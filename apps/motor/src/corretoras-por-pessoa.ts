@@ -34,7 +34,8 @@ const impressaoDe = (c: CredenciaisCorretora): string =>
  */
 export class CorretorasPorPessoa {
   private cache: ReadonlyMap<string, EmCache> = new Map();
-  private readonly trava = new Trava();
+  /** Uma trava por pessoa e rede: a chave lenta de uma pessoa não segura a das outras. */
+  private readonly travas = new Map<string, Trava>();
 
   constructor(private readonly opcoes: OpcoesCorretorasPorPessoa) {}
 
@@ -42,8 +43,11 @@ export class CorretorasPorPessoa {
     const rede = robo.rede;
     if (rede === "papel")
       throw new ErroConfiguracao(`O robô ${robo.id} é de papel: papel não usa conta de corretora.`);
-    // Uma por vez: dois robôs da mesma pessoa ligando juntos não criam duas corretoras.
-    return this.trava.executar(() => this.obter(robo, rede));
+    // Uma por vez por pessoa: dois robôs dela ligando juntos não criam duas corretoras.
+    const chave = `${robo.usuarioId}:${rede}`;
+    const trava = this.travas.get(chave) ?? new Trava();
+    this.travas.set(chave, trava);
+    return trava.executar(() => this.obter(robo, rede));
   }
 
   private async obter(robo: RoboConfig, rede: RedeConta): Promise<Corretora> {

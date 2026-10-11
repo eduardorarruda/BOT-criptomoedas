@@ -1,3 +1,4 @@
+import { Disjuntor } from "@zentrade/corretora";
 import type { ContaCorretora } from "@zentrade/banco";
 import { ContaBinance, ErroConfiguracao, ErroLimiteRequisicoes, ErroRede } from "@zentrade/corretora";
 import { describe, expect, it, vi } from "vitest";
@@ -55,6 +56,8 @@ function montar(redes: ContaCorretora["rede"][] = ["testnet"]) {
   const servico = criarServicoCarteira({
     banco,
     criarConta: fabricaContaBinance({
+      // Cada teste com o próprio disjuntor: um 429 simulado não bloqueia os seguintes.
+      disjuntorDe: () => new Disjuntor(),
       fetch: fetchDaBinanceFalsa(binance),
       agora: () => AGORA,
       dormir: async () => undefined,

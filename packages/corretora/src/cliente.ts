@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { assinarConsulta } from "./assinatura.js";
+import { Disjuntor } from "./disjuntor.js";
 import {
   ErroConfiguracao,
   ErroCorretora,
@@ -22,6 +23,8 @@ export interface OpcoesCliente {
   readonly recvWindow?: number;
   readonly timeoutMs?: number;
   readonly intervaloSincronizacaoMs?: number;
+  /** Bloqueio por IP compartilhado (ver disjuntor.ts). Sem ele, o cliente tem o próprio. */
+  readonly disjuntor?: Disjuntor;
 }
 
 const ESPERA_PADRAO_LIMITE_MS = 60_000;
@@ -39,7 +42,7 @@ export class ClienteBinance {
   private readonly intervaloSincronizacaoMs: number;
   private desvioRelogioMs = 0;
   private sincronizadoEm: number | null = null;
-  private bloqueadoAte = 0;
+  private readonly disjuntor: Disjuntor;
   private peso: { usado: number; em: number } | null = null;
 
   constructor(private readonly opcoes: OpcoesCliente) {
@@ -48,6 +51,7 @@ export class ClienteBinance {
     this.recvWindow = opcoes.recvWindow ?? 5_000;
     this.timeoutMs = opcoes.timeoutMs ?? 10_000;
     this.intervaloSincronizacaoMs = opcoes.intervaloSincronizacaoMs ?? 30 * 60_000;
+    this.disjuntor = opcoes.disjuntor ?? new Disjuntor();
   }
 
   /**
@@ -142,7 +146,7 @@ export class ClienteBinance {
   }
 
   private verificarBloqueio(): void {
-    const falta = this.bloqueadoAte - this.agora();
+    const falta = this.disjuntor.restanteMs(this.agora());
     if (falta > 0)
       throw new ErroLimiteRequisicoes(
         `Limite de requisições da Binance: aguarde ${Math.ceil(falta / 1000)} s antes de tentar de novo.`,
@@ -155,7 +159,7 @@ export class ClienteBinance {
     if (resposta.status === 429 || resposta.status === 418) {
       const segundos = Number(resposta.headers.get("Retry-After"));
       const esperaMs = Number.isFinite(segundos) && segundos > 0 ? segundos * 1000 : ESPERA_PADRAO_LIMITE_MS;
-      this.bloqueadoAte = this.agora() + esperaMs;
+      this.disjuntor.bloquear(this.agora() + esperaMs);
       return erroDeLimite(resposta.status === 418, esperaMs);
     }
     const corpo = RespostaErro.safeParse(await lerJson(resposta).catch(() => null));

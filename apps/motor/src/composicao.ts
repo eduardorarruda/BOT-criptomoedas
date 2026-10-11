@@ -9,7 +9,7 @@ import type {
   PortaRobos,
   RoboConfig,
 } from "@zentrade/contratos";
-import { ativosDoSimbolo, BinanceCorretora, PapelCorretora } from "@zentrade/corretora";
+import { ativosDoSimbolo, BinanceCorretora, disjuntorDaRede, PapelCorretora } from "@zentrade/corretora";
 import { dec } from "@zentrade/dominio";
 import type { Config } from "./config.js";
 import { CorretorasPorPessoa } from "./corretoras-por-pessoa.js";
@@ -40,6 +40,7 @@ export function criarCorretora(config: Config, registro: Registro): Corretora {
       ...(chaveDoAmbiente(config) ?? {}),
       taxaEstimada: config.BINANCE_TAXA_ESTIMADA,
       aoErroWebSocket,
+      disjuntor: disjuntorDaRede("testnet"),
     });
   const papel = new PapelCorretora({
     saldos: { [COTACAO_PAPEL]: dec(config.MOTOR_PAPEL_SALDO) },
@@ -52,7 +53,11 @@ export function criarCorretora(config: Config, registro: Registro): Corretora {
 /** Dados de mercado públicos (nenhuma chave): papel ao vivo e candles históricos do backtest. */
 export function criarDadosPublicos(config: Config, registro: Registro): BinanceCorretora {
   const aoErroWebSocket = (erro: Error) => registro.warn({ erro }, "WebSocket da Binance com problema");
-  return new BinanceCorretora({ rede: config.MOTOR_PAPEL_DADOS, aoErroWebSocket });
+  return new BinanceCorretora({
+    rede: config.MOTOR_PAPEL_DADOS,
+    aoErroWebSocket,
+    disjuntor: disjuntorDaRede(config.MOTOR_PAPEL_DADOS),
+  });
 }
 
 export function criarAgente(config: Config): PortaAgente {
@@ -134,7 +139,13 @@ function corretorasDasPessoas(
     credenciais: f.banco?.credenciais ?? null,
     fallback: chaveDoAmbiente(config),
     criar: (rede, c) =>
-      new BinanceCorretora({ rede, ...c, taxaEstimada: config.BINANCE_TAXA_ESTIMADA, aoErroWebSocket }),
+      new BinanceCorretora({
+        rede,
+        ...c,
+        taxaEstimada: config.BINANCE_TAXA_ESTIMADA,
+        aoErroWebSocket,
+        disjuntor: disjuntorDaRede(rede),
+      }),
   });
   return (robo) => porPessoa.para(robo);
 }

@@ -83,4 +83,24 @@ describe("uma corretora por pessoa e rede", () => {
     const { porPessoa } = montar({ "ana:testnet": CHAVE_ANA });
     await expect(porPessoa.para(robo("r1", "ana", "papel"))).rejects.toThrow(/papel/);
   });
+
+  it("a chave lenta de uma pessoa não atrasa os robôs de outra", async () => {
+    let liberarAna: () => void = () => {};
+    const anaPendente = new Promise<void>((r) => (liberarAna = r));
+    const credenciais: PortaCredenciais = {
+      binance: vi.fn(async (u: string) => {
+        if (u === "ana") await anaPendente;
+        return u === "ana" ? CHAVE_ANA : CHAVE_BETO;
+      }),
+    };
+    const criar = vi.fn(
+      (rede: "testnet" | "real", c: CredenciaisCorretora) =>
+        ({ rede, chave: c.apiKey }) as unknown as Corretora,
+    );
+    const porPessoa = new CorretorasPorPessoa({ credenciais, fallback: null, criar });
+    const daAna = porPessoa.para(robo("r1", "ana"));
+    await expect(porPessoa.para(robo("r2", "beto"))).resolves.toMatchObject({ chave: "beto-k" });
+    liberarAna();
+    await expect(daAna).resolves.toMatchObject({ chave: "ana-k" });
+  });
 });

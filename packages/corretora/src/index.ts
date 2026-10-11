@@ -1,6 +1,7 @@
 export * from "./ativos.js";
 export * from "./binance.js";
 export * from "./conversao.js";
+export * from "./disjuntor.js";
 export * from "./erros.js";
 export * from "./papel.js";
 export * from "./urls.js";

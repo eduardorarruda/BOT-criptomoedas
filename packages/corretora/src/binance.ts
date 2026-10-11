@@ -20,8 +20,11 @@ import { RespostaConta, RespostaExchangeInfo, RespostaKlines, RespostaLivro } fr
 import { OrdensBinance } from "./binance-ordens.js";
 import { URLS_BINANCE, type RedeBinance } from "./urls.js";
 import { assinarKlines, type OpcoesAssinatura } from "./websocket.js";
+import type { Disjuntor } from "./disjuntor.js";
 
 export interface OpcoesBinance {
+  /** Bloqueio por IP compartilhado no processo (disjuntorDaRede). */
+  readonly disjuntor?: Disjuntor;
   readonly rede: RedeBinance;
   readonly apiKey?: string | undefined;
   readonly apiSecret?: string | undefined;
@@ -66,6 +69,7 @@ export class BinanceCorretora implements Corretora {
       ...(opcoes.fetch ? { fetch: opcoes.fetch } : {}),
       ...(opcoes.agora ? { agora: opcoes.agora } : {}),
       ...(opcoes.timeoutMs ? { timeoutMs: opcoes.timeoutMs } : {}),
+      ...(opcoes.disjuntor ? { disjuntor: opcoes.disjuntor } : {}),
     });
     this.ordens = new OrdensBinance(
       this.cliente,

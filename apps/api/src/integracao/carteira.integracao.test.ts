@@ -1,3 +1,4 @@
+import { Disjuntor } from "@zentrade/corretora";
 import { CarteiraAtivoEsquema, CarteiraEsquema, StatusBinanceEsquema } from "@zentrade/contratos";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { fabricaContaBinance } from "../integracoes/binance-conta.js";
@@ -82,6 +83,8 @@ describe("carteira da Binance pela API (Binance simulada, banco e Redis reais)",
           banco,
           agora,
           criarConta: fabricaContaBinance({
+            // Cada teste com o próprio disjuntor: um 429 simulado não bloqueia os seguintes.
+            disjuntorDe: () => new Disjuntor(),
             fetch: fetchDaBinanceFalsa(binance),
             agora: () => binance.agora,
             dormir: async () => undefined,

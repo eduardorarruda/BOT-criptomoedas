@@ -1,6 +1,8 @@
 import type { CredenciaisCorretora, RedeConta } from "@zentrade/contratos";
 import {
   ContaBinance,
+  type Disjuntor,
+  disjuntorDaRede,
   ErroCorretora,
   ErroLimiteRequisicoes,
   ErroRede,
@@ -16,15 +18,17 @@ export type FabricaConta = (rede: RedeConta, credenciais: CredenciaisCorretora) 
 
 export interface OpcoesFabrica {
   readonly fetch?: typeof fetch;
+  /** Bloqueio por IP da Binance; padrão: o do processo, por rede (ver disjuntor.ts). */
+  readonly disjuntorDe?: (rede: RedeConta) => Disjuntor;
   readonly agora?: () => number;
   readonly dormir?: (ms: number) => Promise<void>;
 }
 
 /** Uma ContaBinance nova por uso: o cache de preços históricos vive o tempo de uma sincronização. */
 export const fabricaContaBinance =
-  (o: OpcoesFabrica = {}): FabricaConta =>
+  ({ disjuntorDe = disjuntorDaRede, ...o }: OpcoesFabrica = {}): FabricaConta =>
   (rede, credenciais) =>
-    new ContaBinance({ rede, ...credenciais, ...o });
+    new ContaBinance({ rede, ...credenciais, ...o, disjuntor: disjuntorDe(rede) });
 
 const ERRO_CIFRA = "ErroCifra";
 

@@ -13,6 +13,7 @@ import {
 } from "./esquemas.js";
 import { URLS_BINANCE, type RedeBinance } from "./urls.js";
 import type { z } from "zod";
+import type { Disjuntor } from "./disjuntor.js";
 
 /**
  * Leitura da conta da pessoa na Binance, para a carteira: saldos, negociações, ordens
@@ -25,6 +26,8 @@ import type { z } from "zod";
  * assim vier 429, o erro (ErroLimiteRequisicoes) sobe para quem chamou.
  */
 export interface OpcoesConta {
+  /** Bloqueio por IP compartilhado no processo (disjuntorDaRede). */
+  readonly disjuntor?: Disjuntor;
   readonly rede: RedeBinance;
   readonly apiKey: string;
   readonly apiSecret: string;
@@ -101,6 +104,7 @@ export class ContaBinance {
       agora: this.agora,
       ...(opcoes.fetch ? { fetch: opcoes.fetch } : {}),
       ...(opcoes.timeoutMs ? { timeoutMs: opcoes.timeoutMs } : {}),
+      ...(opcoes.disjuntor ? { disjuntor: opcoes.disjuntor } : {}),
     });
   }
 
