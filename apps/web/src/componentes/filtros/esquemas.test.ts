@@ -44,3 +44,17 @@ describe("parâmetros da URL", () => {
     expect(validar({ pagina: "4" }).pagina).toBe(4);
   });
 });
+
+describe("lista livre (ids e símbolos que vêm da API)", () => {
+  const validarIds = validarBusca(z.object({ robo: campo.listaLivre(/^[a-z0-9-]{1,64}$/) }));
+
+  it("mantém o que tem o formato, sem repetir, e descarta o resto", () => {
+    expect(validarIds({ robo: "r-btc,R SOL,r-btc,r-eth" }).robo).toBe("r-btc,r-eth");
+    expect(validarIds({ robo: "<script>" }).robo).toBeUndefined();
+  });
+
+  it("aceita no máximo 20 valores", () => {
+    const muitos = Array.from({ length: 30 }, (_, i) => `r-${i}`).join(",");
+    expect(validarIds({ robo: muitos }).robo?.split(",")).toHaveLength(20);
+  });
+});

@@ -1,5 +1,5 @@
-import { FilterX, SlidersHorizontal } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { ChevronDown, FilterX, SlidersHorizontal } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
 import { Botao } from "../Botao";
 import { Dialogo } from "../Dialogo";
 import { CampoBusca } from "./CampoBusca";
@@ -29,6 +29,8 @@ export function BarraFiltros({
   resumo,
   extra,
   children,
+  maisFiltros,
+  maisAtivos = 0,
 }: {
   readonly rotulo: string;
   readonly busca?: BuscaDaBarra;
@@ -40,10 +42,15 @@ export function BarraFiltros({
   /** Ao lado do resumo (ex.: visões salvas). */
   readonly extra?: ReactNode;
   readonly children?: ReactNode;
+  /** Filtros de uso menos frequente: ficam atrás de "Mais filtros" (abertos se algum estiver valendo). */
+  readonly maisFiltros?: ReactNode;
+  readonly maisAtivos?: number;
 }) {
   const compacta = useTelaCompacta();
+  const idMais = useId();
   const [folha, setFolha] = useState(false);
-  const temGrupos = Boolean(children);
+  const [mais, setMais] = useState(maisAtivos > 0);
+  const temGrupos = Boolean(children) || Boolean(maisFiltros);
   return (
     <section className="filtros" aria-label={rotulo}>
       <div className="filtros__topo">
@@ -67,7 +74,29 @@ export function BarraFiltros({
         ) : null}
         {ferramentas ? <div className="filtros__ferramentas">{ferramentas}</div> : null}
       </div>
-      {!compacta && temGrupos ? <div className="filtros__grupos">{children}</div> : null}
+      {!compacta && temGrupos ? (
+        <div className="filtros__grupos">
+          {children}
+          {maisFiltros && (mais || maisAtivos > 0) ? (
+            <div id={idMais} className="filtros__mais">
+              {maisFiltros}
+            </div>
+          ) : null}
+          {maisFiltros ? (
+            <button
+              type="button"
+              className="filtros__limpar filtros__alternar"
+              aria-expanded={mais || maisAtivos > 0}
+              aria-controls={idMais}
+              disabled={maisAtivos > 0}
+              onClick={() => setMais((m) => !m)}
+            >
+              <ChevronDown size={14} aria-hidden="true" />
+              {mais || maisAtivos > 0 ? "Menos filtros" : "Mais filtros"}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <div className="filtros__rodape">
         <p className="filtros__resumo" aria-live="polite">
           {resumo}
@@ -83,7 +112,10 @@ export function BarraFiltros({
       {compacta && temGrupos ? (
         <Dialogo aberto={folha} aoFechar={() => setFolha(false)} titulo="Filtros">
           <div className="filtros-folha">
-            <div className="filtros-folha__grupos">{children}</div>
+            <div className="filtros-folha__grupos">
+              {children}
+              {maisFiltros}
+            </div>
             <div className="filtros-folha__acoes">
               <Botao variante="fantasma" icone={FilterX} onClick={aoLimpar} disabled={ativos === 0}>
                 Limpar

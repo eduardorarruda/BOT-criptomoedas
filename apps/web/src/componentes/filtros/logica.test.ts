@@ -5,6 +5,7 @@ import {
   contarAtivos,
   contarPor,
   contemTexto,
+  filtrarCom,
   escreverLista,
   lerLista,
   normalizarTexto,
@@ -114,5 +115,30 @@ describe("paginar", () => {
     expect(paginar(itens, 9, 20).pagina).toBe(3);
     expect(paginar(itens, 0, 20).pagina).toBe(1);
     expect(paginar([], 3, 20)).toMatchObject({ pagina: 1, paginas: 1, itens: [] });
+  });
+});
+
+describe("filtrar com predicados nomeados (contagem facetada)", () => {
+  const itens = [
+    { cor: "azul", grande: true },
+    { cor: "azul", grande: false },
+    { cor: "verde", grande: true },
+  ];
+  const predicados = {
+    cor: (i: (typeof itens)[number]) => i.cor === "azul",
+    tamanho: (i: (typeof itens)[number]) => i.grande,
+  };
+
+  it("aplica todos", () => {
+    expect(filtrarCom(itens, predicados)).toEqual([{ cor: "azul", grande: true }]);
+  });
+
+  it("deixa um de fora para contar as opções daquele filtro", () => {
+    expect(contarPor(filtrarCom(itens, predicados, "cor"), (i) => i.cor)).toEqual(
+      new Map([
+        ["azul", 1],
+        ["verde", 1],
+      ]),
+    );
   });
 });

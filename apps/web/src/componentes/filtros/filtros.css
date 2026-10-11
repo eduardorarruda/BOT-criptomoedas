@@ -28,6 +28,19 @@
   padding-top: var(--espaco-3);
   border-top: 1px solid var(--linha);
 }
+.filtros__mais {
+  display: contents;
+}
+.filtros__alternar {
+  align-self: flex-end;
+  min-height: 30px;
+}
+.filtros__alternar[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.filtros__alternar:disabled {
+  display: none;
+}
 .filtros__rodape {
   display: flex;
   flex-wrap: wrap;

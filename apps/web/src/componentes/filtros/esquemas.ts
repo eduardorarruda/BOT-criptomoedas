@@ -9,6 +9,7 @@ import { PERIODOS } from "./periodo";
  * Listas ficam na URL como "A,B", que é legível e curta.
  */
 const LIMITE_BUSCA = 80;
+const LIMITE_LISTA = 20;
 const DIA = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 /** Campo opcional: chave ausente ou valor inválido viram undefined. */
@@ -23,6 +24,13 @@ export const campo = {
   /** Escolha múltipla ("A,B"), na ordem da definição. */
   lista: <T extends string>(permitidos: readonly T[]) =>
     opcional((v) => lerLista(v, permitidos).join(",") || undefined),
+  /** Escolha múltipla de valores que vêm da API (ids, símbolos): vale o formato, até 20. */
+  listaLivre: (formato: RegExp) =>
+    opcional((v) => {
+      const partes = (comoTexto(v) ?? "").split(",").map((p) => p.trim());
+      const validos = [...new Set(partes.filter((p) => formato.test(p)))].slice(0, LIMITE_LISTA);
+      return validos.join(",") || undefined;
+    }),
   /** Uma escolha entre poucas. */
   opcao: <T extends string>(permitidos: readonly T[]) =>
     opcional((v): T | undefined => {

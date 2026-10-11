@@ -14,6 +14,7 @@ export {
   contarAtivos,
   contarPor,
   contemTexto,
+  filtrarCom,
   escreverLista,
   lerLista,
   normalizarTexto,

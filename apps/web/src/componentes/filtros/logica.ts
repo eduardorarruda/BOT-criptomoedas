@@ -95,6 +95,21 @@ export function agruparPor<T>(
   return [...grupos.entries()].map(([c, g]) => ({ chave: c, titulo: g.titulo, itens: g.itens }));
 }
 
+/**
+ * Aplica predicados nomeados. Com `exceto`, deixa aquele de fora: é assim que cada
+ * opção de um filtro mostra quantos itens traria com os outros filtros valendo.
+ */
+export function filtrarCom<T>(
+  itens: readonly T[],
+  predicados: Readonly<Record<string, (item: T) => boolean>>,
+  exceto?: string,
+): T[] {
+  const ativos = Object.entries(predicados)
+    .filter(([nome]) => nome !== exceto)
+    .map(([, p]) => p);
+  return itens.filter((item) => ativos.every((p) => p(item)));
+}
+
 export function contarPor<T, K>(itens: readonly T[], chave: (item: T) => K): Map<K, number> {
   const contagem = new Map<K, number>();
   for (const item of itens) contagem.set(chave(item), (contagem.get(chave(item)) ?? 0) + 1);
