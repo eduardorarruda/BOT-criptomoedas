@@ -18,6 +18,8 @@ import { corpoDoErro, ErroApi } from "./erros.js";
 import { criarLog } from "./log.js";
 import { rotasAutomacoes } from "./rotas/automacoes.js";
 import { rotasBacktests } from "./rotas/backtests.js";
+import { rotasBinance } from "./rotas/binance.js";
+import { rotasCarteira } from "./rotas/carteira.js";
 import { rotasConhecimento } from "./rotas/conhecimento.js";
 import { rotasContas } from "./rotas/contas.js";
 import { rotasDecisoes } from "./rotas/decisoes.js";
@@ -102,6 +104,8 @@ export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger):
         rotasBacktests,
         rotasConhecimento,
         rotasAutomacoes,
+        rotasCarteira,
+        rotasBinance,
         rotasSaude,
         rotasTempoReal,
       ]) {

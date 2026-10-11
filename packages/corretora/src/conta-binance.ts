@@ -166,14 +166,13 @@ export class ContaBinance {
 
   /** Preço atual em USDT de cada moeda pedida (par direto ou invertido). Sem par, a moeda fica de fora. */
   async precosUsdt(ativos: readonly string[]): Promise<Map<string, Valor>> {
+    return precosUsdtDaTabela(await this.tabelaPrecos(), ativos);
+  }
+
+  /** Último preço de todos os pares (GET /api/v3/ticker/price sem símbolo). */
+  async tabelaPrecos(): Promise<Map<string, Valor>> {
     const r = await this.publico("/api/v3/ticker/price", {}, RespostaPrecos, PESO.precos);
-    const tabela = new Map(r.map((p) => [p.symbol, dec(p.price)]));
-    const precos = new Map<string, Valor>();
-    for (const a of ativos) {
-      const p = precoUsdtDaTabela(tabela, a);
-      if (p) precos.set(a, p);
-    }
-    return precos;
+    return new Map(r.map((p) => [p.symbol, dec(p.price)]));
   }
 
   /**
@@ -267,6 +266,19 @@ function negociacaoBruta(n: z.infer<typeof RespostaMinhasNegociacoes>[number]): 
     em: n.time,
     isBuyer: n.isBuyer,
   };
+}
+
+/** Preço em USDT de cada moeda pela tabela de preços; moeda sem par fica de fora. */
+export function precosUsdtDaTabela(
+  tabela: ReadonlyMap<string, Valor>,
+  ativos: readonly string[],
+): Map<string, Valor> {
+  const precos = new Map<string, Valor>();
+  for (const a of ativos) {
+    const p = precoUsdtDaTabela(tabela, a);
+    if (p) precos.set(a, p);
+  }
+  return precos;
 }
 
 /** Preço em USDT pela tabela de preços: XUSDT direto, ou 1 ÷ USDTX. */
