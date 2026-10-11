@@ -2,5 +2,8 @@ packages:
   - "apps/*"
   - "packages/*"
   - "tools/*"
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: false
 minimumReleaseAgeExclude:
   - prettier@3.9.10

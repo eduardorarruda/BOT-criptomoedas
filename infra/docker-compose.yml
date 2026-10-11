@@ -1,0 +1,78 @@
+# Ambiente de desenvolvimento do ZenTrade: banco, Redis e n8n.
+# Uso: docker compose --env-file .env -f infra/docker-compose.yml up -d
+# As portas ficam presas em 127.0.0.1: nada disso deve ficar exposto na rede.
+name: zentrade
+
+services:
+  banco:
+    # timescaledb-ha já traz TimescaleDB e pgvector; o pg17 é a versão suportada.
+    image: timescale/timescaledb-ha:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-zentrade}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - banco:/home/postgres/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command:
+      ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_SENHA:?defina REDIS_SENHA no .env}"]
+    ports:
+      - "127.0.0.1:56379:6379"
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", 'redis-cli -a "$${REDIS_SENHA}" --no-auth-warning ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    environment:
+      REDIS_SENHA: ${REDIS_SENHA}
+
+  n8n:
+    # Versão fixada: atualizar o n8n é uma decisão, não um efeito colateral do pull.
+    image: n8nio/n8n:2.42.6
+    restart: unless-stopped
+    environment:
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?defina N8N_ENCRYPTION_KEY no .env}
+      N8N_HOST: localhost
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+      GENERIC_TIMEZONE: America/Sao_Paulo
+      TZ: America/Sao_Paulo
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_RUNNERS_ENABLED: "true"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      # O n8n assina e confere os webhooks com o mesmo segredo da API.
+      N8N_WEBHOOK_SEGREDO: ${N8N_WEBHOOK_SEGREDO:?defina N8N_WEBHOOK_SEGREDO no .env}
+      ZENTRADE_API_URL: ${ZENTRADE_API_URL_PARA_N8N:-http://host.docker.internal:8080}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:5678:5678"
+    volumes:
+      - n8n:/home/node/.n8n
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5678/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  banco:
+  redis:
+  n8n:

@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791678321332,
+      "tag": "0000_extensoes",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791678371093,
+      "tag": "0001_esquema",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791678381756,
+      "tag": "0002_timescale_rls_indices",
+      "breakpoints": true
+    }
+  ]
+}

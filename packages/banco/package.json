@@ -1,0 +1,40 @@
+{
+  "name": "@zentrade/banco",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Banco do ZenTrade: esquema (Drizzle), migrações, cifra das chaves da corretora e as portas de repositório usadas pelo motor e pela API.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./teste": {
+      "types": "./dist/teste/index.d.ts",
+      "default": "./dist/teste/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "drizzle"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts",
+    "gerar-migracao": "drizzle-kit generate",
+    "migrar": "node --env-file-if-exists=../../.env dist/comandos/migrar.js"
+  },
+  "dependencies": {
+    "@zentrade/contratos": "workspace:*",
+    "@zentrade/dominio": "workspace:*",
+    "drizzle-orm": "^0.45.4",
+    "postgres": "^3.4.9",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.11"
+  }
+}

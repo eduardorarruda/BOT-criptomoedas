@@ -1,0 +1,113 @@
+import cookie from "@fastify/cookie";
+import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
+import websocket from "@fastify/websocket";
+import Fastify, { type FastifyBaseLogger, type FastifyError, type FastifyInstance } from "fastify";
+import {
+  hasZodFastifySchemaValidationErrors,
+  serializerCompiler,
+  validatorCompiler,
+  type ZodTypeProvider,
+} from "fastify-type-provider-zod";
+import { z } from "zod";
+import { CABECALHO_CSRF, registrarAutenticacao } from "./autenticacao/plugin.js";
+import { chaveDoCliente } from "./chave-cliente.js";
+import type { Dependencias } from "./dependencias.js";
+import { corpoDoErro, ErroApi } from "./erros.js";
+import { criarLog } from "./log.js";
+import { rotasBacktests } from "./rotas/backtests.js";
+import { rotasConhecimento } from "./rotas/conhecimento.js";
+import { rotasContas } from "./rotas/contas.js";
+import { rotasDecisoes } from "./rotas/decisoes.js";
+import { rotasEstrategias } from "./rotas/estrategias.js";
+import { rotasMercado } from "./rotas/mercado.js";
+import { rotasParada } from "./rotas/parada.js";
+import { rotasRobos } from "./rotas/robos.js";
+import { rotasSaude } from "./rotas/saude.js";
+import { rotasSegundoFator } from "./rotas/segundo-fator.js";
+import { rotasSessao } from "./rotas/sessao.js";
+import { rotasTempoReal } from "./rotas/tempo-real.js";
+import { rotasTokens } from "./rotas/tokens.js";
+import { rotasWebhooks } from "./rotas/webhooks.js";
+
+z.config(z.locales.pt());
+
+const LIMITE_GLOBAL = { max: 300, timeWindow: "1 minute" } as const;
+
+function respostaDeErro(erro: FastifyError): { status: number; corpo: unknown } {
+  if (hasZodFastifySchemaValidationErrors(erro)) {
+    const problemas = erro.validation.map(
+      (v) => `${v.instancePath.replace(/^\//, "") || "corpo"}: ${v.message}`,
+    );
+    return { status: 400, corpo: { erro: { codigo: "dados_invalidos", mensagem: problemas.join("; ") } } };
+  }
+  return corpoDoErro(erro);
+}
+
+async function registrarPlugins(app: FastifyInstance, deps: Dependencias): Promise<void> {
+  await app.register(helmet);
+  await app.register(cors, {
+    origin: [deps.config.ZENTRADE_ORIGEM_WEB],
+    credentials: true,
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+    allowedHeaders: ["content-type", "authorization", CABECALHO_CSRF],
+  });
+  await app.register(cookie);
+  await app.register(rateLimit, {
+    ...LIMITE_GLOBAL,
+    keyGenerator: chaveDoCliente,
+    errorResponseBuilder: (_req, ctx) =>
+      new ErroApi(
+        429,
+        "muitas_tentativas",
+        `muitas tentativas seguidas; espere ${ctx.after} e tente de novo`,
+      ),
+  });
+  await app.register(websocket, { options: { maxPayload: 64 * 1024 } });
+}
+
+/** Monta a API com as dependências recebidas. Não abre porta: quem chama decide (servidor ou teste). */
+export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger): Promise<FastifyInstance> {
+  const app = Fastify({ loggerInstance: log ?? criarLog(deps.config.LOG_NIVEL), bodyLimit: 1024 * 1024 });
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
+  app.setErrorHandler((erro: FastifyError, req, reply) => {
+    const { status, corpo } = respostaDeErro(erro);
+    if (status >= 500) req.log.error({ err: erro }, "erro inesperado ao atender a requisição");
+    return reply.code(status).send(corpo);
+  });
+  app.setNotFoundHandler((_req, reply) =>
+    reply
+      .code(404)
+      .send({ erro: { codigo: "rota_inexistente", mensagem: "esse caminho não existe na API" } }),
+  );
+  await registrarPlugins(app, deps);
+  registrarAutenticacao(app, deps);
+
+  await app.register(
+    async (api) => {
+      const tipada = api.withTypeProvider<ZodTypeProvider>();
+      for (const rotas of [
+        rotasSessao,
+        rotasSegundoFator,
+        rotasEstrategias,
+        rotasRobos,
+        rotasDecisoes,
+        rotasMercado,
+        rotasParada,
+        rotasContas,
+        rotasTokens,
+        rotasBacktests,
+        rotasConhecimento,
+        rotasSaude,
+        rotasTempoReal,
+      ]) {
+        await tipada.register(rotas, { deps });
+      }
+    },
+    { prefix: "/api/v1" },
+  );
+  await app.register(rotasWebhooks, { prefix: "/webhooks/n8n", deps });
+  return app;
+}
