@@ -84,6 +84,19 @@ const camposManuais = (t: NovoTitulo) => ({
   liquidez: t.liquidez,
 });
 
+/** Teto de títulos cadastrados à mão por pessoa (os da Pluggy vêm do banco e não contam). */
+export const LIMITE_TITULOS_MANUAIS = 500;
+/** Teto da listagem: manuais + os que a Pluggy trouxer, com folga. */
+const LIMITE_LISTAGEM = 5000;
+
+async function contarManuais(tx: Tx): Promise<number> {
+  const [linha] = await tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(titulosRendaFixa)
+    .where(eq(titulosRendaFixa.origem, "manual"));
+  return linha?.n ?? 0;
+}
+
 async function exigirManual(tx: Tx, id: string): Promise<LinhaBanco | null> {
   const [atual] = await tx.select().from(titulosRendaFixa).where(eq(titulosRendaFixa.id, id));
   if (atual && atual.origem !== "manual") {
@@ -95,7 +108,7 @@ async function exigirManual(tx: Tx, id: string): Promise<LinhaBanco | null> {
   return atual ?? null;
 }
 
-export function repositorioRendaFixa(db: Db) {
+export function repositorioRendaFixa(db: Db, limiteManuais = LIMITE_TITULOS_MANUAIS) {
   return {
     listar: (usuarioId: string, incluirEncerrados = false): Promise<LinhaTitulo[]> =>
       comoUsuario(db, usuarioId, async (tx) =>
@@ -105,6 +118,7 @@ export function repositorioRendaFixa(db: Db) {
             .from(titulosRendaFixa)
             .where(incluirEncerrados ? undefined : eq(titulosRendaFixa.situacao, "ativo"))
             .orderBy(asc(titulosRendaFixa.dataAplicacao), asc(titulosRendaFixa.criadoEm))
+            .limit(LIMITE_LISTAGEM)
         ).map(tituloDeLinha),
       ),
 
@@ -116,6 +130,9 @@ export function repositorioRendaFixa(db: Db) {
 
     criar: (usuarioId: string, t: NovoTitulo): Promise<LinhaTitulo> =>
       comoUsuario(db, usuarioId, async (tx) => {
+        if ((await contarManuais(tx)) >= limiteManuais) {
+          throw new ErroDados("invalido", `limite de ${limiteManuais} títulos cadastrados à mão atingido`);
+        }
         const linha = umaLinha(
           await tx
             .insert(titulosRendaFixa)

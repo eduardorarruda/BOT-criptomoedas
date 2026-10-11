@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { comoUsuario } from "../cliente.js";
 import { titulosRendaFixa } from "../esquema/index.js";
 import type { TituloSincronizado } from "../repositorios/pluggy.js";
+import { repositorioRendaFixa } from "../repositorios/renda-fixa.js";
 import { montarCenario, type Cenario } from "./ajuda.js";
 
 const CDB: NovoTitulo = {
@@ -173,5 +174,13 @@ describe("renda fixa no banco", () => {
       tx.execute(sql`insert into indicadores (serie, dia, valor) values ('CDI', '2020-01-02', 1)`),
     );
     await expect(gravar).rejects.toThrow();
+  });
+
+  it("barra o cadastro manual acima do teto, por pessoa", async () => {
+    const repo = repositorioRendaFixa(c.banco.conexao.db, 2);
+    const jaTinha = (await c.banco.rendaFixa.listar(c.beto.id, true)).filter((t) => t.origem === "manual");
+    for (let i = jaTinha.length; i < 2; i++) await repo.criar(c.beto.id, CDB);
+    await expect(repo.criar(c.beto.id, CDB)).rejects.toMatchObject({ codigo: "invalido" });
+    await expect(c.banco.rendaFixa.criar(c.ana.id, CDB)).resolves.toMatchObject({ origem: "manual" });
   });
 });
