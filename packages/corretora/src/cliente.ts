@@ -40,6 +40,7 @@ export class ClienteBinance {
   private desvioRelogioMs = 0;
   private sincronizadoEm: number | null = null;
   private bloqueadoAte = 0;
+  private peso: { usado: number; em: number } | null = null;
 
   constructor(private readonly opcoes: OpcoesCliente) {
     this.fetch = opcoes.fetch ?? globalThis.fetch;
@@ -47,6 +48,16 @@ export class ClienteBinance {
     this.recvWindow = opcoes.recvWindow ?? 5_000;
     this.timeoutMs = opcoes.timeoutMs ?? 10_000;
     this.intervaloSincronizacaoMs = opcoes.intervaloSincronizacaoMs ?? 30 * 60_000;
+  }
+
+  /**
+   * Peso de requisições já usado neste minuto, como a Binance informou no cabeçalho
+   * X-MBX-USED-WEIGHT-1M da última resposta. Null se ainda não houve resposta neste minuto.
+   */
+  pesoUsado(): number | null {
+    if (!this.peso) return null;
+    const minuto = (ms: number) => Math.floor(ms / 60_000);
+    return minuto(this.peso.em) === minuto(this.agoraServidor()) ? this.peso.usado : null;
   }
 
   /** Horário estimado do servidor da Binance. */
@@ -120,8 +131,14 @@ export class ClienteBinance {
     } catch (erro) {
       throw erroDeRede(erro, metodo, caminho, this.timeoutMs);
     }
+    this.registrarPeso(resposta.headers);
     if (!resposta.ok) throw await this.erroDaResposta(resposta);
     return validar(await lerJson(resposta), esquema, caminho);
+  }
+
+  private registrarPeso(cabecalhos: Headers): void {
+    const usado = Number(cabecalhos.get("X-MBX-USED-WEIGHT-1M"));
+    if (Number.isFinite(usado) && usado > 0) this.peso = { usado, em: this.agoraServidor() };
   }
 
   private verificarBloqueio(): void {
