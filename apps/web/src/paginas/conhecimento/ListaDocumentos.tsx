@@ -136,7 +136,7 @@ export function ListaDocumentos({ api }: { readonly api: ApiConhecimento }) {
           className="campo--estreito"
         />
       </div>
-      {consulta.isPending ? <Esqueleto linhas={6} rotulo="Carregando documentos" /> : null}
+      {consulta.isPending ? <Esqueleto forma="lista" linhas={6} rotulo="Carregando documentos" /> : null}
       {consulta.error ? (
         <ErroCarregar erro={consulta.error} tentarDeNovo={() => void consulta.refetch()} />
       ) : null}

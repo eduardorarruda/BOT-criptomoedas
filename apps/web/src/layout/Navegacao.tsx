@@ -2,11 +2,21 @@ import { Link } from "@tanstack/react-router";
 import { useDecisoes } from "../ganchos/consultas";
 import { NAVEGACAO } from "./navegacao";
 
-/** Menu lateral. "Decisões" mostra quantas aguardam sua resposta. */
-export function Navegacao({ aoNavegar }: { readonly aoNavegar?: () => void }) {
+/**
+ * Menu lateral. "Decisões" mostra quantas aguardam sua resposta. Recolhido (só
+ * ícones), o texto de cada item continua lá para o leitor de tela e vira dica ao
+ * passar o mouse; o contador vira um ponto sobre o ícone.
+ */
+export function Navegacao({
+  aoNavegar,
+  recolhida = false,
+}: {
+  readonly aoNavegar?: () => void;
+  readonly recolhida?: boolean;
+}) {
   const aguardando = useDecisoes({ estado: "aguardando_aprovacao" }).data?.length ?? 0;
   return (
-    <nav className="navegacao" aria-label="Principal">
+    <nav className={`navegacao ${recolhida ? "navegacao--recolhida" : ""}`} aria-label="Principal">
       {NAVEGACAO.map((grupo) => (
         <div key={grupo.titulo} className="navegacao__grupo">
           <p className="navegacao__titulo">{grupo.titulo}</p>
@@ -19,9 +29,15 @@ export function Navegacao({ aoNavegar }: { readonly aoNavegar?: () => void }) {
                   activeOptions={{ exact: para === "/" }}
                   activeProps={{ "aria-current": "page", className: "navegacao__item--ativo" }}
                   onClick={aoNavegar}
+                  title={recolhida ? rotulo : undefined}
                 >
-                  <Icone size={17} strokeWidth={1.8} aria-hidden="true" />
-                  <span>{rotulo}</span>
+                  <span className="navegacao__icone">
+                    <Icone size={17} strokeWidth={1.8} aria-hidden="true" />
+                    {recolhida && para === "/decisoes" && aguardando > 0 ? (
+                      <span className="navegacao__ponto" aria-hidden="true" />
+                    ) : null}
+                  </span>
+                  <span className="navegacao__rotulo">{rotulo}</span>
                   {para === "/decisoes" && aguardando > 0 ? (
                     <span
                       className="navegacao__contador num"

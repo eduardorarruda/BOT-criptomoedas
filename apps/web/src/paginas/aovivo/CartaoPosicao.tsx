@@ -51,7 +51,7 @@ export function CartaoPosicao({ robo, posicao, preco, protecao }: Props) {
       {posicao.error ? (
         <ErroCarregar compacto erro={posicao.error} tentarDeNovo={() => void posicao.refetch()} />
       ) : null}
-      {!p && !posicao.error ? <Esqueleto linhas={3} rotulo="Carregando a posição" /> : null}
+      {!p && !posicao.error ? <Esqueleto forma="lista" linhas={2} rotulo="Carregando a posição" /> : null}
       {p && !temQuantidade(p.quantidade) ? <SemPosicao posicao={p} /> : null}
       {p && temQuantidade(p.quantidade) ? (
         <Aberta posicao={p} simbolo={robo.simbolo} preco={preco} protecao={protecao} />

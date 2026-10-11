@@ -21,7 +21,7 @@ function Conexao() {
   return (
     <span className={`conexao conexao--${estado}`} role="status">
       <span className="conexao__ponto" aria-hidden="true" />
-      {ROTULO_CONEXAO[estado]}
+      <span className="conexao__texto">{ROTULO_CONEXAO[estado]}</span>
     </span>
   );
 }
@@ -29,7 +29,14 @@ function Conexao() {
 /** Perdas, taxas e custo de IA do dia: sempre à vista, em qualquer tela. */
 function Placar() {
   const { data } = useResumo();
-  if (!data) return <div className="placar placar--carregando" aria-hidden="true" />;
+  if (!data)
+    return (
+      <div className="placar placar--carregando" aria-hidden="true">
+        <span className="esqueleto__linha" />
+        <span className="esqueleto__linha" />
+        <span className="esqueleto__linha" />
+      </div>
+    );
   return (
     <dl className="placar" aria-label="Hoje">
       <div>

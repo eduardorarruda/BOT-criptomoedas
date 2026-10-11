@@ -113,7 +113,7 @@ export function AoVivo() {
         Tudo o que o robô faz, na hora em que faz: o candle que fecha, o sinal da regra, o que a IA consulta,
         o que o risco barra, a ordem e a posição.
       </Cabecalho>
-      {robos.isPending ? <Esqueleto altura={420} rotulo="Carregando os robôs" /> : null}
+      {robos.isPending ? <Esqueleto forma="cartoes" quantidade={4} rotulo="Carregando os robôs" /> : null}
       {robos.error ? <ErroCarregar erro={robos.error} tentarDeNovo={() => void robos.refetch()} /> : null}
       {robos.data && lista.length === 0 ? (
         <EstadoVazio

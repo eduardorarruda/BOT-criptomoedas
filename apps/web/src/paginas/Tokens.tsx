@@ -123,8 +123,8 @@ export function Tokens() {
         Acesso para a linha de comando e para assistentes (MCP). Cada token tem nome e permissão.
       </Cabecalho>
       <div className="grade-dupla">
-        <Painel titulo="Tokens ativos" id="titulo-tokens">
-          {tokens.isPending ? <Esqueleto linhas={3} /> : null}
+        <Painel titulo="Tokens ativos" id="titulo-tokens" icone={KeySquare}>
+          {tokens.isPending ? <Esqueleto forma="lista" linhas={2} rotulo="Carregando tokens" /> : null}
           {tokens.error ? (
             <ErroCarregar erro={tokens.error} tentarDeNovo={() => void tokens.refetch()} />
           ) : null}
@@ -135,15 +135,21 @@ export function Tokens() {
           ) : null}
           <ul role="list" className="chaves">
             {tokens.data?.map((t) => (
-              <li key={t.id}>
-                <KeySquare size={16} aria-hidden="true" />
-                <span>{t.nome}</span>
-                <Selo tom={t.escopo === "operar" ? "atencao" : "neutro"}>
-                  {t.escopo === "operar" ? "Pode operar" : "Só leitura"}
-                </Selo>
-                <span className="apagado">
-                  criado em {formatarData(t.criadoEm)} ·{" "}
-                  {t.ultimoUsoEm ? `usado ${formatarRelativo(t.ultimoUsoEm)}` : "nunca usado"}
+              <li key={t.id} className="chave">
+                <span className="chave__icone" aria-hidden="true">
+                  <KeySquare size={16} />
+                </span>
+                <span className="chave__textos">
+                  <span className="chave__nome">
+                    {t.nome}
+                    <Selo tom={t.escopo === "operar" ? "atencao" : "neutro"}>
+                      {t.escopo === "operar" ? "Pode operar" : "Só leitura"}
+                    </Selo>
+                  </span>
+                  <span className="chave__meta">
+                    criado em {formatarData(t.criadoEm)} ·{" "}
+                    {t.ultimoUsoEm ? `usado ${formatarRelativo(t.ultimoUsoEm)}` : "nunca usado"}
+                  </span>
                 </span>
                 <Botao
                   pequeno
@@ -158,7 +164,12 @@ export function Tokens() {
             ))}
           </ul>
         </Painel>
-        <Painel titulo="Novo token" id="titulo-novo-token">
+        <Painel
+          titulo="Novo token"
+          id="titulo-novo-token"
+          icone={Plus}
+          descricao="Dê um nome que diga onde ele será usado."
+        >
           <FormToken aoCriar={setNovo} />
         </Painel>
       </div>

@@ -12,13 +12,16 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--fundo);
+  background: var(--ambiente), var(--fundo);
+  background-attachment: fixed;
   color: var(--texto);
   font-family: var(--fonte-ui);
-  font-size: 15px;
+  font-size: var(--t-corpo);
   line-height: 1.5;
   font-feature-settings: "ss01";
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -63,6 +66,12 @@ svg {
   border-radius: var(--raio-p);
 }
 
+/* Barras de rolagem discretas, no tom do tema (quem não suporta fica com a do sistema). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--linha-forte) transparent;
+}
+
 ::selection {
   background: var(--marca-tenue);
 }
@@ -93,6 +102,15 @@ svg {
   font-weight: 400;
   letter-spacing: -0.01em;
   line-height: 1.05;
+}
+
+/* Rótulo curto em caixa alta (sobretítulos, grupos do menu, legendas de KPI). */
+.rotulo-caixa {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: var(--rastreio-rotulo);
+  text-transform: uppercase;
+  color: var(--apagado);
 }
 
 .so-leitor {
@@ -128,6 +146,7 @@ svg {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;

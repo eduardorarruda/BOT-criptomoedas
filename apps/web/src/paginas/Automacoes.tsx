@@ -1,4 +1,4 @@
-import { CircleCheck, CircleDashed, CircleX, Server, Workflow } from "lucide-react";
+import { Activity, CircleCheck, CircleDashed, CircleX, Server, Workflow } from "lucide-react";
 import { ehErroApi } from "../api/erros";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
@@ -21,7 +21,7 @@ const SERVICOS = {
 
 function Saude() {
   const saude = useSaude();
-  if (saude.isPending) return <Esqueleto linhas={4} />;
+  if (saude.isPending) return <Esqueleto forma="lista" linhas={4} rotulo="Carregando a saúde dos serviços" />;
   if (saude.error)
     return <ErroCarregar erro={saude.error} tentarDeNovo={() => void saude.refetch()} compacto />;
   return (
@@ -30,7 +30,9 @@ function Saude() {
         const ok = saude.data.servicos[s];
         return (
           <li key={s}>
-            <Server size={15} aria-hidden="true" />
+            <span className={`servicos__icone ${ok ? "" : "servicos__icone--fora"}`} aria-hidden="true">
+              <Server size={15} />
+            </span>
             <span>{SERVICOS[s]}</span>
             <Selo tom={ok ? "marca" : "perda"} icone={ok ? CircleCheck : CircleX}>
               {ok ? "No ar" : "Fora do ar"}
@@ -53,8 +55,13 @@ export function Automacoes() {
         avisos.
       </Cabecalho>
       <div className="grade-dupla grade-dupla--larga">
-        <Painel titulo="Fluxos" id="titulo-fluxos">
-          {consulta.isPending ? <Esqueleto linhas={6} rotulo="Carregando automações" /> : null}
+        <Painel
+          titulo="Fluxos"
+          id="titulo-fluxos"
+          icone={Workflow}
+          descricao="Última execução de cada fluxo do n8n."
+        >
+          {consulta.isPending ? <Esqueleto forma="lista" linhas={5} rotulo="Carregando automações" /> : null}
           {semEndpoint ? (
             <EstadoVazio icone={Workflow} titulo="Status indisponível">
               Esta versão da API ainda não informa o status dos fluxos do n8n. Veja direto no painel do n8n
@@ -75,6 +82,9 @@ export function Automacoes() {
               const r = RESULTADO[a.ultimoResultado];
               return (
                 <li key={a.id} className={`fluxo ${a.ultimoResultado === "falhou" ? "fluxo--falhou" : ""}`}>
+                  <span className={`fluxo__icone fluxo__icone--${a.ultimoResultado}`} aria-hidden="true">
+                    <Workflow size={16} />
+                  </span>
                   <div className="fluxo__texto">
                     <p className="fluxo__nome">
                       {a.nome} {a.ativa ? null : <Selo tom="neutro">Desligado</Selo>}
@@ -100,7 +110,7 @@ export function Automacoes() {
             })}
           </ul>
         </Painel>
-        <Painel titulo="Saúde dos serviços" id="titulo-saude">
+        <Painel titulo="Saúde dos serviços" id="titulo-saude" icone={Activity}>
           <Saude />
         </Painel>
       </div>

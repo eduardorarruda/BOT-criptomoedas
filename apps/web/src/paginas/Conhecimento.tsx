@@ -1,4 +1,4 @@
-import { BookOpen, ExternalLink } from "lucide-react";
+import { BookOpen, ExternalLink, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useFonte } from "../api/contexto";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
@@ -26,7 +26,7 @@ const ABAS: readonly { valor: Aba; rotulo: string }[] = [
 /** Modo de demonstração: a lista vem da fonte de mentira; envio e busca precisam da API. */
 function ListaDemo() {
   const consulta = useDocumentos();
-  if (consulta.isPending) return <Esqueleto linhas={6} rotulo="Carregando documentos" />;
+  if (consulta.isPending) return <Esqueleto forma="lista" linhas={6} rotulo="Carregando documentos" />;
   if (consulta.error)
     return <ErroCarregar erro={consulta.error} tentarDeNovo={() => void consulta.refetch()} />;
   if (consulta.data.length === 0) {
@@ -63,7 +63,7 @@ function ListaDemo() {
 function Adicionar({ api, demo }: { readonly api: ApiConhecimento; readonly demo: boolean }) {
   const [aba, setAba] = useState<Aba>(demo ? "nota" : "arquivo");
   return (
-    <Painel titulo="Adicionar ao conhecimento" id="titulo-adicionar">
+    <Painel titulo="Adicionar ao conhecimento" id="titulo-adicionar" icone={Plus}>
       {demo ? null : (
         <Segmentado rotulo="O que adicionar" ocultarRotulo opcoes={ABAS} valor={aba} aoMudar={setAba} />
       )}
@@ -94,11 +94,11 @@ export function Conhecimento({ api: apiInjetada }: { readonly api?: ApiConhecime
       <div className="grade-conhecimento">
         <div className="conhecimento__coluna">
           {fonte.demo ? null : (
-            <Painel titulo="Buscar como o agente busca" id="titulo-busca">
+            <Painel titulo="Buscar como o agente busca" id="titulo-busca" icone={Search}>
               <BuscaConhecimento api={api} />
             </Painel>
           )}
-          <Painel titulo="Documentos" id="titulo-documentos">
+          <Painel titulo="Documentos" id="titulo-documentos" icone={BookOpen}>
             {fonte.demo ? <ListaDemo /> : <ListaDocumentos api={api} />}
           </Painel>
         </div>

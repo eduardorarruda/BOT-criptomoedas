@@ -3,10 +3,7 @@
  * sem pulo de layout, e todas caem para 0,01 ms com prefers-reduced-motion (base.css).
  */
 
-/* botões: o primário clareia, todos afundam um pouco ao apertar */
-.botao--primario:hover:not(:disabled) {
-  background: color-mix(in oklab, var(--marca) 88%, var(--texto));
-}
+/* botões: todos afundam um pouco ao apertar (o brilho do hover está em componentes.css) */
 .botao:active:not(:disabled) {
   transform: translateY(1px) scale(0.985);
 }
@@ -69,11 +66,11 @@
 }
 
 /* tabelas: a linha sob o ponteiro se destaca, para ler da esquerda à direita sem se perder */
-.tabela tbody tr {
+.tabela tbody tr > * {
   transition: background var(--dur-curta);
 }
-.tabela tbody tr:hover {
-  background: color-mix(in oklab, var(--superficie-2) 70%, transparent);
+.tabela tbody tr:hover > * {
+  background: color-mix(in oklab, var(--superficie-2) 75%, transparent);
 }
 
 /* rádios com cara de botão (segmentado): o selecionado desliza a sombra */

@@ -60,9 +60,14 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
       { para: "/mercado", rotulo: "Mercado", icone: ChartCandlestick },
       { para: "/decisoes", rotulo: "Decisões", icone: ScrollText },
       { para: "/ordens", rotulo: "Ordens e posições", icone: ArrowLeftRight },
+      { para: "/assistente", rotulo: "Assistente", icone: MessagesSquare },
+    ],
+  },
+  {
+    titulo: "Finanças",
+    itens: [
       { para: "/patrimonio", rotulo: "Patrimônio", icone: ChartPie },
       { para: "/carteira", rotulo: "Carteira", icone: Wallet },
-      { para: "/assistente", rotulo: "Assistente", icone: MessagesSquare },
       { para: "/renda-fixa", rotulo: "Renda fixa", icone: Landmark },
       { para: "/imobiliario", rotulo: "Imobiliário", icone: Building2 },
     ],
@@ -86,3 +91,10 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
     ],
   },
 ];
+
+/** O grupo do menu de um caminho ("/robos/x" → "Construir"); a raiz só casa com "/". */
+export function grupoDe(caminho: string): string | undefined {
+  const casa = (para: RotaApp): boolean =>
+    para === "/" ? caminho === "/" : caminho === para || caminho.startsWith(`${para}/`);
+  return NAVEGACAO.find((g) => g.itens.some((i) => casa(i.para)))?.titulo;
+}
