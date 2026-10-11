@@ -176,6 +176,17 @@ export function repositorioCarteira(db: Db) {
           });
       }),
 
+    /** Redes em que a pessoa tem conta cadastrada (só a rede: nada da chave). */
+    redes: (usuarioId: string): Promise<RedeConta[]> =>
+      comoUsuario(db, usuarioId, async (tx) =>
+        (
+          await tx
+            .selectDistinct({ rede: contasCorretora.rede })
+            .from(contasCorretora)
+            .orderBy(asc(contasCorretora.rede))
+        ).map((l) => l.rede),
+      ),
+
     sincronizacao: (usuarioId: string, rede: RedeConta): Promise<EstadoSincronizacaoGravado | null> =>
       comoUsuario(db, usuarioId, async (tx) => {
         const [s] = await tx

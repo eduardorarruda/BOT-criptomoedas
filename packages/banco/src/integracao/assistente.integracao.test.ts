@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { dec } from "@zentrade/dominio";
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { comoUsuario } from "../cliente.js";
@@ -61,6 +62,89 @@ describe("configuração do assistente", () => {
     expect(await agente.decisoes(c.beto.id)).toEqual([]);
     expect(await agente.ordens(c.ana.id)).toEqual([]);
     expect((await agente.resumo(c.ana.id, Date.now())).robosAtivos).toBe(1);
+  });
+});
+
+describe("investimentos que o agente lê", () => {
+  let c: Cenario;
+  let agente: BancoDoAgente;
+  const MINUTO = 60_000;
+  const agora = Date.UTC(2026, 9, 11, 12, 0);
+  const vela = (abertura: number, fecha: string) => ({
+    abertura,
+    fechamento: abertura + MINUTO - 1,
+    abre: dec(fecha),
+    maxima: dec(fecha),
+    minima: dec(fecha),
+    fecha: dec(fecha),
+    volume: dec("1"),
+  });
+  beforeAll(async () => {
+    c = await montarCenario();
+    agente = criarBancoDoAgente({ url: c.url, maximoConexoes: 2 });
+    await c.banco.contas.criar(c.ana.id, {
+      corretora: "binance",
+      rede: "real",
+      apiKey: "chave-da-ana-123456",
+      apiSecret: "segredo-da-ana-123456",
+    });
+    await c.banco.carteira.gravarSaldos(
+      c.ana.id,
+      "real",
+      [{ ativo: "BTC", livre: dec("0.5"), bloqueado: dec(0) }],
+      agora,
+    );
+    await c.banco.carteira.registrarSincronizacao(c.ana.id, "real", {
+      em: agora,
+      ok: true,
+      erro: null,
+      negociacoes: 0,
+      simbolos: ["BTCUSDT"],
+    });
+    await c.banco.rendaFixa.criar(c.ana.id, {
+      tipo: "CDB",
+      nome: "CDB Banco X",
+      emissor: "Banco X",
+      indexador: "CDI",
+      percentualIndexador: "110",
+      taxaAnual: null,
+      dataAplicacao: "2026-01-15",
+      vencimento: "2028-01-15",
+      valorAplicado: "10000.00",
+      liquidez: "vencimento",
+    });
+    await c.banco.imobiliario.criar(c.ana.id, { tipo: "fii", nome: "Logística", ticker: "HGLG11" });
+  });
+  afterAll(async () => {
+    await agente.fechar();
+    await c.encerrar();
+  });
+
+  it("carteira, renda fixa e imobiliário só da pessoa do pedido (RLS), sem a chave da corretora", async () => {
+    expect(await agente.redesCarteira(c.ana.id)).toEqual(["real"]);
+    expect(await agente.redesCarteira(c.beto.id)).toEqual([]);
+    expect((await agente.saldosCarteira(c.ana.id, "real")).map((s) => s.ativo)).toEqual(["BTC"]);
+    expect(await agente.saldosCarteira(c.beto.id, "real")).toEqual([]);
+    expect(await agente.negociacoesCarteira(c.ana.id, "real")).toEqual([]);
+    expect(await agente.sincronizacaoCarteira(c.ana.id, "real")).toMatchObject({ em: agora, ok: true });
+    expect(await agente.sincronizacaoCarteira(c.beto.id, "real")).toBeNull();
+    expect((await agente.titulosRendaFixa(c.ana.id)).map((t) => t.nome)).toEqual(["CDB Banco X"]);
+    expect(await agente.titulosRendaFixa(c.beto.id)).toEqual([]);
+    expect((await agente.imobiliario(c.ana.id)).map((r) => r.investimento.nome)).toEqual(["Logística"]);
+    expect(await agente.imobiliario(c.beto.id)).toEqual([]);
+    expect(await agente.indicador("CDI", "2026-01-01")).toEqual([]);
+  });
+
+  it("último fechamento de 1 minuto por símbolo, só desde o instante pedido", async () => {
+    await c.banco.mercado.gravar("BTCUSDT", "1m", [
+      vela(agora - 3 * MINUTO, "60000"),
+      vela(agora - 2 * MINUTO, "60100.5"),
+    ]);
+    await c.banco.mercado.gravar("ETHUSDT", "1m", [vela(agora - 120 * MINUTO, "2500")]);
+    await c.banco.mercado.gravar("BTCUSDT", "1h", [vela(agora - 60 * MINUTO, "1")]);
+    const precos = await agente.ultimosPrecos(["BTCUSDT", "ETHUSDT", "XYZUSDT"], agora - 60 * MINUTO);
+    expect(precos).toEqual(new Map([["BTCUSDT", { preco: "60100.5", em: agora - MINUTO - 1 }]]));
+    expect(await agente.ultimosPrecos([], agora)).toEqual(new Map());
   });
 });
 
