@@ -11,6 +11,9 @@ const FIXAS: Readonly<Record<string, string>> = {
   decisoes_recentes: "Lendo as decisões recentes",
   explicar_decisao: "Abrindo os detalhes de uma decisão",
   ordens_recentes: "Lendo as ordens recentes",
+  carteira_cripto: "Lendo a sua carteira de cripto",
+  renda_fixa: "Lendo os seus títulos de renda fixa",
+  investimentos_imobiliarios: "Lendo os seus investimentos imobiliários",
 };
 
 const LIMITE_TERMO = 80;

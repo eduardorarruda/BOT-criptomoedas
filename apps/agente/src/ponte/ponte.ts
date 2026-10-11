@@ -76,7 +76,7 @@ export function criarPonte(c: ConfigPonte): Server {
     {
       capabilities: { tools: {} },
       instructions:
-        "Dados do ZenTrade da pessoa (mercado, posição, decisões, conhecimento). Tudo só de leitura; nada aqui envia ordem.",
+        "Dados do ZenTrade da pessoa (mercado, posição, decisões, conhecimento, investimentos). Tudo só de leitura; nada aqui envia ordem.",
     },
   );
   servidor.setRequestHandler(ListToolsRequestSchema, async () => ({

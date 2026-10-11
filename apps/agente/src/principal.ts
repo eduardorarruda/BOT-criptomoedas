@@ -84,7 +84,10 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
     config: configDaPessoa,
     api: cliente ? new ChatApi({ cliente, modeloPadrao: config.modelo }) : null,
     cli: executor ? new ChatCli({ executor, tempoMs: config.chat.timeoutMs }) : null,
-    aoFalhar: (erro) => logger.error({ err: erro }, "falha no assistente"),
+    aoFalhar: (erro, ferramenta) =>
+      ferramenta
+        ? logger.error({ err: erro, ferramenta }, "ferramenta do assistente falhou")
+        : logger.error({ err: erro }, "falha no assistente"),
   });
   const estado = (): EstadoAgenteAssistente => ({
     provedores: { api: cliente !== null, cli: executor !== null },

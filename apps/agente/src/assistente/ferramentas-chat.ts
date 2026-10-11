@@ -9,12 +9,14 @@ import {
 import { z } from "zod";
 import { definirFerramenta, type FerramentaLeitura } from "../ferramentas/index.js";
 import type { RegistroCitacoes } from "./citacoes.js";
+import { ferramentasDeInvestimentos, type LeituraInvestimentos } from "./investimentos/index.js";
 
 /**
- * Os dados da pessoa que o assistente pode LER. Implementado por criarBancoDoAgente
- * (@zentrade/banco), sempre sob RLS: o usuarioId vem do pedido da API, nunca do modelo.
+ * Os dados da pessoa que o assistente pode LER (inclusive os investimentos). Implementado
+ * por criarBancoDoAgente (@zentrade/banco), sempre sob RLS: o usuarioId vem do pedido da
+ * API, nunca do modelo.
  */
-export interface DadosDaPessoa {
+export interface DadosDaPessoa extends LeituraInvestimentos {
   resumo(usuarioId: string, agora: number): Promise<Resumo>;
   robos(usuarioId: string): Promise<RoboDTO[]>;
   decisoes(
@@ -201,5 +203,6 @@ export function ferramentasDoChat(ctx: ContextoChat, deps: DependenciasChat): Fe
     explicarDecisao(ctx, deps),
     ordensRecentes(ctx, deps),
     buscarConhecimento(ctx, deps),
+    ...ferramentasDeInvestimentos(ctx, deps.dados),
   ];
 }

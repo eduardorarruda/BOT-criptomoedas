@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { executarFerramenta } from "../ferramentas/index.js";
+import { investimentosFalsos } from "../teste/investimentos-falsos.js";
 import { USUARIO_TESTE } from "../teste/pedido.js";
 import { RegistroCitacoes } from "./citacoes.js";
 import { ferramentasDoChat, type DadosDaPessoa } from "./ferramentas-chat.js";
-import { promptComHistorico, turnosAlternados } from "./prompt-chat.js";
+import { promptComHistorico, SYSTEM_CHAT, turnosAlternados } from "./prompt-chat.js";
 
 const DECISAO = "3f1c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59";
 const decisao = {
@@ -24,6 +25,7 @@ function montar(dados: Partial<DadosDaPessoa> = {}, achados: unknown[] = []) {
     decisoes: vi.fn(async () => []),
     decisao: vi.fn(async () => null),
     ordens: vi.fn(async () => []),
+    ...investimentosFalsos(),
     ...dados,
   };
   const lista = ferramentasDoChat(
@@ -128,6 +130,16 @@ describe("ferramentas do assistente", () => {
   });
 });
 
+describe("investimentos no assistente", () => {
+  it("as ferramentas de investimentos entram no chat, presas à pessoa do pedido", async () => {
+    const titulosRendaFixa = vi.fn(async () => []);
+    const { rodar } = montar({ titulosRendaFixa });
+    const r = await rodar("renda_fixa", { usuarioId: "outra-pessoa" });
+    expect(r.dados).toMatchObject({ titulos: [], aviso: expect.stringMatching(/Nenhum título/) });
+    expect(titulosRendaFixa).toHaveBeenCalledWith(USUARIO_TESTE);
+  });
+});
+
 describe("RegistroCitacoes", () => {
   it("não repete e para em 50", () => {
     const r = new RegistroCitacoes();
@@ -138,6 +150,14 @@ describe("RegistroCitacoes", () => {
 
 describe("prompts do chat", () => {
   const agora = new Date("2026-10-10T12:00:00Z");
+  it("instruções citam os investimentos e mantêm a regra de não recomendar compra nem venda", () => {
+    expect(SYSTEM_CHAT).toMatch(/carteira de cripto/);
+    expect(SYSTEM_CHAT).toMatch(/renda fixa/);
+    expect(SYSTEM_CHAT).toMatch(/imobiliári/);
+    expect(SYSTEM_CHAT).toMatch(/Não recomenda comprar, vender, aplicar, resgatar/);
+    expect(SYSTEM_CHAT).toMatch(/de quando são os números/);
+  });
+
   it("API: turnos alternados começando pela pessoa, juntando os seguidos", () => {
     const turnos = turnosAlternados(
       {
