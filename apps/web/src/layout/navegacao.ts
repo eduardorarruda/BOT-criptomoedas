@@ -9,6 +9,7 @@ import {
   KeySquare,
   ListTree,
   Radio,
+  MessagesSquare,
   ScrollText,
   ShieldAlert,
   Workflow,
@@ -19,6 +20,7 @@ import {
 export type RotaApp =
   | "/"
   | "/aovivo"
+  | "/assistente"
   | "/mercado"
   | "/decisoes"
   | "/ordens"
@@ -53,6 +55,7 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
       { para: "/decisoes", rotulo: "Decisões", icone: ScrollText },
       { para: "/ordens", rotulo: "Ordens e posições", icone: ArrowLeftRight },
       { para: "/carteira", rotulo: "Carteira", icone: Wallet },
+      { para: "/assistente", rotulo: "Assistente", icone: MessagesSquare },
     ],
   },
   {

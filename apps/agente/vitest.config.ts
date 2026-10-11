@@ -6,6 +6,8 @@ export default defineConfig({
   test: {
     include: ["src/**/*.test.ts"],
     exclude: ["src/**/*.integracao.test.ts"],
+    // Os testes do Claude Code de mentira iniciam processos Node: sob carga passam de 5 s.
+    testTimeout: 30_000,
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
@@ -17,6 +19,7 @@ export default defineConfig({
         "src/principal.ts",
         "src/cli/bin.ts",
         "src/mcp/bin.ts",
+        "src/ponte/bin.ts",
       ],
       thresholds: { lines: 85, functions: 85, branches: 80, statements: 85 },
     },

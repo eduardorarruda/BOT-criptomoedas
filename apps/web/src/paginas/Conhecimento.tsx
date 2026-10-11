@@ -1,156 +1,108 @@
-import { BookOpen, ExternalLink, Plus } from "lucide-react";
-import { useState, type FormEvent } from "react";
-import type { FonteDocumento } from "../api/esquemas";
-import { mensagemDe } from "../api/erros";
-import { useAvisos } from "../componentes/Avisos";
-import { Botao } from "../componentes/Botao";
+import { BookOpen, ExternalLink } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useFonte } from "../api/contexto";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
-import { CampoTexto } from "../componentes/Campo";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
 import { Segmentado } from "../componentes/Segmentado";
 import { Selo } from "../componentes/Selo";
 import { useDocumentos } from "../ganchos/consultas";
-import { useCriarNota } from "../ganchos/mutacoes";
+import { linkSeguro } from "../lib/link";
 import { FONTE_DOCUMENTO } from "../lib/rotulos";
 import { formatarData } from "../lib/tempo";
-import { linkSeguro } from "../lib/link";
+import { criarApiConhecimento, type ApiConhecimento } from "./conhecimento/api";
+import { BuscaConhecimento } from "./conhecimento/BuscaConhecimento";
+import "./conhecimento/conhecimento.css";
+import { EnvioArquivos } from "./conhecimento/EnvioArquivos";
+import { NovaNota, NovoLink } from "./conhecimento/Formularios";
+import { ListaDocumentos } from "./conhecimento/ListaDocumentos";
 
-type Filtro = "todas" | FonteDocumento;
-const FILTROS: readonly { valor: Filtro; rotulo: string }[] = [
-  { valor: "todas", rotulo: "Tudo" },
-  ...(Object.keys(FONTE_DOCUMENTO) as FonteDocumento[]).map((f) => ({
-    valor: f,
-    rotulo: FONTE_DOCUMENTO[f],
-  })),
+type Aba = "arquivo" | "link" | "nota";
+const ABAS: readonly { valor: Aba; rotulo: string }[] = [
+  { valor: "arquivo", rotulo: "Arquivo" },
+  { valor: "link", rotulo: "Link" },
+  { valor: "nota", rotulo: "Nota" },
 ];
 
-function NovaNota() {
-  const criar = useCriarNota();
-  const avisar = useAvisos();
-  const [titulo, setTitulo] = useState("");
-  const [texto, setTexto] = useState("");
-  const [erro, setErro] = useState<string | null>(null);
-  const enviar = (e: FormEvent): void => {
-    e.preventDefault();
-    if (!titulo.trim() || !texto.trim()) {
-      setErro("Escreva um título e o texto da nota.");
-      return;
-    }
-    setErro(null);
-    criar.mutate(
-      { titulo: titulo.trim(), texto: texto.trim() },
-      {
-        onSuccess: () => {
-          setTitulo("");
-          setTexto("");
-          avisar("sucesso", "Nota guardada. O agente passa a considerá-la nas próximas análises.");
-        },
-        onError: (er) => avisar("erro", mensagemDe(er)),
-      },
+/** Modo de demonstração: a lista vem da fonte de mentira; envio e busca precisam da API. */
+function ListaDemo() {
+  const consulta = useDocumentos();
+  if (consulta.isPending) return <Esqueleto linhas={6} rotulo="Carregando documentos" />;
+  if (consulta.error)
+    return <ErroCarregar erro={consulta.error} tentarDeNovo={() => void consulta.refetch()} />;
+  if (consulta.data.length === 0) {
+    return (
+      <EstadoVazio icone={BookOpen} titulo="Conhecimento vazio">
+        Escreva uma nota ao lado.
+      </EstadoVazio>
     );
-  };
+  }
   return (
-    <form className="formulario" onSubmit={enviar} noValidate>
-      <CampoTexto
-        rotulo="Título"
-        value={titulo}
-        onChange={(e) => setTitulo(e.target.value)}
-        maxLength={200}
-      />
-      <div className="campo">
-        <label htmlFor="texto-nota" className="campo__rotulo">
-          Texto
-        </label>
-        <textarea
-          id="texto-nota"
-          className="campo__entrada campo__area"
-          rows={6}
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          aria-describedby="dica-nota"
-        />
-        <span id="dica-nota" className="campo__dica">
-          Ex.: “Não operar SOL em dia de atualização da rede.” O agente lê suas notas antes de propor.
-        </span>
-      </div>
-      {erro ? (
-        <p className="formulario__erro" role="alert">
-          {erro}
-        </p>
-      ) : null}
-      <div className="formulario__acoes">
-        <Botao type="submit" variante="primario" icone={Plus} carregando={criar.isPending}>
-          Guardar nota
-        </Botao>
-      </div>
-    </form>
+    <ul role="list" className="documentos">
+      {consulta.data.map((d) => {
+        const link = linkSeguro(d.url);
+        return (
+          <li key={d.id} className="documento">
+            <Selo tom={d.fonte === "nota" ? "marca" : "neutro"}>{FONTE_DOCUMENTO[d.fonte]}</Selo>
+            <p className="documento__titulo">
+              {link ? (
+                <a href={link} target="_blank" rel="noopener noreferrer">
+                  {d.titulo} <ExternalLink size={13} aria-label="(abre em outra aba)" />
+                </a>
+              ) : (
+                d.titulo
+              )}
+            </p>
+            <p className="documento__meta apagado">{formatarData(d.publicadoEm)}</p>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
-export function Conhecimento() {
-  const consulta = useDocumentos();
-  const [filtro, setFiltro] = useState<Filtro>("todas");
-  const [busca, setBusca] = useState("");
-  const termo = busca.trim().toLowerCase();
-  const docs = (consulta.data ?? []).filter(
-    (d) => (filtro === "todas" || d.fonte === filtro) && (!termo || d.titulo.toLowerCase().includes(termo)),
+function Adicionar({ api, demo }: { readonly api: ApiConhecimento; readonly demo: boolean }) {
+  const [aba, setAba] = useState<Aba>(demo ? "nota" : "arquivo");
+  return (
+    <Painel titulo="Adicionar ao conhecimento" id="titulo-adicionar">
+      {demo ? null : (
+        <Segmentado rotulo="O que adicionar" ocultarRotulo opcoes={ABAS} valor={aba} aoMudar={setAba} />
+      )}
+      <div className="conhecimento__aba">
+        {aba === "arquivo" && !demo ? <EnvioArquivos api={api} /> : null}
+        {aba === "link" && !demo ? <NovoLink api={api} /> : null}
+        {aba === "nota" || demo ? <NovaNota /> : null}
+      </div>
+      {demo ? (
+        <p className="apagado conhecimento__demo">
+          Envio de arquivos, links e a busca funcionam com a API rodando.
+        </p>
+      ) : null}
+    </Painel>
   );
+}
 
+/** Conhecimento: o que o agente e o assistente consultam — só da pessoa, nunca de outra. */
+export function Conhecimento({ api: apiInjetada }: { readonly api?: ApiConhecimento } = {}) {
+  const fonte = useFonte();
+  const api = useMemo(() => apiInjetada ?? criarApiConhecimento(), [apiInjetada]);
   return (
     <>
       <Cabecalho titulo="Conhecimento">
-        O que o agente consulta antes de argumentar: seu diário, notícias, regras da corretora e suas notas.
+        O que o agente consulta antes de argumentar e o assistente usa para responder: seus arquivos, links e
+        notas, notícias, regras da corretora e o diário de decisões. Só seu.
       </Cabecalho>
       <div className="grade-conhecimento">
-        <Painel titulo="Documentos" id="titulo-documentos">
-          <div className="barra-filtros">
-            <Segmentado rotulo="Fonte" ocultarRotulo opcoes={FILTROS} valor={filtro} aoMudar={setFiltro} />
-            <CampoTexto
-              rotulo="Buscar pelo título"
-              type="search"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="campo--estreito"
-            />
-          </div>
-          {consulta.isPending ? <Esqueleto linhas={6} rotulo="Carregando documentos" /> : null}
-          {consulta.error ? (
-            <ErroCarregar erro={consulta.error} tentarDeNovo={() => void consulta.refetch()} />
-          ) : null}
-          {consulta.isSuccess && docs.length === 0 ? (
-            <EstadoVazio
-              icone={BookOpen}
-              titulo={termo || filtro !== "todas" ? "Nada encontrado" : "Conhecimento vazio"}
-            >
-              {termo || filtro !== "todas"
-                ? "Tente outro filtro ou outra palavra."
-                : "Notícias e regras chegam pelas automações. Comece escrevendo uma nota ao lado."}
-            </EstadoVazio>
-          ) : null}
-          <ul role="list" className="documentos">
-            {docs.map((d) => {
-              const link = linkSeguro(d.url);
-              return (
-                <li key={d.id} className="documento">
-                  <Selo tom={d.fonte === "nota" ? "marca" : "neutro"}>{FONTE_DOCUMENTO[d.fonte]}</Selo>
-                  <p className="documento__titulo">
-                    {link ? (
-                      <a href={link} target="_blank" rel="noopener noreferrer">
-                        {d.titulo} <ExternalLink size={13} aria-label="(abre em outra aba)" />
-                      </a>
-                    ) : (
-                      d.titulo
-                    )}
-                  </p>
-                  <p className="documento__meta apagado">{formatarData(d.publicadoEm)}</p>
-                </li>
-              );
-            })}
-          </ul>
-        </Painel>
-        <Painel titulo="Nova nota" id="titulo-nota">
-          <NovaNota />
-        </Painel>
+        <div className="conhecimento__coluna">
+          {fonte.demo ? null : (
+            <Painel titulo="Buscar como o agente busca" id="titulo-busca">
+              <BuscaConhecimento api={api} />
+            </Painel>
+          )}
+          <Painel titulo="Documentos" id="titulo-documentos">
+            {fonte.demo ? <ListaDemo /> : <ListaDocumentos api={api} />}
+          </Painel>
+        </div>
+        <Adicionar api={api} demo={fonte.demo} />
       </div>
     </>
   );

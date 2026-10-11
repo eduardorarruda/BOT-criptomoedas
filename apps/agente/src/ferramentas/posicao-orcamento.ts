@@ -1,6 +1,6 @@
-import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { paraTexto } from "@zentrade/dominio";
 import { z } from "zod";
+import { definirFerramenta } from "./definicao.js";
 import type { OrcamentoRisco } from "../serializacao.js";
 import { json, type ContextoAnalise } from "./contexto.js";
 
@@ -17,13 +17,13 @@ function orcamentoComFolga(o: OrcamentoRisco) {
 }
 
 export function posicaoEOrcamento(ctx: ContextoAnalise) {
-  return betaZodTool({
-    name: "posicao_e_orcamento",
-    description:
+  return definirFerramenta({
+    nome: "posicao_e_orcamento",
+    descricao:
       "Posição atual do robô (quantidade, preço médio, resultado realizado e não realizado, taxas) e o orçamento " +
       "de risco (risco por operação, folga de exposição e de perda diária). Valores em USDT, decimais em texto.",
-    inputSchema: z.object({}),
-    run: () => {
+    entrada: z.object({}),
+    rodar: () => {
       const { posicao: p, preco } = ctx.pedido;
       const posicao = {
         quantidade: paraTexto(p.quantidade),

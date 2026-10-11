@@ -1,19 +1,19 @@
-import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { Fonte } from "@zentrade/contratos";
 import { paraTexto } from "@zentrade/dominio";
 import { z } from "zod";
+import { definirFerramenta } from "./definicao.js";
 import { dataCurta, json, type ContextoAnalise, type DependenciasFerramentas } from "./contexto.js";
 
 const Entrada = z.object({ limite: z.number().int().min(1).max(20).default(10) });
 
 export function historicoDecisoes(ctx: ContextoAnalise, deps: DependenciasFerramentas) {
-  return betaZodTool({
-    name: "historico_decisoes",
-    description:
+  return definirFerramenta({
+    nome: "historico_decisoes",
+    descricao:
       "Decisões anteriores deste robô, das mais recentes para as mais antigas: sinal, proposta, estado e o " +
       "desfecho (resultado líquido em USDT, quando já avaliado). Use para ver o que já funcionou ou falhou.",
-    inputSchema: Entrada,
-    run: async (e) => {
+    entrada: Entrada,
+    rodar: async (e) => {
       const decisoes = await deps.historico.recentes(ctx.pedido.robo.id, e.limite);
       return json({
         decisoes: decisoes.map((d) => {

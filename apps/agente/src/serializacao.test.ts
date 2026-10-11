@@ -2,6 +2,7 @@ import { dec, POSICAO_ZERADA } from "@zentrade/dominio";
 import type { PedidoAnalise } from "@zentrade/contratos";
 import { describe, expect, it } from "vitest";
 import { lerCorpoAnalise, pedidoDeJson, pedidoParaJson } from "./serializacao.js";
+import { pedidoExemplo } from "./teste/pedido.js";
 
 const pedido: PedidoAnalise = {
   robo: { id: "r1", simbolo: "BTCUSDT", intervalo: "1h" },
@@ -71,5 +72,14 @@ describe("serialização do PedidoAnalise", () => {
     expect(lerCorpoAnalise({ ...base, robo: { ...base.robo, simbolo: "btc" } }).ok).toBe(false);
     expect(lerCorpoAnalise({ ...base, fechamentos: [1, "2"] }).ok).toBe(false);
     expect(lerCorpoAnalise(null).ok).toBe(false);
+  });
+
+  it("leva e traz o analiseId que liga os passos ao vivo à decisão", () => {
+    const comId = pedidoExemplo({ analiseId: "analise-1" });
+    const json = pedidoParaJson(comId);
+    expect(json.analiseId).toBe("analise-1");
+    const lido = lerCorpoAnalise(json);
+    expect(lido.ok && lido.valor.pedido.analiseId).toBe("analise-1");
+    expect(pedidoParaJson(pedidoExemplo()).analiseId).toBeUndefined();
   });
 });

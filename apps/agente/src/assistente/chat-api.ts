@@ -1,0 +1,86 @@
+import type Anthropic from "@anthropic-ai/sdk";
+import type { BetaMessage } from "@anthropic-ai/sdk/resources/beta/messages/messages";
+import type { PedidoRespostaAgente } from "@zentrade/contratos";
+import { MODELO_PADRAO } from "../analista.js";
+import { paraAnthropic, type FerramentaLeitura } from "../ferramentas/index.js";
+import { SYSTEM_CHAT, turnosAlternados } from "./prompt-chat.js";
+
+const BETA_FALLBACK = "server-side-fallback-2026-07-01";
+
+export interface PedidoChat extends Pick<PedidoRespostaAgente, "historico" | "pergunta"> {
+  readonly ferramentas: readonly FerramentaLeitura[];
+  readonly modelo: string | null;
+  readonly sinal: AbortSignal;
+  readonly aoTexto: (delta: string) => void;
+}
+
+/** Como a resposta terminou, quando não terminou do jeito normal: vira aviso no fim do texto. */
+function avisoDaParada(final: BetaMessage | undefined): string | null {
+  switch (final?.stop_reason) {
+    case "end_turn":
+    case "stop_sequence":
+      return null;
+    case "refusal":
+      return "O modelo recusou responder a este pedido.";
+    case "max_tokens":
+      return "A resposta passou do tamanho máximo e foi cortada.";
+    case "tool_use":
+      return "A resposta não terminou dentro do limite de consultas às ferramentas.";
+    default:
+      return "A resposta parou antes do fim.";
+  }
+}
+
+/**
+ * O assistente pela API da Anthropic: Tool Runner do SDK em streaming, com as mesmas
+ * ferramentas de leitura. Os pedaços de texto saem conforme chegam.
+ */
+export class ChatApi {
+  readonly #cliente: Anthropic;
+  readonly #modeloPadrao: string;
+  readonly #maxIteracoes: number;
+  readonly #agora: () => Date;
+
+  constructor(o: {
+    readonly cliente: Anthropic;
+    readonly modeloPadrao?: string;
+    readonly maxIteracoes?: number;
+    readonly agora?: () => Date;
+  }) {
+    this.#cliente = o.cliente;
+    this.#modeloPadrao = o.modeloPadrao ?? MODELO_PADRAO;
+    this.#maxIteracoes = o.maxIteracoes ?? 10;
+    this.#agora = o.agora ?? (() => new Date());
+  }
+
+  async responder(p: PedidoChat): Promise<void> {
+    const runner = this.#cliente.beta.messages.toolRunner(
+      {
+        model: p.modelo ?? this.#modeloPadrao,
+        max_tokens: 32_000,
+        max_iterations: this.#maxIteracoes,
+        thinking: { type: "adaptive" },
+        betas: [BETA_FALLBACK],
+        fallbacks: "default",
+        system: [{ type: "text", text: SYSTEM_CHAT, cache_control: { type: "ephemeral" } }],
+        tools: p.ferramentas.map((f) => ({ ...paraAnthropic(f), eager_input_streaming: true })),
+        messages: turnosAlternados(p, this.#agora()),
+        stream: true,
+      },
+      { signal: p.sinal },
+    );
+    let jaEscreveu = false;
+    let final: BetaMessage | undefined;
+    for await (const stream of runner) {
+      let novoBloco = jaEscreveu;
+      stream.on("text", (delta) => {
+        p.aoTexto(novoBloco ? `\n\n${delta}` : delta);
+        novoBloco = false;
+        jaEscreveu = true;
+      });
+      final = await stream.finalMessage();
+    }
+    const aviso = avisoDaParada(final);
+    if (aviso) p.aoTexto(`${jaEscreveu ? "\n\n" : ""}_${aviso}_`);
+  }
+}

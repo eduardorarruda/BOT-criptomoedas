@@ -22,11 +22,25 @@ const OPUS: PrecoModelo = {
   escritaCache1h: "10",
 };
 
+/** Leitura de cache = 0,1× a entrada; escrita = 1,25× (5 min) ou 2× (1 h). */
+const preco = (entrada: number, saida: number): PrecoModelo => ({
+  entrada: String(entrada),
+  saida: String(saida),
+  leituraCache: String(entrada / 10),
+  escritaCache5m: String(entrada * 1.25),
+  escritaCache1h: String(entrada * 2),
+});
+
 export const TABELA_PRECOS = {
-  conferidaEm: "2026-10-10",
+  conferidaEm: "2026-10-11",
   modelos: {
     "claude-opus-5": OPUS,
     // Destino do fallback do servidor para recusas da categoria cyber.
     "claude-opus-4-8": OPUS,
+    // Modelos que a pessoa pode escolher em Assistente → Configurações. Preços da tabela de
+    // modelos da documentação da Anthropic (cópia de 2026-06-24): confira em /pricing ao mudar.
+    "claude-opus-5-5": preco(4, 20),
+    "claude-sonnet-5": preco(2, 10),
+    "claude-fable-5-1": preco(10, 50),
   } satisfies Record<string, PrecoModelo>,
 } as const;

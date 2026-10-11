@@ -1,44 +1,138 @@
+import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
+import { criarBancoDoAgente } from "@zentrade/banco";
 import { criarBuscaHibrida, criarRepositorioPostgres, embeddingsDoAmbiente } from "@zentrade/conhecimento";
-import pino from "pino";
+import type { EstadoAgenteAssistente } from "@zentrade/contratos";
+import { Redis } from "ioredis";
+import pino, { type Logger } from "pino";
 import postgres from "postgres";
 import { Analista } from "./analista.js";
-import { configDoAgente, semVazias } from "./config.js";
+import { ChatApi } from "./assistente/chat-api.js";
+import { ChatCli } from "./assistente/chat-cli.js";
+import { registrarRotasAssistente } from "./assistente/rotas.js";
+import { ServicoChat } from "./assistente/servico-chat.js";
+import { AnalistaCli } from "./claude-cli/analista-cli.js";
+import { descreverContas } from "./claude-cli/contas.js";
+import { ExecutorClaude } from "./claude-cli/executor.js";
+import { resolverClaude } from "./claude-cli/resolver.js";
+import { configDoAgente, semVazias, type ConfigAgente } from "./config.js";
+import { publicadorNulo, publicadorRedis } from "./eventos/publicador.js";
+import { registrarRotasPonte } from "./ponte/rotas.js";
+import { SessoesPonte } from "./ponte/sessoes.js";
 import { criarHistoricoPostgres } from "./postgres/historico.js";
+import { AnalistaPorPessoa, configComPadrao } from "./provedores/analista-por-pessoa.js";
+import { MODELOS_SUGERIDOS } from "./provedores/modelos.js";
 import { criarServidor } from "./servidor.js";
 
-/** Sobe o serviço do agente: valida o ambiente, conecta no banco e escuta na porta 8081. */
-async function iniciar(): Promise<void> {
-  const config = configDoAgente(process.env);
-  const logger = pino({ level: config.nivelLog, redact: ["req.headers.authorization"] });
+/** O Claude Code, se estiver instalado: executor com a ponte MCP deste agente. */
+function prepararCli(config: ConfigAgente, sessoes: SessoesPonte, log: Logger): ExecutorClaude | null {
+  const caminho = resolverClaude(config.cli.caminho, process.env["PATH"]);
+  if (!caminho) {
+    log.warn(
+      { caminho: config.cli.caminho },
+      "Claude Code não encontrado: o provedor 'cli' fica indisponível",
+    );
+    return null;
+  }
+  return new ExecutorClaude(
+    {
+      caminho,
+      contas: config.cli.contas,
+      urlAgente: `http://127.0.0.1:${config.porta}`,
+      caminhoPonte: fileURLToPath(new URL("./ponte/bin.js", import.meta.url)),
+      maxTurnos: config.cli.maxTurnos,
+      tetoUsd: config.cli.tetoUsd,
+      env: process.env,
+    },
+    sessoes,
+  );
+}
+
+function prepararRedis(config: ConfigAgente, log: Logger) {
+  if (!config.urlRedis) {
+    log.warn("REDIS_URL não definida: os passos ao vivo das análises não serão publicados");
+    return { redis: null, publicador: publicadorNulo };
+  }
+  const redis = new Redis(config.urlRedis, { connectionName: "zentrade-agente", maxRetriesPerRequest: 2 });
+  redis.on("error", (erro: Error) => log.warn({ err: erro }, "erro na conexão com o Redis"));
+  return { redis, publicador: publicadorRedis(redis, log) };
+}
+
+/** Banco, RAG, Redis, Claude Code e API da Anthropic, montados a partir do ambiente validado. */
+function montarServicos(config: ConfigAgente, logger: Logger) {
   const sql = postgres(config.urlBanco, { max: 5 });
+  const banco = criarBancoDoAgente({ url: config.urlBanco, maximoConexoes: 5 });
   const busca = criarBuscaHibrida({
     repositorio: criarRepositorioPostgres(sql),
     embeddings: embeddingsDoAmbiente(semVazias(process.env)),
   });
-  const analista = new Analista({
-    cliente: new Anthropic({ apiKey: config.chaveAnthropic }),
-    dependencias: { busca, historico: criarHistoricoPostgres(sql) },
-    modelo: config.modelo,
+  const dependencias = { busca, historico: criarHistoricoPostgres(sql) };
+  const { redis, publicador } = prepararRedis(config, logger);
+  const sessoes = new SessoesPonte();
+  const executor = prepararCli(config, sessoes, logger);
+  const cliente = config.chaveAnthropic ? new Anthropic({ apiKey: config.chaveAnthropic }) : null;
+  const provedorPadrao = cliente || !executor ? "api" : "cli";
+  const configDaPessoa = configComPadrao(banco.configGravada, provedorPadrao);
+  const analista = new AnalistaPorPessoa({
+    api: cliente ? new Analista({ cliente, dependencias, modelo: config.modelo }) : null,
+    cli: executor ? new AnalistaCli({ executor, dependencias, tempoMs: config.timeoutMs }) : null,
+    config: configDaPessoa,
   });
+  const chat = new ServicoChat({
+    dados: banco,
+    busca,
+    config: configDaPessoa,
+    api: cliente ? new ChatApi({ cliente, modeloPadrao: config.modelo }) : null,
+    cli: executor ? new ChatCli({ executor, tempoMs: config.chat.timeoutMs }) : null,
+    aoFalhar: (erro) => logger.error({ err: erro }, "falha no assistente"),
+  });
+  const estado = (): EstadoAgenteAssistente => ({
+    provedores: { api: cliente !== null, cli: executor !== null },
+    provedorPadrao,
+    contasCli: executor ? descreverContas(config.cli.contas, process.env["HOME"]) : [],
+    modelos: MODELOS_SUGERIDOS,
+  });
+  const fechar = () => Promise.allSettled([sql.end({ timeout: 5 }), banco.fechar(), redis?.quit()]);
+  return { analista, chat, estado, publicador, sessoes, fechar };
+}
+
+/** Sobe o serviço do agente: valida o ambiente, monta os serviços e escuta na porta 8081. */
+async function iniciar(): Promise<void> {
+  const config = configDoAgente(process.env);
+  const logger = pino({
+    level: config.nivelLog,
+    redact: ["req.headers.authorization", "req.headers['x-zentrade-ponte']"],
+  });
+  const s = montarServicos(config, logger);
   const app = criarServidor({
-    analista,
+    analista: s.analista,
     segredo: config.segredo,
     timeoutMs: config.timeoutMs,
     maxSimultaneas: config.maxSimultaneas,
     maxPorMinuto: config.maxPorMinuto,
     logger,
+    publicador: s.publicador,
     ...(config.usuarioIdPadrao ? { usuarioIdPadrao: config.usuarioIdPadrao } : {}),
+    extras: [
+      (a) => registrarRotasPonte(a, s.sessoes, logger),
+      (a) =>
+        registrarRotasAssistente(a, {
+          segredo: config.segredo,
+          servico: s.chat,
+          estado: s.estado,
+          tempoMs: config.chat.timeoutMs,
+          maxSimultaneas: config.chat.maxSimultaneas,
+          maxPorMinuto: config.chat.maxPorMinuto,
+        }),
+    ],
   });
-
   const encerrar = async (sinal: string) => {
     logger.info({ sinal }, "encerrando o agente");
     await app.close();
-    await sql.end({ timeout: 5 });
+    await s.fechar();
   };
   process.once("SIGTERM", () => void encerrar("SIGTERM"));
   process.once("SIGINT", () => void encerrar("SIGINT"));
-
   await app.listen({ host: config.host, port: config.porta });
 }
 

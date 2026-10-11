@@ -4,6 +4,8 @@ import { portaCredenciais } from "./portas/credenciais.js";
 import { portaDecisoes } from "./portas/decisoes.js";
 import { portaOrdens } from "./portas/ordens.js";
 import { portaRobos } from "./portas/robos.js";
+import { repositorioAssistente } from "./repositorios/assistente.js";
+import { repositorioConhecimentoDetalhe } from "./repositorios/assistente-conhecimento.js";
 import { repositorioAuditoria } from "./repositorios/auditoria.js";
 import { repositorioBacktests } from "./repositorios/backtests.js";
 import { repositorioCarteira } from "./repositorios/carteira.js";
@@ -104,6 +106,8 @@ export function criarBanco(opcoes: OpcoesBanco) {
     mercado: repositorioMercado(db),
     backtests: repositorioBacktests(db),
     conhecimento: repositorioConhecimento(db),
+    conhecimentoDetalhe: repositorioConhecimentoDetalhe(db),
+    assistente: repositorioAssistente(db),
     resumo: repositorioResumo(db),
     sistema: repositorioSistema(db),
     fechar: () => conexao.fechar(),

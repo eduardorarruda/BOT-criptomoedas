@@ -1,6 +1,8 @@
 import type { Banco } from "@zentrade/banco";
 import type { Config } from "./config.js";
 import type { AntiReplay } from "./integracoes/anti-replay.js";
+import type { ClienteAssistente } from "./integracoes/assistente.js";
+import type { ServicoArquivos } from "./integracoes/conhecimento-arquivos.js";
 import type { RegistroAutomacoes } from "./integracoes/automacoes.js";
 import type { ServicoConhecimento } from "./integracoes/conhecimento.js";
 import type { ServicoCarteira } from "./integracoes/binance-carteira.js";
@@ -36,4 +38,8 @@ export interface Dependencias {
   readonly carteira?: ServicoCarteira;
   /** De quanto em quanto tempo o WebSocket confere se a sessão (ou o token) ainda vale. Padrão 30 s. */
   readonly verificacaoTempoRealMs?: number;
+  /** Assistente (chat) no agente. Ausente = rotas do assistente respondem 503. */
+  readonly assistente?: ClienteAssistente | null;
+  /** Arquivos, links e busca na base de conhecimento. Ausente = essas rotas respondem 503. */
+  readonly arquivos?: ServicoArquivos;
 }

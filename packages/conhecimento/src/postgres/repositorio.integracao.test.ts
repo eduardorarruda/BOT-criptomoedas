@@ -2,7 +2,10 @@ import type { Sql } from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { criarBuscaHibrida } from "../busca.js";
 import { criarEmbeddingsDeterministicos } from "../embeddings/deterministicos.js";
+import { detectarTipo } from "../extracao/detectar.js";
+import { extrairTexto } from "../extracao/extrair.js";
 import { ingerir } from "../ingestao.js";
+import { pdfComTexto } from "../teste/arquivos.js";
 import { conectarBancoTeste, criarTabelasRag } from "../teste/banco.js";
 import { criarRepositorioPostgres } from "./repositorio.js";
 
@@ -118,5 +121,17 @@ describe("repositório PostgreSQL + pgvector", () => {
     await sql`delete from documentos where id = ${r.documentoId}`;
     const [contagem] = await sql<{ n: number }[]>`select count(*)::int as n from trechos`;
     expect(contagem?.n).toBe(0);
+  });
+
+  it("arquivo enviado por uma pessoa entra só no RAG dela, nem com a busca idêntica a outra o vê", async () => {
+    const repositorio = criarRepositorioPostgres(sql);
+    const pdf = pdfComTexto(["Plano secreto: comprar ETH so abaixo de 2000 USDT"]);
+    const extraido = await extrairTexto(pdf, detectarTipo("plano.pdf", pdf));
+    await ingerir(doc(ANA, extraido.texto, { titulo: "plano.pdf" }), { repositorio, embeddings });
+    const busca = criarBuscaHibrida({ repositorio, embeddings });
+    const daAna = await busca.buscar("plano secreto comprar ETH", { usuarioId: ANA });
+    expect(daAna.map((a) => a.titulo)).toEqual(["plano.pdf"]);
+    expect(daAna[0]!.texto).toContain("[Página 1]");
+    expect(await busca.buscar(extraido.texto, { usuarioId: BETO, limite: 50 })).toEqual([]);
   });
 });

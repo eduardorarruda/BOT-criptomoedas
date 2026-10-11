@@ -74,6 +74,14 @@ describe("custo da análise", () => {
 
   it("modelo desconhecido é cobrado pelo preço mais alto da tabela (melhor errar para cima)", () => {
     const m = mensagem({ input_tokens: 1_000_000 }, "modelo-novo");
-    expect(custoUsd([m]).gte(5)).toBe(true);
+    expect(custoUsd([m]).toFixed()).toBe("10");
+  });
+
+  it("cada modelo escolhível tem o seu preço (Sonnet 5: US$ 2/M de entrada, 0,2 na leitura de cache)", () => {
+    const m = mensagem(
+      { input_tokens: 1_000_000, output_tokens: 0, cache_read_input_tokens: 1_000_000 },
+      "claude-sonnet-5",
+    );
+    expect(custoUsd([m]).toFixed()).toBe("2.2");
   });
 });

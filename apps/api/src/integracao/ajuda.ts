@@ -64,6 +64,8 @@ export interface OpcoesApi {
   readonly ambiente?: Readonly<Record<string, string>>;
   /** Carteira com uma Binance simulada (o banco é o do teste). */
   readonly carteira?: (banco: Banco, agora: () => number) => ServicoCarteira;
+  /** Dependências a mais, montadas com o banco do teste (ex.: assistente, arquivos). */
+  readonly extras?: (banco: Banco, conhecimento: Dependencias["conhecimento"]) => Partial<Dependencias>;
 }
 
 export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
@@ -100,18 +102,19 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
   const hub = criarHubEventos({ donos: banco.sistema, log: silencioso });
   hub.aoEvento(criarRetransmissorN8n({ decisoes: banco.decisoes, n8n: clienteN8n, log: silencioso }));
   await assinarEventos(assinante, hub);
+  const conhecimento = criarServicoConhecimento({
+    repositorio: repositorioRag(banco),
+    documentos: banco.conhecimento,
+    embeddings: o.embeddings
+      ? { embeddings: o.embeddings }
+      : { indisponivel: "VOYAGE_API_KEY não está definida (use EMBEDDINGS_PROVEDOR=ollama para local)" },
+  });
   const deps: Dependencias = {
     config,
     banco,
     fila: o.fila ?? filaReal,
     n8n: clienteN8n,
-    conhecimento: criarServicoConhecimento({
-      repositorio: repositorioRag(banco),
-      documentos: banco.conhecimento,
-      embeddings: o.embeddings
-        ? { embeddings: o.embeddings }
-        : { indisponivel: "VOYAGE_API_KEY não está definida (use EMBEDDINGS_PROVEDOR=ollama para local)" },
-    }),
+    conhecimento,
     automacoes,
     antiReplay: antiReplayRedis(redis),
     hub,
@@ -119,6 +122,7 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     agora,
     verificacaoTempoRealMs: 50,
     ...(o.carteira ? { carteira: o.carteira(banco, agora) } : {}),
+    ...o.extras?.(banco, conhecimento),
   };
   const app = await construirApp(deps);
 

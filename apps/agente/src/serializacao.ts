@@ -35,6 +35,8 @@ export const PedidoAnaliseJson = z.object({
   preco: TextoDecimal,
   fechamentos: z.array(z.number().finite()).max(2000),
   posicao: PosicaoJson,
+  /** Liga os eventos "analise" (passo a passo ao vivo) à decisão que o motor está tomando. */
+  analiseId: Id.optional(),
 });
 export type PedidoAnaliseJson = z.infer<typeof PedidoAnaliseJson>;
 
@@ -100,6 +102,7 @@ export function pedidoParaJson(p: PedidoAnalise): PedidoAnaliseJson {
       resultadoRealizado: paraTexto(p.posicao.resultadoRealizado),
       taxasPagas: paraTexto(p.posicao.taxasPagas),
     },
+    ...(p.analiseId ? { analiseId: p.analiseId } : {}),
   };
 }
 
@@ -110,6 +113,7 @@ export function pedidoDeJson(j: PedidoAnaliseJson): PedidoAnalise {
     preco: dec(j.preco),
     fechamentos: j.fechamentos,
     posicao: posicaoDeJson(j.posicao),
+    ...(j.analiseId ? { analiseId: j.analiseId } : {}),
   };
 }
 
