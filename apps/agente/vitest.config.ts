@@ -6,6 +6,8 @@ export default defineConfig({
   test: {
     include: ["src/**/*.test.ts"],
     exclude: ["src/**/*.integracao.test.ts"],
+    // Os testes do Claude Code de mentira iniciam processos Node: sob carga passam de 5 s.
+    testTimeout: 30_000,
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
