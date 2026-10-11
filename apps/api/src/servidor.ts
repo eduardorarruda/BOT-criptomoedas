@@ -6,7 +6,9 @@ import { lerConfig, semVazias, type Config } from "./config.js";
 import type { Dependencias } from "./dependencias.js";
 import { antiReplayRedis } from "./integracoes/anti-replay.js";
 import { armazemRedis, criarRegistroAutomacoes } from "./integracoes/automacoes.js";
+import { configAssistenteDoAmbiente, criarClienteAssistente } from "./integracoes/assistente.js";
 import { criarServicoConhecimento, prepararEmbeddings, repositorioRag } from "./integracoes/conhecimento.js";
+import { criarServicoArquivos } from "./integracoes/conhecimento-arquivos.js";
 import { criarHubEventos } from "./integracoes/eventos.js";
 import { criarFilaBacktests } from "./integracoes/fila.js";
 import { criarClienteN8n, n8nComRegistro } from "./integracoes/n8n.js";
@@ -16,14 +18,20 @@ import { criarLog } from "./log.js";
 
 const HORA_MS = 3_600_000;
 
-function conhecimentoDe(banco: Banco, log: FastifyBaseLogger) {
+function conhecimentoDe(banco: Banco, log: FastifyBaseLogger, agora: () => number) {
   const embeddings = prepararEmbeddings(semVazias(process.env));
   if ("indisponivel" in embeddings) log.warn({ motivo: embeddings.indisponivel }, "RAG desligado na API");
-  return criarServicoConhecimento({
-    repositorio: repositorioRag(banco),
-    documentos: banco.conhecimento,
-    embeddings,
-  });
+  const repositorio = repositorioRag(banco);
+  const conhecimento = criarServicoConhecimento({ repositorio, documentos: banco.conhecimento, embeddings });
+  const arquivos = criarServicoArquivos({ conhecimento, banco, repositorio, embeddings, agora });
+  return { conhecimento, arquivos };
+}
+
+/** O assistente (chat) no agente: sem AGENTE_URL e AGENTE_SEGREDO, fica desligado. */
+function assistenteDe(log: FastifyBaseLogger) {
+  const config = configAssistenteDoAmbiente(semVazias(process.env));
+  if (!config) log.warn("AGENTE_URL ou AGENTE_SEGREDO ausentes: o assistente fica desligado");
+  return config ? criarClienteAssistente(config) : null;
 }
 
 /** Monta as dependências reais: banco, Redis (eventos, fila, anti-replay, automações) e n8n. */
@@ -55,7 +63,8 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
     banco,
     fila,
     n8n,
-    conhecimento: conhecimentoDe(banco, log),
+    ...conhecimentoDe(banco, log, agora),
+    assistente: assistenteDe(log),
     automacoes,
     antiReplay: antiReplayRedis(redis),
     hub,

@@ -16,9 +16,12 @@ import { chaveDoCliente } from "./chave-cliente.js";
 import type { Dependencias } from "./dependencias.js";
 import { corpoDoErro, ErroApi } from "./erros.js";
 import { criarLog } from "./log.js";
+import { rotasAssistente } from "./rotas/assistente.js";
+import { rotasAssistenteMensagens } from "./rotas/assistente-mensagens.js";
 import { rotasAutomacoes } from "./rotas/automacoes.js";
 import { rotasBacktests } from "./rotas/backtests.js";
 import { rotasConhecimento } from "./rotas/conhecimento.js";
+import { rotasConhecimentoArquivos } from "./rotas/conhecimento-arquivos.js";
 import { rotasContas } from "./rotas/contas.js";
 import { rotasDecisoes } from "./rotas/decisoes.js";
 import { rotasEstrategias } from "./rotas/estrategias.js";
@@ -101,6 +104,9 @@ export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger):
         rotasTokens,
         rotasBacktests,
         rotasConhecimento,
+        rotasConhecimentoArquivos,
+        rotasAssistente,
+        rotasAssistenteMensagens,
         rotasAutomacoes,
         rotasSaude,
         rotasTempoReal,

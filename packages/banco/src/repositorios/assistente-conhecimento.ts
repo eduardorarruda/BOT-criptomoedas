@@ -62,7 +62,7 @@ export function repositorioConhecimentoDetalhe(db: Db) {
   return {
     listar: (usuarioId: string, limite?: number): Promise<DocumentoDetalhe[]> =>
       comoUsuario(db, usuarioId, async (tx) => {
-        const linhas = await consulta(tx).orderBy(desc(documentos.criadoEm)).limit(limitar(limite));
+        const linhas = await consulta(tx).orderBy(desc(documentos.publicadoEm)).limit(limitar(limite));
         return linhas.map(paraDetalhe);
       }),
 

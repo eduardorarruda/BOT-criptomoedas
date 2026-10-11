@@ -61,6 +61,8 @@ export interface OpcoesApi {
   readonly fila?: FilaBacktests;
   /** Variáveis de ambiente a mais (ex.: N8N_USUARIO_ID). */
   readonly ambiente?: Readonly<Record<string, string>>;
+  /** Dependências a mais, montadas com o banco do teste (ex.: assistente, arquivos). */
+  readonly extras?: (banco: Banco, conhecimento: Dependencias["conhecimento"]) => Partial<Dependencias>;
 }
 
 export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
@@ -97,24 +99,26 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
   const hub = criarHubEventos({ donos: banco.sistema, log: silencioso });
   hub.aoEvento(criarRetransmissorN8n({ decisoes: banco.decisoes, n8n: clienteN8n, log: silencioso }));
   await assinarEventos(assinante, hub);
+  const conhecimento = criarServicoConhecimento({
+    repositorio: repositorioRag(banco),
+    documentos: banco.conhecimento,
+    embeddings: o.embeddings
+      ? { embeddings: o.embeddings }
+      : { indisponivel: "VOYAGE_API_KEY não está definida (use EMBEDDINGS_PROVEDOR=ollama para local)" },
+  });
   const deps: Dependencias = {
     config,
     banco,
     fila: o.fila ?? filaReal,
     n8n: clienteN8n,
-    conhecimento: criarServicoConhecimento({
-      repositorio: repositorioRag(banco),
-      documentos: banco.conhecimento,
-      embeddings: o.embeddings
-        ? { embeddings: o.embeddings }
-        : { indisponivel: "VOYAGE_API_KEY não está definida (use EMBEDDINGS_PROVEDOR=ollama para local)" },
-    }),
+    conhecimento,
     automacoes,
     antiReplay: antiReplayRedis(redis),
     hub,
     saude: verificadorSaude({ redis, log: silencioso, agora }),
     agora,
     verificacaoTempoRealMs: 50,
+    ...o.extras?.(banco, conhecimento),
   };
   const app = await construirApp(deps);
 

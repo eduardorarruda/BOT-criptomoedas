@@ -13,7 +13,7 @@ interface LinhaTrecho {
   readonly fonte: TrechoEncontradoBruto["fonte"];
   readonly titulo: string;
   readonly url: string | null;
-  readonly publicado_em: Date;
+  readonly publicado_em: Date | string;
   readonly texto: string;
 }
 
@@ -23,7 +23,8 @@ const paraTrecho = (l: LinhaTrecho): TrechoEncontradoBruto => ({
   fonte: l.fonte,
   titulo: l.titulo,
   url: l.url,
-  publicadoEm: l.publicado_em,
+  // A conexão do Drizzle (API) devolve timestamptz como texto; a do agente, como Date.
+  publicadoEm: new Date(l.publicado_em),
   texto: l.texto,
 });
 
