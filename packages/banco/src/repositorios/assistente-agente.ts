@@ -1,6 +1,6 @@
 import { conectar } from "../cliente.js";
 import { repositorioAssistente } from "./assistente.js";
-import { repositorioCarteira } from "./carteira.js";
+import { redesComConta, repositorioCarteira } from "./carteira.js";
 import { repositorioDecisoes } from "./decisoes.js";
 import { repositorioImobiliario } from "./imobiliario.js";
 import { repositorioMercado } from "./mercado.js";
@@ -45,7 +45,7 @@ export function criarBancoDoAgente(opcoes: OpcoesBancoDoAgente) {
     decisoes: decisoes.listar,
     decisao: decisoes.obter,
     ordens: ordens.listar,
-    redesCarteira: carteira.redes,
+    redesCarteira: (usuarioId: string) => redesComConta(db, usuarioId),
     saldosCarteira: carteira.saldos,
     negociacoesCarteira: carteira.negociacoes,
     sincronizacaoCarteira: carteira.sincronizacao,
