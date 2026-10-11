@@ -131,6 +131,8 @@ services:
       VOYAGE_MODELO: ${VOYAGE_MODELO:-voyage-4}
       OLLAMA_URL: ${OLLAMA_URL_DOCKER:-http://host.docker.internal:11434}
       OLLAMA_MODELO: ${OLLAMA_MODELO:-bge-m3}
+      PLUGGY_CLIENT_ID: ${PLUGGY_CLIENT_ID:-}
+      PLUGGY_CLIENT_SECRET: ${PLUGGY_CLIENT_SECRET:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

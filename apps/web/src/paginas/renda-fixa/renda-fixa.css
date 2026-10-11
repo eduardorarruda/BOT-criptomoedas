@@ -1,0 +1,304 @@
+/* Renda fixa. Só tokens da marca: jade para o principal, âmbar para atenção, papel de arroz para o neutro. */
+:root {
+  --rf-1: var(--marca);
+  --rf-2: var(--atencao);
+  --rf-3: color-mix(in oklab, var(--texto) 70%, transparent);
+  --rf-4: color-mix(in oklab, var(--marca) 55%, var(--fundo));
+  --rf-5: color-mix(in oklab, var(--atencao) 55%, var(--fundo));
+  --rf-6: color-mix(in oklab, var(--texto) 35%, var(--fundo));
+  --rf-7: color-mix(in oklab, var(--marca) 50%, var(--atencao));
+  --rf-8: color-mix(in oklab, var(--marca-profunda) 70%, var(--texto));
+}
+
+.rf-abas {
+  display: flex;
+  gap: var(--espaco-1);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--linha);
+  margin-bottom: var(--espaco-5);
+  scrollbar-width: none;
+}
+.rf-abas__aba {
+  position: relative;
+  flex: none;
+  padding: 10px 14px 12px;
+  border: 0;
+  background: none;
+  color: var(--apagado);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: var(--raio-p) var(--raio-p) 0 0;
+  transition: color var(--dur-curta) var(--curva);
+}
+.rf-abas__aba:hover,
+.rf-abas__aba[aria-selected="true"] {
+  color: var(--texto);
+}
+.rf-abas__aba:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: -2px;
+}
+.rf-abas__marca {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--marca);
+}
+.rf-painel {
+  min-width: 0;
+}
+
+.rf-metricas {
+  grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr));
+}
+.rf-metricas__data {
+  font-size: 20px;
+}
+.rf-grade {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espaco-5);
+}
+.rf-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-3);
+}
+
+.rf-alocacao__corpo {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--espaco-5);
+}
+.rf-rosca {
+  width: 140px;
+  height: 140px;
+}
+.rf-rosca__trilho {
+  fill: none;
+  stroke: var(--linha);
+  stroke-width: 11;
+}
+.rf-legenda {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+}
+.rf-legenda li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 8px;
+}
+.rf-legenda__cor {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.rf-legenda__valor {
+  grid-column: 2;
+  color: var(--apagado);
+  font-size: 12.5px;
+}
+
+.rf-linhas__caixa {
+  width: 100%;
+  min-width: 0;
+}
+.rf-linhas {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.rf-linhas text {
+  fill: var(--apagado);
+  font-family: var(--fonte-numero);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.rf-linhas__grade line {
+  stroke: var(--linha);
+  stroke-dasharray: 2 4;
+}
+.rf-linhas__marca line {
+  stroke: var(--atencao);
+  stroke-dasharray: 3 3;
+}
+.rf-linhas__marca text {
+  fill: var(--atencao);
+}
+
+.rf-vencimentos {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rf-vencimentos__item {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.rf-vencimentos__item:hover {
+  background: var(--superficie-2);
+}
+.rf-vencimentos__texto {
+  display: grid;
+  min-width: 0;
+}
+.rf-vencimentos__nome {
+  font-size: 13px;
+  color: var(--apagado);
+  overflow-wrap: anywhere;
+}
+
+.rf-taxas {
+  display: grid;
+  gap: var(--espaco-3);
+}
+.rf-taxas__lista {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espaco-3);
+  margin: 0;
+}
+.rf-taxas__item dt {
+  font-size: 12.5px;
+  color: var(--apagado);
+}
+.rf-taxas__item dd {
+  margin: 2px 0 0;
+  font-size: 18px;
+}
+.rf-taxas__data {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--apagado);
+}
+.rf-fonte {
+  margin: 0;
+  font-size: 12px;
+  color: var(--apagado);
+}
+
+.rf-itens {
+  display: grid;
+  gap: var(--espaco-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rf-item {
+  display: grid;
+  gap: 8px;
+  padding-bottom: var(--espaco-4);
+  border-bottom: 1px solid var(--linha);
+}
+.rf-item:last-child {
+  border-bottom: 0;
+}
+.rf-item__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.rf-item__logo {
+  border-radius: 6px;
+}
+.rf-item p {
+  margin: 0;
+}
+
+.rf-resultado {
+  display: grid;
+  gap: var(--espaco-3);
+}
+.rf-resultado__destaque {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.rf-resultado__destaque strong {
+  color: var(--marca);
+}
+
+.rf-regras {
+  margin-top: var(--espaco-6);
+  padding-top: var(--espaco-4);
+  border-top: 1px solid var(--linha);
+  font-size: 13px;
+}
+.rf-regras summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--apagado);
+  cursor: pointer;
+}
+.rf-regras__corpo {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--espaco-3);
+  max-width: 80ch;
+}
+.rf-regras__corpo p {
+  margin: 0;
+}
+
+@media (max-width: 1180px) {
+  .rf-metricas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rf-cartao__numeros {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 860px) {
+  .rf-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 520px) {
+  .rf-alocacao__corpo {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  .rf-legenda {
+    width: 100%;
+  }
+  .rf-cartao__numeros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rf-taxas__lista {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rf-cartao,
+  .rf-abas__aba {
+    transition: none;
+  }
+}

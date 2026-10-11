@@ -84,6 +84,7 @@ const arvore = raiz.addChildren([
     pagina("/decisoes", () => import("./paginas/Decisoes"), "Decisoes"),
     pagina("/ordens", () => import("./paginas/Ordens"), "Ordens"),
     pagina("/carteira", () => import("./paginas/carteira/Carteira"), "Carteira"),
+    pagina("/renda-fixa", () => import("./paginas/renda-fixa/RendaFixa"), "RendaFixa"),
     pagina("/robos", () => import("./paginas/Robos"), "Robos"),
     pagina("/estrategias", () => import("./paginas/Estrategias"), "Estrategias"),
     pagina("/backtests", () => import("./paginas/Backtests"), "Backtests"),

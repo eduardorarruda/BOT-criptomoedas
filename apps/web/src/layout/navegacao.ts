@@ -7,6 +7,7 @@ import {
   History,
   KeyRound,
   KeySquare,
+  Landmark,
   ListTree,
   Radio,
   MessagesSquare,
@@ -25,6 +26,7 @@ export type RotaApp =
   | "/decisoes"
   | "/ordens"
   | "/carteira"
+  | "/renda-fixa"
   | "/robos"
   | "/estrategias"
   | "/backtests"
@@ -56,6 +58,7 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
       { para: "/ordens", rotulo: "Ordens e posições", icone: ArrowLeftRight },
       { para: "/carteira", rotulo: "Carteira", icone: Wallet },
       { para: "/assistente", rotulo: "Assistente", icone: MessagesSquare },
+      { para: "/renda-fixa", rotulo: "Renda fixa", icone: Landmark },
     ],
   },
   {

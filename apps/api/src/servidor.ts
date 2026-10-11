@@ -12,9 +12,15 @@ import { criarServicoArquivos } from "./integracoes/conhecimento-arquivos.js";
 import { criarHubEventos } from "./integracoes/eventos.js";
 import { criarFilaBacktests } from "./integracoes/fila.js";
 import { criarClienteN8n, n8nComRegistro } from "./integracoes/n8n.js";
+import { criarAtualizadorIndicadores } from "./integracoes/bcb-atualizador.js";
+import { criarClienteBcb } from "./integracoes/bcb.js";
+import { lerConfigPluggy } from "./integracoes/pluggy-config.js";
+import { criarSincronizadorPluggy } from "./integracoes/pluggy-sincronizador.js";
+import { criarClientePluggy } from "./integracoes/pluggy.js";
 import { assinarEventos, conectarRedis, verificadorSaude } from "./integracoes/redis.js";
 import { criarRetransmissorN8n } from "./integracoes/retransmissor.js";
 import { criarLog } from "./log.js";
+import { hojeEm, type ServicosRendaFixa } from "./rotas/renda-fixa-servico.js";
 
 const HORA_MS = 3_600_000;
 
@@ -32,6 +38,28 @@ function assistenteDe(log: FastifyBaseLogger) {
   const config = configAssistenteDoAmbiente(semVazias(process.env));
   if (!config) log.warn("AGENTE_URL ou AGENTE_SEGREDO ausentes: o assistente fica desligado");
   return config ? criarClienteAssistente(config) : null;
+}
+
+/** Índices do Banco Central (cache diário no banco) e Pluggy (só com as credenciais da instalação). */
+function rendaFixaDe(banco: Banco, log: FastifyBaseLogger, agora: () => number): ServicosRendaFixa {
+  const config = lerConfigPluggy(process.env);
+  if (!config)
+    log.info("Pluggy desligada: defina PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET para conectar bancos");
+  return {
+    indicadores: criarAtualizadorIndicadores({
+      cliente: criarClienteBcb(),
+      armazem: banco.indicadores,
+      agora,
+      log,
+    }),
+    pluggy: criarSincronizadorPluggy({
+      cliente: config ? criarClientePluggy({ config }) : null,
+      armazem: banco.pluggy,
+      agora,
+      hoje: () => hojeEm(agora()),
+      log,
+    }),
+  };
 }
 
 /** Monta as dependências reais: banco, Redis (eventos, fila, anti-replay, automações) e n8n. */
@@ -70,6 +98,7 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
     hub,
     saude,
     agora,
+    rendaFixa: rendaFixaDe(banco, log, agora),
   };
   return { deps, fila };
 }
@@ -91,10 +120,14 @@ async function iniciar(config: Config): Promise<void> {
       .catch((erro: unknown) => log.error({ err: erro }, "falha ao limpar sessões"));
   }, HORA_MS);
   limpeza.unref();
+  const pararIndicadores = deps.rendaFixa?.indicadores.agendar();
+  const pararPluggy = deps.rendaFixa?.pluggy.agendar();
 
   const encerrar = async (sinal: string) => {
     log.info({ sinal }, "encerrando a API");
     clearInterval(limpeza);
+    pararIndicadores?.();
+    pararPluggy?.();
     await app.close();
     await fila.fechar();
     await Promise.allSettled([assinante.quit(), redis.quit(), deps.banco.fechar()]);

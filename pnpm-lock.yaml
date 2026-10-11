@@ -271,6 +271,9 @@ importers:
       '@zentrade/dominio':
         specifier: workspace:*
         version: link:../../packages/dominio
+      '@zentrade/financas':
+        specifier: workspace:*
+        version: link:../../packages/financas
       bullmq:
         specifier: ^6.3.12
         version: 6.3.12(ioredis@6.0.0)
@@ -343,6 +346,9 @@ importers:
       '@zentrade/dominio':
         specifier: workspace:*
         version: link:../../packages/dominio
+      '@zentrade/financas':
+        specifier: workspace:*
+        version: link:../../packages/financas
       lightweight-charts:
         specifier: ^5.2.1
         version: 5.2.1

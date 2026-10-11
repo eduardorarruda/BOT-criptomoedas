@@ -8,6 +8,7 @@ import type { ServicoConhecimento } from "./integracoes/conhecimento.js";
 import type { ServicoCarteira } from "./integracoes/binance-carteira.js";
 import type { HubEventos } from "./integracoes/eventos.js";
 import type { ClienteN8n } from "./integracoes/n8n.js";
+import type { ServicosRendaFixa } from "./rotas/renda-fixa-servico.js";
 
 export interface FilaBacktests {
   adicionar(backtestId: string): Promise<void>;
@@ -36,6 +37,8 @@ export interface Dependencias {
   readonly agora: () => number;
   /** Carteira da Binance. Sem isto, as rotas montam a padrão (Binance de verdade, pelo fetch global). */
   readonly carteira?: ServicoCarteira;
+  /** Índices do Banco Central e Pluggy. Sem isso, as rotas de renda fixa explicam o que falta. */
+  readonly rendaFixa?: ServicosRendaFixa;
   /** De quanto em quanto tempo o WebSocket confere se a sessão (ou o token) ainda vale. Padrão 30 s. */
   readonly verificacaoTempoRealMs?: number;
   /** Assistente (chat) no agente. Ausente = rotas do assistente respondem 503. */

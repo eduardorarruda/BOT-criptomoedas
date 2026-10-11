@@ -16,6 +16,8 @@ import { repositorioDecisoes } from "./repositorios/decisoes.js";
 import { repositorioEstrategias } from "./repositorios/estrategias.js";
 import { repositorioMercado } from "./repositorios/mercado.js";
 import { repositorioOrdens } from "./repositorios/ordens.js";
+import { repositorioPluggy } from "./repositorios/pluggy.js";
+import { repositorioIndicadores, repositorioRendaFixa } from "./repositorios/renda-fixa.js";
 import { repositorioResumo } from "./repositorios/resumo.js";
 import { repositorioRobos } from "./repositorios/robos.js";
 import { repositorioSessoes } from "./repositorios/sessoes.js";
@@ -110,6 +112,9 @@ export function criarBanco(opcoes: OpcoesBanco) {
     assistente: repositorioAssistente(db),
     resumo: repositorioResumo(db),
     sistema: repositorioSistema(db),
+    rendaFixa: repositorioRendaFixa(db),
+    indicadores: repositorioIndicadores(db),
+    pluggy: repositorioPluggy(db),
     fechar: () => conexao.fechar(),
   };
 }

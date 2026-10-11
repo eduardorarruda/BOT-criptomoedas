@@ -18,6 +18,7 @@ import { criarHubEventos } from "../integracoes/eventos.js";
 import { criarFilaBacktests } from "../integracoes/fila.js";
 import { assinarEventos, conectarRedis, verificadorSaude } from "../integracoes/redis.js";
 import { n8nComRegistro } from "../integracoes/n8n.js";
+import type { ServicosRendaFixa } from "../rotas/renda-fixa-servico.js";
 import { criarRetransmissorN8n } from "../integracoes/retransmissor.js";
 
 export const SEGREDO_WEBHOOK = "w".repeat(40);
@@ -66,6 +67,8 @@ export interface OpcoesApi {
   readonly carteira?: (banco: Banco, agora: () => number) => ServicoCarteira;
   /** Dependências a mais, montadas com o banco do teste (ex.: assistente, arquivos). */
   readonly extras?: (banco: Banco, conhecimento: Dependencias["conhecimento"]) => Partial<Dependencias>;
+  /** Índices do BCB e Pluggy (com clientes falsos nos testes). */
+  readonly rendaFixa?: (banco: Banco, agora: () => number) => ServicosRendaFixa;
 }
 
 export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
@@ -123,6 +126,7 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     verificacaoTempoRealMs: 50,
     ...(o.carteira ? { carteira: o.carteira(banco, agora) } : {}),
     ...o.extras?.(banco, conhecimento),
+    ...(o.rendaFixa ? { rendaFixa: o.rendaFixa(banco, agora) } : {}),
   };
   const app = await construirApp(deps);
 
