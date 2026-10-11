@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { EstadoAssistente, ProvedorIa } from "@zentrade/contratos/esquemas";
-import { ArrowLeft, CircleCheck, CircleSlash, Save, Settings2 } from "lucide-react";
+import { ArrowLeft, CircleCheck, CircleSlash, Save } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { useFonte } from "../../api/contexto";
 import { mensagemDe } from "../../api/erros";
@@ -9,9 +9,10 @@ import { useAvisos } from "../../componentes/Avisos";
 import { Botao } from "../../componentes/Botao";
 import { Cabecalho, Painel } from "../../componentes/Cabecalho";
 import { CampoSelecao, CampoTexto } from "../../componentes/Campo";
-import { ErroCarregar, Esqueleto, EstadoVazio } from "../../componentes/Estados";
+import { ErroCarregar, Esqueleto } from "../../componentes/Estados";
 import { Selo } from "../../componentes/Selo";
 import { criarApiAssistente, type ApiAssistente } from "./api";
+import { apiAssistenteDemo } from "./demo";
 import "./assistente.css";
 import { chavesAssistente } from "./useRespostaAoVivo";
 
@@ -223,13 +224,12 @@ function Formulario({ api, estado }: { readonly api: ApiAssistente; readonly est
 
 /** Assistente → Configurações: quem responde (API ou Claude Code), o modelo e a conta. */
 export function Configuracoes({ api: apiInjetada }: { readonly api?: ApiAssistente } = {}) {
-  const api = useMemo(() => apiInjetada ?? criarApiAssistente(), [apiInjetada]);
   const fonte = useFonte();
-  const estado = useQuery({
-    queryKey: chavesAssistente.estado,
-    queryFn: () => api.estado(),
-    enabled: !fonte.demo,
-  });
+  const api = useMemo(
+    () => apiInjetada ?? (fonte.demo ? apiAssistenteDemo() : criarApiAssistente()),
+    [apiInjetada, fonte.demo],
+  );
+  const estado = useQuery({ queryKey: chavesAssistente.estado, queryFn: () => api.estado() });
   return (
     <>
       <Cabecalho
@@ -243,29 +243,28 @@ export function Configuracoes({ api: apiInjetada }: { readonly api?: ApiAssisten
         Escolha quem analisa os sinais dos seus robôs e responde no assistente. Vale para os dois.
       </Cabecalho>
       {fonte.demo ? (
-        <EstadoVazio icone={Settings2} titulo="Indisponível no modo de demonstração">
-          Estas configurações ficam no servidor: suba o ZenTrade com a API e o agente para escolher.
-        </EstadoVazio>
-      ) : (
-        <Painel titulo="Cérebro do analista e do assistente" id="titulo-config">
-          {estado.isPending ? <Esqueleto linhas={4} rotulo="Carregando a configuração" /> : null}
-          {estado.error ? (
-            <ErroCarregar erro={estado.error} tentarDeNovo={() => void estado.refetch()} />
-          ) : null}
-          {estado.data && !estado.data.agenteNoAr ? (
-            <p className="chat__aviso chat__aviso--erro" role="status">
-              O agente de IA não respondeu. Dá para ver a configuração, mas não para trocar agora.
-            </p>
-          ) : null}
-          {estado.data ? (
-            <Formulario key={JSON.stringify(estado.data.config)} api={api} estado={estado.data} />
-          ) : null}
-          <p className="config__termos apagado">
-            Usar o Claude Code pelo seu plano segue os termos de uso da Anthropic: o plano é pessoal, para
-            você mesmo. O analista continua só propondo — o motor de risco decide e nada aqui envia ordem.
+        <p className="config__termos apagado">
+          Modo de demonstração: a escolha vale só nesta aba e nenhuma IA é chamada.
+        </p>
+      ) : null}
+      <Painel titulo="Cérebro do analista e do assistente" id="titulo-config">
+        {estado.isPending ? <Esqueleto linhas={4} rotulo="Carregando a configuração" /> : null}
+        {estado.error ? (
+          <ErroCarregar erro={estado.error} tentarDeNovo={() => void estado.refetch()} />
+        ) : null}
+        {estado.data && !estado.data.agenteNoAr ? (
+          <p className="config__aviso" role="status">
+            O agente de IA não respondeu. Dá para ver a configuração, mas não para trocar agora.
           </p>
-        </Painel>
-      )}
+        ) : null}
+        {estado.data ? (
+          <Formulario key={JSON.stringify(estado.data.config)} api={api} estado={estado.data} />
+        ) : null}
+        <p className="config__termos apagado">
+          Usar o Claude Code pelo seu plano segue os termos de uso da Anthropic: o plano é pessoal, para você
+          mesmo. O analista continua só propondo — o motor de risco decide e nada aqui envia ordem.
+        </p>
+      </Painel>
     </>
   );
 }

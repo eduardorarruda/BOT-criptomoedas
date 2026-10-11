@@ -1,0 +1,429 @@
+/* Mensagens do assistente: a pergunta num balão, a resposta solta na coluna, em Markdown. */
+
+.mensagens {
+  display: grid;
+  gap: 28px;
+  margin: 0;
+  padding: var(--espaco-3) 0 var(--espaco-6);
+  list-style: none;
+}
+
+/* ---------- pergunta ---------- */
+.msg--pessoa {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+.msg__balao {
+  max-width: min(85%, 600px);
+  padding: 10px 16px;
+  border: 1px solid var(--linha);
+  border-radius: 18px 18px 6px 18px;
+  background: var(--superficie-2);
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- resposta ---------- */
+.msg--assistente {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.msg__avatar {
+  margin-top: 2px;
+}
+.msg__corpo {
+  display: grid;
+  gap: var(--espaco-3);
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.msg__pensando {
+  margin: 0;
+  color: var(--apagado);
+  animation: respirar-texto 1.8s ease-in-out infinite;
+}
+@keyframes respirar-texto {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Cursor no fim do texto enquanto a resposta chega. */
+.msg__corpo--escrevendo .md > :is(p, h2, h3, h4, blockquote):last-child::after,
+.msg__corpo--escrevendo .md > :is(ul, ol):last-child > li:last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  border-radius: 2px;
+  background: var(--marca);
+  animation: piscar-cursor 1s steps(2, start) infinite;
+}
+@keyframes piscar-cursor {
+  to {
+    visibility: hidden;
+  }
+}
+
+.msg__aviso {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-self: start;
+  gap: var(--espaco-2);
+  padding: 8px 12px;
+  border-radius: var(--raio);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.msg__aviso--erro {
+  border: 1px solid color-mix(in oklab, var(--perda) 35%, transparent);
+  background: var(--perda-tenue);
+}
+.msg__aviso--erro > svg {
+  color: var(--perda);
+}
+.msg__aviso--interrompida {
+  background: var(--atencao-tenue);
+}
+.msg__aviso--interrompida > svg {
+  color: var(--atencao);
+}
+
+/* ---------- ações (copiar, gerar de novo, hora) ---------- */
+.acoes {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 28px;
+  font-size: 12px;
+  color: var(--apagado);
+  opacity: 0;
+  transition: opacity var(--dur-curta);
+}
+.msg:hover .acoes,
+.msg:focus-within .acoes,
+.mensagens > .msg--assistente:last-child .acoes {
+  opacity: 1;
+}
+.acoes__botao {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: transparent;
+  color: var(--apagado);
+  cursor: pointer;
+}
+.acoes__botao:hover {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+.acoes__hora {
+  margin-left: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- consultas aos dados (como os blocos de ferramenta) ---------- */
+.etapas {
+  justify-self: start;
+  max-width: 100%;
+}
+.etapas__resumo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--apagado);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    color var(--dur-curta),
+    border-color var(--dur-curta);
+}
+.etapas__resumo:hover {
+  border-color: var(--linha-forte);
+  color: var(--texto);
+}
+.etapas__texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.etapas--rodando .etapas__resumo {
+  color: var(--texto);
+}
+.etapas__resumo > svg:first-child,
+.etapas__item > svg {
+  flex: none;
+  color: var(--marca);
+}
+.etapas--parada .etapas__resumo > svg:first-child,
+.etapas__item--parada > svg {
+  color: var(--apagado);
+}
+.etapas__seta {
+  flex: none;
+  transition: rotate var(--dur-curta);
+}
+.etapas__resumo[aria-expanded="true"] .etapas__seta {
+  rotate: 180deg;
+}
+.etapas__lista {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 0 11px;
+  padding: 6px 0 6px 14px;
+  border-left: 2px solid var(--linha);
+  list-style: none;
+  font-size: 13px;
+  color: var(--apagado);
+}
+.etapas__lista[hidden] {
+  display: none;
+}
+.etapas__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+.etapas__nome {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--superficie-2);
+  font-family: var(--fonte-numero);
+  font-size: 11.5px;
+}
+
+/* ---------- fontes ---------- */
+.fontes {
+  display: grid;
+  gap: 6px;
+}
+.fontes__titulo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--apagado);
+}
+.fontes__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fonte {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-decoration: none;
+}
+a.fonte:hover {
+  border-color: var(--marca);
+}
+.fonte__tipo {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--marca);
+}
+.fonte__titulo {
+  max-width: 34ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fonte__data {
+  color: var(--apagado);
+}
+
+/* ---------- Markdown ---------- */
+.md {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.md > * {
+  margin: 0;
+}
+.md > * + * {
+  margin-top: 0.85em;
+}
+.md a {
+  color: var(--marca);
+  text-underline-offset: 2px;
+}
+.md__link-icone {
+  margin-left: 2px;
+  vertical-align: -1px;
+}
+.md__link-recusado {
+  color: var(--apagado);
+  text-decoration: underline dotted;
+}
+.md__imagem {
+  color: var(--apagado);
+  font-style: italic;
+}
+.md h2.md__titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.md h3.md__titulo {
+  font-size: 16.5px;
+  font-weight: 620;
+}
+.md h4.md__titulo {
+  font-size: 15px;
+  font-weight: 620;
+}
+.md * + .md__titulo {
+  margin-top: 1.3em;
+}
+.md ul,
+.md ol {
+  padding-left: 1.4em;
+}
+.md li + li {
+  margin-top: 0.3em;
+}
+.md li::marker {
+  color: var(--apagado);
+}
+.md blockquote {
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--marca);
+  color: var(--apagado);
+}
+.md hr {
+  border: 0;
+  border-top: 1px solid var(--linha);
+}
+.md :not(pre) > code {
+  padding: 0.1em 0.38em;
+  border: 1px solid var(--linha);
+  border-radius: 5px;
+  background: var(--superficie-2);
+  font-family: var(--fonte-numero);
+  font-size: 0.86em;
+}
+.md__codigo {
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  overflow: hidden;
+}
+.md__codigo-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px 3px 12px;
+  border-bottom: 1px solid var(--linha);
+  font-size: 12px;
+  color: var(--apagado);
+}
+.md__codigo-lingua {
+  font-family: var(--fonte-numero);
+}
+.md__copiar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: transparent;
+  color: var(--apagado);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.md__copiar:hover {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+.md__codigo pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: var(--fonte-numero);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.md__codigo pre code {
+  white-space: pre;
+  overflow-wrap: normal;
+}
+.md__tabela {
+  overflow-x: auto;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+}
+.md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: normal;
+}
+.md th,
+.md td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--linha);
+  text-align: left;
+  white-space: nowrap;
+}
+.md th {
+  background: var(--superficie);
+  font-weight: 600;
+}
+.md tr:last-child td {
+  border-bottom: 0;
+}
+.md tbody tr:hover {
+  background: color-mix(in oklab, var(--superficie-2) 60%, transparent);
+}
+
+@media (max-width: 560px) {
+  .msg--assistente {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .msg__balao {
+    max-width: 92%;
+  }
+}
+@media (hover: none) {
+  .acoes {
+    opacity: 1;
+  }
+}
