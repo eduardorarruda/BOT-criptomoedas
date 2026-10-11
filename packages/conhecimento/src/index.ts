@@ -5,6 +5,7 @@ export * from "./embeddings/deterministicos.js";
 export * from "./embeddings/ollama.js";
 export * from "./embeddings/tipos.js";
 export * from "./embeddings/voyage.js";
+export * from "./extracao/index.js";
 export * from "./fusao.js";
 export * from "./ingestao.js";
 export * from "./normalizar.js";
