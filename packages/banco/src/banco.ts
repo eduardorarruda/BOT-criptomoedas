@@ -10,6 +10,7 @@ import { repositorioConhecimento } from "./repositorios/conhecimento.js";
 import { repositorioContas } from "./repositorios/contas.js";
 import { repositorioDecisoes } from "./repositorios/decisoes.js";
 import { repositorioEstrategias } from "./repositorios/estrategias.js";
+import { repositorioImobiliario } from "./repositorios/imobiliario.js";
 import { repositorioMercado } from "./repositorios/mercado.js";
 import { repositorioOrdens } from "./repositorios/ordens.js";
 import { repositorioResumo } from "./repositorios/resumo.js";
@@ -95,6 +96,7 @@ export function criarBanco(opcoes: OpcoesBanco) {
     backtests: repositorioBacktests(db),
     conhecimento: repositorioConhecimento(db),
     resumo: repositorioResumo(db),
+    imobiliario: repositorioImobiliario(db),
     sistema: repositorioSistema(db),
     fechar: () => conexao.fechar(),
   };
