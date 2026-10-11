@@ -81,6 +81,12 @@ export async function executarOrdem(
     deps.registro.warn({ roboId: robo.id, idCliente }, "ordem já reservada: não reenviada");
     return null;
   }
+  // "Ordem enviada": a tela vê a ordem sair antes da resposta da corretora.
+  const enviada = { idCliente, idCorretora: null, estado: "PENDENTE" as const, execucoes: [] };
+  await publicar(deps, {
+    tipo: "ordem",
+    ordem: ordemDTO(decisaoId, robo, lado, quantidade, enviada, criadaEm),
+  });
   const resultado = await enviar(deps, robo, lado, quantidade, idCliente);
   await deps.ordens.concluir(idCliente, resultado);
   await publicar(deps, {

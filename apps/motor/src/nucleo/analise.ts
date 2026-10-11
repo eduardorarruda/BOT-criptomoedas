@@ -1,5 +1,6 @@
 import type { OrcamentoAnalise, PropostaAgente, RespostaAnalise, RoboConfig } from "@zentrade/contratos";
 import type { Posicao, Sinal, Valor } from "@zentrade/dominio";
+import { concluirAnalise, iniciarAnalise } from "./aovivo.js";
 import { exposicao, inicioDoDia } from "./estado-risco.js";
 import type { Dependencias } from "./tipos.js";
 
@@ -38,11 +39,27 @@ async function orcamento(
   }
 }
 
-/** Pede a análise ao agente. Falha não é engolida: vira resultado com o motivo. */
+/**
+ * Pede a análise ao agente, com o `analiseId` que liga o passo a passo dele (eventos
+ * "analise") a este pedido; a tela vê o início e o fim publicados aqui.
+ */
 export async function consultarAgente(
   deps: Dependencias,
   robo: RoboConfig,
   p: PedidoDoCiclo,
+): Promise<ResultadoAnalise> {
+  const analiseId = await iniciarAnalise(deps, robo);
+  const resultado = await pedirAoAgente(deps, robo, p, analiseId);
+  await concluirAnalise(deps, robo, analiseId, resultado);
+  return resultado;
+}
+
+/** Falha não é engolida: vira resultado com o motivo. */
+async function pedirAoAgente(
+  deps: Dependencias,
+  robo: RoboConfig,
+  p: PedidoDoCiclo,
+  analiseId: string,
 ): Promise<ResultadoAnalise> {
   try {
     const orc = await orcamento(deps, robo, p);
@@ -53,6 +70,7 @@ export async function consultarAgente(
       fechamentos: p.fechamentos,
       posicao: p.posicao,
       usuarioId: robo.usuarioId,
+      analiseId,
       ...(orc ? { orcamento: orc } : {}),
     });
     return { tipo: "ok", resposta };

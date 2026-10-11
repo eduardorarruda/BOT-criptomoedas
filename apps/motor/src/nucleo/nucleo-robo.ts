@@ -8,6 +8,7 @@ import {
   vigiarAprovacao,
   type FimAprovacao,
 } from "./aprovacao.js";
+import { publicarCandle, publicarPosicao, publicarSinal } from "./aovivo.js";
 import { MemoriaBloqueio } from "./bloqueio.js";
 import { ehStop, processarSinal } from "./ciclo.js";
 import { mudarEstado, publicar } from "./diario.js";
@@ -74,6 +75,7 @@ export class NucleoRobo {
   aoFecharIntervalo(candle: Candle): Promise<ResultadoCiclo | null> {
     return this.protegido("decidir no candle do intervalo", async () => {
       if (!this.buffer.adicionar(candle)) return null;
+      await publicarCandle(this.deps, this.robo, candle);
       await this.publicarPreco(candle);
       if (!(await this.semOrdemIncerta())) return null;
       this.bloqueio.novoIntervalo();
@@ -83,6 +85,7 @@ export class NucleoRobo {
         { fechamentos: this.buffer.fechamentos(), preco: candle.fecha },
         posicao,
       );
+      await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
       return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
     });
   }
@@ -103,6 +106,7 @@ export class NucleoRobo {
         posicao,
       );
       if (sinal.acao !== "VENDER" || (await this.bloqueio.repetido(sinal, posicao))) return null;
+      await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
       return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
     });
   }
@@ -162,6 +166,7 @@ export class NucleoRobo {
     if (ordem.execucoes.length === 0) return;
     if (plano.lado === "COMPRA") this.aberta.aoComprar(decisaoId, plano.ajuste);
     else await this.aposVenda();
+    await publicarPosicao(this.deps, this.robo);
   }
 
   /** Venda executada: grava o desfecho e, se a posição zerou, encerra a venda que esperava aprovação. */
@@ -201,6 +206,7 @@ export class NucleoRobo {
       if (resultado.execucoes.length === 0) continue;
       if (incerta.lado === "COMPRA") this.aberta.esquecer();
       else await this.aposVenda();
+      await publicarPosicao(this.deps, this.robo);
     }
     return true;
   }

@@ -31,8 +31,8 @@ const posicaoNoFio = (p: Posicao) => ({
 
 /**
  * O corpo do POST /analisar no formato que o apps/agente valida (serializacao.ts de
- * lá): decimais sempre em texto plano (nunca "1e-7"), `usuarioId` e `orcamento`
- * opcionais. A dona local (arquivo, backtest) não vai: o agente usa a configurada nele.
+ * lá): decimais sempre em texto plano (nunca "1e-7"), `usuarioId`, `analiseId` e
+ * `orcamento` opcionais. A dona local (arquivo, backtest) não vai: o agente usa a configurada nele.
  */
 export function pedidoNoFio(p: PedidoAnalise) {
   const o = p.orcamento;
@@ -43,6 +43,8 @@ export function pedidoNoFio(p: PedidoAnalise) {
     fechamentos: [...p.fechamentos],
     posicao: posicaoNoFio(p.posicao),
     ...(p.usuarioId && p.usuarioId !== USUARIO_LOCAL ? { usuarioId: p.usuarioId } : {}),
+    // Liga os eventos "analise" que o agente publica a este pedido (tela Ao vivo).
+    ...(p.analiseId ? { analiseId: p.analiseId } : {}),
     ...(o
       ? {
           orcamento: {

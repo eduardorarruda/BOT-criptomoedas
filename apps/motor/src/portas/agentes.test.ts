@@ -110,5 +110,11 @@ describe("agente por HTTP", () => {
     expect(venda.sinal).toEqual({ acao: "VENDER", motivo: "alvo", explicacao: "regra" });
     expect(venda).not.toHaveProperty("usuarioId"); // o agente usa o ZENTRADE_USUARIO_ID dele
     expect(venda).not.toHaveProperty("orcamento");
+    expect(venda).not.toHaveProperty("analiseId");
+  });
+
+  it("leva o analiseId ao agente, para o passo a passo dele chegar à tela ligado à análise", () => {
+    const fio = pedidoNoFio({ ...pedido("COMPRAR"), analiseId: "a-123" });
+    expect(fio.analiseId).toBe("a-123");
   });
 });
