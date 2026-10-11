@@ -1,0 +1,273 @@
+/* ---------- selos ---------- */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.6;
+  white-space: nowrap;
+  border: 1px solid var(--linha-forte);
+  color: var(--apagado);
+}
+.selo--marca,
+.selo--ganho {
+  color: var(--marca);
+  border-color: color-mix(in oklab, var(--marca) 40%, transparent);
+  background: var(--marca-tenue);
+}
+.selo--perda {
+  color: var(--perda);
+  border-color: color-mix(in oklab, var(--perda) 40%, transparent);
+  background: var(--perda-tenue);
+}
+.selo--atencao {
+  color: var(--atencao);
+  border-color: color-mix(in oklab, var(--atencao) 40%, transparent);
+  background: var(--atencao-tenue);
+}
+
+/* ---------- diálogos ---------- */
+.dialogo,
+.gaveta {
+  border: 0;
+  padding: 0;
+  color: var(--texto);
+  background: var(--superficie);
+  box-shadow: var(--sombra-flutuante);
+}
+.dialogo {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  border-radius: var(--raio-g);
+}
+.dialogo--largo {
+  width: min(780px, calc(100vw - 32px));
+}
+.dialogo::backdrop,
+.gaveta::backdrop {
+  background: rgb(3 7 5 / 0.62);
+  backdrop-filter: blur(2px);
+}
+.dialogo[open] {
+  animation: surgir var(--dur-media) var(--curva);
+}
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+.dialogo__corpo {
+  display: grid;
+  gap: var(--espaco-4);
+  padding: var(--espaco-5);
+}
+.dialogo__cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+}
+.dialogo__titulo {
+  font-size: 30px;
+}
+.dialogo__descricao {
+  color: var(--apagado);
+}
+
+/* ---------- estados ---------- */
+.estado-vazio {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding: var(--espaco-5) 0;
+  max-width: 52ch;
+}
+.estado-vazio__icone {
+  color: var(--apagado);
+  margin-bottom: 4px;
+}
+.estado-vazio__titulo {
+  font-weight: 600;
+}
+.estado-vazio__texto {
+  color: var(--apagado);
+  font-size: 14px;
+}
+.estado-vazio__acao {
+  margin-top: var(--espaco-3);
+}
+.erro-carregar {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  flex-wrap: wrap;
+  padding: var(--espaco-4);
+  border-radius: var(--raio);
+  border: 1px solid color-mix(in oklab, var(--perda) 35%, transparent);
+  background: var(--perda-tenue);
+}
+.erro-carregar p {
+  flex: 1 1 240px;
+}
+.erro-carregar--compacto {
+  padding: var(--espaco-3);
+  font-size: 14px;
+}
+
+.esqueleto {
+  display: grid;
+  gap: 10px;
+  padding: 4px 0;
+}
+.esqueleto__linha,
+.esqueleto--bloco {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--superficie-2) 0%, var(--linha) 50%, var(--superficie-2) 100%);
+  background-size: 200% 100%;
+  animation: brilho 1.6s ease-in-out infinite;
+}
+.esqueleto--bloco {
+  border-radius: var(--raio);
+}
+@keyframes brilho {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* ---------- avisos (toasts) ---------- */
+.avisos {
+  position: fixed;
+  right: var(--espaco-4);
+  bottom: var(--espaco-4);
+  z-index: 60;
+  display: grid;
+  gap: var(--espaco-2);
+  width: min(400px, calc(100vw - 32px));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.aviso {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 10px;
+  padding: 12px 8px 12px 14px;
+  border-radius: var(--raio);
+  background: var(--superficie);
+  box-shadow: var(--sombra-flutuante);
+  font-size: 14px;
+}
+.aviso > svg {
+  margin-top: 2px;
+}
+.aviso--sucesso > svg {
+  color: var(--marca);
+}
+.aviso--erro > svg {
+  color: var(--perda);
+}
+.aviso--info > svg {
+  color: var(--atencao);
+}
+.aviso .botao-icone {
+  width: 28px;
+  height: 28px;
+  margin-top: -4px;
+}
+
+/* ---------- segurar para confirmar ---------- */
+.segurar {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.segurar__botao {
+  position: relative;
+  overflow: hidden;
+  min-height: 56px;
+  padding: 0 28px;
+  border-radius: var(--raio);
+  border: 1px solid var(--perda);
+  background: var(--perda-tenue);
+  color: var(--perda);
+  font-weight: 650;
+  font-size: 15px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.segurar__progresso {
+  position: absolute;
+  inset: 0;
+  background: var(--perda);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms var(--curva);
+}
+.segurar__botao[data-segurando] .segurar__progresso {
+  transform: scaleX(1);
+  transition: transform var(--segurar-ms) linear;
+}
+.segurar__rotulo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.segurar__botao[data-segurando] .segurar__rotulo {
+  color: var(--sobre-perda);
+}
+.segurar__dica,
+.segurar__aviso {
+  font-size: 13px;
+  color: var(--apagado);
+}
+.segurar__aviso:empty {
+  display: none;
+}
+/*
+ * Com menos movimento, a barra enche em 3 degraus em vez de deslizar: continua
+ * dizendo quanto falta (é informação, não enfeite), com bem menos movimento.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .segurar__botao[data-segurando] .segurar__progresso {
+    transition: transform var(--segurar-ms) steps(3, end) !important;
+  }
+}
+
+/* ---------- números ao vivo ---------- */
+.preco-tique {
+  border-radius: 4px;
+  padding: 0 2px;
+  margin: 0 -2px;
+}
+.preco-tique--sobe {
+  animation: tique-sobe 900ms ease-out;
+}
+.preco-tique--desce {
+  animation: tique-desce 900ms ease-out;
+}
+@keyframes tique-sobe {
+  from {
+    background: color-mix(in oklab, var(--ganho) 28%, transparent);
+    color: var(--ganho);
+  }
+}
+@keyframes tique-desce {
+  from {
+    background: color-mix(in oklab, var(--perda) 28%, transparent);
+    color: var(--perda);
+  }
+}
