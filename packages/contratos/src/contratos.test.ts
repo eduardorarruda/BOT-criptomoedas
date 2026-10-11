@@ -154,3 +154,61 @@ describe("esquemas", () => {
     expect(EventoEsquema.safeParse({ tipo: "saude", servico: "motor", ok: true, em: 1 }).success).toBe(true);
   });
 });
+
+describe("eventos ao vivo novos", () => {
+  it("análise passo a passo, candle, sinal e posição", () => {
+    const ok = (e: unknown) => EventoEsquema.safeParse(e).success;
+    expect(
+      ok({
+        tipo: "analise",
+        analiseId: "a1",
+        roboId: "r1",
+        concluida: false,
+        etapa: { ferramenta: "retrato_mercado", descricao: "lendo o mercado", em: 1 },
+      }),
+    ).toBe(true);
+    expect(
+      ok({
+        tipo: "analise",
+        analiseId: "a1",
+        roboId: "r1",
+        concluida: true,
+        resultado: "aguardar",
+        decisaoId: "d1",
+      }),
+    ).toBe(true);
+    expect(
+      ok({
+        tipo: "candle",
+        roboId: "r1",
+        simbolo: "BTCUSDT",
+        intervalo: "1m",
+        candle: { abertura: 1, abre: "1", maxima: "2", minima: "0.5", fecha: "1.5", volume: "10" },
+      }),
+    ).toBe(true);
+    expect(ok({ tipo: "sinal", roboId: "r1", acao: "COMPRAR", explicacao: "x", preco: "100", em: 1 })).toBe(
+      true,
+    );
+    expect(
+      ok({
+        tipo: "posicao",
+        roboId: "r1",
+        simbolo: "BTCUSDT",
+        quantidade: "0.006",
+        precoMedio: "83000",
+        resultadoRealizado: "0",
+        taxasPagas: "0.5",
+        em: 1,
+      }),
+    ).toBe(true);
+    expect(
+      ok({
+        tipo: "candle",
+        roboId: "r1",
+        simbolo: "BTCUSDT",
+        intervalo: "1m",
+        candle: { abertura: 1, abre: 1 },
+      }),
+    ).toBe(false);
+  });
+});

@@ -130,6 +130,8 @@ export interface PedidoAnalise {
   readonly posicao: Posicao;
   /** Dona do robô: o agente busca o RAG e o diário dela. */
   readonly usuarioId?: string;
+  /** Liga os eventos "analise" do agente (passo a passo ao vivo) a esta decisão. */
+  readonly analiseId?: string;
   readonly orcamento?: OrcamentoAnalise;
 }
 
