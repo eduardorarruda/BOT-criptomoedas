@@ -14,6 +14,7 @@ import { chaves } from "./ganchos/chaves";
 import { Casca } from "./layout/Casca";
 import { buscaDecisoes } from "./paginas/decisoes/filtros";
 import { NaoEncontrada } from "./paginas/NaoEncontrada";
+import { buscaOrdens } from "./paginas/ordens/filtros";
 
 /**
  * Rotas (código, sem gerador). Tudo depois de /entrar exige sessão; as telas com
@@ -86,6 +87,13 @@ const decisoes = createRoute({
   component: lazyRouteComponent(() => import("./paginas/Decisoes"), "Decisoes"),
 });
 
+const ordens = createRoute({
+  getParentRoute: () => app,
+  path: "/ordens",
+  validateSearch: validarBusca(buscaOrdens),
+  component: lazyRouteComponent(() => import("./paginas/Ordens"), "Ordens"),
+});
+
 const arvore = raiz.addChildren([
   entrar,
   app.addChildren([
@@ -95,7 +103,7 @@ const arvore = raiz.addChildren([
     pagina("/assistente/configuracoes", () => import("./paginas/assistente/Configuracoes"), "Configuracoes"),
     pagina("/mercado", () => import("./paginas/Mercado"), "Mercado"),
     decisoes,
-    pagina("/ordens", () => import("./paginas/Ordens"), "Ordens"),
+    ordens,
     pagina("/patrimonio", () => import("./paginas/patrimonio/Patrimonio"), "Patrimonio"),
     pagina("/carteira", () => import("./paginas/carteira/Carteira"), "Carteira"),
     pagina("/renda-fixa", () => import("./paginas/renda-fixa/RendaFixa"), "RendaFixa"),

@@ -89,3 +89,11 @@
   color: var(--perda);
   font-weight: 550;
 }
+.diario-tabela__grupo th {
+  padding-top: var(--espaco-4);
+  border-bottom: 1px solid var(--linha-forte);
+  font-family: var(--fonte-titulo);
+  font-size: 18px;
+  font-weight: 400;
+  text-align: left;
+}
