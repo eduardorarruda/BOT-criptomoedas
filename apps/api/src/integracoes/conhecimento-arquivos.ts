@@ -5,7 +5,6 @@ import {
   ErroConhecimento,
   ErroEmbeddings,
   ErroExtracao,
-  extrairTexto,
   lerLink,
   type LinkLido,
   type RepositorioConhecimento,
@@ -14,6 +13,7 @@ import {
 import type { ArquivoIngerido, FonteDocumento, ResultadoBuscaConhecimento } from "@zentrade/contratos";
 import { ErroApi } from "../erros.js";
 import type { FonteEmbeddings, ServicoConhecimento } from "./conhecimento.js";
+import { extrairIsolado } from "./extracao-isolada.js";
 
 /** Arquivos e links para a base de conhecimento da pessoa, e a busca nela. */
 export interface ServicoArquivos {
@@ -81,7 +81,8 @@ async function ingerirArquivo(d: DependenciasArquivos, usuarioId: string, a: Arq
   const nome = nomeSeguro(a.nome);
   const extraido = await (async () => {
     const tipo = detectarTipo(nome, a.bytes);
-    return { tipo, texto: await extrairTexto(a.bytes, tipo) };
+    // Numa worker thread com teto de memória e tempo: arquivo hostil não derruba a API.
+    return { tipo, texto: await extrairIsolado(a.bytes, tipo) };
   })().catch((e: unknown) => {
     throw traduzir(e, "arquivo_invalido");
   });
@@ -101,7 +102,7 @@ async function ingerirArquivo(d: DependenciasArquivos, usuarioId: string, a: Arq
 }
 
 async function ingerirLink(d: DependenciasArquivos, usuarioId: string, l: LinkPedido) {
-  const ler = d.lerLink ?? ((url: string) => lerLink(url));
+  const ler = d.lerLink ?? ((url: string) => lerLink(url, {}, (bytes, tipo) => extrairIsolado(bytes, tipo)));
   const lido = await ler(l.url).catch((e: unknown) => {
     throw traduzir(e, "link_invalido");
   });

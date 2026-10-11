@@ -8,9 +8,18 @@ export interface LinkLido extends TextoExtraido {
   readonly bytes: number;
 }
 
-/** Baixa o link (com a defesa contra SSRF de baixarPagina) e extrai o texto. */
-export async function lerLink(url: string, opcoes: OpcoesBaixarPagina = {}): Promise<LinkLido> {
+export type Extrator = (bytes: Uint8Array, tipo: TipoExtraivel) => Promise<TextoExtraido>;
+
+/**
+ * Baixa o link (com a defesa contra SSRF de baixarPagina) e extrai o texto. Quem roda
+ * num servidor que atende várias pessoas passa um extrator isolado (worker com teto).
+ */
+export async function lerLink(
+  url: string,
+  opcoes: OpcoesBaixarPagina = {},
+  extrair: Extrator = extrairTexto,
+): Promise<LinkLido> {
   const pagina = await baixarPagina(url, opcoes);
-  const texto = await extrairTexto(pagina.bytes, pagina.tipo);
+  const texto = await extrair(pagina.bytes, pagina.tipo);
   return { ...texto, url: pagina.url, tipo: pagina.tipo, bytes: pagina.bytes.length };
 }

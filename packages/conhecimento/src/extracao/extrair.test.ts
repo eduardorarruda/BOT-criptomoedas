@@ -112,3 +112,25 @@ describe("limitarTexto", () => {
     expect(r).toMatchObject({ truncado: true, caracteres: LIMITE_CARACTERES_EXTRAIDOS });
   });
 });
+
+describe("DOCX descompactado grande demais (zip bomb)", () => {
+  /** Reescreve, no diretório central, o tamanho descompactado declarado de cada entrada. */
+  function comTamanhoDeclarado(docx: Buffer, bytes: number): Buffer {
+    const copia = Buffer.from(docx);
+    for (let i = 0; i + 4 <= copia.length; i++) {
+      if (copia.readUInt32LE(i) === 0x02014b50) copia.writeUInt32LE(bytes, i + 24);
+    }
+    return copia;
+  }
+
+  it("recusa antes de abrir quando o zip declara mais de 100 MB descompactados", async () => {
+    const bomba = comTamanhoDeclarado(docxComParagrafos(["x"]), 0x7fffffff);
+    await expect(extrairTexto(bomba, "docx")).rejects.toThrow(/descompactado/);
+  });
+
+  it("aceita um docx normal", async () => {
+    await expect(extrairTexto(docxComParagrafos(["oi"]), "docx")).resolves.toMatchObject({
+      texto: expect.stringContaining("oi"),
+    });
+  });
+});

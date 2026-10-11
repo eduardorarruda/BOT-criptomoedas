@@ -2,6 +2,7 @@ import mammoth from "mammoth";
 import { decodificarTexto } from "./detectar.js";
 import { textoDoHtml } from "./html.js";
 import { ErroExtracao, limitarTexto, type TextoExtraido, type TipoExtraivel } from "./tipos.js";
+import { tamanhoDescompactadoDeclarado } from "./zip.js";
 
 async function textoDoPdf(bytes: Uint8Array): Promise<string> {
   const { extractText } = await import("unpdf");
@@ -24,7 +25,18 @@ async function textoDoPdf(bytes: Uint8Array): Promise<string> {
   }
 }
 
+/** Teto do que um .docx pode declarar descompactado: texto de verdade cabe com folga. */
+export const LIMITE_DOCX_DESCOMPACTADO = 100 * 1024 * 1024;
+
 async function textoDoDocx(bytes: Uint8Array): Promise<string> {
+  const declarado = tamanhoDescompactadoDeclarado(bytes);
+  if (declarado === null || declarado > LIMITE_DOCX_DESCOMPACTADO) {
+    throw new ErroExtracao(
+      declarado === null
+        ? "Não deu para ler este .docx: o arquivo parece corrompido."
+        : "Este .docx descompactado passa de 100 MB. Salve como PDF ou divida o documento.",
+    );
+  }
   try {
     const r = await mammoth.extractRawText({ buffer: Buffer.from(bytes) });
     return r.value;

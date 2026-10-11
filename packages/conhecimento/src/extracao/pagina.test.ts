@@ -174,4 +174,15 @@ describe("lerLink", () => {
     expect(r.texto).toContain("BTC caiu.");
     expect(r.bytes).toBeGreaterThan(0);
   });
+
+  it("usa o extrator que receber (a API passa o isolado em worker)", async () => {
+    const vistos: string[] = [];
+    const r = await lerLink(`${base}/artigo`, { permitirEndereco: soLocal }, async (bytes, tipo) => {
+      vistos.push(tipo);
+      const texto = `extraído ${bytes.length}`;
+      return { texto, titulo: null, caracteres: texto.length, truncado: false };
+    });
+    expect(vistos).toEqual(["html"]);
+    expect(r.texto).toMatch(/^extraído \d+$/);
+  });
 });
