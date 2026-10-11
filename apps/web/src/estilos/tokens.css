@@ -2,18 +2,26 @@
  * Tokens da marca ZenTrade. Cada cor tem um papel; as telas usam o papel, não o hex.
  * Escuro é o padrão. O claro vale quando o sistema pede (sem escolha salva) ou
  * quando a pessoa escolhe (data-tema="claro").
+ *
+ * Camadas: primitivos (as cores de cada tema, abaixo) → papéis (fundo, superfície,
+ * texto, marca…) → componentes (usam só os papéis). Nomes antigos continuam valendo.
  */
 :root {
   --fonte-titulo: "Instrument Serif", "Iowan Old Style", Georgia, serif;
   --fonte-ui: "Geist Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --fonte-numero: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
+  /* ---------- cores (tema escuro) ---------- */
   --fundo: #070c0a;
-  --superficie: #0d1512;
+  --fundo-lateral: #080f0c;
+  --superficie: #0c1411;
   --superficie-2: #121c18;
-  --linha: #1e2b25;
+  --superficie-3: #18241f;
+  --segmento-ativo: #1b2823;
+  --linha: #1c2923;
   --linha-forte: #2c3d35;
   --texto: #e6eee8;
+  --texto-2: #c3d0c9;
   --apagado: #8ea198;
   --marca: #3ddc8e;
   --marca-profunda: #0e6b47;
@@ -23,17 +31,48 @@
   --ganho: #3ddc8e;
   --perda: #ff6f61;
   --atencao: #e9b44c;
+  --info: #6aa8ff;
   --foco: #3ddc8e;
   --anel-simbolo: #e6eee8;
+
+  /*
+   * Paleta categórica (gráficos, classes de ativo, séries). Sem coral, que é de
+   * perda. Conferida: ≥ 7:1 sobre o fundo escuro e ≥ 3,5:1 sobre o claro, o
+   * suficiente para marcas gráficas (WCAG 1.4.11). Use na ordem.
+   */
+  --cat-1: #3ddc8e;
+  --cat-2: #6aa8ff;
+  --cat-3: #e9b44c;
+  --cat-4: #a993ff;
+  --cat-5: #f07fb0;
+  --cat-6: #3fc7d6;
+  --cat-7: #d99a6c;
+  --cat-8: #9fb3a8;
+
+  /* ---------- elevação ---------- */
+  --brilho-borda: inset 0 1px 0 rgb(255 255 255 / 0.035);
+  --sombra-1: 0 1px 0 rgb(0 0 0 / 0.25), 0 8px 24px -16px rgb(0 0 0 / 0.6);
+  --sombra-2: 0 2px 0 rgb(0 0 0 / 0.2), 0 18px 40px -20px rgb(0 0 0 / 0.75);
   --sombra-flutuante: 0 18px 48px -12px rgb(0 0 0 / 0.7), 0 0 0 1px var(--linha-forte);
+  --superficie-relevo: linear-gradient(180deg, rgb(255 255 255 / 0.022), rgb(255 255 255 / 0) 120px);
+  --ambiente:
+    radial-gradient(1100px 520px at 0% -8%, rgb(61 220 142 / 0.055), transparent 62%),
+    radial-gradient(900px 480px at 100% 0%, rgb(106 168 255 / 0.03), transparent 60%);
 
   --marca-tenue: color-mix(in oklab, var(--marca) 12%, transparent);
   --perda-tenue: color-mix(in oklab, var(--perda) 12%, transparent);
   --atencao-tenue: color-mix(in oklab, var(--atencao) 13%, transparent);
+  --info-tenue: color-mix(in oklab, var(--info) 12%, transparent);
+  --linha-suave: color-mix(in oklab, var(--linha) 72%, transparent);
 
+  /* ---------- forma ---------- */
   --raio-p: 6px;
   --raio: 10px;
   --raio-g: 16px;
+  --raio-xg: 22px;
+  --raio-pilula: 999px;
+
+  /* ---------- espaço (base 4) ---------- */
   --espaco-1: 4px;
   --espaco-2: 8px;
   --espaco-3: 12px;
@@ -41,10 +80,34 @@
   --espaco-5: 24px;
   --espaco-6: 32px;
   --espaco-7: 48px;
+  --espaco-8: 64px;
 
+  /* ---------- tipo (escala ~1,2; títulos em serifa, números em mono) ---------- */
+  --t-micro: 11px;
+  --t-legenda: 12px;
+  --t-pequeno: 13px;
+  --t-ui: 14px;
+  --t-corpo: 15px;
+  --t-destaque: 17px;
+  --t-titulo-3: 20px;
+  --t-titulo-2: 28px;
+  --t-titulo-1: clamp(34px, 3.4vw, 46px);
+  --t-numero-g: clamp(28px, 2.6vw, 36px);
+  --t-numero: 22px;
+  --rastreio-rotulo: 0.08em;
+
+  /* ---------- moldura ---------- */
+  --largura-lateral: 252px;
+  --largura-lateral-recolhida: 68px;
+  --altura-topo: 60px;
+  --largura-conteudo: 1320px;
+
+  /* ---------- movimento ---------- */
   --dur-curta: 140ms;
   --dur-media: 260ms;
+  --dur-longa: 420ms;
   --curva: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --curva-saida: cubic-bezier(0.16, 1, 0.3, 1);
 
   color-scheme: dark;
 }
@@ -52,11 +115,15 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-tema="escuro"]) {
     --fundo: #eef2ec;
-    --superficie: #f7f9f5;
-    --superficie-2: #e3e9e1;
-    --linha: #cfd8d0;
+    --fundo-lateral: #e8ede6;
+    --superficie: #fafbf8;
+    --superficie-2: #e6ece4;
+    --superficie-3: #dbe3d9;
+    --segmento-ativo: #ffffff;
+    --linha: #d3dcd4;
     --linha-forte: #b5c2b8;
     --texto: #0b1310;
+    --texto-2: #26332d;
     --apagado: #4e5f57;
     --marca: #0e6b47;
     --sobre-marca: #eef2ec;
@@ -65,20 +132,40 @@
     --ganho: #0e6b47;
     --perda: #b8382c;
     --atencao: #8a5f00;
+    --info: #2a64c8;
     --foco: #0e6b47;
     --anel-simbolo: #0b1310;
+    --cat-1: #0e7a50;
+    --cat-2: #2a64c8;
+    --cat-3: #a86b00;
+    --cat-4: #6b4fd1;
+    --cat-5: #c03f7a;
+    --cat-6: #0f7f8c;
+    --cat-7: #a3592b;
+    --cat-8: #5d6f66;
+    --brilho-borda: inset 0 1px 0 rgb(255 255 255 / 0.7);
+    --sombra-1: 0 1px 2px rgb(11 19 16 / 0.05), 0 8px 24px -18px rgb(11 19 16 / 0.22);
+    --sombra-2: 0 2px 4px rgb(11 19 16 / 0.05), 0 18px 36px -20px rgb(11 19 16 / 0.3);
     --sombra-flutuante: 0 18px 40px -16px rgb(11 19 16 / 0.28), 0 0 0 1px var(--linha);
+    --superficie-relevo: none;
+    --ambiente:
+      radial-gradient(1100px 520px at 0% -8%, rgb(14 107 71 / 0.06), transparent 62%),
+      radial-gradient(900px 480px at 100% 0%, rgb(42 100 200 / 0.035), transparent 60%);
     color-scheme: light;
   }
 }
 
 :root[data-tema="claro"] {
   --fundo: #eef2ec;
-  --superficie: #f7f9f5;
-  --superficie-2: #e3e9e1;
-  --linha: #cfd8d0;
+  --fundo-lateral: #e8ede6;
+  --superficie: #fafbf8;
+  --superficie-2: #e6ece4;
+  --superficie-3: #dbe3d9;
+  --segmento-ativo: #ffffff;
+  --linha: #d3dcd4;
   --linha-forte: #b5c2b8;
   --texto: #0b1310;
+  --texto-2: #26332d;
   --apagado: #4e5f57;
   --marca: #0e6b47;
   --sobre-marca: #eef2ec;
@@ -87,8 +174,24 @@
   --ganho: #0e6b47;
   --perda: #b8382c;
   --atencao: #8a5f00;
+  --info: #2a64c8;
   --foco: #0e6b47;
   --anel-simbolo: #0b1310;
+  --cat-1: #0e7a50;
+  --cat-2: #2a64c8;
+  --cat-3: #a86b00;
+  --cat-4: #6b4fd1;
+  --cat-5: #c03f7a;
+  --cat-6: #0f7f8c;
+  --cat-7: #a3592b;
+  --cat-8: #5d6f66;
+  --brilho-borda: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  --sombra-1: 0 1px 2px rgb(11 19 16 / 0.05), 0 8px 24px -18px rgb(11 19 16 / 0.22);
+  --sombra-2: 0 2px 4px rgb(11 19 16 / 0.05), 0 18px 36px -20px rgb(11 19 16 / 0.3);
   --sombra-flutuante: 0 18px 40px -16px rgb(11 19 16 / 0.28), 0 0 0 1px var(--linha);
+  --superficie-relevo: none;
+  --ambiente:
+    radial-gradient(1100px 520px at 0% -8%, rgb(14 107 71 / 0.06), transparent 62%),
+    radial-gradient(900px 480px at 100% 0%, rgb(42 100 200 / 0.035), transparent 60%);
   color-scheme: light;
 }
