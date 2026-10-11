@@ -1,0 +1,44 @@
+[
+  {
+    "id": "exemplo-btc-15m",
+    "nome": "BTC na queda (exemplo)",
+    "simbolo": "BTCUSDT",
+    "intervalo": "15m",
+    "modo": "observar",
+    "rede": "papel",
+    "estrategia": {
+      "entrada": {
+        "tipo": "e",
+        "regras": [
+          {
+            "tipo": "comparar",
+            "esquerda": { "tipo": "indicador", "nome": "rsi", "periodo": 14 },
+            "comparador": "<",
+            "direita": { "tipo": "numero", "valor": 30 }
+          },
+          {
+            "tipo": "comparar",
+            "esquerda": { "tipo": "preco" },
+            "comparador": "<",
+            "direita": {
+              "tipo": "multiplicar",
+              "operando": { "tipo": "indicador", "nome": "sma", "periodo": 50 },
+              "fator": 0.98
+            }
+          }
+        ]
+      },
+      "stop": 0.02,
+      "alvoLiquido": 0.01,
+      "taxa": 0.001
+    },
+    "limites": {
+      "perdaDiariaMaxima": "20",
+      "exposicaoMaxima": "200",
+      "riscoPorOperacao": "4",
+      "ordensPorHoraMax": 4,
+      "pausaAposPerdaMin": 60,
+      "confiancaMinima": 0.6
+    }
+  }
+]
