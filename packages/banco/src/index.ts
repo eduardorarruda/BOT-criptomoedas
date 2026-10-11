@@ -18,6 +18,13 @@ export type { DadosEstrategia, DetalheEstrategia } from "./repositorios/estrateg
 export { validarDadosEstrategia } from "./repositorios/estrategias.js";
 export { LIMITE_MAXIMO_LISTA } from "./repositorios/lista.js";
 export type { CandleDTO, ConsultaCandles } from "./repositorios/mercado.js";
+export type {
+  ContagemSincronizacao,
+  DadosItem,
+  ItemPluggyLinha,
+  TituloSincronizado,
+} from "./repositorios/pluggy.js";
+export type { EstadoIndicador, LinhaTitulo, PontoIndicador } from "./repositorios/renda-fixa.js";
 export type { Resumo } from "./repositorios/resumo.js";
 export type { MudancaRobo, NovoRobo } from "./repositorios/robos.js";
 export type { Sessao } from "./repositorios/sessoes.js";
