@@ -71,7 +71,7 @@ export class ErroTitulo extends Error {
 const CEM = dec(100);
 const TRUNCAR = 1; // Decimal.ROUND_DOWN
 const formatarDia = (d: Dia): string => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
-const formatarPct = (v: Valor): string => v.toFixed().replace(".", ",");
+const formatarPct = (v: Valor): string => v.toDecimalPlaces(2).toFixed().replace(".", ",");
 
 function avisoParcial(nome: string, ate: Dia): string {
   return `Valor até ${formatarDia(ate)}: o ${nome} de ${formatarDia(ate)} em diante ainda não foi publicado pelo Banco Central.`;
@@ -105,7 +105,7 @@ function fatorIpcaMais(t: Titulo, indices: Indices, de: Dia, ate: Dia, projecao?
   const real = fatorPrefixado(t.taxaAnual ?? dec(0), diasUteis(de, ate));
   const avisos = inflacao.mesesProjetados.map(
     (m) =>
-      `IPCA de ${m} ainda não publicado: usamos a projeção de ${formatarPct(projecao ?? dec(0))}% ao ano informada.`,
+      `IPCA de ${m} ainda não publicado: usamos a projeção de ${formatarPct(projecao ?? dec(0))}% ao ano.`,
   );
   return { fator: inflacao.fator.times(real), ate, avisos };
 }

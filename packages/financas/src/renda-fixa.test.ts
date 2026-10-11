@@ -141,7 +141,7 @@ describe("tipos de rendimento", () => {
     });
     const indices = { ...VAZIO, ipca: mapa({ "2026-01": "0.5" }) };
     const p = calculada(posicaoDoTitulo(t, indices, { hoje: "2026-02-15", ipcaProjetadoAnual: dec(4) }));
-    expect(p.avisos.join(" ")).toMatch(/2026-02.*projeção de 4% ao ano/);
+    expect(p.avisos.join(" ")).toMatch(/2026-02 ainda não publicado: usamos a projeção de 4% ao ano/);
   });
 
   it("poupança: só os aniversários completos, isenta", () => {

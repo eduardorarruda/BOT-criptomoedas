@@ -17,6 +17,7 @@ import { criarHubEventos } from "../integracoes/eventos.js";
 import { criarFilaBacktests } from "../integracoes/fila.js";
 import { assinarEventos, conectarRedis, verificadorSaude } from "../integracoes/redis.js";
 import { n8nComRegistro } from "../integracoes/n8n.js";
+import type { ServicosRendaFixa } from "../rotas/renda-fixa-servico.js";
 import { criarRetransmissorN8n } from "../integracoes/retransmissor.js";
 
 export const SEGREDO_WEBHOOK = "w".repeat(40);
@@ -61,6 +62,8 @@ export interface OpcoesApi {
   readonly fila?: FilaBacktests;
   /** Variáveis de ambiente a mais (ex.: N8N_USUARIO_ID). */
   readonly ambiente?: Readonly<Record<string, string>>;
+  /** Índices do BCB e Pluggy (com clientes falsos nos testes). */
+  readonly rendaFixa?: (banco: Banco, agora: () => number) => ServicosRendaFixa;
 }
 
 export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
@@ -115,6 +118,7 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     saude: verificadorSaude({ redis, log: silencioso, agora }),
     agora,
     verificacaoTempoRealMs: 50,
+    ...(o.rendaFixa ? { rendaFixa: o.rendaFixa(banco, agora) } : {}),
   };
   const app = await construirApp(deps);
 
