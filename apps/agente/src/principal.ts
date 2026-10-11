@@ -25,6 +25,8 @@ async function iniciar(): Promise<void> {
     analista,
     segredo: config.segredo,
     timeoutMs: config.timeoutMs,
+    maxSimultaneas: config.maxSimultaneas,
+    maxPorMinuto: config.maxPorMinuto,
     logger,
     ...(config.usuarioIdPadrao ? { usuarioIdPadrao: config.usuarioIdPadrao } : {}),
   });

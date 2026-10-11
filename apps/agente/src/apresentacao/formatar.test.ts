@@ -3,6 +3,17 @@ import { DECISOES } from "../teste/api-falsa.js";
 import { explicarDecisao, formatarBacktest, formatarDecisoes, formatarResumo } from "./formatar.js";
 
 describe("formatação para gente", () => {
+  it("tira caracteres de controle do texto que vem de fora antes de mostrar", () => {
+    const base = DECISOES[0]!;
+    const t = explicarDecisao({
+      ...base,
+      proposta: { ...base.proposta!, justificativa: "ok\u001b[2Jsumiu\u0007", riscos: ["r\u001b[1m"] },
+    } as never);
+    // eslint-disable-next-line no-control-regex -- o teste procura exatamente caracteres de controle
+    expect(t).not.toMatch(/[\u0000-\u0008\u000b-\u001f\u007f]/);
+    expect(t).toMatch(/oksumiu/);
+  });
+
   it("resumo destaca a parada total ligada", () => {
     const t = formatarResumo({
       resultadoHoje: "0",

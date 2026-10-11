@@ -1,3 +1,4 @@
+import { removerControles } from "@zentrade/conhecimento";
 import type { DecisaoDTO } from "@zentrade/contratos";
 import { dec, formatarDolar, formatarNumero } from "@zentrade/dominio";
 import type { Backtest, DecisaoDetalhe, Resumo } from "../api/cliente-api.js";
@@ -7,7 +8,7 @@ const quando = (ms: number): string => `${new Date(ms).toISOString().slice(0, 16
 const dolar = (texto: string): string => formatarDolar(dec(texto));
 const porcento = (fracao: number): string => `${Math.round(fracao * 100)}%`;
 
-export function formatarResumo(r: Resumo): string {
+function resumoBruto(r: Resumo): string {
   return [
     "ZenTrade — resumo",
     `Parada total: ${r.paradaTotal ? "LIGADA (nenhuma ordem sai)" : "desligada"}`,
@@ -19,7 +20,7 @@ export function formatarResumo(r: Resumo): string {
   ].join("\n");
 }
 
-export function formatarDecisoes(lista: readonly DecisaoDTO[]): string {
+function decisoesBrutas(lista: readonly DecisaoDTO[]): string {
   if (lista.length === 0) return "Nenhuma decisão encontrada.";
   const linhas = lista.map((d) =>
     [
@@ -58,7 +59,7 @@ function explicarRisco(d: DecisaoDTO): string[] {
   return ["Motor de risco: barrou.", ...d.risco.barreiras.map((b) => `  - ${b.mensagem} (${b.codigo})`)];
 }
 
-export function explicarDecisao(d: DecisaoDetalhe): string {
+function explicacaoBruta(d: DecisaoDetalhe): string {
   return [
     `Decisão ${d.id} — robô ${d.roboId} — ${quando(d.em)}`,
     `Sinal das regras: ${d.sinal.acao}. ${d.sinal.explicacao}`,
@@ -74,8 +75,16 @@ export function explicarDecisao(d: DecisaoDetalhe): string {
   ].join("\n");
 }
 
-export function formatarBacktest(b: Backtest): string {
+function backtestBruto(b: Backtest): string {
   const { id, estado, ...resto } = b;
   const detalhes = Object.keys(resto).length > 0 ? `\n${JSON.stringify(resto, null, 2)}` : "";
   return `Backtest ${id}: ${estado}${detalhes}`;
 }
+
+// Justificativa, riscos e títulos de fonte podem trazer texto de notícia: nada de
+// escape de terminal ou caractere de controle chega à tela da CLI ou ao MCP.
+export const formatarResumo = (r: Resumo): string => removerControles(resumoBruto(r));
+export const formatarDecisoes = (lista: readonly DecisaoDTO[]): string =>
+  removerControles(decisoesBrutas(lista));
+export const explicarDecisao = (d: DecisaoDetalhe): string => removerControles(explicacaoBruta(d));
+export const formatarBacktest = (b: Backtest): string => removerControles(backtestBruto(b));

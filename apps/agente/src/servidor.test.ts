@@ -18,7 +18,13 @@ const proposta: PropostaAgente = {
 
 function servidor(
   analisar: AnalistaServico["analisar"],
-  extra: { timeoutMs?: number; usuarioIdPadrao?: string } = {},
+  extra: {
+    timeoutMs?: number;
+    usuarioIdPadrao?: string;
+    maxSimultaneas?: number;
+    maxPorMinuto?: number;
+    agora?: () => number;
+  } = {},
 ) {
   return criarServidor({ analista: { analisar }, segredo: SEGREDO, logger: false, ...extra });
 }
@@ -134,5 +140,61 @@ describe("POST /analisar", () => {
     app = servidor(vi.fn());
     const r = await app.inject({ method: "GET", url: "/saude" });
     expect(r.json()).toEqual({ ok: true });
+  });
+});
+
+describe("limites do /analisar (custo de IA com teto)", () => {
+  it("recusa com 429 quando já há análises demais em andamento", async () => {
+    let liberar: () => void = () => {};
+    const travada = new Promise<void>((r) => (liberar = r));
+    const analisar = vi.fn(async () => {
+      await travada;
+      return { proposta, custoUsd: dec(0) };
+    });
+    app = servidor(analisar, { maxSimultaneas: 1 });
+    const primeira = app.inject({ method: "POST", url: "/analisar", headers: cabecalhos, payload: corpo });
+    await vi.waitFor(() => expect(analisar).toHaveBeenCalledTimes(1));
+    const segunda = await app.inject({
+      method: "POST",
+      url: "/analisar",
+      headers: cabecalhos,
+      payload: corpo,
+    });
+    expect(segunda.statusCode).toBe(429);
+    expect(segunda.json().erro.codigo).toBe("limite_excedido");
+    liberar();
+    expect((await primeira).statusCode).toBe(200);
+  });
+
+  it("recusa com 429 acima do máximo por minuto e volta a aceitar no minuto seguinte", async () => {
+    let agora = 1_000_000;
+    const analisar = vi.fn(async () => ({ proposta, custoUsd: dec(0) }));
+    app = servidor(analisar, { maxPorMinuto: 2, agora: () => agora });
+    const pedir = () =>
+      app!.inject({ method: "POST", url: "/analisar", headers: cabecalhos, payload: corpo });
+    expect((await pedir()).statusCode).toBe(200);
+    expect((await pedir()).statusCode).toBe(200);
+    expect((await pedir()).statusCode).toBe(429);
+    agora += 60_001;
+    expect((await pedir()).statusCode).toBe(200);
+  });
+
+  it("pedido sem o segredo não consome a cota", async () => {
+    const analisar = vi.fn(async () => ({ proposta, custoUsd: dec(0) }));
+    app = servidor(analisar, { maxPorMinuto: 1 });
+    await app.inject({ method: "POST", url: "/analisar", headers: {}, payload: corpo });
+    const r = await app.inject({ method: "POST", url: "/analisar", headers: cabecalhos, payload: corpo });
+    expect(r.statusCode).toBe(200);
+  });
+
+  it("recusa corpo grande demais", async () => {
+    app = servidor(vi.fn());
+    const r = await app.inject({
+      method: "POST",
+      url: "/analisar",
+      headers: { ...cabecalhos, "content-type": "application/json" },
+      payload: JSON.stringify({ lixo: "x".repeat(600_000) }),
+    });
+    expect(r.statusCode).toBe(413);
   });
 });

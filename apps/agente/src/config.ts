@@ -13,6 +13,9 @@ const Ambiente = z.object({
   AGENTE_MODELO: z.string().min(1).default(MODELO_PADRAO),
   AGENTE_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(600_000).default(55_000),
   ZENTRADE_USUARIO_ID: z.uuid("precisa ser um uuid").optional(),
+  // Teto de custo de IA: análises simultâneas e por minuto.
+  AGENTE_MAX_SIMULTANEAS: z.coerce.number().int().min(1).max(64).default(4),
+  AGENTE_MAX_POR_MINUTO: z.coerce.number().int().min(1).max(600).default(30),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 });
 
@@ -24,6 +27,8 @@ export interface ConfigAgente {
   readonly host: string;
   readonly modelo: string;
   readonly timeoutMs: number;
+  readonly maxSimultaneas: number;
+  readonly maxPorMinuto: number;
   readonly usuarioIdPadrao?: string;
   readonly nivelLog: z.infer<typeof Ambiente>["LOG_LEVEL"];
 }
@@ -48,6 +53,8 @@ export function configDoAgente(env: Readonly<Record<string, string | undefined>>
     host: a.AGENTE_HOST,
     modelo: a.AGENTE_MODELO,
     timeoutMs: a.AGENTE_TIMEOUT_MS,
+    maxSimultaneas: a.AGENTE_MAX_SIMULTANEAS,
+    maxPorMinuto: a.AGENTE_MAX_POR_MINUTO,
     nivelLog: a.LOG_LEVEL,
     ...(a.ZENTRADE_USUARIO_ID ? { usuarioIdPadrao: a.ZENTRADE_USUARIO_ID } : {}),
   };

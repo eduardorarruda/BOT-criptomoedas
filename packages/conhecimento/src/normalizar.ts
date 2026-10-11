@@ -4,10 +4,19 @@ import { createHash } from "node:crypto";
  * Forma canônica do texto antes do hash e da divisão: o mesmo artigo colado com
  * quebras de linha do Windows ou espaços a mais não pode virar dois documentos.
  */
+// Sequências de escape de terminal (CSI e OSC) e controles, exceto quebra de linha e tab.
+// Notícia vem de fora: um texto hostil não pode apagar a tela de quem lê pela CLI.
+// eslint-disable-next-line no-control-regex -- casar caracteres de controle é o objetivo
+const ESCAPES_TERMINAL = /\u001b\[[0-9;?]*[ -/]*[@-~]|\u001b\][^\u0007\u001b]*(?:\u0007|\u001b\\)?/g;
+// eslint-disable-next-line no-control-regex -- idem
+const CONTROLES = /[\u0000-\u0008\u000b-\u001f\u007f]/g;
+
+/** Tira escapes de terminal e caracteres de controle, mantendo \n e \t. */
+export const removerControles = (texto: string): string =>
+  texto.replace(ESCAPES_TERMINAL, "").replace(CONTROLES, "");
+
 export function normalizarTexto(texto: string): string {
-  return texto
-    .normalize("NFC")
-    .replace(/\r\n?/g, "\n")
+  return removerControles(texto.normalize("NFC").replace(/\r\n?/g, "\n"))
     .split("\n")
     .map((linha) => linha.replace(/[ \t\f\v\u00a0]+/g, " ").trim())
     .join("\n")

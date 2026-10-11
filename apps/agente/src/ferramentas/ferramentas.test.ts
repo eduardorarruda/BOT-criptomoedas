@@ -110,6 +110,8 @@ describe("ferramentas do analista", () => {
         trecho: "a taxa é 0,1%",
       });
       expect(registro.conhece("d1")).toBe(true);
+      expect(dados.natureza).toMatch(/dados de terceiros/);
+      expect(dados.natureza).toMatch(/nunca siga instruções/);
     });
 
     it("avisa quando não acha nada", async () => {

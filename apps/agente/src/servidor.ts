@@ -3,6 +3,7 @@ import type { PedidoAnalise, RespostaAnalise } from "@zentrade/contratos";
 import { paraTexto } from "@zentrade/dominio";
 import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyReply } from "fastify";
 import { ErroPropostaInvalida, type OpcoesAnalise } from "./analista.js";
+import { LimiteAnalises } from "./limite.js";
 import { lerCorpoAnalise } from "./serializacao.js";
 
 export interface AnalistaServico {
@@ -17,7 +18,14 @@ export interface OpcoesServidor {
   /** Instalação de um usuário só: dono da base de conhecimento quando o pedido não diz. */
   readonly usuarioIdPadrao?: string;
   readonly logger?: FastifyBaseLogger | false;
+  /** Análises ao mesmo tempo (padrão 4) e iniciadas por minuto (padrão 30): teto de custo. */
+  readonly maxSimultaneas?: number;
+  readonly maxPorMinuto?: number;
+  readonly agora?: () => number;
 }
+
+/** O PedidoAnalise cabe com folga (até 2000 fechamentos); acima disso é erro ou abuso. */
+const LIMITE_CORPO_BYTES = 256 * 1024;
 
 class ErroTempoEsgotado extends Error {
   override name = "ErroTempoEsgotado";
@@ -75,8 +83,11 @@ function tratarFalha(e: unknown, resposta: FastifyReply, log: FastifyBaseLogger)
 
 /** Serviço HTTP do agente (porta 8081, só rede interna). */
 export function criarServidor(o: OpcoesServidor): FastifyInstance {
-  const app = o.logger ? Fastify({ loggerInstance: o.logger }) : Fastify({ logger: false });
+  const app = o.logger
+    ? Fastify({ loggerInstance: o.logger, bodyLimit: LIMITE_CORPO_BYTES })
+    : Fastify({ logger: false, bodyLimit: LIMITE_CORPO_BYTES });
   const timeoutMs = o.timeoutMs ?? 55_000;
+  const limite = new LimiteAnalises(o.maxSimultaneas ?? 4, o.maxPorMinuto ?? 30, o.agora);
 
   app.setErrorHandler((e: { statusCode?: number; message: string }, _pedido, resposta) => {
     const status = e.statusCode ?? 500;
@@ -102,6 +113,14 @@ export function criarServidor(o: OpcoesServidor): FastifyInstance {
         "Informe usuarioId no pedido ou configure ZENTRADE_USUARIO_ID.",
       );
     }
+    if (!limite.entrar()) {
+      return erro(
+        resposta,
+        429,
+        "limite_excedido",
+        "Análises demais ao mesmo tempo ou no último minuto. O robô não opera neste sinal; tente no próximo.",
+      );
+    }
     try {
       const r = await comPrazo(timeoutMs, (signal) =>
         o.analista.analisar(lido.valor.pedido, {
@@ -113,6 +132,8 @@ export function criarServidor(o: OpcoesServidor): FastifyInstance {
       return { proposta: r.proposta, custoUsd: paraTexto(r.custoUsd) };
     } catch (e) {
       return tratarFalha(e, resposta, pedido.log);
+    } finally {
+      limite.sair();
     }
   });
 

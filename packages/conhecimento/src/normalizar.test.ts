@@ -13,6 +13,13 @@ describe("normalizarTexto", () => {
   });
 });
 
+describe("normalizarTexto contra texto hostil", () => {
+  it("remove caracteres de controle e sequências de escape de terminal, mantendo quebras e tabs", () => {
+    const hostil = "Título\u001b[2J\u001b[31mvermelho\u0007 fim\nlinha\tcom tab\u0000";
+    expect(normalizarTexto(hostil)).toBe("Títulovermelho fim\nlinha com tab");
+  });
+});
+
 describe("hashConteudo", () => {
   it("é igual para textos que só diferem em espaços e quebras de linha", () => {
     expect(hashConteudo("Taxa de 0,1%\r\n")).toBe(hashConteudo("  Taxa  de 0,1%"));
