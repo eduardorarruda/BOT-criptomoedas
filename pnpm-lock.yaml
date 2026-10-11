@@ -449,6 +449,12 @@ importers:
         specifier: ^10.6.0
         version: 10.6.0
 
+  packages/financas:
+    dependencies:
+      '@zentrade/dominio':
+        specifier: workspace:*
+        version: link:../dominio
+
   tools/n8n-validacao:
     dependencies:
       '@zentrade/contratos':

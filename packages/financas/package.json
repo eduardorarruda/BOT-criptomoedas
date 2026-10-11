@@ -1,0 +1,25 @@
+{
+  "name": "@zentrade/financas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Contas puras de investimento: amortização SAC e Price, fluxo de caixa (TIR, VPL, payback), renda fixa, indexadores e impostos. Sem rede, sem banco.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@zentrade/dominio": "workspace:*"
+  }
+}
