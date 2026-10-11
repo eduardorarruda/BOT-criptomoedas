@@ -3,6 +3,7 @@ import type {
   PortaAgente,
   PortaAprovacao,
   PortaCandles,
+  PortaCredenciais,
   PortaDecisoes,
   PortaOrdens,
   PortaRobos,
@@ -11,6 +12,7 @@ import type {
 import { ativosDoSimbolo, BinanceCorretora, PapelCorretora } from "@zentrade/corretora";
 import { dec } from "@zentrade/dominio";
 import type { Config } from "./config.js";
+import { CorretorasPorPessoa } from "./corretoras-por-pessoa.js";
 import type { OpcoesMotor } from "./motor.js";
 import { OPCOES_PADRAO, type Dependencias, type Registro } from "./nucleo/tipos.js";
 import { CorretoraPapelAoVivo } from "./papel-ao-vivo.js";
@@ -26,13 +28,16 @@ import { dormirReal, RelogioSistema } from "./relogio.js";
 const COTACAO_PAPEL = ativosDoSimbolo("BTCUSDT").cotacao;
 const SAUDE_MS = 30_000;
 
+/**
+ * A corretora padrão do motor. Na testnet, os robôs ligam com a corretora da pessoa
+ * (corretorasDasPessoas); esta só leva a chave do ambiente em desenvolvimento.
+ */
 export function criarCorretora(config: Config, registro: Registro): Corretora {
   const aoErroWebSocket = (erro: Error) => registro.warn({ erro }, "WebSocket da Binance com problema");
   if (config.MOTOR_REDE === "testnet")
     return new BinanceCorretora({
       rede: "testnet",
-      apiKey: config.BINANCE_API_KEY,
-      apiSecret: config.BINANCE_API_SECRET,
+      ...(chaveDoAmbiente(config) ?? {}),
       taxaEstimada: config.BINANCE_TAXA_ESTIMADA,
       aoErroWebSocket,
     });
@@ -61,6 +66,8 @@ export interface FontesMotor {
   readonly banco?: {
     readonly portas: { robos: PortaRobos; decisoes: PortaDecisoes; ordens: PortaOrdens };
     readonly mercado: PortaCandles;
+    /** As chaves de corretora de cada pessoa (null sem ZENTRADE_CHAVE_MESTRA). */
+    readonly credenciais?: PortaCredenciais | null;
   };
   readonly redis?: ClienteRedis;
   readonly arquivo?: RobosCarregados;
@@ -106,15 +113,44 @@ function prepararPapel(corretora: Corretora, ordens: PortaOrdens): OpcoesMotor["
   };
 }
 
+/** Só em desenvolvimento: a chave do ambiente para quem não cadastrou a própria. */
+function chaveDoAmbiente(config: Config) {
+  const { BINANCE_API_KEY: apiKey, BINANCE_API_SECRET: apiSecret } = config;
+  return config.ZENTRADE_AMBIENTE === "desenvolvimento" && apiKey && apiSecret ? { apiKey, apiSecret } : null;
+}
+
+/**
+ * Fora do papel, cada robô opera com a chave da pessoa dona dele: uma BinanceCorretora
+ * por pessoa e rede (CorretorasPorPessoa). Com uma corretora trocada (testes), não.
+ */
+function corretorasDasPessoas(
+  config: Config,
+  f: FontesMotor,
+  registro: Registro,
+): OpcoesMotor["corretoraDe"] {
+  if (config.MOTOR_REDE === "papel" || f.corretora) return undefined;
+  const aoErroWebSocket = (erro: Error) => registro.warn({ erro }, "WebSocket da Binance com problema");
+  const porPessoa = new CorretorasPorPessoa({
+    credenciais: f.banco?.credenciais ?? null,
+    fallback: chaveDoAmbiente(config),
+    criar: (rede, c) =>
+      new BinanceCorretora({ rede, ...c, taxaEstimada: config.BINANCE_TAXA_ESTIMADA, aoErroWebSocket }),
+  });
+  return (robo) => porPessoa.para(robo);
+}
+
 function opcoesDoMotor(
   config: Config,
   f: FontesMotor,
   corretora: Corretora,
   ordens: PortaOrdens,
+  registro: Registro,
 ): OpcoesMotor {
   const batida = f.redis ? new BatidaRedis(f.redis) : null;
   const preparar = f.banco ? prepararPapel(corretora, ordens) : undefined;
+  const corretoraDe = corretorasDasPessoas(config, f, registro);
   return {
+    ...(corretoraDe ? { corretoraDe } : {}),
     intervaloSaudeMs: SAUDE_MS,
     ...(f.banco ? { intervaloRecargaMs: config.MOTOR_RECARGA_SEGUNDOS * 1000 } : {}),
     ...(batida ? { bater: (em: number) => batida.bater(em) } : {}),
@@ -152,5 +188,5 @@ export function montarMotor(config: Config, f: FontesMotor, registro: Registro) 
       expiracaoAprovacaoMs: config.APROVACAO_VALIDADE_MIN * 60_000,
     },
   };
-  return { deps, opcoesMotor: opcoesDoMotor(config, f, corretora, portas.ordens) };
+  return { deps, opcoesMotor: opcoesDoMotor(config, f, corretora, portas.ordens, registro) };
 }

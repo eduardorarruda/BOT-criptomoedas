@@ -1,3 +1,4 @@
+import { ConfigBancoEsquema } from "@zentrade/banco";
 import { TextoDecimal } from "@zentrade/contratos";
 import { z } from "zod";
 
@@ -20,8 +21,12 @@ export const EsquemaConfig = z
     MOTOR_PAPEL_DESLIZAMENTO_BPS: z.coerce.number().min(0).max(1000).default(5),
     AGENTE_URL: z.url().optional(),
     AGENTE_SEGREDO: z.string().min(32, "precisa ter pelo menos 32 caracteres").optional(),
+    /** Só em desenvolvimento: chave de quem não cadastrou a própria na tela. */
     BINANCE_API_KEY: z.string().optional(),
     BINANCE_API_SECRET: z.string().optional(),
+    /** A mesma chave mestra da API: decifra a chave da Binance de cada pessoa (contas_corretora). */
+    ZENTRADE_CHAVE_MESTRA: ConfigBancoEsquema.shape.ZENTRADE_CHAVE_MESTRA.optional(),
+    ZENTRADE_AMBIENTE: z.enum(["desenvolvimento", "producao"]).default("producao"),
     BINANCE_TAXA_ESTIMADA: z.coerce.number().min(0).lt(0.01).default(0.001),
     /** Com banco: robôs de todas as pessoas, decisões e ordens duráveis. Sem banco: papel em memória. */
     DATABASE_URL: z
@@ -42,13 +47,7 @@ export const EsquemaConfig = z
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   })
   .superRefine((c, ctx) => {
-    if (c.MOTOR_REDE === "testnet" && (!c.BINANCE_API_KEY || !c.BINANCE_API_SECRET))
-      ctx.addIssue({
-        code: "custom",
-        path: ["BINANCE_API_KEY"],
-        message:
-          "a testnet exige BINANCE_API_KEY e BINANCE_API_SECRET (crie em https://testnet.binance.vision)",
-      });
+    if (c.MOTOR_REDE === "testnet") conferirChavesDaTestnet(c, ctx);
     if (c.MOTOR_REDE === "testnet" && !c.DATABASE_URL)
       ctx.addIssue({
         code: "custom",
@@ -65,6 +64,37 @@ export const EsquemaConfig = z
   });
 
 export type Config = z.infer<typeof EsquemaConfig>;
+
+interface ChavesDoAmbiente {
+  readonly BINANCE_API_KEY?: string | undefined;
+  readonly BINANCE_API_SECRET?: string | undefined;
+  readonly ZENTRADE_CHAVE_MESTRA?: Buffer | undefined;
+  readonly ZENTRADE_AMBIENTE: "desenvolvimento" | "producao";
+}
+
+/**
+ * Fora do papel, cada robô opera com a chave da pessoa dona dele (cadastrada na tela,
+ * cifrada no banco): o motor precisa da chave mestra. As chaves do ambiente são só um
+ * atalho de desenvolvimento, para quem ainda não cadastrou a própria.
+ */
+function conferirChavesDaTestnet(c: ChavesDoAmbiente, ctx: z.RefinementCtx): void {
+  const desenvolvimento = c.ZENTRADE_AMBIENTE === "desenvolvimento";
+  const doAmbiente = Boolean(c.BINANCE_API_KEY && c.BINANCE_API_SECRET);
+  if ((c.BINANCE_API_KEY || c.BINANCE_API_SECRET) && !desenvolvimento)
+    ctx.addIssue({
+      code: "custom",
+      path: ["BINANCE_API_KEY"],
+      message:
+        "BINANCE_API_KEY/SECRET só valem com ZENTRADE_AMBIENTE=desenvolvimento; fora dele, cada pessoa cadastra a própria chave em Contas e chaves e o motor a decifra com ZENTRADE_CHAVE_MESTRA",
+    });
+  if (!c.ZENTRADE_CHAVE_MESTRA && !(desenvolvimento && doAmbiente))
+    ctx.addIssue({
+      code: "custom",
+      path: ["ZENTRADE_CHAVE_MESTRA"],
+      message:
+        "a testnet usa a chave da Binance de cada pessoa, cifrada no banco: defina ZENTRADE_CHAVE_MESTRA (a mesma da API)",
+    });
+}
 
 export class ErroConfig extends Error {
   override name = "ErroConfig";

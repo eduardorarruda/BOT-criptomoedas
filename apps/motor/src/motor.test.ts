@@ -114,4 +114,30 @@ describe("motor", () => {
     expect(c.erros.some((e) => /recarregar/.test(e.msg))).toBe(true);
     await motor.parar();
   });
+
+  it("cada robô pode ligar com a corretora da pessoa dona dele", async () => {
+    const c = montarCenario();
+    const pedidos: string[] = [];
+    const motor = new Motor(c.deps, {
+      intervaloSaudeMs: 1_000,
+      corretoraDe: async (r) => {
+        pedidos.push(r.id);
+        return c.deps.corretora;
+      },
+    });
+    expect(await motor.iniciar()).toEqual({ ligados: 1, falharam: 0 });
+    expect(pedidos).toEqual(["r1"]);
+    await motor.parar();
+  });
+
+  it("sem a chave da pessoa o robô não liga, e o motor segue", async () => {
+    const c = montarCenario();
+    const motor = new Motor(c.deps, {
+      intervaloSaudeMs: 1_000,
+      corretoraDe: () => Promise.reject(new Error("sem chave cadastrada")),
+    });
+    expect(await motor.iniciar()).toEqual({ ligados: 0, falharam: 1 });
+    expect(c.erros.some((e) => /não ligou/.test(e.msg))).toBe(true);
+    await motor.parar();
+  });
 });

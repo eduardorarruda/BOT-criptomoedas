@@ -28,10 +28,11 @@ describe("composição do motor", () => {
     expect(c.rede).toBe("papel");
   });
 
-  it("testnet: Binance testnet com as chaves do ambiente", () => {
+  it("testnet: Binance testnet (as chaves do ambiente só em desenvolvimento)", () => {
     const c = criarCorretora(
       lerConfig({
         MOTOR_REDE: "testnet",
+        ZENTRADE_AMBIENTE: "desenvolvimento",
         BINANCE_API_KEY: "k",
         BINANCE_API_SECRET: "s",
         DATABASE_URL: "postgres://x@127.0.0.1/z",
@@ -40,6 +41,39 @@ describe("composição do motor", () => {
     );
     expect(c).toBeInstanceOf(BinanceCorretora);
     expect(c.rede).toBe("testnet");
+  });
+
+  it("testnet com banco: cada robô liga com a corretora da pessoa dona dele", async () => {
+    const config = lerConfig({
+      MOTOR_REDE: "testnet",
+      DATABASE_URL: "postgres://x@127.0.0.1/z",
+      ZENTRADE_CHAVE_MESTRA: Buffer.alloc(32, 3).toString("base64"),
+    });
+    const credenciais = {
+      binance: async (u: string) => (u === "ana" ? { apiKey: "k", apiSecret: "s" } : null),
+    };
+    const fontes: FontesMotor = {
+      banco: {
+        portas: {
+          robos: new RobosMemoria([]),
+          decisoes: new DecisoesMemoria(),
+          ordens: new OrdensMemoria(new RelogioManual(0)),
+        },
+        mercado: { gravar: async () => undefined },
+        credenciais,
+      },
+    };
+    const { opcoesMotor } = montarMotor(config, fontes, registroDeTeste().registro);
+    const robo = (usuarioId: string) => ({ id: "r", usuarioId, rede: "testnet" }) as never;
+    const corretora = await opcoesMotor.corretoraDe!(robo("ana"));
+    expect(corretora).toBeInstanceOf(BinanceCorretora);
+    expect(corretora.rede).toBe("testnet");
+    await expect(opcoesMotor.corretoraDe!(robo("beto"))).rejects.toThrow(/Contas e chaves/);
+  });
+
+  it("papel ou corretora trocada (testes): sem corretora por pessoa", () => {
+    const { opcoesMotor } = montarMotor(lerConfig({}), {}, registroDeTeste().registro);
+    expect(opcoesMotor.corretoraDe).toBeUndefined();
   });
 
   it("agente: HTTP quando há URL; senão o fixo configurado", () => {
