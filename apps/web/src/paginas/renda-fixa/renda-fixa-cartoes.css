@@ -1,0 +1,136 @@
+/* Renda fixa: cartões dos títulos e o detalhe de um título. */
+.rf-lista {
+  display: grid;
+  gap: var(--espaco-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rf-lista--lotes {
+  margin: var(--espaco-3) 0 0 var(--espaco-4);
+}
+.rf-cartao {
+  display: grid;
+  gap: var(--espaco-3);
+  width: 100%;
+  padding: var(--espaco-4);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  background: var(--superficie);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-curta) var(--curva),
+    transform var(--dur-curta) var(--curva);
+}
+.rf-cartao:hover {
+  border-color: var(--linha-forte);
+}
+.rf-cartao:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+.rf-grupo > summary {
+  list-style: none;
+}
+.rf-grupo > summary::-webkit-details-marker {
+  display: none;
+}
+.rf-cartao__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+}
+.rf-cartao__nome {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.rf-cartao__selos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.rf-cartao__numeros {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--espaco-3);
+  margin: 0;
+}
+.rf-cartao__numeros dt,
+.rf-detalhe__posicao dt {
+  font-size: 12px;
+  color: var(--apagado);
+}
+.rf-cartao__numeros dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.rf-cartao__falta {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  color: var(--atencao);
+  font-size: 13.5px;
+}
+.rf-cartao__rodape {
+  margin: 0;
+  font-size: 12.5px;
+}
+.rf-cartao__rodape svg {
+  display: inline;
+  vertical-align: -2px;
+}
+
+.rf-detalhe {
+  display: grid;
+  gap: var(--espaco-4);
+}
+.rf-detalhe__posicao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--espaco-3) var(--espaco-4);
+  margin: 0;
+}
+.rf-detalhe__posicao dd {
+  margin: 2px 0 0;
+  font-size: 17px;
+}
+.rf-detalhe__posicao p {
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+.rf-detalhe__projecao {
+  display: grid;
+  gap: var(--espaco-3);
+  padding-top: var(--espaco-4);
+  border-top: 1px solid var(--linha);
+}
+.rf-avisos {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--apagado);
+}
+.rf-avisos svg {
+  display: inline;
+  vertical-align: -2px;
+  color: var(--atencao);
+}
+.rf-premissas__lista {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 13px;
+  color: var(--apagado);
+}
+.rf-premissas {
+  align-items: end;
+}

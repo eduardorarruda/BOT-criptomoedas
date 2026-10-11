@@ -7,6 +7,7 @@ import {
   History,
   KeyRound,
   KeySquare,
+  Landmark,
   ListTree,
   ScrollText,
   ShieldAlert,
@@ -19,6 +20,7 @@ export type RotaApp =
   | "/mercado"
   | "/decisoes"
   | "/ordens"
+  | "/renda-fixa"
   | "/robos"
   | "/estrategias"
   | "/backtests"
@@ -47,6 +49,7 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
       { para: "/mercado", rotulo: "Mercado", icone: ChartCandlestick },
       { para: "/decisoes", rotulo: "Decisões", icone: ScrollText },
       { para: "/ordens", rotulo: "Ordens e posições", icone: ArrowLeftRight },
+      { para: "/renda-fixa", rotulo: "Renda fixa", icone: Landmark },
     ],
   },
   {
