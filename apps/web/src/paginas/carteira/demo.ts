@@ -120,6 +120,30 @@ const NEGOCIACOES = {
       { lado: "COMPRA", qtd: "3", preco: "139.4", taxa: "0.4182", origem: "robo", em: BASE + 400 * HORA },
     ],
   },
+  BNB: {
+    preco: "584.3",
+    extra: "0",
+    negs: [
+      { lado: "COMPRA", qtd: "0.4", preco: "561.2", taxa: "0.2245", origem: "manual", em: BASE + 60 * HORA },
+      { lado: "COMPRA", qtd: "0.2", preco: "598.7", taxa: "0.1197", origem: "robo", em: BASE + 360 * HORA },
+    ],
+  },
+  // Vendida inteira: saldo zero, só o resultado realizado (para o filtro "com resultado realizado").
+  ADA: {
+    preco: "0.3612",
+    extra: "0",
+    negs: [
+      { lado: "COMPRA", qtd: "900", preco: "0.3420", taxa: "0.3078", origem: "manual", em: BASE + 30 * HORA },
+      { lado: "VENDA", qtd: "900", preco: "0.3785", taxa: "0.3407", origem: "manual", em: BASE + 260 * HORA },
+    ],
+  },
+  LINK: {
+    preco: "11.92",
+    extra: "0",
+    negs: [
+      { lado: "COMPRA", qtd: "6", preco: "12.85", taxa: "0.0771", origem: "robo", em: BASE + 420 * HORA },
+    ],
+  },
 } satisfies Record<string, DadosMoeda>;
 
 const dadosDe = (ativo: string): DadosMoeda | undefined => (NEGOCIACOES as Record<string, DadosMoeda>)[ativo];
