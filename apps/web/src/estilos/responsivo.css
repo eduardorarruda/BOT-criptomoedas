@@ -14,9 +14,8 @@
     order: 10;
     flex-basis: 100%;
     justify-content: flex-start;
-    gap: var(--espaco-5);
-    padding: 6px 0 8px;
-    border-top: 1px solid var(--linha);
+    padding: 7px 0 8px;
+    border-top: 1px solid var(--linha-suave);
     overflow-x: auto;
   }
   .placar > div {
@@ -24,6 +23,18 @@
     align-items: baseline;
     gap: 6px;
     white-space: nowrap;
+  }
+  .placar > div:first-child {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 1180px) {
+  .grade-kpi--5 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .grade-kpi--5 .kpi--destaque {
+    grid-column: 1 / -1;
   }
 }
 
@@ -33,6 +44,9 @@
   }
   .lateral {
     display: none;
+  }
+  .app--recolhida .app__grade {
+    grid-template-columns: minmax(0, 1fr);
   }
   .barra-topo {
     padding: 0 var(--espaco-3);
@@ -58,15 +72,34 @@
   .metrica {
     padding: var(--espaco-3);
   }
+  /* no celular o placar vira três colunas iguais: tudo à vista, sem rolar de lado */
   .placar {
-    gap: var(--espaco-4);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+  .placar > div {
+    display: grid;
+    gap: 0;
+    padding: 0 var(--espaco-2);
   }
   .placar dd {
     font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .conexao {
-    font-size: 0;
-    gap: 0;
+    min-height: 26px;
+    padding: 0 8px;
+  }
+  .conexao__texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
   }
   .barra-topo__marca .marca__palavra {
     display: none;
@@ -87,6 +120,31 @@
   .cabecalho__acoes .botao {
     width: 100%;
   }
+  .grade-kpi,
+  .grade-kpi--3,
+  .grade-kpi--4,
+  .grade-kpi--5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kpi--destaque {
+    grid-column: 1 / -1;
+  }
+  .kpi {
+    padding: var(--espaco-3);
+  }
+  .kpi__valor {
+    font-size: 18px;
+  }
+  .kpi--destaque .kpi__valor {
+    font-size: 30px;
+  }
+  .kpi__grafico {
+    display: none;
+  }
+  .kpi--destaque .kpi__grafico {
+    display: block;
+    margin: auto calc(-1 * var(--espaco-3)) calc(-1 * var(--espaco-3));
+  }
 }
 
 /* ---------- gaveta (menu no celular) ---------- */
@@ -95,6 +153,9 @@
   width: min(300px, 86vw);
   height: 100dvh;
   max-height: none;
+  overflow: hidden;
+  border-right: 1px solid var(--linha);
+  background: var(--fundo-lateral);
   border-radius: 0 var(--raio-g) var(--raio-g) 0;
 }
 .gaveta[open] {
@@ -109,9 +170,10 @@
 .gaveta__corpo {
   display: flex;
   flex-direction: column;
-  gap: var(--espaco-5);
-  min-height: 100%;
-  padding: var(--espaco-5) var(--espaco-3) var(--espaco-4);
+  height: 100%;
+}
+.gaveta__corpo .lateral__rolagem {
+  flex: 1;
 }
 
 /* ---------- abertura ---------- */
