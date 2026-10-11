@@ -23,7 +23,7 @@ export function Confirmar({
   return (
     <Dialogo aberto={aberto} aoFechar={aoCancelar} titulo={titulo} descricao={children}>
       <div className="formulario__acoes">
-        <Botao variante="fantasma" onClick={aoCancelar} autoFocus>
+        <Botao variante="fantasma" onClick={aoCancelar} disabled={carregando} autoFocus>
           Cancelar
         </Botao>
         <Botao variante="perigo" carregando={carregando} onClick={aoConfirmar}>

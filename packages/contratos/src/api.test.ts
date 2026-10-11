@@ -6,6 +6,7 @@ import {
   AutomacaoEsquema,
   BacktestEsquema,
   ConhecimentoWebhookEsquema,
+  DocumentoEsquema,
   DocumentoIngeridoEsquema,
   ResumoEsquema,
   SaudeN8nEsquema,
@@ -74,6 +75,19 @@ describe("contrato da API", () => {
     expect(TokenCriadoEsquema.safeParse(token).success).toBe(false);
     const doc = { id: "d1", fonte: "nota", titulo: "x", url: null, publicadoEm: 1, criadoEm: 1 };
     expect(DocumentoIngeridoEsquema.safeParse({ ...doc, novo: true, trechos: 2 }).success).toBe(true);
+  });
+
+  it("url de documento só passa se for http(s): o resto vira null em vez de virar link", () => {
+    const doc = { id: "d1", fonte: "noticia", titulo: "x", publicadoEm: 1, criadoEm: 1 };
+    const url = (u: unknown) => DocumentoEsquema.parse({ ...doc, url: u }).url;
+    expect(url("https://binance.com/pt-BR/support/announcement/x")).toBe(
+      "https://binance.com/pt-BR/support/announcement/x",
+    );
+    expect(url("http://exemplo.com")).toBe("http://exemplo.com");
+    expect(url("javascript:alert(document.cookie)")).toBeNull();
+    expect(url("data:text/html,<script>alert(1)</script>")).toBeNull();
+    expect(url("JaVaScRiPt:alert(1)")).toBeNull();
+    expect(url(null)).toBeNull();
   });
 
   it("automação sem execução tem resultado 'nunca'", () => {

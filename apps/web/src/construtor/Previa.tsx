@@ -27,7 +27,7 @@ function EmPalavras({ estado }: { readonly estado: EstadoConstrutor }) {
       </p>
       <ul role="list" className="previa__linhas">
         {linhas(estado.entrada).map((l, i) => (
-          <li key={i} style={{ paddingInlineStart: `${l.nivel * 14}px` }}>
+          <li key={`${i}-${l.nivel}-${l.texto}`} style={{ paddingInlineStart: `${l.nivel * 14}px` }}>
             {l.texto}
           </li>
         ))}

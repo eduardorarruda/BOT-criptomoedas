@@ -94,11 +94,20 @@ export type TokenApi = z.infer<typeof TokenApiEsquema>;
 export const TokenCriadoEsquema = TokenApiEsquema.extend({ token: z.string().min(16) });
 export type TokenCriado = z.infer<typeof TokenCriadoEsquema>;
 
+/**
+ * A tela transforma a url em link: só http(s) passa. Qualquer outra coisa (javascript:,
+ * data:...) vira null — o documento continua na lista, sem link, em vez de virar XSS.
+ */
+const UrlDeDocumento = z
+  .url({ protocol: /^https?$/ })
+  .nullable()
+  .catch(null);
+
 export const DocumentoEsquema = z.object({
   id: Id,
   fonte: FonteDocumento,
   titulo: z.string(),
-  url: z.string().nullable(),
+  url: UrlDeDocumento,
   publicadoEm: Instante,
   criadoEm: Instante,
 });

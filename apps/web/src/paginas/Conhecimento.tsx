@@ -13,6 +13,7 @@ import { useDocumentos } from "../ganchos/consultas";
 import { useCriarNota } from "../ganchos/mutacoes";
 import { FONTE_DOCUMENTO } from "../lib/rotulos";
 import { formatarData } from "../lib/tempo";
+import { linkSeguro } from "../lib/link";
 
 type Filtro = "todas" | FonteDocumento;
 const FILTROS: readonly { valor: Filtro; rotulo: string }[] = [
@@ -127,21 +128,24 @@ export function Conhecimento() {
             </EstadoVazio>
           ) : null}
           <ul role="list" className="documentos">
-            {docs.map((d) => (
-              <li key={d.id} className="documento">
-                <Selo tom={d.fonte === "nota" ? "marca" : "neutro"}>{FONTE_DOCUMENTO[d.fonte]}</Selo>
-                <p className="documento__titulo">
-                  {d.url ? (
-                    <a href={d.url} target="_blank" rel="noopener noreferrer">
-                      {d.titulo} <ExternalLink size={13} aria-label="(abre em outra aba)" />
-                    </a>
-                  ) : (
-                    d.titulo
-                  )}
-                </p>
-                <p className="documento__meta apagado">{formatarData(d.publicadoEm)}</p>
-              </li>
-            ))}
+            {docs.map((d) => {
+              const link = linkSeguro(d.url);
+              return (
+                <li key={d.id} className="documento">
+                  <Selo tom={d.fonte === "nota" ? "marca" : "neutro"}>{FONTE_DOCUMENTO[d.fonte]}</Selo>
+                  <p className="documento__titulo">
+                    {link ? (
+                      <a href={link} target="_blank" rel="noopener noreferrer">
+                        {d.titulo} <ExternalLink size={13} aria-label="(abre em outra aba)" />
+                      </a>
+                    ) : (
+                      d.titulo
+                    )}
+                  </p>
+                  <p className="documento__meta apagado">{formatarData(d.publicadoEm)}</p>
+                </li>
+              );
+            })}
           </ul>
         </Painel>
         <Painel titulo="Nova nota" id="titulo-nota">
