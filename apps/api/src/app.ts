@@ -16,6 +16,7 @@ import { chaveDoCliente } from "./chave-cliente.js";
 import type { Dependencias } from "./dependencias.js";
 import { corpoDoErro, ErroApi } from "./erros.js";
 import { criarLog } from "./log.js";
+import { rotasAoVivo } from "./rotas/aovivo.js";
 import { rotasAutomacoes } from "./rotas/automacoes.js";
 import { rotasBacktests } from "./rotas/backtests.js";
 import { rotasBinance } from "./rotas/binance.js";
@@ -108,6 +109,7 @@ export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger):
         rotasBinance,
         rotasSaude,
         rotasTempoReal,
+        rotasAoVivo,
       ]) {
         await tipada.register(rotas, { deps });
       }

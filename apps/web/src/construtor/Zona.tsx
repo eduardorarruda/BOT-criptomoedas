@@ -19,6 +19,7 @@ export function ZonaSoltar({
   if (!podeReceber(raiz, destinoId, movendo)) return null;
 
   return (
+    // eslint-disable-next-line jsx-a11y-x/no-static-element-interactions -- zona de soltar do mouse; o teclado move blocos pelos botões do construtor
     <div
       className={`zona ${sobre ? "zona--sobre" : ""}`}
       data-testid={`zona-${destinoId}-${indice}`}

@@ -102,8 +102,10 @@
 .metrica--destaque dd {
   font-size: 36px;
 }
-.metrica__nota {
+.metrica .metrica__nota,
+.metrica--destaque .metrica__nota {
   font-size: 12px;
+  line-height: 1.5;
   color: var(--apagado);
 }
 .metricas--simulacao {
@@ -150,8 +152,8 @@
 .lista-robos__item:last-child {
   border-bottom: 0;
 }
-.lista-robos__item--pausado {
-  opacity: 0.6;
+.lista-robos__item--pausado .lista-robos__nome {
+  color: var(--apagado);
 }
 .lista-robos__nome {
   font-weight: 550;
@@ -177,8 +179,15 @@
   padding: var(--espaco-5) 0;
   border-bottom: 1px solid var(--linha);
 }
-.robo--pausado .robo__identidade {
-  opacity: 0.65;
+/* Pausado: o nome apaga (sem opacidade, que derrubaria o contraste) e o selo diz o porquê. */
+.robo--pausado .robo__nome {
+  color: var(--apagado);
+}
+.robo__acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--espaco-2);
 }
 .robo__nome {
   font-family: var(--fonte-titulo);
@@ -231,6 +240,9 @@
 @media (max-width: 900px) {
   .robo {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .robo__acoes {
+    flex-direction: row;
   }
   .lista-robos__item {
     grid-template-columns: minmax(0, 1fr) auto;

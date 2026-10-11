@@ -64,10 +64,20 @@ const pagina = <P extends string, M extends Record<string, ComponentType>>(
   nome: keyof M & string,
 ) => createRoute({ getParentRoute: () => app, path, component: lazyRouteComponent(carregar, nome) });
 
+/** Ao vivo: `?robo=<id>` abre direto num robô (sem ele, todos). */
+const aoVivo = createRoute({
+  getParentRoute: () => app,
+  path: "/aovivo",
+  validateSearch: (s: Record<string, unknown>): { robo?: string } =>
+    typeof s.robo === "string" && s.robo.length > 0 && s.robo.length <= 64 ? { robo: s.robo } : {},
+  component: lazyRouteComponent(() => import("./paginas/aovivo/AoVivo"), "AoVivo"),
+});
+
 const arvore = raiz.addChildren([
   entrar,
   app.addChildren([
     pagina("/", () => import("./paginas/VisaoGeral"), "VisaoGeral"),
+    aoVivo,
     pagina("/mercado", () => import("./paginas/Mercado"), "Mercado"),
     pagina("/decisoes", () => import("./paginas/Decisoes"), "Decisoes"),
     pagina("/ordens", () => import("./paginas/Ordens"), "Ordens"),

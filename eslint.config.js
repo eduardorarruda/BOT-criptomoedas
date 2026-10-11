@@ -1,6 +1,8 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
+// Fork mantido (es-tooling) do eslint-plugin-jsx-a11y, que ainda não aceita ESLint 10.
+import jsxA11y from "eslint-plugin-jsx-a11y-x";
 
 export default tseslint.config(
   { ignores: ["**/dist/**", "**/coverage/**", "**/node_modules/**", "infra/n8n/**", "index.js"] },
@@ -30,6 +32,15 @@ export default tseslint.config(
           ],
         },
       ],
+    },
+  },
+  {
+    files: ["apps/web/**/*.tsx"],
+    ...jsxA11y.configs.strict,
+    rules: {
+      ...jsxA11y.configs.strict.rules,
+      // role="list" em ul/ol sem marcador é de propósito: o Safari tira a semântica de lista.
+      "jsx-a11y-x/no-redundant-roles": ["error", { ul: ["list"], ol: ["list"] }],
     },
   },
   {

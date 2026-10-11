@@ -10,6 +10,12 @@ import { Enso } from "../Enso";
  * ordem. Quando a análise termina, ele avisa e a decisão entra logo abaixo.
  */
 const FERRAMENTA: Record<string, { readonly rotulo: string; readonly icone: LucideIcon }> = {
+  // ferramentas do apps/agente
+  retrato_mercado: { rotulo: "Mercado", icone: Activity },
+  buscar_conhecimento: { rotulo: "Conhecimento", icone: Newspaper },
+  historico_decisoes: { rotulo: "Diário", icone: History },
+  posicao_e_orcamento: { rotulo: "Orçamento", icone: Landmark },
+  // roteiro do modo de demonstração
   conferir_regra: { rotulo: "Regra", icone: ListTree },
   buscar_casos_parecidos: { rotulo: "Diário", icone: History },
   ler_noticias: { rotulo: "Notícias", icone: Newspaper },
@@ -17,6 +23,22 @@ const FERRAMENTA: Record<string, { readonly rotulo: string; readonly icone: Luci
   medir_volatilidade: { rotulo: "Volatilidade", icone: Activity },
 };
 const PADRAO = { rotulo: "Consulta", icone: Search };
+
+const FIM = {
+  comprar: { texto: "Propôs comprar. O risco tem a palavra final.", classe: "" },
+  vender: { texto: "Propôs vender. O risco tem a palavra final.", classe: "" },
+  aguardar: { texto: "Propôs aguardar: nenhuma ordem sai desta análise.", classe: "" },
+  falhou: { texto: "A análise falhou. Sem ela, o robô não opera.", classe: "pensando__fim--falhou" },
+} as const;
+
+function Fim({ resultado }: { readonly resultado: AnaliseAoVivo["resultado"] }) {
+  const f = resultado ? FIM[resultado] : null;
+  return (
+    <p className={`pensando__fim ${f?.classe ?? ""}`}>
+      {f?.texto ?? "Análise entregue ao risco, que tem a palavra final."}
+    </p>
+  );
+}
 
 export function Pensando({
   analise,
@@ -75,9 +97,7 @@ export function Pensando({
           </li>
         ) : null}
       </ol>
-      {analise.concluida ? (
-        <p className="pensando__fim">O risco já avaliou a proposta. A decisão está logo abaixo.</p>
-      ) : null}
+      {analise.concluida ? <Fim resultado={analise.resultado} /> : null}
     </article>
   );
 }

@@ -1,0 +1,90 @@
+/*
+ * Micro-interações: resposta imediata ao passar, focar e apertar. Curtas (140 ms),
+ * sem pulo de layout, e todas caem para 0,01 ms com prefers-reduced-motion (base.css).
+ */
+
+/* botões: o primário clareia, todos afundam um pouco ao apertar */
+.botao--primario:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--marca) 88%, var(--texto));
+}
+.botao:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+}
+.botao-icone {
+  transition:
+    color var(--dur-curta),
+    background var(--dur-curta),
+    transform var(--dur-curta) var(--curva);
+}
+.botao-icone:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+/* menu: o ícone anda um pixel no hover; o indicador do item ativo cresce ao entrar */
+.navegacao__item {
+  transition:
+    color var(--dur-curta),
+    background var(--dur-curta),
+    transform var(--dur-curta) var(--curva);
+}
+.navegacao__item svg {
+  transition: transform var(--dur-curta) var(--curva);
+}
+.navegacao__item:hover svg {
+  transform: translateX(1px);
+}
+.navegacao__item:active {
+  transform: scale(0.985);
+}
+.navegacao__item--ativo::before {
+  transform-origin: center;
+  animation: indicador-entra var(--dur-media) var(--curva);
+}
+@keyframes indicador-entra {
+  from {
+    transform: scaleY(0.2);
+    opacity: 0;
+  }
+}
+
+/* parada total: o botão mais sério da tela responde como botão */
+.pilula-parada {
+  transition:
+    background var(--dur-curta),
+    transform var(--dur-curta) var(--curva);
+}
+.pilula-parada:active {
+  transform: scale(0.97);
+}
+
+/* links com seta: a seta aponta para onde vai */
+.link-seta {
+  transition: color var(--dur-curta);
+}
+.link-seta svg {
+  transition: transform var(--dur-curta) var(--curva);
+}
+.link-seta:hover svg {
+  transform: translateX(2px);
+}
+
+/* tabelas: a linha sob o ponteiro se destaca, para ler da esquerda à direita sem se perder */
+.tabela tbody tr {
+  transition: background var(--dur-curta);
+}
+.tabela tbody tr:hover {
+  background: color-mix(in oklab, var(--superficie-2) 70%, transparent);
+}
+
+/* rádios com cara de botão (segmentado): o selecionado desliza a sombra */
+.segmentado__opcao span,
+.alternador__opcao span {
+  transition:
+    background var(--dur-curta),
+    color var(--dur-curta),
+    box-shadow var(--dur-curta);
+}
+.segmentado__opcao:hover input:not(:checked) + span,
+.alternador__opcao:hover input:not(:checked) + span {
+  color: var(--texto);
+}

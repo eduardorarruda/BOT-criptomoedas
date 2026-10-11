@@ -21,7 +21,8 @@ describe("motor de ponta a ponta (papel + portas em memória)", () => {
       dec(94).minus(dec(94).times(0.98)).plus(dec(94).times(0.001)).plus(dec(94).times(0.98).times(0.001)),
     );
     expect(perda.lte(10)).toBe(true);
-    expect(c.eventos.doTipo("ordem")).toHaveLength(1);
+    // a ordem aparece ao sair (PENDENTE) e de novo com a resposta da corretora
+    expect(c.eventos.doTipo("ordem").map((e) => e.ordem.estado)).toEqual(["PENDENTE", "PREENCHIDA"]);
     expect(c.eventos.doTipo("decisao").at(-1)?.decisao.estado).toBe("executada");
     expect(c.eventos.doTipo("preco").length).toBeGreaterThan(0);
   });

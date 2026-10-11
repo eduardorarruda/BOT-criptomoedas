@@ -19,6 +19,7 @@ export function Paleta() {
       </p>
       <ul role="list" className="paleta__blocos" aria-labelledby="titulo-paleta">
         {BLOCOS.map(({ bloco, icone: Icone, dica }) => (
+          // eslint-disable-next-line jsx-a11y-x/no-noninteractive-element-interactions -- arrastar é atalho do mouse; pelo teclado, os botões "+" de cada grupo inserem o bloco
           <li
             key={bloco}
             className="paleta__bloco"

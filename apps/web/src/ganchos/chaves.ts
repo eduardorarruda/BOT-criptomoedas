@@ -22,4 +22,5 @@ export const chaves = {
   backtest: (id: string) => ["backtest", id] as const,
   documentos: ["documentos"] as const,
   automacoes: ["automacoes"] as const,
+  aoVivo: (roboId?: string) => ["aovivo", roboId ?? "todos"] as const,
 };

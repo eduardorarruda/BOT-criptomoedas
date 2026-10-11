@@ -27,6 +27,7 @@ export function Dialogo({ aberto, aoFechar, titulo, descricao, children, largo =
   }, [aberto]);
 
   return (
+    // eslint-disable-next-line jsx-a11y-x/click-events-have-key-events, jsx-a11y-x/no-noninteractive-element-interactions -- clicar no fundo fecha; pelo teclado, Esc fecha (onCancel)
     <dialog
       ref={ref}
       className={`dialogo ${largo ? "dialogo--largo" : ""}`}

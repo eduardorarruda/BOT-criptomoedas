@@ -85,7 +85,7 @@ export function BarraTopo({
 }) {
   const claro = tema.tema === "claro";
   return (
-    <div className="barra-topo">
+    <header className="barra-topo">
       <button
         type="button"
         className="botao-icone barra-topo__menu"
@@ -111,6 +111,6 @@ export function BarraTopo({
           {claro ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
         </button>
       </div>
-    </div>
+    </header>
   );
 }

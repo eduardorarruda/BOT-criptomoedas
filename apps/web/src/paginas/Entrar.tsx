@@ -102,6 +102,7 @@ export function Entrar() {
               value={codigo}
               onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
               className="campo--codigo"
+              // eslint-disable-next-line jsx-a11y-x/no-autofocus -- o campo do código aparece depois do envio; o foco vai para ele
               autoFocus
             />
           )}

@@ -38,21 +38,21 @@ function Metricas() {
           <dd>
             <Dinheiro valor={r.resultadoHoje} sinal colorir animar />
           </dd>
-          <p className="metrica__nota">inclui posições abertas pelo preço atual</p>
+          <dd className="metrica__nota">inclui posições abertas pelo preço atual</dd>
         </div>
         <div className="metrica">
           <dt>Exposição</dt>
           <dd>
             <NumeroAnimado valor={r.exposicao} formatar={(t) => formatarDinheiro(t)} />
           </dd>
-          <p className="metrica__nota">em posições abertas</p>
+          <dd className="metrica__nota">em posições abertas</dd>
         </div>
         <div className="metrica">
           <dt>Maior queda</dt>
           <dd>
             <Dinheiro valor={queda} colorir />
           </dd>
-          <p className="metrica__nota">nos últimos 30 dias</p>
+          <dd className="metrica__nota">nos últimos 30 dias</dd>
         </div>
         <div className="metrica">
           <dt>Taxas hoje</dt>
@@ -63,14 +63,14 @@ function Metricas() {
               <span className="apagado">—</span>
             )}
           </dd>
-          <p className="metrica__nota">pagas à corretora</p>
+          <dd className="metrica__nota">pagas à corretora</dd>
         </div>
         <div className="metrica">
           <dt>Custo de IA hoje</dt>
           <dd>
             <NumeroAnimado valor={r.custoIaHoje} formatar={formatarCustoIa} />
           </dd>
-          <p className="metrica__nota">análises do agente</p>
+          <dd className="metrica__nota">análises do agente</dd>
         </div>
       </dl>
     </>

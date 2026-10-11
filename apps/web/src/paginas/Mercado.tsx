@@ -1,14 +1,17 @@
-import type { Intervalo } from "@zentrade/contratos/esquemas";
-import { useMemo, useState } from "react";
+import type { DecisaoDTO, Intervalo } from "@zentrade/contratos/esquemas";
+import { useCallback, useMemo, useState } from "react";
+import type { CoresGrafico } from "../componentes/graficos/cores";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
-import { ErroCarregar, Esqueleto } from "../componentes/Estados";
+import { CandlestickChart } from "lucide-react";
+import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
 import { GraficoCandles } from "../componentes/graficos/GraficoCandles";
-import { estiloDecisao } from "../componentes/graficos/velas";
+import { estiloDecisao, marcadores } from "../componentes/graficos/velas";
 import { PrecoAoVivo } from "../componentes/PrecoAoVivo";
 import { Segmentado } from "../componentes/Segmentado";
 import { Selo } from "../componentes/Selo";
 import { useCandles, useDecisoes, useRobos } from "../ganchos/consultas";
 import { lojaPrecos } from "../ganchos/lojas";
+import { useTelaEstreita } from "../ganchos/useTelaEstreita";
 import { formatarPreco } from "../lib/formatar";
 import { useLoja } from "../lib/loja";
 import { ACAO, ESTADO_DECISAO } from "../lib/rotulos";
@@ -16,11 +19,15 @@ import { formatarDataHora } from "../lib/tempo";
 
 const SIMBOLOS_PADRAO = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const INTERVALOS: readonly { valor: Intervalo; rotulo: string }[] = [
+  { valor: "1m", rotulo: "1 min" },
+  { valor: "5m", rotulo: "5 min" },
   { valor: "15m", rotulo: "15 min" },
   { valor: "1h", rotulo: "1 h" },
   { valor: "4h", rotulo: "4 h" },
   { valor: "1d", rotulo: "1 dia" },
 ];
+
+const SEM_DECISOES: readonly DecisaoDTO[] = [];
 
 const LEGENDA = [
   { rotulo: "Compra", classe: "legenda--compra" },
@@ -41,11 +48,19 @@ export function Mercado() {
   const simbolo = escolhido ?? simbolos[0] ?? "BTCUSDT";
   const [intervalo, setIntervalo] = useState<Intervalo>("1h");
   const velas = useCandles(simbolo, intervalo);
-  const todas = useDecisoes({ limite: 200 }).data ?? [];
-  const idsDoSimbolo = new Set(robos.filter((r) => r.simbolo === simbolo).map((r) => r.id));
-  const decisoes = todas.filter((d) => idsDoSimbolo.has(d.roboId));
+  const todas = useDecisoes({ limite: 200 }).data ?? SEM_DECISOES;
+  const decisoes = useMemo(() => {
+    const ids = new Set((dadosRobos ?? []).filter((r) => r.simbolo === simbolo).map((r) => r.id));
+    return todas.filter((d) => ids.has(d.roboId));
+  }, [todas, dadosRobos, simbolo]);
+  const estreita = useTelaEstreita();
+  const marcar = useCallback(
+    (cores: CoresGrafico, inicio: number) => marcadores(decisoes, intervalo, cores, inicio, estreita),
+    [decisoes, intervalo, estreita],
+  );
   const precoAoVivo = useLoja(lojaPrecos, (s) => s[simbolo]);
   const ultimaVela = velas.data?.at(-1);
+  const rotuloIntervalo = INTERVALOS.find((i) => i.valor === intervalo)?.rotulo ?? intervalo;
 
   return (
     <>
@@ -70,11 +85,20 @@ export function Mercado() {
         </div>
         {velas.isPending ? <Esqueleto altura={420} rotulo="Carregando os candles" /> : null}
         {velas.error ? <ErroCarregar erro={velas.error} tentarDeNovo={() => void velas.refetch()} /> : null}
-        {velas.data ? (
+        {velas.data?.length === 0 ? (
+          <EstadoVazio
+            icone={CandlestickChart}
+            titulo={`Ainda não há candles de ${rotuloIntervalo} gravados`}
+          >
+            O motor grava os candles do intervalo de cada robô e os de 1 min de cada par que ele acompanha.
+            Escolha outro intervalo ou crie um robô em {simbolo.replace("USDT", "/USDT")} neste intervalo.
+          </EstadoVazio>
+        ) : null}
+        {velas.data?.length ? (
           <GraficoCandles
             velas={velas.data}
             intervalo={intervalo}
-            decisoes={decisoes}
+            marcar={marcar}
             precoAoVivo={precoAoVivo}
             rotulo={`Gráfico de candles de ${simbolo} em ${intervalo}: ${velas.data.length} velas, último preço ${formatarPreco(precoAoVivo?.preco ?? ultimaVela?.fecha ?? "")}, ${decisoes.length} decisões marcadas. A tabela abaixo lista as decisões.`}
           />
@@ -87,6 +111,10 @@ export function Mercado() {
             </li>
           ))}
         </ul>
+        <p className="legenda__nota">
+          Na mesma vela, as marcas se juntam: “Compra ×2” são duas compras; “Barrada +1” é uma barrada e mais
+          uma decisão de outro tipo. A tabela abaixo mostra cada uma.
+        </p>
       </Painel>
       <Painel titulo="Decisões neste par" id="titulo-decisoes-par">
         {decisoes.length === 0 ? (

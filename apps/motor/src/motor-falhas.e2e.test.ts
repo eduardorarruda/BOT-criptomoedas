@@ -60,7 +60,7 @@ describe("motor: falhas não passam em silêncio", () => {
     expect(ordem?.resultado?.motivo).toMatch(/Confira/);
     expect(c.decisoes.todas()[0]?.estado).toBe("falhou");
     expect(c.erros.map((e) => e.msg)).toContain("falha ao enviar ordem: estado incerto");
-    expect(c.eventos.doTipo("ordem")[0]?.ordem.estado).toBe("PENDENTE");
+    expect(c.eventos.doTipo("ordem").at(-1)?.ordem.estado).toBe("PENDENTE");
 
     // No candle seguinte, o robô confere a ordem incerta na corretora antes de decidir:
     // ela tinha entrado, então a posição aparece e não há compra em dobro.
@@ -117,7 +117,7 @@ describe("motor: falhas não passam em silêncio", () => {
     await c.aoVivo.iniciar();
     await c.fecharIntervalo(94);
     expect(c.decisoes.todas()[0]?.estado).toBe("falhou");
-    expect(c.eventos.doTipo("ordem")[0]?.ordem.motivo).toMatch(/-2010/);
+    expect(c.eventos.doTipo("ordem").at(-1)?.ordem.motivo).toMatch(/-2010/);
   });
 
   it("erro inesperado numa decisão vai para o registro e a saúde, e o robô continua", async () => {

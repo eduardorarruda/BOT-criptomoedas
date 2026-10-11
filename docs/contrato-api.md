@@ -81,6 +81,19 @@ Detalhes que valem para várias rotas:
 - **`/automacoes`:** a API não consulta o n8n. O status vem do que ela viu: webhooks assinados recebidos (`zentrade-vigia-saude` → `/webhooks/n8n/saude`, `zentrade-noticias` → `/conhecimento`, `zentrade-aprovacao` → `/aprovacao`) e avisos que ela enviou (`zentrade-aprovacao`, `zentrade-alertas`). Guardado no Redis em `zentrade:automacoes`. Fluxo agendado sem sinal há mais de 3 intervalos aparece com `ativa: false`. Relatório diário e revalidação semanal usam a API com token e não aparecem.
 - **`/tempo-real`:** com sessão, só aceita a origem `ZENTRADE_ORIGEM_WEB`. A cada 30 s a API confere se a sessão ainda vale (ou se o token não foi revogado); se não, fecha a conexão com o código **4401**. Se não der para conferir (banco fora), fecha com **1011**.
 
+### Ao vivo (`/aovivo`)
+
+Para a tela "Ao vivo" abrir já preenchida, a API guarda os últimos eventos de cada robô que passaram pelo canal `zentrade:eventos`. O WebSocket `/tempo-real` continua sendo o fluxo ao vivo; estas rotas só contam o que aconteceu há pouco.
+
+| Método e caminho               | Consulta                        | Resposta                                                                                                          |
+| ------------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `GET /aovivo/:roboId/recentes` | `?limite` (1 a 400, padrão 400) | `{ eventos: [{ recebidoEm, evento }] }` do mais antigo ao mais novo; robô de outra pessoa ou inexistente: **404** |
+| `GET /aovivo/recentes`         | `?limite` (1 a 400, padrão 400) | o mesmo, juntando todos os robôs da pessoa, ordenado por `recebidoEm`                                             |
+
+- **Quais eventos:** `candle`, `sinal`, `analise`, `decisao`, `risco`, `ordem` e `posicao`. `preco` e `saude` não são de um robô e não entram (a tela recebe os preços pelo WebSocket). `evento` segue `EventoEsquema`; `recebidoEm` é a hora (ms) em que a API recebeu.
+- **Guardado no Redis:** lista `zentrade:aovivo:robo:<roboId>` (mais novo primeiro), com teto de 400 e validade de 24 h renovada a cada evento. A ordem só diz a decisão: o robô vem do evento da decisão (lembrado em `zentrade:aovivo:decisao:<decisaoId>`, 24 h) ou, se a API não o viu, do banco. Gravação em fila, na ordem de chegada.
+- **É memória curta, não fonte da verdade:** sem Redis, o evento não entra no histórico (fica no log) e as rotas respondem 500; decisões, ordens e posição continuam no banco e nas rotas de sempre. Escopo `leitura`.
+
 ## Webhooks (`/webhooks/n8n`, assinados, sem sessão)
 
 | Caminho                           | Corpo                                         | Efeito                                                         |

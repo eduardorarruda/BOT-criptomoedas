@@ -84,9 +84,11 @@ describe("motor com as portas do banco e o Redis (papel, ponta a ponta)", () => 
     expect(gravados.length).toBeGreaterThanOrEqual(31); // histórico + o candle fechado
     const tipos = await ate(
       async () => eventos.map((e) => e.tipo),
-      (t) => t.includes("ordem") && t.includes("decisao"),
+      (t) => t.includes("ordem") && t.includes("decisao") && t.includes("posicao"),
     );
-    expect(tipos).toEqual(expect.arrayContaining(["preco", "decisao", "ordem", "saude"]));
+    expect(tipos).toEqual(
+      expect.arrayContaining(["preco", "decisao", "ordem", "saude", "candle", "sinal", "analise", "posicao"]),
+    );
   });
 
   it("reinício com ordem pendente: o motor novo confere na corretora e não compra em dobro", async () => {

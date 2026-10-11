@@ -1,5 +1,4 @@
 import { EventoEsquema } from "@zentrade/contratos/esquemas";
-import { EventoAnaliseEsquema } from "./esquemas";
 import type { EventoTela, OuvintesTempoReal } from "./fonte";
 
 /**
@@ -18,9 +17,7 @@ export function interpretarEvento(dados: string): EventoTela | null {
     return null;
   }
   const evento = EventoEsquema.safeParse(bruto);
-  if (evento.success) return evento.data;
-  const analise = EventoAnaliseEsquema.safeParse(bruto);
-  return analise.success ? analise.data : null;
+  return evento.success ? evento.data : null;
 }
 
 export function urlTempoReal(local: Pick<Location, "protocol" | "host"> = window.location): string {

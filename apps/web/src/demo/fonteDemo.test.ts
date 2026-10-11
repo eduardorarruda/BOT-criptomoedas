@@ -148,9 +148,13 @@ describe("fonte demo: decisões", () => {
     vi.advanceTimersByTime(1100);
     const tipos = eventos.map((e) => e.tipo);
     expect(tipos).toContain("preco");
-    const etapas = eventos.filter((e) => e.tipo === "analise" && !e.concluida);
-    expect(etapas.length).toBe(5);
     const fim = eventos.find((e) => e.tipo === "analise" && e.concluida);
+    const etapas = eventos.filter((e) => e.tipo === "analise" && e.etapa);
+    expect(etapas.length).toBe(5);
+    // a mesma sequência do motor: candle → sinal → início da análise → etapas → fim → decisão
+    const ordem = eventos.map((e) => e.tipo).filter((t) => t !== "preco");
+    expect(ordem.slice(0, 3)).toEqual(["candle", "sinal", "analise"]);
+    expect(fim && "resultado" in fim ? fim.resultado : null).toBe("comprar");
     expect(fim).toBeDefined();
     expect(tipos).toContain("decisao");
     parar();

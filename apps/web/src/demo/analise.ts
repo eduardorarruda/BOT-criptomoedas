@@ -1,6 +1,6 @@
 import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { dec, precoAlvo, precoStop } from "@zentrade/dominio";
-import type { EventoAnalise } from "../api/esquemas";
+import type { EventoAnalise } from "@zentrade/contratos/esquemas";
 import { formatarDinheiro, formatarPreco } from "../lib/formatar";
 import { PROPOSTAS } from "./propostas";
 
@@ -98,5 +98,33 @@ export function decisaoDaAnalise(
     estado,
     ...(estado === "executada" ? { ordemId: `o-${id}` } : {}),
     custoIaUsd: "0.0158",
+  };
+}
+
+/** Venda da posição inteira pelo alvo: o agente concorda e o risco não barra saída. */
+export function decisaoDeVenda(
+  id: string,
+  robo: RoboDTO,
+  preco: string,
+  em: number,
+  quantidade: string,
+): DecisaoDTO {
+  const base = propostaPara(robo.simbolo);
+  const estado = estadoInicial(robo, true);
+  return {
+    id,
+    roboId: robo.id,
+    em,
+    sinal: { acao: "VENDER", explicacao: `preço ${formatarPreco(preco)} chegou ao alvo líquido` },
+    proposta: {
+      ...base,
+      acao: "vender",
+      justificativa: "O alvo líquido foi atingido e nada no diário nem nas notícias pede para segurar.",
+    },
+    quantidade,
+    preco,
+    risco: { aprovada: true, barreiras: [] },
+    estado,
+    custoIaUsd: "0.0121",
   };
 }

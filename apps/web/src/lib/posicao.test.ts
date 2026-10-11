@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { naoRealizado, precoMedioExecucoes, taxaTotal, temQuantidade } from "./posicao";
+import { distancia, naoRealizado, precoMedioExecucoes, taxaTotal, temQuantidade, variacao } from "./posicao";
 
 describe("contas de posição", () => {
   it("calcula o resultado não realizado pelo preço atual", () => {
@@ -29,5 +29,12 @@ describe("contas de posição", () => {
   it("diz se há quantidade", () => {
     expect(temQuantidade("0")).toBe(false);
     expect(temQuantidade("0.0001")).toBe(true);
+  });
+
+  it("variação desde o preço médio e distância até stop e alvo", () => {
+    expect(variacao("100", "101.25")).toBe("0.012500");
+    expect(variacao("0", "5")).toBe("0");
+    expect(distancia("100", "98")).toBe("-0.020000");
+    expect(distancia("0", "98")).toBe("0");
   });
 });

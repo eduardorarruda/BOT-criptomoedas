@@ -1,12 +1,12 @@
-import type { DecisaoDTO, OrdemDTO, RoboDTO } from "@zentrade/contratos/esquemas";
-import { dec, validarEstrategia } from "@zentrade/dominio";
+import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
+import { validarEstrategia } from "@zentrade/dominio";
 import { ErroApi } from "../api/erros";
 import type { Backtest } from "../api/esquemas";
 import type { Fonte, OuvintesTempoReal } from "../api/fonte";
 import { criarAleatorio, type Aleatorio } from "./aleatorio";
-import { decisaoDaAnalise, etapasPara, eventoEtapa } from "./analise";
 import { ehSimboloDemo, criarMercado } from "./mercado";
-import { estadoInicialDemo, exposicaoAtual, posicaoDTO, resumoDemo, type EstadoDemo } from "./estado";
+import { estadoInicialDemo, posicaoDTO, resumoDemo, type EstadoDemo } from "./estado";
+import { criarSimulacao } from "./simulacao";
 import { USUARIO_DEMO } from "./dados";
 import { simularBacktest } from "./backtestDemo";
 import { paraDominio } from "../lib/estrategia";
@@ -65,9 +65,7 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
   const mercado = criarMercado(aleatorio);
   let estado: EstadoDemo = { ...estadoInicialDemo(agora()), usuario: lerSessao() ? USUARIO_DEMO : null };
   const ouvintes = new Set<OuvintesTempoReal>();
-  let relogios: ReturnType<typeof setInterval>[] = [];
   let contador = 0;
-  let vez = 0;
 
   const atraso = async (): Promise<void> => {
     const ms = latMin + aleatorio() * (latMax - latMin);
@@ -77,6 +75,15 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
   const mudar = (f: (e: EstadoDemo) => EstadoDemo): void => {
     estado = f(estado);
   };
+  const simulacao = criarSimulacao({
+    agora,
+    mercado,
+    estado: () => estado,
+    mudar,
+    transmitir: (e) => ouvintes.forEach((o) => o.aoEvento(e)),
+    novoId: (prefixo) => novoId(prefixo),
+    opcoes,
+  });
   const exigirConfirmacao = (): void => {
     if (agora() > estado.confirmadoAte) throw erroReautenticar();
   };
@@ -88,74 +95,6 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
     return robo;
   }
 
-  function ordemPara(d: DecisaoDTO, simbolo: string): OrdemDTO {
-    const quantidade = d.quantidade ?? "0";
-    const taxa = dec(d.preco).times(quantidade).times("0.001").toFixed(8);
-    return {
-      id: `o-${d.id}`,
-      decisaoId: d.id,
-      idCliente: `zt-${d.id}`.slice(0, 36),
-      simbolo,
-      lado: d.sinal.acao === "VENDER" ? "VENDA" : "COMPRA",
-      quantidade,
-      estado: "PREENCHIDA",
-      criadaEm: agora(),
-      execucoes: [{ preco: d.preco, quantidade, taxaCotacao: taxa, em: agora() }],
-    };
-  }
-
-  function registrarDecisao(d: DecisaoDTO, robo: RoboDTO): void {
-    mudar((e) => ({ ...e, decisoes: [d, ...e.decisoes] }));
-    emitir({ tipo: "decisao", decisao: d });
-    d.risco.barreiras.forEach((b) => emitir({ tipo: "risco", roboId: robo.id, barreira: b, em: d.em }));
-    if (d.estado === "executada") {
-      const ordem = ordemPara(d, robo.simbolo);
-      mudar((e) => ({ ...e, ordens: [ordem, ...e.ordens] }));
-      emitir({ tipo: "ordem", ordem });
-    }
-  }
-
-  function proximoRobo(): RoboDTO | null {
-    const ativos = estado.robos.filter((r) => !r.pausado);
-    if (estado.paradaTotal || ativos.length === 0) return null;
-    return ativos[vez++ % ativos.length] ?? null;
-  }
-
-  function analisar(): void {
-    const robo = proximoRobo();
-    if (!robo) return;
-    const analiseId = novoId("a");
-    const preco = mercado.preco(robo.simbolo);
-    const etapas = etapasPara(robo, preco);
-    const passo = opcoes.etapaMs ?? 1300;
-    etapas.forEach((etapa, i) => {
-      setTimeout(() => emitir(eventoEtapa(analiseId, robo, etapa, agora())), passo * (i + 1));
-    });
-    setTimeout(
-      () => {
-        const id = novoId("d");
-        const d = decisaoDaAnalise(id, robo, preco, agora(), exposicaoAtual(estado, mercado.preco));
-        registrarDecisao(d, robo);
-        emitir({ tipo: "analise", analiseId, roboId: robo.id, concluida: true, decisaoId: id });
-      },
-      passo * (etapas.length + 1),
-    );
-  }
-
-  function ligarRelogios(): void {
-    const tique = setInterval(() => {
-      mercado.tique(agora()).forEach((t) => emitir({ tipo: "preco", ...t }));
-    }, opcoes.tiqueMs ?? 2000);
-    const primeira = setTimeout(analisar, opcoes.primeiraAnaliseMs ?? 6000);
-    const analises = setInterval(analisar, opcoes.analiseCadaMs ?? 26_000);
-    relogios = [tique, primeira, analises];
-  }
-
-  function desligarRelogios(): void {
-    relogios.forEach((r) => clearInterval(r));
-    relogios = [];
-  }
-
   function decidirAprovacao(id: string, aprovar: boolean): DecisaoDTO {
     const d = estado.decisoes.find((x) => x.id === id);
     if (!d) throw new ErroApi("nao_encontrado", "Essa decisão não existe mais. Atualize a lista.", 404);
@@ -164,22 +103,8 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
     const nova: DecisaoDTO = { ...d, estado: aprovar ? "aprovada" : "recusada" };
     mudar((e) => ({ ...e, decisoes: e.decisoes.map((x) => (x.id === id ? nova : x)) }));
     emitir({ tipo: "decisao", decisao: nova });
-    if (aprovar) setTimeout(() => executarAprovada(nova), 1200);
+    if (aprovar) simulacao.executarAprovada(nova);
     return nova;
-  }
-
-  function executarAprovada(d: DecisaoDTO): void {
-    const robo = estado.robos.find((r) => r.id === d.roboId);
-    if (!robo) return;
-    const executada: DecisaoDTO = { ...d, estado: "executada", ordemId: `o-${d.id}` };
-    const ordem = ordemPara(executada, robo.simbolo);
-    mudar((e) => ({
-      ...e,
-      decisoes: e.decisoes.map((x) => (x.id === d.id ? executada : x)),
-      ordens: [ordem, ...e.ordens],
-    }));
-    emitir({ tipo: "decisao", decisao: executada });
-    emitir({ tipo: "ordem", ordem });
   }
 
   function atualizarRoboNoEstado(robo: RoboDTO): RoboDTO {
@@ -378,14 +303,19 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
     }),
     automacoes: comAtraso(() => [...estado.automacoes]),
 
+    aoVivo: comAtraso((roboId) => {
+      if (roboId) roboOuErro(roboId);
+      return simulacao.historico(roboId);
+    }),
+
     tempoReal(o) {
       ouvintes.add(o);
       o.aoEstado("conectado");
-      if (ouvintes.size === 1) ligarRelogios();
+      if (ouvintes.size === 1) simulacao.ligar();
       return () => {
         ouvintes.delete(o);
         o.aoEstado("desligado");
-        if (ouvintes.size === 0) desligarRelogios();
+        if (ouvintes.size === 0) simulacao.desligar();
       };
     },
   };

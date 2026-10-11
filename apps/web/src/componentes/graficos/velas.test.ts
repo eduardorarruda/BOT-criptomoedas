@@ -2,7 +2,7 @@ import type { DecisaoDTO } from "@zentrade/contratos/esquemas";
 import { describe, expect, it } from "vitest";
 import type { CoresGrafico } from "./cores";
 import { comAlfa } from "./cores";
-import { estiloDecisao, marcadores, paraVela, velaComPreco } from "./velas";
+import { estiloDecisao, marcadores, marcadoresExecucoes, paraVela, velaComPreco } from "./velas";
 
 const cores = {
   texto: "t",
@@ -82,5 +82,69 @@ describe("velas do gráfico", () => {
     expect(comAlfa("#3ddc8e", 0.2)).toBe("rgba(61, 220, 142, 0.2)");
     expect(comAlfa("#fff", 1)).toBe("rgba(255, 255, 255, 1)");
     expect(comAlfa("nada", 1)).toBe("nada");
+  });
+
+  it("agrupa as marcas da mesma vela e do mesmo lado, com a contagem e a mais importante na frente", () => {
+    const m = marcadores(
+      [
+        decisao("executada", "COMPRAR", 61_000),
+        decisao("executada", "COMPRAR", 62_000),
+        decisao("barrada", "COMPRAR", 125_000),
+        decisao("aguardando_aprovacao", "COMPRAR", 126_000),
+        decisao("registrada", "COMPRAR", 127_000),
+        decisao("registrada", "COMPRAR", 190_000),
+        decisao("registrada", "COMPRAR", 191_000),
+        decisao("executada", "VENDER", 63_000),
+      ],
+      "1m",
+      cores,
+      0,
+    );
+    expect(m.map((x) => [x.time, x.position, x.text])).toEqual([
+      [60, "belowBar", "Compra ×2"],
+      [60, "aboveBar", "Venda"],
+      [120, "belowBar", "Aguarda você +2"],
+      [180, "belowBar", "×2"],
+    ]);
+    expect(m[2]?.shape).toBe("square");
+  });
+
+  it("marca compras e vendas executadas pelas execuções da corretora", () => {
+    const ordem = (lado: "COMPRA" | "VENDA", ems: number[]) => ({
+      id: lado,
+      decisaoId: "d",
+      idCliente: "zt",
+      simbolo: "BTCUSDT",
+      lado,
+      quantidade: "1",
+      estado: "PREENCHIDA" as const,
+      criadaEm: 0,
+      execucoes: ems.map((em) => ({ preco: "1", quantidade: "0.5", taxaCotacao: "0", em })),
+    });
+    const m = marcadoresExecucoes(
+      [ordem("COMPRA", [61_000, 62_000]), ordem("VENDA", [5_000, 130_000])],
+      "1m",
+      cores,
+      60_000,
+    );
+    expect(m.map((x) => [x.time, x.text, x.color])).toEqual([
+      [60, "Compra ×2", "m"],
+      [120, "Venda", "t"],
+    ]);
+  });
+
+  it("em tela estreita, as marcas ficam só com a contagem", () => {
+    const m = marcadores(
+      [
+        decisao("executada", "COMPRAR", 61_000),
+        decisao("barrada", "COMPRAR", 62_000),
+        decisao("executada", "VENDER", 63_000),
+      ],
+      "1m",
+      cores,
+      0,
+      true,
+    );
+    expect(m.map((x) => x.text)).toEqual(["2", ""]);
   });
 });

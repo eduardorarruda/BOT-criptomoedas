@@ -51,6 +51,14 @@ describe("fonte da API", () => {
     );
   });
 
+  it("ao vivo: histórico de um robô ou de todos, já sem o envelope", async () => {
+    const { cliente, pedir } = clienteFalso({ eventos: [{ recebidoEm: 1 }] });
+    const f = criarFonteApi(cliente);
+    await expect(f.aoVivo("r/1")).resolves.toEqual([{ recebidoEm: 1 }]);
+    await f.aoVivo();
+    expect(pedir.mock.calls.map((c) => c[1])).toEqual(["/aovivo/r%2F1/recentes", "/aovivo/recentes"]);
+  });
+
   it("fala com os caminhos do contrato", async () => {
     const { cliente, pedir } = clienteFalso({ ligada: true, usuario: { id: "u", email: "a@b" } });
     const f = criarFonteApi(cliente);

@@ -2,7 +2,7 @@ import type { DecisaoDTO, OrdemDTO } from "@zentrade/contratos/esquemas";
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { chaves } from "./chaves";
-import { lojaAnalises, lojaBarreiras, lojaPrecos } from "./lojas";
+import { lojaAnalises, lojaAoVivo, lojaBarreiras, lojaPrecos, lojaUltimoEvento } from "./lojas";
 import { aplicarEvento } from "./useTempoReal";
 
 const decisao = (estado: DecisaoDTO["estado"]): DecisaoDTO => ({
@@ -13,6 +13,18 @@ const decisao = (estado: DecisaoDTO["estado"]): DecisaoDTO => ({
   preco: "1",
   risco: { aprovada: true, barreiras: [] },
   estado,
+});
+
+const ordem = (id: string, decisaoId: string): OrdemDTO => ({
+  id,
+  decisaoId,
+  idCliente: `zt-${id}`,
+  simbolo: "BTCUSDT",
+  lado: "COMPRA",
+  quantidade: "1",
+  estado: "PREENCHIDA",
+  criadaEm: 1,
+  execucoes: [],
 });
 
 describe("aplicarEvento", () => {
@@ -36,7 +48,7 @@ describe("aplicarEvento", () => {
     const qc = new QueryClient();
     qc.setQueryData(chaves.ordens(), []);
     qc.setQueryData(chaves.robos, [{ id: "r1", nome: "a" }]);
-    aplicarEvento(qc, { tipo: "ordem", ordem: { id: "o1" } as OrdemDTO });
+    aplicarEvento(qc, { tipo: "ordem", ordem: ordem("o1", "d-sem-dono") });
     aplicarEvento(qc, { tipo: "robo", robo: { id: "r1", nome: "b" } as never });
     aplicarEvento(qc, {
       tipo: "risco",
@@ -73,5 +85,77 @@ describe("aplicarEvento", () => {
     expect(agendar).toHaveBeenCalledTimes(1);
     (agendar.mock.calls[0]![0] as () => void)();
     expect(lojaAnalises.obter().a1).toBeUndefined();
+  });
+
+  it("ordem entra na lista do robô dela e não na de outro; sem saber o robô, a lista recarrega", () => {
+    const qc = new QueryClient();
+    qc.setQueryData(chaves.decisoes({}), [decisao("executada")]);
+    qc.setQueryData(chaves.ordens("r1"), []);
+    qc.setQueryData(chaves.ordens("r2"), []);
+    aplicarEvento(qc, { tipo: "ordem", ordem: ordem("o1", "d1") });
+    expect(qc.getQueryData<OrdemDTO[]>(chaves.ordens("r1"))).toHaveLength(1);
+    expect(qc.getQueryData<OrdemDTO[]>(chaves.ordens("r2"))).toHaveLength(0);
+    aplicarEvento(qc, { tipo: "ordem", ordem: ordem("o2", "d-desconhecida") });
+    expect(qc.getQueryState(chaves.ordens("r2"))?.isInvalidated).toBe(true);
+  });
+
+  it("posição ao vivo vai direto para o cache do robô; tudo de robô entra no histórico ao vivo", () => {
+    const qc = new QueryClient();
+    const depois = Date.now() + 60_000;
+    aplicarEvento(
+      qc,
+      {
+        tipo: "posicao",
+        roboId: "r9",
+        simbolo: "BTCUSDT",
+        quantidade: "0.5",
+        precoMedio: "100",
+        resultadoRealizado: "-1",
+        taxasPagas: "0.1",
+        em: 7,
+      },
+      setTimeout,
+      () => depois,
+    );
+    expect(qc.getQueryData(chaves.posicao("r9"))).toEqual({
+      roboId: "r9",
+      simbolo: "BTCUSDT",
+      quantidade: "0.5",
+      precoMedio: "100",
+      resultadoRealizado: "-1",
+      taxasPagas: "0.1",
+    });
+    aplicarEvento(
+      qc,
+      { tipo: "sinal", roboId: "r9", acao: "AGUARDAR", explicacao: "x", preco: "1", em: 8 },
+      setTimeout,
+      () => depois + 1,
+    );
+    const ultimos = lojaAoVivo.obter().slice(-2);
+    expect(ultimos.map((r) => r.evento.tipo)).toEqual(["posicao", "sinal"]);
+    expect(ultimos[0]?.recebidoEm).toBe(depois);
+    expect(lojaUltimoEvento.obter()).not.toBeNull();
+  });
+
+  it("guarda o resultado da análise e não reabre com etapa atrasada", () => {
+    const qc = new QueryClient();
+    const agendar = vi.fn();
+    aplicarEvento(
+      qc,
+      { tipo: "analise", analiseId: "a9", roboId: "r1", concluida: true, resultado: "falhou" },
+      agendar as never,
+    );
+    aplicarEvento(
+      qc,
+      {
+        tipo: "analise",
+        analiseId: "a9",
+        roboId: "r1",
+        concluida: false,
+        etapa: { ferramenta: "f", descricao: "d", em: 2 },
+      },
+      agendar as never,
+    );
+    expect(lojaAnalises.obter().a9).toMatchObject({ concluida: true, resultado: "falhou" });
   });
 });
