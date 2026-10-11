@@ -1,0 +1,26 @@
+{
+  "name": "@zentrade/contratos",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Contratos entre os serviços do ZenTrade: esquemas dos dados, interface da corretora, portas de repositório, proposta do agente e assinatura dos webhooks.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@zentrade/dominio": "workspace:*",
+    "zod": "^4.6.5"
+  }
+}
