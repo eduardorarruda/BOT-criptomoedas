@@ -280,6 +280,9 @@ importers:
 
   apps/motor:
     dependencies:
+      '@zentrade/banco':
+        specifier: workspace:*
+        version: link:../../packages/banco
       '@zentrade/contratos':
         specifier: workspace:*
         version: link:../../packages/contratos
@@ -289,6 +292,12 @@ importers:
       '@zentrade/dominio':
         specifier: workspace:*
         version: link:../../packages/dominio
+      bullmq:
+        specifier: ^6.3.12
+        version: 6.3.12(ioredis@6.0.0)
+      ioredis:
+        specifier: ^6.0.0
+        version: 6.0.0
       pino:
         specifier: ^10.4.0
         version: 10.4.0

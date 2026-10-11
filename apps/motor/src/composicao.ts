@@ -1,17 +1,30 @@
-import type { Corretora, PortaAgente } from "@zentrade/contratos";
+import type {
+  Corretora,
+  PortaAgente,
+  PortaAprovacao,
+  PortaCandles,
+  PortaDecisoes,
+  PortaOrdens,
+  PortaRobos,
+  RoboConfig,
+} from "@zentrade/contratos";
 import { ativosDoSimbolo, BinanceCorretora, PapelCorretora } from "@zentrade/corretora";
 import { dec } from "@zentrade/dominio";
 import type { Config } from "./config.js";
+import type { OpcoesMotor } from "./motor.js";
 import { OPCOES_PADRAO, type Dependencias, type Registro } from "./nucleo/tipos.js";
 import { CorretoraPapelAoVivo } from "./papel-ao-vivo.js";
 import { AgenteFixo } from "./portas/agente-fixo.js";
 import { AgenteHttp } from "./portas/agente-http.js";
 import { EventosNoRegistro } from "./portas/eventos-registro.js";
 import { AprovacaoMemoria, DecisoesMemoria, OrdensMemoria, RobosMemoria } from "./portas/memoria.js";
+import { BatidaRedis, EventosRedis, type ClienteRedis } from "./portas/redis.js";
+import { RobosDaRede } from "./portas/robos-da-rede.js";
 import type { RobosCarregados } from "./robos-arquivo.js";
 import { dormirReal, RelogioSistema } from "./relogio.js";
 
 const COTACAO_PAPEL = ativosDoSimbolo("BTCUSDT").cotacao;
+const SAUDE_MS = 30_000;
 
 export function criarCorretora(config: Config, registro: Registro): Corretora {
   const aoErroWebSocket = (erro: Error) => registro.warn({ erro }, "WebSocket da Binance com problema");
@@ -23,14 +36,18 @@ export function criarCorretora(config: Config, registro: Registro): Corretora {
       taxaEstimada: config.BINANCE_TAXA_ESTIMADA,
       aoErroWebSocket,
     });
-  // No papel, os dados de mercado são públicos: nenhuma chave é usada.
-  const dados = new BinanceCorretora({ rede: config.MOTOR_PAPEL_DADOS, aoErroWebSocket });
   const papel = new PapelCorretora({
     saldos: { [COTACAO_PAPEL]: dec(config.MOTOR_PAPEL_SALDO) },
     taxa: config.MOTOR_PAPEL_TAXA,
     deslizamentoBps: config.MOTOR_PAPEL_DESLIZAMENTO_BPS,
   });
-  return new CorretoraPapelAoVivo(dados, papel);
+  return new CorretoraPapelAoVivo(criarDadosPublicos(config, registro), papel);
+}
+
+/** Dados de mercado públicos (nenhuma chave): papel ao vivo e candles históricos do backtest. */
+export function criarDadosPublicos(config: Config, registro: Registro): BinanceCorretora {
+  const aoErroWebSocket = (erro: Error) => registro.warn({ erro }, "WebSocket da Binance com problema");
+  return new BinanceCorretora({ rede: config.MOTOR_PAPEL_DADOS, aoErroWebSocket });
 }
 
 export function criarAgente(config: Config): PortaAgente {
@@ -39,21 +56,92 @@ export function criarAgente(config: Config): PortaAgente {
   return new AgenteFixo(config.MOTOR_AGENTE_FIXO);
 }
 
-/** Liga as peças. Portas em memória até o packages/banco existir. */
-export function montarDependencias(config: Config, carregados: RobosCarregados, registro: Registro) {
-  const relogio = new RelogioSistema();
-  const robos = new RobosMemoria(carregados.robos);
-  carregados.pausados.forEach((id) => robos.pausar(id));
-  const deps: Dependencias = {
-    corretora: criarCorretora(config, registro),
-    robos,
-    decisoes: new DecisoesMemoria(),
-    ordens: new OrdensMemoria(relogio),
-    agente: criarAgente(config),
-    eventos: new EventosNoRegistro(registro),
-    aprovacao: new AprovacaoMemoria((id) =>
-      registro.warn({ decisaoId: id }, "aprovação pedida, mas ainda não há API para responder: vai expirar"),
+/** O que o motor recebe de fora: o banco (portas e candles), o Redis e, sem banco, o arquivo de robôs. */
+export interface FontesMotor {
+  readonly banco?: {
+    readonly portas: { robos: PortaRobos; decisoes: PortaDecisoes; ordens: PortaOrdens };
+    readonly mercado: PortaCandles;
+  };
+  readonly redis?: ClienteRedis;
+  readonly arquivo?: RobosCarregados;
+  /** Outra corretora no lugar da escolhida pela configuração (testes de integração, por exemplo). */
+  readonly corretora?: Corretora;
+}
+
+/** Com banco, a API repassa a proposta ao n8n quando vê o evento da decisão; o motor só registra. */
+const aprovacaoPelaApi = (registro: Registro): PortaAprovacao => ({
+  solicitar: (decisaoId, _resumo, expiraEm) => {
+    registro.info({ decisaoId, expiraEm }, "aprovação pedida: a API repassa ao n8n");
+    return Promise.resolve();
+  },
+});
+
+interface Portas {
+  readonly robos: PortaRobos;
+  readonly decisoes: PortaDecisoes;
+  readonly ordens: PortaOrdens;
+  readonly aprovacao: PortaAprovacao;
+}
+
+function portasDaMemoria(f: FontesMotor, registro: Registro, relogio: RelogioSistema): Portas {
+  const robos = new RobosMemoria(f.arquivo?.robos ?? []);
+  f.arquivo?.pausados.forEach((id) => robos.pausar(id));
+  const aprovacao = new AprovacaoMemoria((id) =>
+    registro.warn(
+      { decisaoId: id },
+      "aprovação pedida, mas sem banco a API não tem como responder: vai expirar",
     ),
+  );
+  return { robos, decisoes: new DecisoesMemoria(), ordens: new OrdensMemoria(relogio), aprovacao };
+}
+
+/** Papel com banco: refaz o saldo simulado com as execuções gravadas, uma vez por robô. */
+function prepararPapel(corretora: Corretora, ordens: PortaOrdens): OpcoesMotor["preparar"] {
+  if (!(corretora instanceof CorretoraPapelAoVivo)) return undefined;
+  let preparados: ReadonlySet<string> = new Set();
+  return async (robo: RoboConfig) => {
+    if (preparados.has(robo.id)) return;
+    corretora.restaurarExecucoes(robo.simbolo, await ordens.execucoes(robo.id));
+    preparados = new Set([...preparados, robo.id]);
+  };
+}
+
+function opcoesDoMotor(
+  config: Config,
+  f: FontesMotor,
+  corretora: Corretora,
+  ordens: PortaOrdens,
+): OpcoesMotor {
+  const batida = f.redis ? new BatidaRedis(f.redis) : null;
+  const preparar = f.banco ? prepararPapel(corretora, ordens) : undefined;
+  return {
+    intervaloSaudeMs: SAUDE_MS,
+    ...(f.banco ? { intervaloRecargaMs: config.MOTOR_RECARGA_SEGUNDOS * 1000 } : {}),
+    ...(batida ? { bater: (em: number) => batida.bater(em) } : {}),
+    ...(preparar ? { preparar } : {}),
+  };
+}
+
+/**
+ * Liga as peças. Com banco: portas do packages/banco, robôs de todas as pessoas (só os
+ * da rede do motor), recarga periódica. Sem banco: memória e arquivo (só papel; a
+ * configuração recusa testnet sem banco). Com Redis: eventos e batida no Redis.
+ */
+export function montarMotor(config: Config, f: FontesMotor, registro: Registro) {
+  const relogio = new RelogioSistema();
+  const corretora = f.corretora ?? criarCorretora(config, registro);
+  const portas: Portas = f.banco
+    ? { ...f.banco.portas, aprovacao: aprovacaoPelaApi(registro) }
+    : portasDaMemoria(f, registro, relogio);
+  const deps: Dependencias = {
+    corretora,
+    robos: new RobosDaRede(portas.robos, config.MOTOR_REDE),
+    decisoes: portas.decisoes,
+    ordens: portas.ordens,
+    agente: criarAgente(config),
+    eventos: f.redis ? new EventosRedis(f.redis) : new EventosNoRegistro(registro),
+    aprovacao: portas.aprovacao,
+    ...(f.banco ? { candles: f.banco.mercado } : {}),
     relogio,
     registro,
     dormir: dormirReal,
@@ -61,7 +149,8 @@ export function montarDependencias(config: Config, carregados: RobosCarregados, 
       ...OPCOES_PADRAO,
       agenteObrigatorio: config.MOTOR_AGENTE_OBRIGATORIO,
       tamanhoHistorico: config.MOTOR_HISTORICO,
+      expiracaoAprovacaoMs: config.APROVACAO_VALIDADE_MIN * 60_000,
     },
   };
-  return { deps, robos };
+  return { deps, opcoesMotor: opcoesDoMotor(config, f, corretora, portas.ordens) };
 }

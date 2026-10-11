@@ -77,6 +77,7 @@ export function roboDeLinha(r: LinhaRobo): RoboDTO {
 export function roboConfigDeLinha(r: LinhaRobo, versao: LinhaVersao): RoboConfig {
   return {
     id: r.id,
+    usuarioId: r.usuarioId,
     simbolo: r.simbolo,
     intervalo: r.intervalo,
     modo: r.modo,

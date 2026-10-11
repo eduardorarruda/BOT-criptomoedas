@@ -6,6 +6,7 @@ import { criarBancoDescartavel, type BancoDescartavel } from "../teste/index.js"
 /** Banco migrado do zero + duas pessoas com uma estratégia e um robô cada. */
 export interface Cenario {
   readonly banco: Banco;
+  readonly url: string;
   readonly ana: { id: string; estrategia: EstrategiaDTO; robo: RoboDTO };
   readonly beto: { id: string; estrategia: EstrategiaDTO; robo: RoboDTO };
   encerrar(): Promise<void>;
@@ -56,6 +57,7 @@ export async function montarCenario(): Promise<Cenario> {
   const beto = await pessoa(banco, "beto@exemplo.com");
   return {
     banco,
+    url: descartavel.url,
     ana,
     beto,
     encerrar: async () => {

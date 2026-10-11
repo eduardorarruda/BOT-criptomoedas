@@ -2,14 +2,23 @@ import { BinanceCorretora, PapelCorretora } from "@zentrade/corretora";
 import { dec } from "@zentrade/dominio";
 import { Writable } from "node:stream";
 import { describe, expect, it } from "vitest";
-import { criarAgente, criarCorretora, montarDependencias } from "./composicao.js";
+import {
+  criarAgente,
+  criarCorretora,
+  criarDadosPublicos,
+  montarMotor,
+  type FontesMotor,
+} from "./composicao.js";
 import { lerConfig } from "./config.js";
 import { CorretoraPapelAoVivo } from "./papel-ao-vivo.js";
 import { AgenteFixo } from "./portas/agente-fixo.js";
 import { AgenteHttp } from "./portas/agente-http.js";
 import { EventosNoRegistro } from "./portas/eventos-registro.js";
+import { AprovacaoMemoria, DecisoesMemoria, OrdensMemoria, RobosMemoria } from "./portas/memoria.js";
+import { EventosRedis, type ClienteRedis } from "./portas/redis.js";
+import { RelogioManual } from "./relogio.js";
 import { criarRegistro } from "./registro.js";
-import { registroDeTeste } from "./teste/cenario.js";
+import { montarCenario, registroDeTeste } from "./teste/cenario.js";
 import { candle } from "./teste/candles.js";
 
 describe("composição do motor", () => {
@@ -21,7 +30,12 @@ describe("composição do motor", () => {
 
   it("testnet: Binance testnet com as chaves do ambiente", () => {
     const c = criarCorretora(
-      lerConfig({ MOTOR_REDE: "testnet", BINANCE_API_KEY: "k", BINANCE_API_SECRET: "s" }),
+      lerConfig({
+        MOTOR_REDE: "testnet",
+        BINANCE_API_KEY: "k",
+        BINANCE_API_SECRET: "s",
+        DATABASE_URL: "postgres://x@127.0.0.1/z",
+      }),
       registroDeTeste().registro,
     );
     expect(c).toBeInstanceOf(BinanceCorretora);
@@ -35,19 +49,90 @@ describe("composição do motor", () => {
     expect(criarAgente(lerConfig({}))).toBeInstanceOf(AgenteFixo);
   });
 
-  it("monta as dependências com portas em memória e aplica os robôs pausados", async () => {
-    const config = lerConfig({ MOTOR_AGENTE_OBRIGATORIO: "false" });
-    const robo = { id: "r1" } as never;
-    const { deps, robos } = montarDependencias(
+  it("sem banco: portas em memória com os robôs do arquivo, eventos no registro, sem recarga", async () => {
+    const config = lerConfig({ MOTOR_AGENTE_OBRIGATORIO: "false", APROVACAO_VALIDADE_MIN: "3" });
+    const robo = { id: "r1", rede: "papel" } as never;
+    const { deps, opcoesMotor } = montarMotor(
       config,
-      { robos: [robo], pausados: ["r1"] },
+      { arquivo: { robos: [robo], pausados: ["r1"] } },
       registroDeTeste().registro,
     );
     expect(deps.opcoes.agenteObrigatorio).toBe(false);
     expect(deps.opcoes.tamanhoHistorico).toBe(500);
-    expect(await robos.ativos()).toEqual([robo]);
+    expect(deps.opcoes.expiracaoAprovacaoMs).toBe(3 * 60_000);
+    expect(await deps.robos.ativos()).toEqual([robo]);
     expect(await deps.robos.pausado("r1")).toBe(true);
     expect(deps.eventos).toBeInstanceOf(EventosNoRegistro);
+    expect(deps.decisoes).toBeInstanceOf(DecisoesMemoria);
+    expect(deps.aprovacao).toBeInstanceOf(AprovacaoMemoria);
+    expect(deps.candles).toBeUndefined();
+    expect(opcoesMotor).toEqual({ intervaloSaudeMs: 30_000 });
+    await deps.aprovacao.solicitar("d1", "x", 1);
+  });
+
+  it("com banco e Redis: portas do banco, só os robôs da rede do motor, eventos e batida no Redis", async () => {
+    const c = montarCenario();
+    const robos = new RobosMemoria([c.robo, { ...c.robo, id: "t1", rede: "testnet" }]);
+    const gravadas: unknown[][] = [];
+    const redis: ClienteRedis = {
+      publish: async () => 1,
+      set: async (...a: unknown[]) => void gravadas.push(a),
+    };
+    const ordens = new OrdensMemoria(new RelogioManual(0));
+    const mercado = { gravar: async () => undefined };
+    const fontes: FontesMotor = {
+      banco: { portas: { robos, decisoes: c.decisoes, ordens }, mercado },
+      redis,
+    };
+    const { registro } = registroDeTeste();
+    const { deps, opcoesMotor } = montarMotor(lerConfig({ MOTOR_RECARGA_SEGUNDOS: "12" }), fontes, registro);
+    expect((await deps.robos.ativos()).map((r) => r.id)).toEqual(["r1"]);
+    expect(deps.decisoes).toBe(c.decisoes);
+    expect(deps.ordens).toBe(ordens);
+    expect(deps.candles).toBe(mercado);
+    expect(deps.eventos).toBeInstanceOf(EventosRedis);
+    expect(opcoesMotor.intervaloRecargaMs).toBe(12_000);
+    await opcoesMotor.bater?.(123);
+    expect(gravadas).toEqual([["zentrade:motor:batida", "123", "EX", 3600]]);
+    await deps.aprovacao.solicitar("d1", "Comprar", 5); // a API repassa ao n8n: aqui só registra
+  });
+
+  it("papel com banco: antes de ligar, o saldo simulado é refeito com as execuções gravadas (uma vez por robô)", async () => {
+    const ordens = new OrdensMemoria(new RelogioManual(0));
+    const robo = { id: "r1", simbolo: "BTCUSDT", rede: "papel" } as never;
+    await ordens.reservar({
+      decisaoId: "d",
+      roboId: "r1",
+      idCliente: "zt-1",
+      simbolo: "BTCUSDT",
+      lado: "COMPRA",
+      quantidade: dec(1),
+    });
+    await ordens.concluir("zt-1", {
+      idCliente: "zt-1",
+      idCorretora: "1",
+      estado: "PREENCHIDA",
+      execucoes: [{ lado: "COMPRA", preco: dec(100), quantidade: dec(1), taxaCotacao: dec("0.1"), em: 1 }],
+    });
+    const fontes: FontesMotor = {
+      banco: {
+        portas: { robos: new RobosMemoria([robo]), decisoes: new DecisoesMemoria(), ordens },
+        mercado: { gravar: async () => undefined },
+      },
+    };
+    const { deps, opcoesMotor } = montarMotor(lerConfig({}), fontes, registroDeTeste().registro);
+    await opcoesMotor.preparar?.(robo);
+    await opcoesMotor.preparar?.(robo);
+    expect((await deps.corretora.saldoLivre("BTC")).toFixed()).toBe("1");
+    expect((await deps.corretora.saldoLivre("USDT")).toFixed()).toBe("899.9");
+    expect(deps.eventos).toBeInstanceOf(EventosNoRegistro);
+    expect(opcoesMotor.bater).toBeUndefined();
+  });
+
+  it("dados públicos para o backtest: Binance sem chave", () => {
+    const c = criarDadosPublicos(lerConfig({ MOTOR_PAPEL_DADOS: "real" }), registroDeTeste().registro);
+    expect(c).toBeInstanceOf(BinanceCorretora);
+    expect(c.rede).toBe("real");
   });
 });
 

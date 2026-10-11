@@ -174,4 +174,16 @@ describe("PapelCorretora", () => {
     expect(() => new PapelCorretora({ saldos: {}, taxa: -1, deslizamentoBps: 0 })).toThrow(/taxa/);
     expect(() => new PapelCorretora({ saldos: {}, taxa: 0, deslizamentoBps: -1 })).toThrow(/deslizamento/);
   });
+
+  it("restaura os saldos a partir de execuções já gravadas (papel com banco, depois de reiniciar)", async () => {
+    const papel = new PapelCorretora({ saldos: { USDT: dec(1000) }, taxa: 0.001, deslizamentoBps: 0 });
+    papel.restaurarExecucoes("BTCUSDT", [
+      { lado: "COMPRA", preco: dec(100), quantidade: dec(2), taxaCotacao: dec("0.2"), em: 1 },
+      { lado: "VENDA", preco: dec(110), quantidade: dec(1), taxaCotacao: dec("0.11"), em: 2 },
+    ]);
+    expect((await papel.saldoLivre("BTC")).toFixed()).toBe("1");
+    expect((await papel.saldoLivre("USDT")).toFixed()).toBe("909.69"); // 1000 - 200,2 + 110 - 0,11
+    papel.restaurarExecucoes("BTCUSDT", []);
+    expect((await papel.saldoLivre("BTC")).toFixed()).toBe("1");
+  });
 });

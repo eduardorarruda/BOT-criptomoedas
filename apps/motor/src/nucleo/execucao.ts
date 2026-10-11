@@ -1,8 +1,9 @@
-import type { OrdemDTO, ResultadoOrdem, RoboConfig } from "@zentrade/contratos";
+import type { EstadoDecisao, OrdemDTO, ResultadoOrdem, RoboConfig } from "@zentrade/contratos";
 import { paraTexto, type Lado, type Valor } from "@zentrade/dominio";
 import { idClienteDe } from "../id-cliente.js";
-import { publicar } from "./diario.js";
-import type { Dependencias } from "./tipos.js";
+import { mudarEstado, publicar, type DecisaoRegistrada } from "./diario.js";
+import type { Plano } from "./plano.js";
+import type { Dependencias, ResultadoCiclo } from "./tipos.js";
 
 export function ordemDTO(
   decisaoId: string,
@@ -92,4 +93,18 @@ export async function executarOrdem(
       "ordem rejeitada pela corretora",
     );
   return resultado;
+}
+
+/** Envia a ordem da decisão e grava o estado: executada se houve execução; senão, falhou. */
+export async function executarDecisao(
+  deps: Dependencias,
+  robo: RoboConfig,
+  registrada: DecisaoRegistrada,
+  plano: Plano,
+): Promise<ResultadoCiclo> {
+  const ordem = await executarOrdem(deps, robo, registrada.id, plano.lado, plano.quantidade);
+  if (!ordem) return { estado: registrada.decisao.estado, plano };
+  const estado: EstadoDecisao = ordem.execucoes.length > 0 ? "executada" : "falhou";
+  await mudarEstado(deps, registrada, estado, { ordemId: ordem.idCliente });
+  return { estado, plano, ordem, decisaoId: registrada.id };
 }

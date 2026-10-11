@@ -129,6 +129,9 @@ export const decisoes = pgTable(
     /** Só para `aguardando_aprovacao`: depois disto a aprovação não vale mais. */
     expiraEm: instante("expira_em"),
     decididaPor: text("decidida_por"),
+    /** Compra: stop e alvo efetivos (regra ou agente, o mais conservador), para a posição sobreviver a reinício. */
+    stopEfetivo: decimal("stop_efetivo"),
+    alvoEfetivo: decimal("alvo_efetivo"),
     resultado: decimal("resultado"),
     avaliadaEm: instante("avaliada_em"),
     atualizadaEm: instante("atualizada_em").notNull().defaultNow(),

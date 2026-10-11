@@ -23,6 +23,22 @@ export const EsquemaConfig = z
     BINANCE_API_KEY: z.string().optional(),
     BINANCE_API_SECRET: z.string().optional(),
     BINANCE_TAXA_ESTIMADA: z.coerce.number().min(0).lt(0.01).default(0.001),
+    /** Com banco: robôs de todas as pessoas, decisões e ordens duráveis. Sem banco: papel em memória. */
+    DATABASE_URL: z
+      .string()
+      .regex(/^postgres(ql)?:\/\//, "precisa começar com postgres://")
+      .optional(),
+    /** Com Redis: eventos no canal zentrade:eventos, batida do motor e fila de backtests. */
+    REDIS_URL: z
+      .string()
+      .regex(/^rediss?:\/\//, "precisa começar com redis://")
+      .optional(),
+    /** O mesmo prazo que a API usa para aceitar a aprovação (minutos). */
+    APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(60).default(5),
+    MOTOR_RECARGA_SEGUNDOS: z.coerce.number().int().min(5).max(3600).default(30),
+    MOTOR_BACKTEST_SALDO: TextoDecimal.default("1000"),
+    /** Fração do saldo arriscada por operação no backtest (0,01 = 1%). */
+    MOTOR_BACKTEST_RISCO: z.coerce.number().gt(0).max(0.1).default(0.01),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   })
   .superRefine((c, ctx) => {
@@ -32,6 +48,13 @@ export const EsquemaConfig = z
         path: ["BINANCE_API_KEY"],
         message:
           "a testnet exige BINANCE_API_KEY e BINANCE_API_SECRET (crie em https://testnet.binance.vision)",
+      });
+    if (c.MOTOR_REDE === "testnet" && !c.DATABASE_URL)
+      ctx.addIssue({
+        code: "custom",
+        path: ["DATABASE_URL"],
+        message:
+          "a testnet exige banco (estado durável: decisões, ordens e posição precisam sobreviver a um reinício). Defina DATABASE_URL ou use MOTOR_REDE=papel",
       });
     if (c.AGENTE_URL && !c.AGENTE_SEGREDO)
       ctx.addIssue({

@@ -1,6 +1,6 @@
-import type { NovaOrdem, PortaOrdens, ResultadoOrdem } from "@zentrade/contratos";
-import { paraTexto, type Execucao, type Valor } from "@zentrade/dominio";
-import { and, count, eq, gte, sql } from "drizzle-orm";
+import type { NovaOrdem, OrdemPendente, PortaOrdens, ResultadoOrdem } from "@zentrade/contratos";
+import { dec, paraTexto, type Execucao, type Valor } from "@zentrade/dominio";
+import { and, asc, count, eq, gte, sql } from "drizzle-orm";
 import { resultadoDesde, ultimaPerdaEm } from "../calculos.js";
 import type { Db } from "../cliente.js";
 import { ErroDados } from "../erros.js";
@@ -54,6 +54,21 @@ export function portaOrdens(db: Db): PortaOrdens {
           .values(r.execucoes.map((e, sequencia) => linhaExecucao(ordem, sequencia, e)))
           .onConflictDoNothing({ target: [execucoes.ordemId, execucoes.sequencia] });
       });
+    },
+
+    async pendentes(roboId: string): Promise<OrdemPendente[]> {
+      const linhas = await db
+        .select()
+        .from(ordens)
+        .where(and(eq(ordens.roboId, roboId), eq(ordens.estado, "PENDENTE")))
+        .orderBy(asc(ordens.criadaEm), asc(ordens.idCliente));
+      return linhas.map((o) => ({
+        idCliente: o.idCliente,
+        decisaoId: o.decisaoId,
+        lado: o.lado,
+        quantidade: dec(o.quantidade),
+        criadaEm: o.criadaEm.getTime(),
+      }));
     },
 
     execucoes: (roboId: string): Promise<Execucao[]> => execucoesDoRobo(db, roboId),

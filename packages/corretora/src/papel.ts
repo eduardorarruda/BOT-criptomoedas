@@ -185,6 +185,28 @@ export class PapelCorretora implements Corretora {
     };
   }
 
+  /**
+   * Refaz os saldos com execuções que já aconteceram (gravadas no banco), sem validar
+   * nem gerar ordens: no papel com banco, o saldo simulado sobrevive ao reinício.
+   */
+  restaurarExecucoes(simbolo: string, execucoes: readonly Execucao[]): void {
+    const { base, cotacao } = ativosDoSimbolo(simbolo);
+    const novos = new Map(this.saldos);
+    const saldo = (a: string) => novos.get(a) ?? dec(0);
+    for (const e of execucoes) {
+      const valor = e.quantidade.times(e.preco);
+      const compra = e.lado === "COMPRA";
+      novos.set(
+        cotacao,
+        compra
+          ? saldo(cotacao).minus(valor).minus(e.taxaCotacao)
+          : saldo(cotacao).plus(valor).minus(e.taxaCotacao),
+      );
+      novos.set(base, compra ? saldo(base).plus(e.quantidade) : saldo(base).minus(e.quantidade));
+    }
+    this.saldos = novos;
+  }
+
   /** Atualiza os saldos (novo mapa, sem mutar o anterior) ou diz o que faltou. */
   private movimentar(pedido: PedidoOrdemMercado, valor: Valor, taxa: Valor): string | null {
     const { base, cotacao } = ativosDoSimbolo(pedido.simbolo);
