@@ -15,6 +15,7 @@ import { Casca } from "./layout/Casca";
 import { buscaDecisoes } from "./paginas/decisoes/filtros";
 import { NaoEncontrada } from "./paginas/NaoEncontrada";
 import { buscaOrdens } from "./paginas/ordens/filtros";
+import { buscaRendaFixa } from "./paginas/renda-fixa/filtros";
 
 /**
  * Rotas (código, sem gerador). Tudo depois de /entrar exige sessão; as telas com
@@ -94,6 +95,13 @@ const ordens = createRoute({
   component: lazyRouteComponent(() => import("./paginas/Ordens"), "Ordens"),
 });
 
+const rendaFixa = createRoute({
+  getParentRoute: () => app,
+  path: "/renda-fixa",
+  validateSearch: validarBusca(buscaRendaFixa),
+  component: lazyRouteComponent(() => import("./paginas/renda-fixa/RendaFixa"), "RendaFixa"),
+});
+
 const arvore = raiz.addChildren([
   entrar,
   app.addChildren([
@@ -106,7 +114,7 @@ const arvore = raiz.addChildren([
     ordens,
     pagina("/patrimonio", () => import("./paginas/patrimonio/Patrimonio"), "Patrimonio"),
     pagina("/carteira", () => import("./paginas/carteira/Carteira"), "Carteira"),
-    pagina("/renda-fixa", () => import("./paginas/renda-fixa/RendaFixa"), "RendaFixa"),
+    rendaFixa,
     pagina("/robos", () => import("./paginas/Robos"), "Robos"),
     pagina("/estrategias", () => import("./paginas/Estrategias"), "Estrategias"),
     pagina("/backtests", () => import("./paginas/Backtests"), "Backtests"),
