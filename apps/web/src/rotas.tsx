@@ -14,6 +14,7 @@ import { chaves } from "./ganchos/chaves";
 import { Casca } from "./layout/Casca";
 import { buscaCarteira } from "./paginas/carteira/filtros";
 import { buscaDecisoes } from "./paginas/decisoes/filtros";
+import { buscaImobiliario } from "./paginas/imobiliario/filtros";
 import { NaoEncontrada } from "./paginas/NaoEncontrada";
 import { buscaOrdens } from "./paginas/ordens/filtros";
 import { buscaRendaFixa } from "./paginas/renda-fixa/filtros";
@@ -121,6 +122,13 @@ const carteira = createRoute({
   component: lazyRouteComponent(() => import("./paginas/carteira/Carteira"), "Carteira"),
 });
 
+const imobiliario = createRoute({
+  getParentRoute: () => app,
+  path: "/imobiliario",
+  validateSearch: validarBusca(buscaImobiliario),
+  component: lazyRouteComponent(() => import("./paginas/imobiliario/VisaoImobiliario"), "VisaoImobiliario"),
+});
+
 const arvore = raiz.addChildren([
   entrar,
   app.addChildren([
@@ -142,7 +150,7 @@ const arvore = raiz.addChildren([
     pagina("/automacoes", () => import("./paginas/Automacoes"), "Automacoes"),
     pagina("/contas", () => import("./paginas/Contas"), "Contas"),
     pagina("/tokens", () => import("./paginas/Tokens"), "Tokens"),
-    pagina("/imobiliario", () => import("./paginas/imobiliario/VisaoImobiliario"), "VisaoImobiliario"),
+    imobiliario,
     pagina("/imobiliario/novo", () => import("./paginas/imobiliario/NovoInvestimento"), "NovoInvestimento"),
     pagina("/imobiliario/simuladores", () => import("./paginas/imobiliario/Simuladores"), "Simuladores"),
     pagina(

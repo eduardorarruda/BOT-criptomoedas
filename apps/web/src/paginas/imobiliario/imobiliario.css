@@ -149,6 +149,51 @@
   font-size: 12px;
 }
 
+/* ---------- visão geral: KPIs, tabela, rodapé, alocação grande ---------- */
+/* o patrimônio em cima, largo; renda e resultado lado a lado embaixo */
+.imob-kpis {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.imob-kpis > .kpi--destaque {
+  grid-column: 1 / -1;
+}
+.imob-cartao__linha {
+  display: block;
+}
+.imob-tabela th,
+.imob-tabela td {
+  white-space: nowrap;
+}
+.imob-tabela__nome {
+  color: var(--texto);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--linha-forte);
+  text-underline-offset: 3px;
+}
+.imob-tabela__nome:hover {
+  text-decoration-color: var(--marca);
+}
+.imob-tabela__sub {
+  display: block;
+  color: var(--apagado);
+  font-size: 12px;
+  font-weight: 400;
+}
+.imob-rodape {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--espaco-5);
+  align-items: start;
+}
+.imob-alocacao-grande .imob-rosca {
+  grid-template-columns: 220px minmax(0, 420px);
+  justify-content: center;
+}
+.imob-alocacao-grande .imob-rosca__svg {
+  max-width: 220px;
+}
+
 /* ---------- rosca ---------- */
 .imob-rosca {
   display: grid;
@@ -178,13 +223,27 @@
   gap: 6px;
   font-size: 13px;
 }
+/* nome numa linha; valor e fatia embaixo (nomes longos não empurram os números) */
 .imob-rosca__lista li {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  gap: var(--espaco-2);
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 0 var(--espaco-2);
   align-items: center;
-  padding: 2px 4px;
+  padding: 3px 4px;
   border-radius: var(--raio-p);
+}
+.imob-rosca__nome {
+  grid-column: 2 / -1;
+}
+.imob-rosca__lista li > .imob-rosca__valor {
+  grid-column: 2;
+  text-align: left;
+  color: var(--apagado);
+  font-size: 12px;
+}
+.imob-rosca__lista li > :last-child {
+  grid-column: 3;
+  font-size: 12px;
 }
 .imob-rosca__item--ativo {
   background: var(--superficie-2);
@@ -416,6 +475,7 @@
 
 @media (max-width: 1180px) {
   .imob-topo,
+  .imob-rodape,
   .imob-sim {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -435,7 +495,8 @@
     justify-items: start;
     text-align: left;
   }
-  .imob-rosca {
+  .imob-rosca,
+  .imob-alocacao-grande .imob-rosca {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
   }

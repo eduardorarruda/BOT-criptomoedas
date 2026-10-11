@@ -28,17 +28,22 @@ vi.setConfig({ testTimeout: 60_000 });
 const fonteApp = { demo: false } as unknown as Fonte;
 
 /** As telas usam <Link>: um roteador em memória só com a raiz basta para os testes. */
-function comRoteador(ui: ReactElement) {
+function comRoteador(ui: ReactElement, caminho = "/") {
   const raiz = createRootRoute({ component: () => ui });
-  const roteador = createRouter({ routeTree: raiz, history: createMemoryHistory({ initialEntries: ["/"] }) });
-  return <RouterProvider router={roteador as never} />;
+  const roteador = createRouter({
+    routeTree: raiz,
+    history: createMemoryHistory({ initialEntries: [caminho] }),
+  });
+  return { elemento: <RouterProvider router={roteador as never} />, roteador };
 }
 
-function montar(ui: ReactElement, fonte: FonteImobiliario) {
-  return renderizar(
-    <ProvedorFonteImobiliario fonte={fonte}>{comRoteador(ui)}</ProvedorFonteImobiliario>,
+function montar(ui: ReactElement, fonte: FonteImobiliario, caminho = "/") {
+  const { elemento, roteador } = comRoteador(ui, caminho);
+  const r = renderizar(
+    <ProvedorFonteImobiliario fonte={fonte}>{elemento}</ProvedorFonteImobiliario>,
     fonteApp,
   );
+  return { ...r, roteador };
 }
 
 /** Troca o valor de uma vez (digitar letra a letra refaria a conta a cada tecla). */
@@ -93,6 +98,26 @@ describe("visão geral", () => {
     expect(screen.getByText("Alocação por tipo")).toBeInTheDocument();
     const lista = screen.getByRole("region", { name: "Investimentos" });
     expect(within(lista).getAllByRole("link").length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("filtros pela URL: tipo e situação, totais do recorte e a tabela", async () => {
+    const { roteador } = montar(
+      <VisaoImobiliario />,
+      criarFonteImobiliarioDemo("2026-10-11"),
+      "/?situacao=ativo&visao=tabela&ordem=nome",
+    );
+    const tabela = await screen.findByRole("table", { name: /Investimentos imobiliários filtrados/ });
+    const nomes = within(tabela)
+      .getAllByRole("rowheader")
+      .map((c) => c.querySelector("a")?.textContent);
+    expect(nomes).not.toContain("Casa para reformar (vendida)");
+    expect([...nomes].sort((a, b) => (a ?? "").localeCompare(b ?? "", "pt-BR"))).toEqual(nomes);
+    expect(screen.getByLabelText("Totais dos investimentos filtrados")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Fundo imobiliário/ }));
+    await waitFor(() => expect((roteador.state.location.search as Record<string, unknown>).tipo).toBe("fii"));
+    expect(
+      within(screen.getByRole("table", { name: /Investimentos imobiliários/ })).getAllByRole("rowheader"),
+    ).toHaveLength(1);
   });
 
   it("vazia: explica o que fazer", async () => {
