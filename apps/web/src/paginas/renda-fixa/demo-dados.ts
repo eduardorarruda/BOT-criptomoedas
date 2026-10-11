@@ -60,9 +60,11 @@ const titulo = (
 });
 
 /** Carteira de exemplo (fictícia). As datas são relativas a hoje para os números fazerem sentido. */
-export function carteiraDemo(hoje: string): (NovoTitulo & { grupo?: string })[] {
+export function carteiraDemo(hoje: string): (NovoTitulo & { grupo?: string; origem?: "pluggy" })[] {
   const ha = (meses: number) => somarMeses(hoje, -meses);
   const daqui = (meses: number) => somarMeses(hoje, meses);
+  // Os que vieram "pela Pluggy" na demonstração: só para o filtro de origem ter o que mostrar.
+  const pluggy = <T extends NovoTitulo>(t: T) => ({ ...t, origem: "pluggy" as const });
   return [
     titulo({
       tipo: "CDB",
@@ -142,6 +144,52 @@ export function carteiraDemo(hoje: string): (NovoTitulo & { grupo?: string })[] 
       }),
       grupo: "demo-caixinha:100",
     },
+    pluggy(
+      titulo({
+        tipo: "CDB",
+        nome: "CDB Banco Digital 102%",
+        emissor: "Banco Digital Exemplo",
+        indexador: "CDI",
+        percentualIndexador: "102",
+        dataAplicacao: ha(11),
+        vencimento: somarDias(hoje, 20),
+        valorAplicado: "7000",
+      }),
+    ),
+    pluggy(
+      titulo({
+        tipo: "LCI",
+        nome: "LCI Imobiliária 92%",
+        emissor: "Banco Digital Exemplo",
+        indexador: "CDI",
+        percentualIndexador: "92",
+        dataAplicacao: ha(7),
+        vencimento: daqui(26),
+        valorAplicado: "6000",
+        liquidez: "carencia",
+        carenciaAte: daqui(2),
+      }),
+    ),
+    titulo({
+      tipo: "CRA",
+      nome: "CRA Agro IPCA+ 2028",
+      emissor: "Securitizadora Exemplo",
+      indexador: "IPCA",
+      taxaAnual: "6.2",
+      dataAplicacao: ha(9),
+      vencimento: daqui(30),
+      valorAplicado: "5000",
+    }),
+    titulo({
+      tipo: "CDB",
+      nome: "CDB Prefixado 12,4% (vencido)",
+      emissor: "Banco Exemplo",
+      indexador: "PREFIXADO",
+      taxaAnual: "12.4",
+      dataAplicacao: ha(26),
+      vencimento: ha(2),
+      valorAplicado: "4500",
+    }),
     titulo({
       tipo: "POUPANCA",
       nome: "Poupança",

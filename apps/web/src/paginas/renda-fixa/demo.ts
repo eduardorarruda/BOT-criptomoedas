@@ -30,6 +30,7 @@ import type { FonteRendaFixa } from "./fonte";
 
 type Gravado = NovoTitulo & {
   readonly id: string;
+  readonly origem?: "manual" | "pluggy";
   readonly grupo: string | null;
   readonly atualizadoEm: number;
 };
@@ -97,8 +98,8 @@ export function criarFonteRendaFixaDemo(agora: () => number = Date.now): FonteRe
     posicoes: ReturnType<typeof calcular>["posicoes"],
   ): TituloRendaFixa => ({
     id: g.id,
-    origem: "manual",
-    itemId: null,
+    origem: g.origem ?? "manual",
+    itemId: g.origem === "pluggy" ? "demo-item-pluggy" : null,
     grupo: g.grupo,
     tipo: g.tipo,
     nome: g.nome,

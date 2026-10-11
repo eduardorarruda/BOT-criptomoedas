@@ -8,7 +8,10 @@ describe("renda fixa na demonstração", () => {
 
   it("o resumo segue o contrato da API e tem números", async () => {
     const r = ResumoRendaFixaEsquema.parse(await fonte.resumo());
-    expect(r.quantidade).toBe(8);
+    const titulos = await fonte.titulos();
+    expect(titulos.filter((t) => t.origem === "pluggy")).toHaveLength(2);
+    expect(titulos.some((t) => t.posicao.disponivel && t.posicao.vencido)).toBe(true);
+    expect(r.quantidade).toBe(12);
     expect(r.indisponiveis).toEqual([]);
     expect(Number(r.bruto)).toBeGreaterThan(Number(r.aplicado));
     expect(Number(r.liquido)).toBeLessThan(Number(r.bruto));
