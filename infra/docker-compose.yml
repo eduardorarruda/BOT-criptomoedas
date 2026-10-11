@@ -75,6 +75,12 @@ services:
       N8N_WEBHOOK_SEGREDO: ${N8N_WEBHOOK_SEGREDO:?defina N8N_WEBHOOK_SEGREDO no .env}
       # Com o perfil app, use http://api:8080; com a API rodando no host (pnpm dev), o padrão.
       ZENTRADE_API_URL: ${ZENTRADE_API_URL_PARA_N8N:-http://host.docker.internal:8080}
+      # Usadas pelos fluxos de infra/n8n (veja infra/n8n/README.md); tokens vão em credenciais.
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      TELEGRAM_APROVADORES_IDS: ${TELEGRAM_APROVADORES_IDS:-}
+      ZENTRADE_FEEDS_RSS: ${ZENTRADE_FEEDS_RSS:-}
+      ZENTRADE_ALERTA_EMAIL: ${ZENTRADE_ALERTA_EMAIL:-}
+      ZENTRADE_ALERTA_EMAIL_DE: ${ZENTRADE_ALERTA_EMAIL_DE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

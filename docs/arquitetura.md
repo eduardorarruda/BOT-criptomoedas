@@ -115,11 +115,18 @@ Pontos que valem em todos os caminhos:
 ## Onde está cada coisa
 
 ```
-apps/          serviços (api, motor, agente, web)
+apps/            serviços (api, motor, agente, web)
 packages/
-  dominio/     regras puras e testadas
-  contratos/   formatos entre os serviços
-infra/n8n/     fluxos do n8n versionados
-tools/         ferramentas de desenvolvimento (ex.: validação dos fluxos)
-docs/          esta documentação
+  dominio/       regras puras e testadas
+  contratos/     formatos entre os serviços (e o subcaminho /esquemas para a tela)
+  corretora/     Binance (REST e WebSocket) e corretora de papel
+  banco/         esquema, migrações, RLS e repositórios sobre PostgreSQL
+  conhecimento/  RAG: divisor, embeddings (Voyage ou Ollama), ingestão e busca híbrida
+infra/
+  docker/        Dockerfiles por serviço e o nginx da tela
+  docker-compose.yml  infra de desenvolvimento e o perfil "app" (tudo junto)
+  n8n/           fluxos do n8n versionados
+  teste/         banco e Redis descartáveis para os testes de integração
+tools/           ferramentas de desenvolvimento (ex.: validação dos fluxos)
+docs/            esta documentação
 ```

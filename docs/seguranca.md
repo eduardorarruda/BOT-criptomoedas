@@ -31,7 +31,8 @@ O ZenTrade guarda chaves de corretora e envia ordens com dinheiro. Este document
 ### Webhooks entre a API e o n8n
 
 - **Ameaça:** alguém forja uma aprovação, injeta notícia falsa no RAG ou repete uma requisição capturada.
-- **Defesa do sistema:** todo webhook, nos dois sentidos, leva `X-ZenTrade-Assinatura` com HMAC-SHA256 de `"carimbo.corpo"`; vale por **5 minutos**; a comparação é em tempo constante; corpo sem assinatura válida nem é lido. O n8n ignora proposta repetida, e a API só aceita resposta para decisão ainda pendente.
+- **Defesa do sistema:** todo webhook, nos dois sentidos, leva `X-ZenTrade-Assinatura` com HMAC-SHA256 de `"carimbo.corpo"`; vale por **5 minutos**; a comparação é em tempo constante; corpo sem assinatura válida nem é lido. A API guarda no Redis cada assinatura aceita pelo tempo em que ela ainda vale e recusa a cópia (409 `webhook_repetido`; sem Redis, recusa tudo). O n8n ignora proposta repetida, e a API só aceita resposta para decisão ainda pendente. Com mais de uma pessoa cadastrada, o conhecimento que chega pelo n8n só é aceito com `N8N_USUARIO_ID` definido.
+- **Tempo real:** o WebSocket confere a cada 30 s se a sessão ainda vale ou se o token não foi revogado, e fecha a conexão (código 4401) quando não vale mais.
 - **Defesa de quem opera:** segredo aleatório de 32+ caracteres (`openssl rand -hex 32`), igual nos dois lados e em lugar nenhum mais; relógio do servidor sincronizado (NTP), senão as assinaturas vencem.
 
 ### IA e injeção de prompt pelas notícias
