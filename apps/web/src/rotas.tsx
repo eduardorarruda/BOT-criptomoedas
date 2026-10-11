@@ -9,8 +9,10 @@ import {
 } from "@tanstack/react-router";
 import type { ComponentType } from "react";
 import type { Fonte } from "./api/fonte";
+import { validarBusca } from "./componentes/filtros/esquemas";
 import { chaves } from "./ganchos/chaves";
 import { Casca } from "./layout/Casca";
+import { buscaDecisoes } from "./paginas/decisoes/filtros";
 import { NaoEncontrada } from "./paginas/NaoEncontrada";
 
 /**
@@ -73,6 +75,17 @@ const aoVivo = createRoute({
   component: lazyRouteComponent(() => import("./paginas/aovivo/AoVivo"), "AoVivo"),
 });
 
+/**
+ * Telas de dados com filtros na URL (`?robo=r-sol&periodo=30d&visao=tabela`): o link
+ * abre igual, recarregar mantém e voltar desfaz. Parâmetro inválido é descartado.
+ */
+const decisoes = createRoute({
+  getParentRoute: () => app,
+  path: "/decisoes",
+  validateSearch: validarBusca(buscaDecisoes),
+  component: lazyRouteComponent(() => import("./paginas/Decisoes"), "Decisoes"),
+});
+
 const arvore = raiz.addChildren([
   entrar,
   app.addChildren([
@@ -81,7 +94,7 @@ const arvore = raiz.addChildren([
     pagina("/assistente", () => import("./paginas/assistente/Assistente"), "Assistente"),
     pagina("/assistente/configuracoes", () => import("./paginas/assistente/Configuracoes"), "Configuracoes"),
     pagina("/mercado", () => import("./paginas/Mercado"), "Mercado"),
-    pagina("/decisoes", () => import("./paginas/Decisoes"), "Decisoes"),
+    decisoes,
     pagina("/ordens", () => import("./paginas/Ordens"), "Ordens"),
     pagina("/patrimonio", () => import("./paginas/patrimonio/Patrimonio"), "Patrimonio"),
     pagina("/carteira", () => import("./paginas/carteira/Carteira"), "Carteira"),

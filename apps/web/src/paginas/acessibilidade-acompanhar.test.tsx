@@ -11,6 +11,8 @@ describe("acessibilidade: Acompanhar", () => {
     ["/aovivo?robo=r-sol", /ao vivo/i],
     ["/mercado", /mercado/i],
     ["/decisoes", /decisões/i],
+    ["/decisoes?visao=tabela&robo=r-sol&periodo=90d", /decisões/i],
+    ["/decisoes?q=nada-disso-existe", /decisões/i],
     ["/ordens", /ordens/i],
     ["/patrimonio", /patrimônio/i],
   ])(

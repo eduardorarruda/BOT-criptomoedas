@@ -1,0 +1,91 @@
+/* Diário de decisões e ordens: totais que seguem o filtro e a visão em tabela. Só tokens do tema. */
+.diario-totais {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--linha);
+}
+.diario-totais > div {
+  display: grid;
+  gap: 2px;
+  padding: var(--espaco-3) var(--espaco-4);
+  background: var(--superficie);
+}
+.diario-totais dt {
+  color: var(--apagado);
+  font-size: 12px;
+}
+.diario-totais dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 18px;
+}
+.diario-totais__nota {
+  color: var(--apagado);
+  font-size: 12px;
+}
+.diario-grupo__conta {
+  margin-left: 6px;
+  color: var(--apagado);
+  font-family: var(--fonte-numero);
+  font-size: 13px;
+}
+[data-densidade="compacta"].linha-do-tempo {
+  gap: var(--espaco-4);
+}
+[data-densidade="compacta"] .linha-do-tempo__lista {
+  gap: var(--espaco-2);
+}
+
+.diario-tabela th,
+.diario-tabela td {
+  white-space: nowrap;
+}
+.diario-tabela__abrir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  margin-left: -4px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: none;
+  color: var(--texto);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.diario-tabela__abrir:hover {
+  background: var(--superficie-2);
+}
+.diario-tabela__abrir:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 1px;
+}
+.diario-tabela__sub {
+  display: block;
+  color: var(--apagado);
+  font-size: 12px;
+}
+.diario-tabela__linha--aberta > * {
+  background: color-mix(in oklab, var(--superficie-2) 60%, transparent);
+}
+.diario-tabela__detalhe > td {
+  padding: var(--espaco-3) 0 var(--espaco-4);
+  white-space: normal;
+}
+.diario-compra {
+  color: var(--ganho);
+  font-weight: 550;
+}
+.diario-venda {
+  color: var(--perda);
+  font-weight: 550;
+}
