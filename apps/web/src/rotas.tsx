@@ -17,6 +17,7 @@ import { buscaDecisoes } from "./paginas/decisoes/filtros";
 import { buscaImobiliario } from "./paginas/imobiliario/filtros";
 import { NaoEncontrada } from "./paginas/NaoEncontrada";
 import { buscaOrdens } from "./paginas/ordens/filtros";
+import { buscaPatrimonio } from "./paginas/patrimonio/filtros";
 import { buscaRendaFixa } from "./paginas/renda-fixa/filtros";
 
 /**
@@ -129,6 +130,13 @@ const imobiliario = createRoute({
   component: lazyRouteComponent(() => import("./paginas/imobiliario/VisaoImobiliario"), "VisaoImobiliario"),
 });
 
+const patrimonio = createRoute({
+  getParentRoute: () => app,
+  path: "/patrimonio",
+  validateSearch: validarBusca(buscaPatrimonio),
+  component: lazyRouteComponent(() => import("./paginas/patrimonio/Patrimonio"), "Patrimonio"),
+});
+
 const arvore = raiz.addChildren([
   entrar,
   app.addChildren([
@@ -139,7 +147,7 @@ const arvore = raiz.addChildren([
     pagina("/mercado", () => import("./paginas/Mercado"), "Mercado"),
     decisoes,
     ordens,
-    pagina("/patrimonio", () => import("./paginas/patrimonio/Patrimonio"), "Patrimonio"),
+    patrimonio,
     carteira,
     rendaFixa,
     pagina("/robos", () => import("./paginas/Robos"), "Robos"),

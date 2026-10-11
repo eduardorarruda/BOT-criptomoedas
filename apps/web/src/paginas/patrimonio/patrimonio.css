@@ -212,3 +212,31 @@
     width: min(180px, 100%);
   }
 }
+
+/* classes fora da soma escolhida: continuam à vista, apagadas */
+.patrimonio-classe--fora {
+  opacity: 0.55;
+}
+.patrimonio-classe--fora:hover,
+.patrimonio-classe--fora:focus-within {
+  opacity: 0.85;
+}
+.patrimonio-tabela th,
+.patrimonio-tabela td {
+  white-space: nowrap;
+}
+.patrimonio-tabela th a {
+  color: var(--texto);
+  font-weight: 600;
+}
+.patrimonio-tabela__marca {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: var(--espaco-2);
+  border-radius: 3px;
+  background: currentColor;
+}
+.patrimonio-tabela__fora > * {
+  color: var(--apagado);
+}

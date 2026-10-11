@@ -29,14 +29,26 @@ const O_QUE_ENTRA: Record<ClassePatrimonio, string> = {
 };
 
 /** Um cartão por classe: quanto vale, que fatia é, quando foi atualizada e o caminho para o detalhe. */
-export function CartaoClasse({ c, ordem }: { readonly c: ClassePatrimonioResumo; readonly ordem: number }) {
+export function CartaoClasse({
+  c,
+  ordem,
+  fracao = c.fracao,
+  fora = false,
+}: {
+  readonly c: ClassePatrimonioResumo;
+  readonly ordem: number;
+  /** Fatia na soma escolhida (por padrão, a do total da API). */
+  readonly fracao?: string | null;
+  /** A classe ficou fora da soma escolhida: o cartão fica, apagado. */
+  readonly fora?: boolean;
+}) {
   const menos = useMenosMovimento();
   const Icone = ICONE[c.classe];
   const situacao = SITUACAO[c.situacao];
   const id = `patrimonio-classe-${c.classe}`;
   return (
     <m.li
-      className={`patrimonio-classe patrimonio-classe--${c.classe}`}
+      className={`patrimonio-classe patrimonio-classe--${c.classe} ${fora ? "patrimonio-classe--fora" : ""}`}
       aria-labelledby={id}
       initial={menos ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -49,13 +61,13 @@ export function CartaoClasse({ c, ordem }: { readonly c: ClassePatrimonioResumo;
         <h2 className="patrimonio-classe__titulo" id={id}>
           {ROTULO_CLASSE[c.classe]}
         </h2>
-        <Selo tom={situacao.tom}>{situacao.texto}</Selo>
+        {fora ? <Selo tom="neutro">Fora desta soma</Selo> : <Selo tom={situacao.tom}>{situacao.texto}</Selo>}
       </div>
       <p className="patrimonio-classe__valor num">{valorDaClasse(c)}</p>
       <dl className="patrimonio-classe__dados">
         <div>
           <dt>Fatia do total</dt>
-          <dd className="num">{c.fracao === null ? TRACO : formatarPercentual(c.fracao)}</dd>
+          <dd className="num">{fora || fracao === null ? TRACO : formatarPercentual(fracao)}</dd>
         </div>
         <div>
           <dt>Investido</dt>

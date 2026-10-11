@@ -52,7 +52,11 @@ export function FiltroChips<T extends string>({
               type="checkbox"
               className="chip__entrada"
               checked={marcado}
-              onChange={() => aoMudar(alternarNaLista(selecionados, o.valor))}
+              onChange={() => {
+                // Sempre na ordem das opções: a mesma escolha gera a mesma URL.
+                const nova = alternarNaLista(selecionados, o.valor);
+                aoMudar(opcoes.map((x) => x.valor).filter((v) => nova.includes(v)));
+              }}
             />
             <Check size={13} strokeWidth={2.4} aria-hidden="true" className="chip__marca" />
             <span>{o.rotulo}</span>

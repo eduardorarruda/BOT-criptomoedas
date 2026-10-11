@@ -1,6 +1,6 @@
 import type { Patrimonio as PatrimonioDTO } from "@zentrade/contratos/esquemas";
 import { createMemoryHistory, createRootRoute, createRouter, RouterProvider } from "@tanstack/react-router";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { describe, expect, it, vi } from "vitest";
@@ -16,7 +16,7 @@ const AGORA = Date.now();
 /** 1840,25 USDT × 5,43 = 9.992,56 + 48.210,37 + 312.400 (o demo). */
 const TOTAL = "R$ 370.602,93";
 
-function montar(patrimonio: FontePatrimonio["patrimonio"]) {
+function montar(patrimonio: FontePatrimonio["patrimonio"], caminho = "/") {
   const fonte: FontePatrimonio = { patrimonio };
   const raiz = createRootRoute({
     component: () => (
@@ -25,8 +25,14 @@ function montar(patrimonio: FontePatrimonio["patrimonio"]) {
       </ContextoFontePatrimonio.Provider>
     ),
   });
-  const roteador = createRouter({ routeTree: raiz, history: createMemoryHistory({ initialEntries: ["/"] }) });
-  return renderizar(<RouterProvider router={roteador} />, criarFonteDemo({ latenciaMs: [0, 0] }));
+  const roteador = createRouter({
+    routeTree: raiz,
+    history: createMemoryHistory({ initialEntries: [caminho] }),
+  });
+  return {
+    ...renderizar(<RouterProvider router={roteador} />, criarFonteDemo({ latenciaMs: [0, 0] })),
+    roteador,
+  };
 }
 
 const VAZIO: PatrimonioDTO = {
@@ -145,5 +151,27 @@ describe("tela Patrimônio", () => {
     await screen.findByText(marco);
     const r = await axe.run(container, OPCOES_AXE);
     expect(r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.html).join(" | ")}`)).toEqual([]);
+  });
+
+  it("escolher o que somar: total, fatias e cartões seguem a escolha (e a URL)", async () => {
+    const { roteador } = montar(async () => patrimonioDemo(AGORA));
+    expect((await screen.findAllByText(TOTAL)).length).toBeGreaterThan(0);
+    await userEvent.click(screen.getByRole("checkbox", { name: "Renda fixa" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Cripto" }));
+    await waitFor(() =>
+      expect((roteador.state.location.search as Record<string, unknown>).classes).toBe("cripto,renda_fixa"),
+    );
+    // 9.992,56 + 48.210,37
+    expect((await screen.findAllByText("R$ 58.202,93")).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Soma de cripto \+ renda fixa/)).toBeInTheDocument();
+    const imob = screen.getByRole("listitem", { name: "Imobiliário" });
+    expect(within(imob).getByText("Fora desta soma")).toBeInTheDocument();
+  });
+
+  it("visão em tabela pela URL, com valor − investido", async () => {
+    montar(async () => patrimonioDemo(AGORA), "/?visao=tabela");
+    const tabela = await screen.findByRole("table", { name: /Classes do patrimônio/ });
+    expect(within(tabela).getAllByRole("row")).toHaveLength(4);
+    expect(within(tabela).getByText("+R$ 3.210,37")).toBeInTheDocument();
   });
 });
