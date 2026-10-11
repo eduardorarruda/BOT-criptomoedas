@@ -139,114 +139,130 @@ async function contar(tx: Tx): Promise<number> {
   return linha?.n ?? 0;
 }
 
+async function criarNa(
+  tx: Tx,
+  usuarioId: string,
+  novo: NovoInvestimentoImobiliario,
+  validar?: ValidarRegistro,
+) {
+  exigirTipoValido(novo);
+  if ((await contar(tx)) >= LIMITE_INVESTIMENTOS_IMOBILIARIOS) {
+    throw new ErroDados("invalido", `limite de ${LIMITE_INVESTIMENTOS_IMOBILIARIOS} investimentos atingido`);
+  }
+  const { id } = umaLinha(
+    await tx
+      .insert(investimentosImobiliarios)
+      .values({
+        usuarioId,
+        tipo: novo.tipo,
+        moeda: novo.moeda ?? "BRL",
+        nome: novo.nome,
+        ...colunasDoInvestimento(novo),
+      })
+      .returning({ id: investimentosImobiliarios.id }),
+  );
+  await gravarFinanciamento(tx, usuarioId, id, novo.financiamento ?? null);
+  await inserirLancamentos(tx, usuarioId, id, novo.lancamentosIniciais ?? []);
+  const registro = (await obterNa(tx, id)) as RegistroImobiliario;
+  validar?.(registro);
+  await auditar(tx, usuarioId, "imobiliario_criado", id, { tipo: novo.tipo });
+  return registro;
+}
+
+async function atualizarNa(
+  tx: Tx,
+  usuarioId: string,
+  id: string,
+  mudanca: MudancaInvestimentoImobiliario,
+  validar?: ValidarRegistro,
+) {
+  await travar(tx, id);
+  const atual = (await obterNa(tx, id)) as RegistroImobiliario;
+  exigirTipoValido({ ...atual.investimento, ...mudanca });
+  await tx
+    .update(investimentosImobiliarios)
+    .set({ ...colunasDoInvestimento(mudanca), atualizadoEm: new Date() })
+    .where(eq(investimentosImobiliarios.id, id));
+  await gravarFinanciamento(tx, usuarioId, id, mudanca.financiamento);
+  const registro = (await obterNa(tx, id)) as RegistroImobiliario;
+  validar?.(registro);
+  await auditar(tx, usuarioId, "imobiliario_alterado", id, { campos: Object.keys(mudanca) });
+  return registro;
+}
+
+async function removerNa(tx: Tx, usuarioId: string, id: string): Promise<void> {
+  const apagados = await tx
+    .delete(investimentosImobiliarios)
+    .where(eq(investimentosImobiliarios.id, id))
+    .returning({ tipo: investimentosImobiliarios.tipo });
+  if (apagados.length === 0) throw naoEncontrado();
+  await auditar(tx, usuarioId, "imobiliario_removido", id, { tipo: apagados[0]?.tipo });
+}
+
+async function adicionarLancamentoNa(
+  tx: Tx,
+  usuarioId: string,
+  investimentoId: string,
+  novo: NovoLancamentoImobiliario,
+  validar?: ValidarRegistro,
+): Promise<LancamentoImobiliario> {
+  await travar(tx, investimentoId);
+  const [lancamentoId] = await inserirLancamentos(tx, usuarioId, investimentoId, [novo]);
+  const registro = (await obterNa(tx, investimentoId)) as RegistroImobiliario;
+  validar?.(registro);
+  await tx
+    .update(investimentosImobiliarios)
+    .set({ atualizadoEm: new Date() })
+    .where(eq(investimentosImobiliarios.id, investimentoId));
+  return registro.lancamentos.find((l) => l.id === lancamentoId) as LancamentoImobiliario;
+}
+
+async function removerLancamentoNa(
+  tx: Tx,
+  investimentoId: string,
+  lancamentoId: string,
+  validar?: ValidarRegistro,
+): Promise<void> {
+  await travar(tx, investimentoId);
+  const apagados = await tx
+    .delete(lancamentosImobiliarios)
+    .where(
+      and(
+        eq(lancamentosImobiliarios.id, lancamentoId),
+        eq(lancamentosImobiliarios.investimentoId, investimentoId),
+      ),
+    )
+    .returning({ id: lancamentosImobiliarios.id });
+  if (apagados.length === 0) throw new ErroDados("nao_encontrado", "lançamento não encontrado; confira o id");
+  validar?.((await obterNa(tx, investimentoId)) as RegistroImobiliario);
+}
+
+/** Tudo roda como a pessoa (RLS): sem WHERE por usuario_id, as policies filtram. */
 export function repositorioImobiliario(db: Db) {
   return {
     /** Todos os investimentos da pessoa, com financiamento e lançamentos. */
     listar: (usuarioId: string): Promise<RegistroImobiliario[]> =>
       comoUsuario(db, usuarioId, (tx) => registrosDe(tx)),
-
     obter: (usuarioId: string, id: string): Promise<RegistroImobiliario | null> =>
       comoUsuario(db, usuarioId, (tx) => obterNa(tx, id)),
-
     criar: (usuarioId: string, novo: NovoInvestimentoImobiliario, validar?: ValidarRegistro) =>
-      comoUsuario(db, usuarioId, async (tx): Promise<RegistroImobiliario> => {
-        exigirTipoValido(novo);
-        if ((await contar(tx)) >= LIMITE_INVESTIMENTOS_IMOBILIARIOS) {
-          throw new ErroDados(
-            "invalido",
-            `limite de ${LIMITE_INVESTIMENTOS_IMOBILIARIOS} investimentos atingido`,
-          );
-        }
-        const { id } = umaLinha(
-          await tx
-            .insert(investimentosImobiliarios)
-            .values({
-              usuarioId,
-              tipo: novo.tipo,
-              moeda: novo.moeda ?? "BRL",
-              nome: novo.nome,
-              ...colunasDoInvestimento(novo),
-            })
-            .returning({ id: investimentosImobiliarios.id }),
-        );
-        await gravarFinanciamento(tx, usuarioId, id, novo.financiamento ?? null);
-        await inserirLancamentos(tx, usuarioId, id, novo.lancamentosIniciais ?? []);
-        const registro = (await obterNa(tx, id)) as RegistroImobiliario;
-        validar?.(registro);
-        await auditar(tx, usuarioId, "imobiliario_criado", id, { tipo: novo.tipo });
-        return registro;
-      }),
-
+      comoUsuario(db, usuarioId, (tx) => criarNa(tx, usuarioId, novo, validar)),
     atualizar: (
       usuarioId: string,
       id: string,
-      mudanca: MudancaInvestimentoImobiliario,
+      m: MudancaInvestimentoImobiliario,
       validar?: ValidarRegistro,
-    ) =>
-      comoUsuario(db, usuarioId, async (tx): Promise<RegistroImobiliario> => {
-        await travar(tx, id);
-        const atual = (await obterNa(tx, id)) as RegistroImobiliario;
-        exigirTipoValido({ ...atual.investimento, ...mudanca });
-        await tx
-          .update(investimentosImobiliarios)
-          .set({ ...colunasDoInvestimento(mudanca), atualizadoEm: new Date() })
-          .where(eq(investimentosImobiliarios.id, id));
-        await gravarFinanciamento(tx, usuarioId, id, mudanca.financiamento);
-        const registro = (await obterNa(tx, id)) as RegistroImobiliario;
-        validar?.(registro);
-        await auditar(tx, usuarioId, "imobiliario_alterado", id, { campos: Object.keys(mudanca) });
-        return registro;
-      }),
-
+    ) => comoUsuario(db, usuarioId, (tx) => atualizarNa(tx, usuarioId, id, m, validar)),
     remover: (usuarioId: string, id: string): Promise<void> =>
-      comoUsuario(db, usuarioId, async (tx) => {
-        const apagados = await tx
-          .delete(investimentosImobiliarios)
-          .where(eq(investimentosImobiliarios.id, id))
-          .returning({ tipo: investimentosImobiliarios.tipo });
-        if (apagados.length === 0) throw naoEncontrado();
-        await auditar(tx, usuarioId, "imobiliario_removido", id, { tipo: apagados[0]?.tipo });
-      }),
-
+      comoUsuario(db, usuarioId, (tx) => removerNa(tx, usuarioId, id)),
     adicionarLancamento: (
       usuarioId: string,
-      investimentoId: string,
-      novo: NovoLancamentoImobiliario,
+      id: string,
+      l: NovoLancamentoImobiliario,
       validar?: ValidarRegistro,
-    ) =>
-      comoUsuario(db, usuarioId, async (tx): Promise<LancamentoImobiliario> => {
-        await travar(tx, investimentoId);
-        const [lancamentoId] = await inserirLancamentos(tx, usuarioId, investimentoId, [novo]);
-        const registro = (await obterNa(tx, investimentoId)) as RegistroImobiliario;
-        validar?.(registro);
-        await tx
-          .update(investimentosImobiliarios)
-          .set({ atualizadoEm: new Date() })
-          .where(eq(investimentosImobiliarios.id, investimentoId));
-        return registro.lancamentos.find((l) => l.id === lancamentoId) as LancamentoImobiliario;
-      }),
-
-    removerLancamento: (
-      usuarioId: string,
-      investimentoId: string,
-      lancamentoId: string,
-      validar?: ValidarRegistro,
-    ) =>
-      comoUsuario(db, usuarioId, async (tx): Promise<void> => {
-        await travar(tx, investimentoId);
-        const apagados = await tx
-          .delete(lancamentosImobiliarios)
-          .where(
-            and(
-              eq(lancamentosImobiliarios.id, lancamentoId),
-              eq(lancamentosImobiliarios.investimentoId, investimentoId),
-            ),
-          )
-          .returning({ id: lancamentosImobiliarios.id });
-        if (apagados.length === 0)
-          throw new ErroDados("nao_encontrado", "lançamento não encontrado; confira o id");
-        validar?.((await obterNa(tx, investimentoId)) as RegistroImobiliario);
-      }),
+    ) => comoUsuario(db, usuarioId, (tx) => adicionarLancamentoNa(tx, usuarioId, id, l, validar)),
+    removerLancamento: (usuarioId: string, id: string, lancamentoId: string, validar?: ValidarRegistro) =>
+      comoUsuario(db, usuarioId, (tx) => removerLancamentoNa(tx, id, lancamentoId, validar)),
   };
 }
 
