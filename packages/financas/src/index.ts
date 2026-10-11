@@ -10,3 +10,4 @@ export * from "./renda-fixa-simuladores.js";
 export * from "./amortizacao.js";
 export * from "./fluxo-caixa.js";
 export * from "./imobiliario.js";
+export * from "./patrimonio.js";
