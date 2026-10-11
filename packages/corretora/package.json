@@ -1,0 +1,31 @@
+{
+  "name": "@zentrade/corretora",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Corretoras do ZenTrade: Binance spot (real e testnet) por REST e WebSocket, e a corretora de papel para simulação e backtest.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@zentrade/contratos": "workspace:*",
+    "@zentrade/dominio": "workspace:*",
+    "ws": "^8.22.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.2"
+  }
+}
