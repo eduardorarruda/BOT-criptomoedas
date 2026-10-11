@@ -4,6 +4,7 @@
  * A assinatura dos webhooks e as portas ficam só em `@zentrade/contratos`.
  */
 export * from "./api.js";
+export * from "./assistente.js";
 export * from "./backtest.js";
 export * from "./comum.js";
 export * from "./dados.js";

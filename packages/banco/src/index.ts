@@ -5,6 +5,16 @@ export * from "./cliente.js";
 export * from "./config.js";
 export * from "./erros.js";
 export * from "./migrar.js";
+export {
+  criarBancoDoAgente,
+  type BancoDoAgente,
+  type OpcoesBancoDoAgente,
+} from "./repositorios/assistente-agente.js";
+export type { NovaMensagem, RepositorioAssistente, TurnoHistorico } from "./repositorios/assistente.js";
+export type {
+  OrigemParaGravar,
+  RepositorioConhecimentoDetalhe,
+} from "./repositorios/assistente-conhecimento.js";
 export type {
   Backtest,
   BacktestParaRodar,
