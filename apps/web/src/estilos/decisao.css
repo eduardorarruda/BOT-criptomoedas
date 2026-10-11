@@ -190,6 +190,7 @@
 .analises {
   display: grid;
   gap: var(--espaco-3);
+  container-type: inline-size;
 }
 .pensando {
   display: grid;
@@ -245,6 +246,17 @@
   font-size: 13px;
   color: var(--apagado);
 }
+/* Em coluna estreita (lateral do Ao vivo, celular): ferramenta e hora em cima, o texto embaixo. */
+@container (max-width: 460px) {
+  .pensando__etapa {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 10px;
+  }
+  .pensando__descricao {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
 
 @media (max-width: 560px) {
   .decisao {
@@ -252,12 +264,6 @@
   }
   .decisao__quando {
     margin-left: 0;
-  }
-  .pensando__etapa {
-    grid-template-columns: 1fr auto;
-  }
-  .pensando__descricao {
-    grid-column: 1 / -1;
   }
   .decisao__botoes,
   .decisao__botoes .botao {

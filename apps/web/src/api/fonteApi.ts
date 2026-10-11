@@ -17,6 +17,7 @@ import {
   DocumentoIngeridoEsquema,
   ParadaTotalEsquema,
   PontoPatrimonioEsquema,
+  RespostaAoVivoEsquema,
   ResumoEsquema,
   SaudeEsquema,
   SessaoEsquema,
@@ -104,6 +105,15 @@ export function criarFonteApi(cliente: ClienteApi = criarCliente()): Fonte {
     documentos: () => pedir("GET", "/conhecimento/documentos", lista(DocumentoEsquema)),
     criarNota: (n) => pedir("POST", "/conhecimento/notas", DocumentoIngeridoEsquema, n),
     automacoes: () => pedir("GET", "/automacoes", lista(AutomacaoEsquema)),
+
+    aoVivo: async (roboId) =>
+      (
+        await pedir(
+          "GET",
+          roboId ? `/aovivo/${encodeURIComponent(roboId)}/recentes` : "/aovivo/recentes",
+          RespostaAoVivoEsquema,
+        )
+      ).eventos,
 
     tempoReal: (o) => conectarTempoReal(o),
   };

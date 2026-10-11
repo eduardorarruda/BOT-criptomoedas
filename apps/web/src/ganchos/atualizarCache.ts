@@ -1,5 +1,5 @@
 import type { DecisaoDTO, OrdemDTO, RoboDTO } from "@zentrade/contratos/esquemas";
-import type { EventoAnalise } from "../api/esquemas";
+import type { EventoAnalise } from "@zentrade/contratos/esquemas";
 import type { FiltroDecisoes } from "../api/fonte";
 
 /**
@@ -49,6 +49,8 @@ export interface AnaliseAoVivo {
   readonly roboId: string;
   readonly etapas: readonly EtapaAnalise[];
   readonly concluida: boolean;
+  /** Quando concluída: o que o agente propôs, ou "falhou" (aí o motor não opera). */
+  readonly resultado?: NonNullable<EventoAnalise["resultado"]>;
   readonly decisaoId?: string;
 }
 
@@ -66,7 +68,8 @@ export function aplicarAnalise(atual: Analises, e: EventoAnalise): Analises {
   const nova: AnaliseAoVivo = {
     ...anterior,
     etapas,
-    concluida: e.concluida,
+    concluida: anterior.concluida || e.concluida,
+    ...(e.resultado ? { resultado: e.resultado } : {}),
     ...(e.decisaoId ? { decisaoId: e.decisaoId } : {}),
   };
   const todas = { ...atual, [e.analiseId]: nova };

@@ -98,3 +98,13 @@ export function useAutomacoes() {
     refetchInterval: 60_000,
   });
 }
+
+/** Histórico curto para a tela "Ao vivo" abrir preenchida; depois, o WebSocket segue. */
+export function useAoVivo(roboId?: string) {
+  const fonte = useFonte();
+  return useQuery({
+    queryKey: chaves.aoVivo(roboId),
+    queryFn: () => fonte.aoVivo(roboId),
+    staleTime: Infinity,
+  });
+}

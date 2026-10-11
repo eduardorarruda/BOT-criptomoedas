@@ -19,8 +19,8 @@ import type {
   Documento,
   DocumentoIngerido,
   EscopoToken,
-  EventoAnalise,
   PontoPatrimonio,
+  RegistroAoVivo,
   Resumo,
   Saude,
   TokenApi,
@@ -33,7 +33,7 @@ import type {
  * (`criarFonteApi`) e o modo de demonstração (`criarFonteDemo`), que roda tudo no
  * navegador. As telas só conhecem esta interface.
  */
-export type EventoTela = Evento | EventoAnalise;
+export type EventoTela = Evento;
 export type EstadoConexao = "conectando" | "conectado" | "reconectando" | "desligado";
 
 export interface Credenciais {
@@ -127,6 +127,9 @@ export interface Fonte {
   documentos(): Promise<Documento[]>;
   criarNota(n: NovaNota): Promise<DocumentoIngerido>;
   automacoes(): Promise<Automacao[]>;
+
+  /** O que o robô (ou, sem id, todos os robôs da pessoa) fez há pouco, do mais antigo ao mais novo. */
+  aoVivo(roboId?: string): Promise<RegistroAoVivo[]>;
 
   /** Assina os eventos ao vivo; devolve a função que encerra a assinatura. */
   tempoReal(o: OuvintesTempoReal): () => void;

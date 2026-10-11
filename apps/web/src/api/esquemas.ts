@@ -1,4 +1,4 @@
-import { Id, Instante } from "@zentrade/contratos/esquemas";
+import { EventoEsquema, Instante } from "@zentrade/contratos/esquemas";
 import { z } from "zod";
 
 /**
@@ -41,16 +41,12 @@ export type {
   Usuario,
 } from "@zentrade/contratos/esquemas";
 
+export type { EventoAnalise } from "@zentrade/contratos/esquemas";
+
 /**
- * Passo a passo do agente enquanto analisa (proposta: ainda não está no contrato).
- * A tela mostra cada ferramenta consultada, ao vivo, no cartão "pensando".
+ * Histórico curto do que os robôs fizeram (GET /aovivo/.../recentes). Proposta de
+ * contrato: por enquanto só a API e a tela conhecem este formato.
  */
-export const EventoAnaliseEsquema = z.object({
-  tipo: z.literal("analise"),
-  analiseId: Id,
-  roboId: Id,
-  etapa: z.object({ ferramenta: z.string(), descricao: z.string(), em: Instante }).optional(),
-  concluida: z.boolean(),
-  decisaoId: Id.optional(),
-});
-export type EventoAnalise = z.infer<typeof EventoAnaliseEsquema>;
+export const RegistroAoVivoEsquema = z.object({ recebidoEm: Instante, evento: EventoEsquema });
+export type RegistroAoVivo = z.infer<typeof RegistroAoVivoEsquema>;
+export const RespostaAoVivoEsquema = z.object({ eventos: z.array(RegistroAoVivoEsquema) });
