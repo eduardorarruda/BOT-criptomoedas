@@ -1,12 +1,18 @@
 import { Disjuntor } from "@zentrade/corretora";
 import type { ContaCorretora } from "@zentrade/banco";
 import { ContaBinance, ErroConfiguracao, ErroLimiteRequisicoes, ErroRede } from "@zentrade/corretora";
+import { dec } from "@zentrade/dominio";
 import { describe, expect, it, vi } from "vitest";
 import { ErroApi } from "../erros.js";
 import { estadoInicial, fetchDaBinanceFalsa, type EstadoBinanceFalsa } from "../integracao/binance-falsa.js";
 import { carteiraEmMemoria } from "../integracao/carteira-memoria.js";
 import { contaNaoEncontrada, erroDaBinance, fabricaContaBinance } from "./binance-conta.js";
-import { criarServicoCarteira, servicoCarteiraDe, type DependenciasCarteira } from "./binance-carteira.js";
+import {
+  criarServicoCarteira,
+  reaisPorUsdtDaTabela,
+  servicoCarteiraDe,
+  type DependenciasCarteira,
+} from "./binance-carteira.js";
 import { simbolosCandidatos } from "./binance-sincronizacao.js";
 import { avisosDaChave } from "./binance-status.js";
 
@@ -137,6 +143,30 @@ describe("serviço da carteira", () => {
     ]);
   });
 
+  it("câmbio USDT/BRL: da mesma tabela de preços (em cache), sem pedir de novo à Binance", async () => {
+    const { servico, binance } = montar(["real"]);
+    binance.precos = { BTCUSDT: "60000", USDTBRL: "5.4321" };
+    await servico.carteira(ANA);
+    const antes = binance.chamadas.filter((c) => c === "/api/v3/ticker/price").length;
+    const cambio = await servico.cambioReais(ANA, "real");
+    expect([cambio?.preco.toFixed(), cambio?.em]).toEqual(["5.4321", AGORA]);
+    expect(binance.chamadas.filter((c) => c === "/api/v3/ticker/price").length).toBe(antes);
+  });
+
+  it("câmbio sem o par na tabela, ou com a Binance fora: null e o motivo no registro", async () => {
+    const semPar = montar(["real"]);
+    expect(await semPar.servico.cambioReais(ANA, "real")).toBeNull();
+    expect(semPar.log.warn).not.toHaveBeenCalled();
+    const fora = montar(["real"]);
+    fora.binance.precos = { USDTBRL: "5.5" };
+    fora.credenciais.binance.mockRejectedValueOnce(Object.assign(new Error("x"), { name: "ErroCifra" }));
+    expect(await fora.servico.cambioReais(ANA, "real")).toBeNull();
+    expect(fora.log.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ rede: "real" }),
+      "cotação USDT/BRL indisponível",
+    );
+  });
+
   it("um serviço por API: injetado nos testes, padrão e reaproveitado nas demais", () => {
     const { servico } = montar();
     const deps = { banco: {} as DependenciasCarteira["banco"], agora: Date.now };
@@ -168,6 +198,15 @@ describe("erros da Binance para a API", () => {
 
   it("a fábrica cria uma ContaBinance da rede pedida", () => {
     expect(fabricaContaBinance()("real", { apiKey: "k", apiSecret: "s" })).toBeInstanceOf(ContaBinance);
+  });
+});
+
+describe("reais por USDT na tabela de preços", () => {
+  it("USDTBRL direto; senão o inverso de BRLUSDT; sem par ou com zero, null", () => {
+    expect(reaisPorUsdtDaTabela(new Map([["USDTBRL", dec("5.43")]]))?.toFixed()).toBe("5.43");
+    expect(reaisPorUsdtDaTabela(new Map([["BRLUSDT", dec("0.2")]]))?.toFixed()).toBe("5");
+    expect(reaisPorUsdtDaTabela(new Map([["USDTBRL", dec(0)]]))).toBeNull();
+    expect(reaisPorUsdtDaTabela(new Map([["BTCUSDT", dec(1)]]))).toBeNull();
   });
 });
 

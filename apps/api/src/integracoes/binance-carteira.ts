@@ -10,7 +10,7 @@ import {
   type StatusBinance,
 } from "@zentrade/contratos";
 import { calcularCarteira, dinheiro, precosUsdtDaTabela } from "@zentrade/corretora";
-import type { Valor } from "@zentrade/dominio";
+import { dec, type Valor } from "@zentrade/dominio";
 import { ErroApi, naoEncontrado } from "../erros.js";
 import {
   contaNaoEncontrada,
@@ -37,8 +37,16 @@ export interface ServicoCarteira {
   ativo(usuarioId: string, ativo: string, rede?: RedeConta): Promise<CarteiraAtivo>;
   sincronizar(usuarioId: string, pedido: PedidoSincronizacao): Promise<Sincronizacao>;
   status(usuarioId: string): Promise<StatusBinance>;
+  /** Reais por USDT na tabela de preços da rede (a mesma da carteira, em cache); null se não houver. */
+  cambioReais(usuarioId: string, rede: RedeConta): Promise<CambioReais | null>;
   /** Uma pessoa e rede por vez (o peso da Binance é por IP). Falha de uma não para as outras. */
   sincronizarTodos(): Promise<void>;
+}
+
+export interface CambioReais {
+  readonly preco: Valor;
+  /** Quando a tabela de preços foi lida. */
+  readonly em: number;
 }
 
 const VALIDADE_PRECOS_MS = 10_000;
@@ -74,6 +82,14 @@ const carteiraVazia = (): Carteira => ({
   moedas: [],
   avisos: [],
 });
+
+/** Reais por 1 USDT: o par USDTBRL, ou o inverso de BRLUSDT. Sem par (ou zero), null. */
+export function reaisPorUsdtDaTabela(tabela: ReadonlyMap<string, Valor>): Valor | null {
+  const direto = tabela.get(`${MOEDA_REFERENCIA}BRL`);
+  if (direto?.gt(0)) return direto;
+  const invertido = tabela.get(`BRL${MOEDA_REFERENCIA}`);
+  return invertido?.gt(0) ? dec(1).div(invertido) : null;
+}
 
 const opcional = (v: Valor | null): string | null => (v === null ? null : dinheiro(v));
 
@@ -251,6 +267,17 @@ export function criarServicoCarteira(d: DependenciasCarteira): ServicoCarteira {
     return { contas: await statusDasContas(deps, usuarioId, contas) };
   }
 
+  async function cambioReais(usuarioId: string, rede: RedeConta): Promise<CambioReais | null> {
+    try {
+      const tabela = await tabelaDe(rede, await contaDe(usuarioId, rede));
+      const preco = reaisPorUsdtDaTabela(tabela);
+      return preco ? { preco, em: precos.get(rede)?.em ?? d.agora() } : null;
+    } catch (erro) {
+      d.log?.warn({ err: erro, usuarioId, rede }, "cotação USDT/BRL indisponível");
+      return null;
+    }
+  }
+
   async function sincronizarTodos(): Promise<void> {
     for (const { usuarioId, rede } of await banco.carteira.contasParaSincronizar()) {
       try {
@@ -261,7 +288,7 @@ export function criarServicoCarteira(d: DependenciasCarteira): ServicoCarteira {
     }
   }
 
-  return { carteira, ativo, sincronizar, status, sincronizarTodos };
+  return { carteira, ativo, sincronizar, status, cambioReais, sincronizarTodos };
 }
 
 const servicos = new WeakMap<object, ServicoCarteira>();
