@@ -140,6 +140,7 @@ function FormConfirmacao({
           value={valor}
           onChange={(e) => setValor(e.target.value)}
           erro={erro}
+          // eslint-disable-next-line jsx-a11y-x/no-autofocus -- foco inicial do diálogo (padrão WAI-ARIA de modal)
           autoFocus
         />
       ) : (
@@ -152,6 +153,7 @@ function FormConfirmacao({
           onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))}
           erro={erro}
           className="campo--codigo"
+          // eslint-disable-next-line jsx-a11y-x/no-autofocus -- foco inicial do diálogo (padrão WAI-ARIA de modal)
           autoFocus
         />
       )}

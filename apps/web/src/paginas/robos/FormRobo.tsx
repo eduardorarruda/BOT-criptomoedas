@@ -77,6 +77,7 @@ export function FormRobo({
           onChange={(e) => setNome(e.target.value)}
           erro={erroNome}
           maxLength={80}
+          // eslint-disable-next-line jsx-a11y-x/no-autofocus -- foco inicial do diálogo (padrão WAI-ARIA de modal)
           autoFocus
         />
         <CampoSelecao

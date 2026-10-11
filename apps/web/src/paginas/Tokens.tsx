@@ -46,6 +46,7 @@ function TokenNovo({
       descricao="Ele aparece só desta vez. Se perder, revogue e crie outro."
     >
       <div className="token-novo">
+        {/* eslint-disable-next-line jsx-a11y-x/no-noninteractive-tabindex -- o token rola na horizontal; o teclado precisa alcançar a região para ler e selecionar */}
         <code className="num" tabIndex={0}>
           {token?.token}
         </code>
