@@ -1,0 +1,190 @@
+/* Carteira: só tokens do tema (tokens.css). Todo número usa .num (Geist Mono, tabular). */
+.carteira-metricas {
+  margin-top: var(--espaco-2);
+}
+.carteira-conta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--apagado);
+}
+.carteira-conta .num {
+  color: var(--texto);
+}
+.carteira-situacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+  font-size: 13px;
+}
+.carteira-aviso {
+  display: flex;
+  gap: var(--espaco-2);
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--apagado);
+}
+.carteira-grade {
+  align-items: start;
+}
+
+/* tabela */
+.carteira-tabela th,
+.carteira-tabela td {
+  padding-right: 16px;
+}
+.carteira-tabela tfoot th,
+.carteira-tabela tfoot td {
+  border-top: 1px solid var(--linha-forte);
+  border-bottom: 0;
+  font-weight: 550;
+}
+.carteira-ordenar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.carteira-ordenar:hover {
+  color: var(--texto);
+}
+.carteira-moeda {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--texto);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--linha-forte);
+  text-underline-offset: 3px;
+}
+.carteira-moeda:hover {
+  text-decoration-color: var(--marca);
+}
+.carteira-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--apagado);
+}
+.carteira-moeda .carteira-sub {
+  display: inline;
+  font-weight: 400;
+}
+.carteira-linha:hover > * {
+  background: color-mix(in oklab, var(--superficie-2) 60%, transparent);
+}
+.carteira-parcelas td,
+.carteira-parcelas th {
+  white-space: nowrap;
+}
+
+/* donut */
+.carteira-donut {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  gap: var(--espaco-5);
+  align-items: center;
+  margin: 0;
+}
+.carteira-donut svg {
+  width: 100%;
+  height: auto;
+}
+.carteira-donut__fundo {
+  fill: none;
+  stroke: var(--linha);
+  stroke-width: 20;
+}
+.carteira-donut__fatia {
+  fill: none;
+  stroke-width: 20;
+  stroke-linecap: butt;
+}
+.carteira-legenda {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.carteira-legenda li {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  gap: var(--espaco-2);
+  align-items: center;
+}
+.carteira-legenda__cor {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: currentColor;
+}
+.carteira-cor-0 {
+  stroke: var(--marca);
+  color: var(--marca);
+}
+.carteira-cor-1 {
+  stroke: var(--atencao);
+  color: var(--atencao);
+}
+.carteira-cor-2 {
+  stroke: color-mix(in oklab, var(--marca) 55%, var(--texto));
+  color: color-mix(in oklab, var(--marca) 55%, var(--texto));
+}
+.carteira-cor-3 {
+  stroke: color-mix(in oklab, var(--atencao) 50%, var(--perda));
+  color: color-mix(in oklab, var(--atencao) 50%, var(--perda));
+}
+.carteira-cor-4 {
+  stroke: var(--apagado);
+  color: var(--apagado);
+}
+.carteira-cor-5 {
+  stroke: color-mix(in oklab, var(--marca-profunda) 70%, var(--superficie));
+  color: color-mix(in oklab, var(--marca-profunda) 70%, var(--superficie));
+}
+
+/* como calculamos */
+.carteira-como {
+  font-size: 13.5px;
+  color: var(--apagado);
+}
+.carteira-como ul {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 var(--espaco-3);
+  padding-left: 18px;
+}
+.carteira-como strong {
+  color: var(--texto);
+}
+
+@media (max-width: 1180px) {
+  .carteira-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .carteira-donut {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  .carteira-donut svg {
+    width: min(200px, 100%);
+  }
+}

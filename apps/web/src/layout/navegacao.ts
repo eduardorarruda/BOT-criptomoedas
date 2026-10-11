@@ -11,6 +11,7 @@ import {
   ScrollText,
   ShieldAlert,
   Workflow,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ export type RotaApp =
   | "/mercado"
   | "/decisoes"
   | "/ordens"
+  | "/carteira"
   | "/robos"
   | "/estrategias"
   | "/backtests"
@@ -47,6 +49,7 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
       { para: "/mercado", rotulo: "Mercado", icone: ChartCandlestick },
       { para: "/decisoes", rotulo: "Decisões", icone: ScrollText },
       { para: "/ordens", rotulo: "Ordens e posições", icone: ArrowLeftRight },
+      { para: "/carteira", rotulo: "Carteira", icone: Wallet },
     ],
   },
   {
