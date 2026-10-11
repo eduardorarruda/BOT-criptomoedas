@@ -151,6 +151,25 @@ describe("PapelCorretora", () => {
     expect(livro.vendas[0]!.preco.equals(dec(100))).toBe(true);
   });
 
+  it("filtros por símbolo (ex.: os reais da Binance no papel ao vivo) valem na validação", async () => {
+    const papel = criar();
+    papel.definirFiltros("BTCUSDT", {
+      passoQuantidade: dec(1),
+      quantidadeMinima: dec(1),
+      valorMinimo: dec(5),
+      passoPreco: dec("0.01"),
+    });
+    expect((await papel.filtros("BTCUSDT")).passoQuantidade.equals(dec(1))).toBe(true);
+    expect((await papel.filtros("ETHUSDT")).passoQuantidade.equals(dec("0.00001"))).toBe(true);
+    const r = await papel.enviarOrdemMercado({
+      simbolo: "BTCUSDT",
+      lado: "COMPRA",
+      quantidade: dec("1.5"),
+      idCliente: "f",
+    });
+    expect(r.motivo).toMatch(/passo/);
+  });
+
   it("recusa configuração impossível", () => {
     expect(() => new PapelCorretora({ saldos: {}, taxa: -1, deslizamentoBps: 0 })).toThrow(/taxa/);
     expect(() => new PapelCorretora({ saldos: {}, taxa: 0, deslizamentoBps: -1 })).toThrow(/deslizamento/);

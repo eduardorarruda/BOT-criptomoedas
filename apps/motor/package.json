@@ -1,0 +1,30 @@
+{
+  "name": "@zentrade/motor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Motor do ZenTrade: roda os robôs ao vivo (papel ou testnet), decide com as regras, consulta o agente, passa pelo risco e executa de forma idempotente. Também roda backtests.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "start": "node --env-file-if-exists=../../.env dist/main.js"
+  },
+  "dependencies": {
+    "@zentrade/contratos": "workspace:*",
+    "@zentrade/corretora": "workspace:*",
+    "@zentrade/dominio": "workspace:*",
+    "pino": "^10.4.0",
+    "zod": "^4.6.5"
+  }
+}

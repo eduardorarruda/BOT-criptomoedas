@@ -59,7 +59,8 @@ export class PapelCorretora implements Corretora {
   private assinantes: readonly Assinante[] = [];
   private conectada = true;
   private sequencia = 0;
-  private readonly filtrosAtivo: FiltrosAtivo;
+  private readonly filtrosPadrao: FiltrosAtivo;
+  private filtrosPorSimbolo: ReadonlyMap<string, FiltrosAtivo> = new Map();
   private readonly agora: () => number;
 
   constructor(private readonly opcoes: OpcoesPapel) {
@@ -68,7 +69,7 @@ export class PapelCorretora implements Corretora {
     if (!(opcoes.deslizamentoBps >= 0 && opcoes.deslizamentoBps <= 1_000))
       throw new ErroConfiguracao("O deslizamento do papel precisa estar entre 0 e 1000 pontos-base.");
     this.saldos = new Map(Object.entries(opcoes.saldos));
-    this.filtrosAtivo = opcoes.filtros ?? FILTROS_PADRAO;
+    this.filtrosPadrao = opcoes.filtros ?? FILTROS_PADRAO;
     this.agora = opcoes.agora ?? Date.now;
   }
 
@@ -98,8 +99,17 @@ export class PapelCorretora implements Corretora {
     this.assinantes.forEach((a) => a.aoEstado?.("conectado"));
   }
 
-  filtros(_simbolo: string): Promise<FiltrosAtivo> {
-    return Promise.resolve(this.filtrosAtivo);
+  /** Filtros de um símbolo (ex.: os reais da Binance, no papel ao vivo). Sem isso, vale o padrão. */
+  definirFiltros(simbolo: string, filtros: FiltrosAtivo): void {
+    this.filtrosPorSimbolo = new Map([...this.filtrosPorSimbolo, [simbolo, filtros]]);
+  }
+
+  filtros(simbolo: string): Promise<FiltrosAtivo> {
+    return Promise.resolve(this.filtrosDe(simbolo));
+  }
+
+  private filtrosDe(simbolo: string): FiltrosAtivo {
+    return this.filtrosPorSimbolo.get(simbolo) ?? this.filtrosPadrao;
   }
 
   candles(simbolo: string, intervalo: Intervalo, limite: number, fim?: number): Promise<Candle[]> {
@@ -153,7 +163,7 @@ export class PapelCorretora implements Corretora {
     const preco = this.precos.get(pedido.simbolo);
     if (!preco)
       return this.rejeitar(pedido, `Sem preço conhecido para ${pedido.simbolo}: a ordem não foi executada.`);
-    const problema = this.problemaDeQuantidade(pedido.quantidade, preco);
+    const problema = this.problemaDeQuantidade(pedido.quantidade, preco, this.filtrosDe(pedido.simbolo));
     if (problema) return this.rejeitar(pedido, problema);
     const precoExecucao = this.comDeslizamento(preco, pedido.lado);
     const valor = pedido.quantidade.times(precoExecucao);
@@ -191,8 +201,7 @@ export class PapelCorretora implements Corretora {
     return null;
   }
 
-  private problemaDeQuantidade(q: Valor, preco: Valor): string | null {
-    const f = this.filtrosAtivo;
+  private problemaDeQuantidade(q: Valor, preco: Valor, f: FiltrosAtivo): string | null {
     if (q.lte(0)) return "A quantidade da ordem precisa ser maior que zero.";
     if (q.lt(f.quantidadeMinima))
       return `A quantidade ${q.toFixed()} é menor que o mínimo (${f.quantidadeMinima.toFixed()}).`;
