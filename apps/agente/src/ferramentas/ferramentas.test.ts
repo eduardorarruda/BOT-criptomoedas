@@ -1,7 +1,17 @@
+import { ToolError } from "@anthropic-ai/sdk/lib/tools/ToolError";
 import { dec, ema, rsi, sma } from "@zentrade/dominio";
 import { describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import { pedidoExemplo, USUARIO_TESTE } from "../teste/pedido.js";
-import { criarFerramentas, NOMES_FERRAMENTAS, type DependenciasFerramentas } from "./index.js";
+import {
+  criarFerramentas,
+  definirFerramenta,
+  executarFerramenta,
+  mensagemDeFalha,
+  NOMES_FERRAMENTAS,
+  paraAnthropic,
+  type DependenciasFerramentas,
+} from "./index.js";
 import { RegistroFontes } from "./registro.js";
 
 function deps(extra: Partial<DependenciasFerramentas> = {}): DependenciasFerramentas {
@@ -219,5 +229,33 @@ describe("ferramentas do analista", () => {
       expect(recentes).toHaveBeenCalledWith("robo-1", 10);
       expect(dados.decisoes[0].resultado).toBeNull();
     });
+  });
+});
+
+describe("falha de uma ferramenta", () => {
+  const quebrada = definirFerramenta({
+    nome: "quebrada",
+    descricao: "Sempre falha.",
+    entrada: z.object({}),
+    rodar: () => {
+      throw new Error("connect ECONNREFUSED 10.0.0.5:5432 senha=xyz");
+    },
+  });
+
+  it("pela ponte MCP vira frase curta, sem detalhe interno, e o erro vai para quem registra", async () => {
+    const aoFalhar = vi.fn();
+    const r = await executarFerramenta(quebrada, {}, aoFalhar);
+    expect(r).toEqual({ ok: false, texto: mensagemDeFalha("quebrada") });
+    expect(aoFalhar).toHaveBeenCalledWith(expect.any(Error), "quebrada");
+  });
+
+  it("pelo Tool Runner da API, a mesma frase (nada de 'Error: <mensagem>' para o modelo)", async () => {
+    const aoFalhar = vi.fn();
+    const f = paraAnthropic(quebrada, aoFalhar);
+    const erro = await Promise.resolve(f.run(f.parse({}))).catch((e: unknown) => e);
+    expect(erro).toBeInstanceOf(ToolError);
+    expect((erro as ToolError).content).toBe(mensagemDeFalha("quebrada"));
+    expect(String((erro as ToolError).content)).not.toMatch(/ECONNREFUSED|senha/);
+    expect(aoFalhar).toHaveBeenCalledWith(expect.any(Error), "quebrada");
   });
 });

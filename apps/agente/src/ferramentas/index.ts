@@ -16,8 +16,10 @@ export {
   definirFerramenta,
   esquemaJson,
   executarFerramenta,
+  mensagemDeFalha,
   observar,
   paraAnthropic,
+  type AoFalharFerramenta,
   type AoUsarFerramenta,
   type FerramentaLeitura,
   type ResultadoFerramenta,
@@ -58,5 +60,5 @@ export function criarFerramentas(
   deps: DependenciasFerramentas,
   aoUsar?: AoUsarFerramenta,
 ): BetaRunnableTool[] {
-  return ferramentasDaAnalise(ctx, deps, aoUsar).map(paraAnthropic);
+  return ferramentasDaAnalise(ctx, deps, aoUsar).map((f) => paraAnthropic(f));
 }
