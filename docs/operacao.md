@@ -124,6 +124,54 @@ A parada total barra **todas** as ordens de todos os robôs. O motor a lê a cad
 
 Ligue sem medo quando tiver dúvida. O custo é perder oportunidades; posições abertas continuam na corretora e você pode encerrá-las pela própria Binance.
 
+## Assistente e o Claude Code (o seu plano)
+
+O analista dos robôs e o **Assistente** (o chat em Acompanhar → Assistente) podem responder por dois "cérebros", escolhidos por pessoa em **Assistente → Configurações**:
+
+| Provedor                  | Como funciona                                                                    | Precisa de                                        |
+| ------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Claude pela API           | O SDK da Anthropic, pago por uso. O custo de cada análise fica na decisão.       | `ANTHROPIC_API_KEY` no agente                     |
+| Claude Code (o seu plano) | O agente roda `claude -p` com o login da pessoa, dentro do limite do plano dela. | O CLI instalado no agente e o login feito uma vez |
+
+Nos dois casos o analista **só propõe** (a saída é a `PropostaAgente`, validada; fora do esquema vira "aguardar") e as ferramentas são **só de leitura**. No Claude Code, as ferramentas nativas ficam desligadas (`--tools ""`, `--restricted`, nada de Bash, Edit, Write ou WebFetch), as configurações do usuário são ignoradas e só a ponte MCP do ZenTrade é liberada; o ambiente do processo não leva `ANTHROPIC_API_KEY` nem os segredos do ZenTrade. Quem nunca escolheu fica com a API, se o agente tiver a chave, senão com o Claude Code.
+
+> **Termos de uso.** Usar o Claude Code pelo plano (Pro, Max, Team…) segue os termos da Anthropic: o plano é **pessoal**, para a própria pessoa usar. Não compartilhe a conta de uma pessoa com outras, nem use o plano de alguém para atender terceiros. Para uso por várias pessoas ou automatizado em escala, use a API.
+
+### Fazer o login uma vez (Docker)
+
+A imagem do agente já traz o `claude` (repositório apk assinado da Anthropic, canal stable). O login fica no volume `claude-contas`, montado em `/dados/claude`, e sobrevive à troca do container. Cada conta é uma pasta (`CLAUDE_CONFIG_DIR`):
+
+```bash
+# entre no agente e abra o Claude Code com a pasta da conta "principal"
+docker compose --env-file .env -f infra/docker-compose.yml --profile app exec -it agente \
+  sh -c 'CLAUDE_CONFIG_DIR=/dados/claude/principal claude'
+# dentro dele: /login, abra o link no navegador, entre com a conta do SEU plano e cole o código.
+# Depois: /exit. Confira: a conta aparece "com login" em Assistente → Configurações.
+```
+
+Para conferir sem abrir a tela: `docker compose … exec agente sh -c 'CLAUDE_CONFIG_DIR=/dados/claude/principal claude auth status'`. Se o login expirar, o analista falha com uma mensagem clara (o robô não opera naquele sinal) e o assistente mostra "faça o login de novo": repita o passo acima.
+
+### Várias contas
+
+Cada pessoa usa o próprio plano. Liste as contas no `.env` (id=pasta, separadas por vírgula) e faça o login de cada uma na pasta dela:
+
+```bash
+AGENTE_CLAUDE_CONTAS=ana=/dados/claude/ana,beto=/dados/claude/beto
+docker compose … exec -it agente sh -c 'mkdir -p /dados/claude/ana && CLAUDE_CONFIG_DIR=/dados/claude/ana claude'
+```
+
+Cada pessoa escolhe a **sua** conta em Assistente → Configurações. As pastas são definidas por quem opera o servidor; a tela só mostra os ids, nunca os caminhos.
+
+### Sem Docker
+
+Instale o Claude Code na máquina do agente (`curl -fsSL https://claude.ai/install.sh | bash`), faça o login com `claude` e deixe `AGENTE_CLAUDE_CONTAS` vazio para usar o login padrão (`~/.claude`) do usuário que roda o agente — ou aponte contas para outras pastas, como acima. `AGENTE_CLAUDE_CAMINHO` diz onde está o executável (padrão: `claude` no `PATH`).
+
+### Tetos e passos ao vivo
+
+- `AGENTE_CLI_MAX_TURNOS` (padrão 8) e `AGENTE_CLI_TETO_USD` (padrão 1) limitam cada execução do Claude Code (`--max-turns` e `--max-budget-usd`); `AGENTE_TIMEOUT_MS` é o prazo da análise e `AGENTE_CHAT_TIMEOUT_MS` o de uma resposta do chat.
+- Com `REDIS_URL` no agente, cada ferramenta consultada numa análise aparece ao vivo na tela (evento `analise` em `zentrade:eventos`, ligado ao `analiseId` do pedido do motor), nos dois provedores.
+- A API precisa de `AGENTE_URL` e `AGENTE_SEGREDO` para o assistente; sem elas, as rotas do assistente respondem 503 e o resto segue normal.
+
 ## Backups
 
 O que guardar, e onde:
@@ -155,4 +203,5 @@ Primeiro passo, sempre: **na dúvida, ligue a parada total**. Depois investigue.
 | Telegram não recebe nada               | Confira a credencial do bot, `TELEGRAM_CHAT_ID` e se você mandou mensagem ao bot antes. Veja as execuções com erro no n8n.                                               |
 | O n8n caiu                             | O núcleo segue. Propostas em `sugerir` expiram sem resposta; alertas e relatório atrasam. Suba o n8n de novo.                                                            |
 | Suspeita de chave vazada               | Ligue a parada total, **apague a chave na Binance**, remova a conta-corretora na tela, gere uma nova (sem saque, com IP) e troque os segredos do `.env`.                 |
+| Assistente: "faça o login de novo"     | O login do Claude Code daquela conta expirou. Refaça como em [Assistente e o Claude Code](#fazer-o-login-uma-vez-docker), ou troque para a API nas configurações.        |
 | Suspeita de token vazado               | Revogue na tela (Tokens) e crie outro. Se for o do n8n, atualize a credencial.                                                                                           |

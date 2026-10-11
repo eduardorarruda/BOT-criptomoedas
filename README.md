@@ -106,14 +106,16 @@ O que existe e tem teste automatizado:
 - **Banco**: esquema, migrações e RLS testados contra PostgreSQL de verdade (Timescale + pgvector).
 - **API**: autenticação (sessão, CSRF, 2FA, reautenticação, tokens com escopo), robôs, decisões, backtests, conhecimento, automações, patrimônio e webhooks com anti-replay, testados contra PostgreSQL e Redis de verdade.
 - **Motor**: ciclo de decisão completo em papel, com corretora simulada e testes de ponta a ponta.
-- **Agente**: análise com saída estruturada, ferramentas só de leitura, CLI e MCP, testados com um cliente da Anthropic falso.
+- **Agente**: análise com saída estruturada, ferramentas só de leitura, CLI e MCP, testados com um cliente da Anthropic falso. O "cérebro" é escolhido por pessoa: a API da Anthropic ou o Claude Code do plano dela (`claude -p` travado, só com as ferramentas de leitura pela ponte MCP), com o passo a passo de cada análise ao vivo na tela.
+- **Assistente**: chat com os seus dados (resumo, robôs, decisões, ordens, conhecimento), só leitura, com as fontes consultadas e resposta em streaming.
+- **Conhecimento**: arquivos (PDF, DOCX, MD, TXT, HTML), links (baixados com defesa contra SSRF) e notas, por pessoa, buscáveis na tela.
 - **Tela**: todas as páginas, com modo de demonstração e testes de componentes.
 - **Docker**: as quatro imagens constroem e o perfil `app` sobe com o motor em papel e o agente fixo.
 
 O que **ainda não foi testado contra o serviço real** (só com dublês):
 
 - ordens na **testnet da Binance** com chave de verdade;
-- análises com a **API da Anthropic** de verdade (custo, latência, qualidade das propostas);
+- análises com a **API da Anthropic** de verdade (custo, latência, qualidade das propostas); o **Claude Code** de verdade só teve um teste manual mínimo (flags, saída estruturada e a ponte MCP);
 - embeddings pela **Voyage** de verdade (o Ollama local com `bge-m3` também não foi exercitado aqui);
 - os fluxos do **n8n** importados num n8n real falando com o Telegram.
 

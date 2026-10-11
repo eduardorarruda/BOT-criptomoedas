@@ -124,6 +124,8 @@ services:
       N8N_WEBHOOK_SEGREDO: ${N8N_WEBHOOK_SEGREDO:-}
       N8N_USUARIO_ID: ${N8N_USUARIO_ID:-}
       AGENTE_URL: http://agente:8081
+      # Mesmo segredo do agente: a API repassa o assistente (chat) para ele.
+      AGENTE_SEGREDO: ${AGENTE_SEGREDO:-}
       EMBEDDINGS_PROVEDOR: ${EMBEDDINGS_PROVEDOR:-voyage}
       VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
       VOYAGE_MODELO: ${VOYAGE_MODELO:-voyage-4}
@@ -173,8 +175,16 @@ services:
     # Sem "ports": o agente só é alcançado pela rede interna (motor e API).
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-zentrade}:${POSTGRES_PASSWORD:-}@banco:5432/${POSTGRES_DB:-zentrade}
+      # Para os passos ao vivo das análises (eventos "analise" em zentrade:eventos).
+      REDIS_URL: redis://:${REDIS_SENHA:-}@redis:6379
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Opcional: sem a chave, só o Claude Code (provedor "cli") atende.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Contas do Claude Code: id=/pasta, separadas por vírgula, dentro do volume claude-contas.
+      AGENTE_CLAUDE_CONTAS: ${AGENTE_CLAUDE_CONTAS:-principal=/dados/claude/principal}
+      AGENTE_CLI_MAX_TURNOS: ${AGENTE_CLI_MAX_TURNOS:-8}
+      AGENTE_CLI_TETO_USD: ${AGENTE_CLI_TETO_USD:-1}
+      AGENTE_CHAT_TIMEOUT_MS: ${AGENTE_CHAT_TIMEOUT_MS:-300000}
       AGENTE_SEGREDO: ${AGENTE_SEGREDO:-}
       AGENTE_MODELO: ${AGENTE_MODELO:-claude-opus-5}
       AGENTE_TIMEOUT_MS: ${AGENTE_TIMEOUT_MS:-55000}
@@ -188,8 +198,12 @@ services:
       OLLAMA_MODELO: ${OLLAMA_MODELO:-bge-m3}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # O login do Claude Code de cada conta (fica fora do container; veja docs/operacao.md).
+    volumes:
+      - claude-contas:/dados/claude
     depends_on:
       migrar: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
 
   web:
     profiles: ["app"]
@@ -205,3 +219,4 @@ volumes:
   banco:
   redis:
   n8n:
+  claude-contas:
