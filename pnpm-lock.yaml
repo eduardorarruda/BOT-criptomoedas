@@ -217,9 +217,15 @@ importers:
       '@zentrade/contratos':
         specifier: workspace:*
         version: link:../../packages/contratos
+      '@zentrade/corretora':
+        specifier: workspace:*
+        version: link:../../packages/corretora
       '@zentrade/dominio':
         specifier: workspace:*
         version: link:../../packages/dominio
+      '@zentrade/financas':
+        specifier: workspace:*
+        version: link:../../packages/financas
       fastify:
         specifier: ^5.12.5
         version: 5.12.5
