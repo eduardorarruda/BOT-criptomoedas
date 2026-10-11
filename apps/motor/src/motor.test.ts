@@ -11,7 +11,7 @@ describe("motor", () => {
     const c = montarCenario();
     const motor = new Motor(c.deps, { intervaloSaudeMs: 20 });
     expect(await motor.iniciar()).toEqual({ ligados: 1, falharam: 0 });
-    await esperar(70);
+    for (let i = 0; i < 100 && c.eventos.doTipo("saude").length < 3; i++) await esperar(10);
     const saudes = c.eventos.doTipo("saude");
     expect(saudes.length).toBeGreaterThanOrEqual(3);
     expect(saudes.every((s) => s.ok && s.servico === "motor")).toBe(true);

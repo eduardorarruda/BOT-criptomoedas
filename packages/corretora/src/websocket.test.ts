@@ -91,7 +91,8 @@ describe("assinatura de candles por WebSocket", () => {
 
   it("reconecta preventivamente antes do limite de 24 h da Binance", async () => {
     const { estados } = assinar({ reconexaoPreventivaMs: 80 });
-    await esperarAte(() => conexoes.length >= 2, 2_000);
+    // O servidor vê a conexão antes do cliente receber o "open": espera o estado do cliente.
+    await esperarAte(() => estados.filter((e) => e === "conectado").length >= 2, 2_000);
     expect(estados.slice(0, 3)).toEqual(["conectado", "reconectando", "conectado"]);
   });
 
