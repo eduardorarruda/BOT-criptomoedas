@@ -1,3 +1,4 @@
+import { ContaCorretoraEsquema } from "@zentrade/contratos";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { usuarioIdDe } from "../autenticacao/plugin.js";
@@ -15,14 +16,19 @@ const NovaConta = z.object({
 export const rotasContas: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (app, { deps }) => {
   const { contas } = deps.banco;
 
-  app.get("/contas-corretora", { config: { acesso: "sessao" } }, async (req) =>
-    contas.listar(usuarioIdDe(req)),
+  app.get(
+    "/contas-corretora",
+    { config: { acesso: "sessao" }, schema: { response: { 200: z.array(ContaCorretoraEsquema) } } },
+    async (req) => contas.listar(usuarioIdDe(req)),
   );
 
   // Cadastrar chave é crítico: reautenticação recente; chave de dinheiro real exige 2FA.
   app.post(
     "/contas-corretora",
-    { config: { acesso: "sessao", critica: true }, schema: { body: NovaConta } },
+    {
+      config: { acesso: "sessao", critica: true },
+      schema: { body: NovaConta, response: { 201: ContaCorretoraEsquema } },
+    },
     async (req, reply) => {
       const a = req.autenticacao;
       if (req.body.rede === "real" && a?.via === "sessao" && !a.usuario.doisFatores) {

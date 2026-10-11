@@ -203,7 +203,7 @@ describe("autenticação, CSRF, reautenticação e tokens", () => {
     expect(deNovo.json()).toMatchObject({ erro: { codigo: "2fa_ja_ativo" } });
 
     const semCodigo = await api.entrar("beto@exemplo.com");
-    expect(semCodigo.json()).toMatchObject({ erro: { codigo: "2fa_necessario" } });
+    expect(semCodigo.json()).toMatchObject({ erro: { codigo: "codigo2fa_necessario" } });
     const codigoErrado = await api.entrar("beto@exemplo.com", "000000");
     expect(codigoErrado.statusCode).toBe(401);
     const comCodigo = await api.entrar("beto@exemplo.com", await generate({ secret: segredo }));

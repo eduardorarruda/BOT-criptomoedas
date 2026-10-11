@@ -1,4 +1,5 @@
 import { ErroDados, type CodigoErroDados } from "@zentrade/banco";
+import { CODIGOS_ERRO } from "@zentrade/contratos";
 
 /** Erro com status e código do contrato: `{ "erro": { "codigo", "mensagem" } }`. */
 export class ErroApi extends Error {
@@ -19,7 +20,7 @@ export const naoEncontrado = (o: string) =>
 export const proibido = (codigo: string, mensagem: string) => new ErroApi(403, codigo, mensagem);
 export const reautenticacaoNecessaria = () =>
   proibido(
-    "reautenticacao_necessaria",
+    CODIGOS_ERRO.reautenticacaoNecessaria,
     "esta ação é crítica: confirme sua senha ou código 2FA em POST /api/v1/sessao/confirmar e tente de novo em até 5 minutos",
   );
 

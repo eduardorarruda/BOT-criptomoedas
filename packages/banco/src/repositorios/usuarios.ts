@@ -1,4 +1,4 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, count, eq, sql } from "drizzle-orm";
 import { cifrar, decifrar } from "../cifra.js";
 import type { Db } from "../cliente.js";
 import { codigoPostgres, ErroDados, umaLinha, VIOLACAO_UNICA } from "../erros.js";
@@ -84,7 +84,13 @@ export function repositorioUsuarios(db: Db, chaveMestra: Buffer) {
         .where(sql`${usuarios.id} = ${id} and ${usuarios.segredo2fa} is not null`);
     },
 
-    /** A primeira pessoa cadastrada: dona padrão do que chega pelo n8n. */
+    /** Quantas pessoas estão cadastradas (decide se o dono do n8n pode ser deduzido). */
+    async contar(): Promise<number> {
+      const [linha] = await db.select({ n: count() }).from(usuarios);
+      return linha?.n ?? 0;
+    },
+
+    /** A primeira pessoa cadastrada: dona padrão do que chega pelo n8n numa instalação de uma pessoa só. */
     async primeiro(): Promise<Usuario | null> {
       const [u] = await db.select(colunas).from(usuarios).orderBy(asc(usuarios.criadoEm)).limit(1);
       return u ?? null;

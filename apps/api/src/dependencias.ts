@@ -1,6 +1,8 @@
 import type { Banco } from "@zentrade/banco";
 import type { Config } from "./config.js";
-import type { Embeddings } from "./integracoes/embeddings.js";
+import type { AntiReplay } from "./integracoes/anti-replay.js";
+import type { RegistroAutomacoes } from "./integracoes/automacoes.js";
+import type { ServicoConhecimento } from "./integracoes/conhecimento.js";
 import type { HubEventos } from "./integracoes/eventos.js";
 import type { ClienteN8n } from "./integracoes/n8n.js";
 
@@ -23,8 +25,12 @@ export interface Dependencias {
   readonly banco: Banco;
   readonly fila: FilaBacktests;
   readonly n8n: ClienteN8n;
-  readonly embeddings: Embeddings | null;
+  readonly conhecimento: ServicoConhecimento;
+  readonly automacoes: RegistroAutomacoes;
+  readonly antiReplay: AntiReplay;
   readonly hub: HubEventos;
   readonly saude: VerificadorSaude;
   readonly agora: () => number;
+  /** De quanto em quanto tempo o WebSocket confere se a sessão (ou o token) ainda vale. Padrão 30 s. */
+  readonly verificacaoTempoRealMs?: number;
 }

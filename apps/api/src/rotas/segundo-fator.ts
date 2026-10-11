@@ -1,4 +1,5 @@
 import type { Usuario } from "@zentrade/banco";
+import { SegredoDoisFatoresEsquema } from "@zentrade/contratos";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { REAUTENTICACAO_MS } from "../autenticacao/plugin.js";
@@ -41,19 +42,24 @@ export const rotasSegundoFator: FastifyPluginAsyncZod<{ deps: Dependencias }> = 
     },
   );
 
-  app.post("/sessao/2fa", { config: { acesso: "sessao", critica: true } }, async (req) => {
-    const s = sessaoDe(req);
-    if (s.usuario.doisFatores) {
-      throw new ErroApi(
-        409,
-        "2fa_ja_ativo",
-        "o 2FA já está ativo; para trocar o app, fale com quem administra o servidor",
-      );
-    }
-    const segredo = gerarSegredoTotp();
-    await deps.banco.usuarios.definirSegredo2fa(s.usuario.id, segredo);
-    return { segredo, uri: uriTotp(segredo, s.usuario.email) };
-  });
+  const segredo2fa = { response: { 200: SegredoDoisFatoresEsquema } };
+  app.post(
+    "/sessao/2fa",
+    { config: { acesso: "sessao", critica: true }, schema: segredo2fa },
+    async (req) => {
+      const s = sessaoDe(req);
+      if (s.usuario.doisFatores) {
+        throw new ErroApi(
+          409,
+          "2fa_ja_ativo",
+          "o 2FA já está ativo; para trocar o app, fale com quem administra o servidor",
+        );
+      }
+      const segredo = gerarSegredoTotp();
+      await deps.banco.usuarios.definirSegredo2fa(s.usuario.id, segredo);
+      return { segredo, uri: uriTotp(segredo, s.usuario.email) };
+    },
+  );
 
   app.post(
     "/sessao/2fa/ativar",

@@ -1,10 +1,11 @@
+import { ParadaTotalEsquema } from "@zentrade/contratos";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
-import { z } from "zod";
 import { exigirReautenticacao, usuarioIdDe } from "../autenticacao/plugin.js";
 import type { Dependencias } from "../dependencias.js";
 
 export const rotasParada: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (app, { deps }) => {
-  app.get("/parada-total", { config: { acesso: "leitura" } }, async (req) => ({
+  const response = { 200: ParadaTotalEsquema };
+  app.get("/parada-total", { config: { acesso: "leitura" }, schema: { response } }, async (req) => ({
     ligada: await deps.banco.configuracao.paradaTotal(usuarioIdDe(req)),
   }));
 
@@ -12,7 +13,7 @@ export const rotasParada: FastifyPluginAsyncZod<{ deps: Dependencias }> = async 
   // Desligar é crítico e exige reautenticação.
   app.post(
     "/parada-total",
-    { config: { acesso: "operar" }, schema: { body: z.object({ ligada: z.boolean() }) } },
+    { config: { acesso: "operar" }, schema: { body: ParadaTotalEsquema, response } },
     async (req) => {
       if (!req.body.ligada) exigirReautenticacao(req, deps.agora());
       const usuarioId = usuarioIdDe(req);

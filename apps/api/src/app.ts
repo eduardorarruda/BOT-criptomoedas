@@ -16,6 +16,7 @@ import { chaveDoCliente } from "./chave-cliente.js";
 import type { Dependencias } from "./dependencias.js";
 import { corpoDoErro, ErroApi } from "./erros.js";
 import { criarLog } from "./log.js";
+import { rotasAutomacoes } from "./rotas/automacoes.js";
 import { rotasBacktests } from "./rotas/backtests.js";
 import { rotasConhecimento } from "./rotas/conhecimento.js";
 import { rotasContas } from "./rotas/contas.js";
@@ -69,7 +70,7 @@ async function registrarPlugins(app: FastifyInstance, deps: Dependencias): Promi
 
 /** Monta a API com as dependências recebidas. Não abre porta: quem chama decide (servidor ou teste). */
 export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger): Promise<FastifyInstance> {
-  const app = Fastify({ loggerInstance: log ?? criarLog(deps.config.LOG_NIVEL), bodyLimit: 1024 * 1024 });
+  const app = Fastify({ loggerInstance: log ?? criarLog(deps.config.LOG_LEVEL), bodyLimit: 1024 * 1024 });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.setErrorHandler((erro: FastifyError, req, reply) => {
@@ -100,6 +101,7 @@ export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger):
         rotasTokens,
         rotasBacktests,
         rotasConhecimento,
+        rotasAutomacoes,
         rotasSaude,
         rotasTempoReal,
       ]) {

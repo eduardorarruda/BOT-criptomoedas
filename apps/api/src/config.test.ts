@@ -17,12 +17,15 @@ describe("configuração da API", () => {
     expect(c.ZENTRADE_ORIGEM_WEB).toBe("http://localhost:5173");
     expect(c.COOKIE_SEGURO).toBe(true);
     expect(c.APROVACAO_VALIDADE_MIN).toBe(15);
-    expect(c.embeddings).toBeNull();
+    expect(c.EMBEDDINGS_PROVEDOR).toBe("voyage");
+    expect(c.LOG_LEVEL).toBe("info");
   });
 
-  it("monta a configuração de embeddings só quando a URL existe", () => {
-    const c = lerConfig({ ...valido, EMBEDDINGS_URL: "http://127.0.0.1:11434/v1/embeddings" });
-    expect(c.embeddings).toEqual({ url: "http://127.0.0.1:11434/v1/embeddings", modelo: "bge-m3" });
+  it("confere o provedor de embeddings e o nível de log unificados", () => {
+    expect(lerConfig({ ...valido, EMBEDDINGS_PROVEDOR: "ollama" }).EMBEDDINGS_PROVEDOR).toBe("ollama");
+    expect(() => lerConfig({ ...valido, EMBEDDINGS_PROVEDOR: "openai" })).toThrow(/voyage ou ollama/);
+    expect(lerConfig({ ...valido, LOG_LEVEL: "silent" }).LOG_LEVEL).toBe("silent");
+    expect(() => lerConfig({ ...valido, LOG_LEVEL: "verboso" })).toThrow(/LOG_LEVEL/);
   });
 
   it("recusa segredo de webhook curto e diz como resolver", () => {

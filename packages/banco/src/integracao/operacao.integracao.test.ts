@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { dec } from "@zentrade/dominio";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ErroDados } from "../erros.js";
@@ -136,7 +137,16 @@ describe("repositórios da API: decisões, ordens, mercado, backtests, conhecime
     expect(resumo.robosAtivos).toBe(1);
     expect(dec(resumo.custoIaHoje).gt(0)).toBe(true);
     expect(resumo.paradaTotal).toBe(false);
+    expect(resumo.taxasHoje).toBe("0.025");
     expect((await c.banco.resumo.resumo(c.beto.id, Date.now())).exposicao).toBe("0");
+  });
+
+  it("patrimônio: curva diária do resultado realizado, só da dona", async () => {
+    const curva = await c.banco.resumo.patrimonio(c.ana.id, Date.now(), 30);
+    // As compras de hoje só pagaram taxa: começa em zero ontem e termina em -0,025 hoje.
+    expect(curva.map((p) => p.valor)).toEqual(["0", "-0.025"]);
+    expect(curva[1]!.em - curva[0]!.em).toBe(86_400_000);
+    expect(await c.banco.resumo.patrimonio(c.beto.id, Date.now(), 30)).toEqual([]);
   });
 
   it("candles: grava, corrige e lê; 5m sai do agregado contínuo de 1m", async () => {
@@ -181,7 +191,27 @@ describe("repositórios da API: decisões, ordens, mercado, backtests, conhecime
     expect(estado).toBe("na_fila");
     expect((await c.banco.backtests.iniciar(id))!.estado).toBe("rodando");
     await c.banco.backtests.concluir(id, { metricas: { retorno: "0.1" }, curva: [] });
-    expect(await c.banco.backtests.obter(c.ana.id, id)).toMatchObject({ estado: "concluido", versao: 1 });
+    // Métricas fora do contrato não saem: o erro explica.
+    expect(await c.banco.backtests.obter(c.ana.id, id)).toMatchObject({
+      estado: "concluido",
+      versao: 1,
+      metricas: null,
+      curva: [],
+      erro: expect.stringMatching(/fora do contrato/),
+    });
+    const metricas = {
+      resultadoLiquido: "-1.5",
+      maiorQueda: "3",
+      maiorQuedaPercentual: 0.003,
+      operacoes: 2,
+      acertos: 1,
+      taxaAcerto: 0.5,
+      taxasPagas: "0.4",
+    };
+    await c.banco.backtests.concluir(id, { metricas, curva: [{ em: 1, patrimonio: "1000" }] });
+    expect(await c.banco.backtests.obter(c.ana.id, id)).toMatchObject({ metricas, erro: null });
+    expect((await c.banco.backtests.listar(c.ana.id)).map((b) => b.id)).toEqual([id]);
+    expect(await c.banco.backtests.listar(c.beto.id)).toEqual([]);
     expect(await c.banco.backtests.obter(c.beto.id, id)).toBeNull();
     await expect(c.banco.backtests.criar(c.beto.id, pedido)).rejects.toMatchObject({ codigo: "invalido" });
     await expect(c.banco.backtests.criar(c.ana.id, { ...pedido, fim: pedido.inicio })).rejects.toMatchObject({
@@ -196,25 +226,36 @@ describe("repositórios da API: decisões, ordens, mercado, backtests, conhecime
     expect(await c.banco.backtests.iniciar("00000000-0000-0000-0000-000000000000")).toBeNull();
   });
 
-  it("conhecimento: ingere documento com trechos e não duplica conteúdo repetido", async () => {
+  it("conhecimento: grava documento com trechos sob RLS e não duplica conteúdo repetido", async () => {
     const embedding = Array.from({ length: 1024 }, (_, i) => (i % 7) / 7);
     const doc = {
+      id: randomUUID(),
+      usuarioId: c.ana.id,
       fonte: "nota" as const,
       titulo: "Por que não opero em fim de semana",
-      publicadoEm: Date.now(),
-      texto: "Liquidez baixa no sábado.",
-      trechos: [{ texto: "Liquidez baixa no sábado.", embedding }],
+      url: null,
+      publicadoEm: new Date(),
+      hashConteudo: "h".repeat(64),
     };
-    const primeiro = await c.banco.conhecimento.ingerir(c.ana.id, doc);
-    const repetido = await c.banco.conhecimento.ingerir(c.ana.id, doc);
-    expect(primeiro.novo).toBe(true);
-    expect(repetido).toEqual({ id: primeiro.id, novo: false });
+    const trechos = [{ id: randomUUID(), ordem: 0, texto: "Liquidez baixa no sábado.", embedding }];
+    const primeiro = await c.banco.conhecimento.gravarDocumento(doc, trechos);
+    const repetido = await c.banco.conhecimento.gravarDocumento({ ...doc, id: randomUUID() }, trechos);
+    expect(primeiro).toEqual({ documentoId: doc.id, novo: true });
+    expect(repetido).toEqual({ documentoId: doc.id, novo: false });
+    expect(await c.banco.conhecimento.documentoPorHash(c.ana.id, doc.hashConteudo)).toBe(doc.id);
+    expect(await c.banco.conhecimento.documentoPorHash(c.beto.id, doc.hashConteudo)).toBeNull();
+    expect(await c.banco.conhecimento.obter(c.ana.id, doc.id)).toMatchObject({
+      titulo: doc.titulo,
+      url: null,
+    });
+    expect(await c.banco.conhecimento.obter(c.beto.id, doc.id)).toBeNull();
     expect((await c.banco.conhecimento.listar(c.ana.id)).map((d) => d.titulo)).toEqual([doc.titulo]);
     expect(await c.banco.conhecimento.listar(c.beto.id)).toEqual([]);
+    const outro = { ...doc, id: randomUUID(), hashConteudo: "i".repeat(64) };
     await expect(
-      c.banco.conhecimento.ingerir(c.ana.id, { ...doc, trechos: [{ texto: "x", embedding: [1, 2] }] }),
+      c.banco.conhecimento.gravarDocumento(outro, [{ ...trechos[0]!, embedding: [1, 2] }]),
     ).rejects.toThrow(/1024 dimensões/);
-    await expect(c.banco.conhecimento.ingerir(c.ana.id, { ...doc, trechos: [] })).rejects.toThrow(/trecho/);
+    await expect(c.banco.conhecimento.gravarDocumento(outro, [])).rejects.toThrow(/trecho/);
   });
 
   it("estratégias: lista a versão atual, recusa regra inválida e versão de estratégia alheia", async () => {

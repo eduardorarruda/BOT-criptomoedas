@@ -1,3 +1,4 @@
+import { SaudeEsquema } from "@zentrade/contratos";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import type { Dependencias } from "../dependencias.js";
 
@@ -15,7 +16,8 @@ export const rotasSaude: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (
     }
   }
 
-  app.get("/saude", { config: { acesso: "publico" } }, async (_req, reply) => {
+  const schema = { response: { 200: SaudeEsquema, 503: SaudeEsquema } };
+  app.get("/saude", { config: { acesso: "publico" }, schema }, async (_req, reply) => {
     const [banco, redis, motorHa, agente] = await Promise.all([
       bancoOk(),
       deps.saude.redis(),

@@ -60,8 +60,10 @@ describe("contas da corretora, tokens, sessões e auditoria", () => {
     });
     expect(await c.banco.tokens.porHash("x".repeat(64))).toBeNull();
     expect(await c.banco.tokens.listar(c.beto.id)).toEqual([]);
+    expect(await c.banco.tokens.existe(token.id)).toBe(true);
     expect(await c.banco.tokens.remover(c.ana.id, token.id)).toBe(true);
     expect(await c.banco.tokens.porHash("h".repeat(64))).toBeNull();
+    expect(await c.banco.tokens.existe(token.id)).toBe(false);
   });
 
   it("sessões vencem e podem ser reautenticadas", async () => {
@@ -111,5 +113,6 @@ describe("contas da corretora, tokens, sessões e auditoria", () => {
       c.banco.usuarios.criar({ email: "ANA@exemplo.com", nome: "Outra", senhaHash: "x" }),
     ).rejects.toMatchObject({ codigo: "conflito" });
     expect((await c.banco.usuarios.porEmail("Ana@Exemplo.com"))!.id).toBe(c.ana.id);
+    expect(await c.banco.usuarios.contar()).toBe(2);
   });
 });

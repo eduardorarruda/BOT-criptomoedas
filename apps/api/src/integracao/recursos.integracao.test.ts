@@ -3,7 +3,7 @@ import { Queue } from "bullmq";
 import { Redis } from "ioredis";
 import { generate } from "otplib";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { comSessao, montarApi, SENHA, type Api, type Pessoa } from "./ajuda.js";
+import { comSessao, embeddingsFalsos, montarApi, SENHA, type Api, type Pessoa } from "./ajuda.js";
 
 const ESTRATEGIA = {
   nome: "Médias",
@@ -27,8 +27,6 @@ const LIMITES = {
   confiancaMinima: 0.6,
 };
 
-const vetorFalso = () => Array.from({ length: 1024 }, (_, i) => (i % 10) / 10);
-
 describe("rotas de recursos contra banco e Redis reais", () => {
   let api: Api;
   let ana: Pessoa;
@@ -40,7 +38,7 @@ describe("rotas de recursos contra banco e Redis reais", () => {
     api.app.inject({ method, url: `/api/v1${url}`, headers: comSessao(p), ...(payload ? { payload } : {}) });
 
   beforeAll(async () => {
-    api = await montarApi({ embeddings: { gerar: async (textos) => textos.map(vetorFalso) } });
+    api = await montarApi({ embeddings: embeddingsFalsos });
     ana = await api.pessoa("ana@exemplo.com");
     beto = await api.pessoa("beto@exemplo.com");
   });
@@ -174,7 +172,21 @@ describe("rotas de recursos contra banco e Redis reais", () => {
       taxasPagas: "0.05",
     });
     const resumo = await chamar(ana, "GET", "/resumo");
-    expect(resumo.json()).toMatchObject({ exposicao: "50", robosAtivos: 1, paradaTotal: false });
+    expect(resumo.json()).toMatchObject({
+      exposicao: "50",
+      robosAtivos: 1,
+      paradaTotal: false,
+      taxasHoje: "0.05",
+    });
+  });
+
+  it("patrimônio: curva diária do resultado realizado, com teto de dias", async () => {
+    const curva = await chamar(ana, "GET", "/patrimonio");
+    expect(curva.statusCode).toBe(200);
+    expect(curva.json<{ valor: string }[]>().map((p) => p.valor)).toEqual(["0", "-0.05"]);
+    expect((await chamar(beto, "GET", "/patrimonio?dias=7")).json()).toEqual([]);
+    expect((await chamar(ana, "GET", "/patrimonio?dias=0")).statusCode).toBe(400);
+    expect((await chamar(ana, "GET", "/patrimonio?dias=366")).statusCode).toBe(400);
   });
 
   it("candles do mercado pelo período", async () => {
@@ -250,6 +262,7 @@ describe("rotas de recursos contra banco e Redis reais", () => {
     expect(r.statusCode).toBe(202);
     const { id, estado } = r.json<{ id: string; estado: string }>();
     expect(estado).toBe("na_fila");
+    expect(r.json()).toMatchObject({ simbolo: "BTCUSDT", metricas: null, curva: null, erro: null });
     const conexao = new Redis(api.redisUrl, { maxRetriesPerRequest: null });
     const fila = new Queue("backtests", { connection: conexao });
     try {
@@ -262,14 +275,44 @@ describe("rotas de recursos contra banco e Redis reais", () => {
     expect((await chamar(ana, "GET", `/backtests/${id}`)).json()).toMatchObject({ id, estado: "na_fila" });
     expect((await chamar(beto, "GET", `/backtests/${id}`)).statusCode).toBe(404);
     expect((await chamar(beto, "POST", "/backtests", pedido)).statusCode).toBe(400);
+    expect((await chamar(ana, "GET", "/backtests")).json()).toMatchObject([{ id, estado: "na_fila" }]);
+    expect((await chamar(beto, "GET", "/backtests")).json()).toEqual([]);
+    expect((await chamar(ana, "GET", "/backtests?limite=51")).statusCode).toBe(400);
+  });
+
+  it("backtest concluído sai com as métricas do contrato", async () => {
+    const [b] = await api.banco.backtests.listar(ana.id);
+    const metricas = {
+      resultadoLiquido: "12.3",
+      patrimonioFinal: "1012.3",
+      maiorQueda: "4",
+      maiorQuedaPercentual: 0.004,
+      operacoes: 3,
+      acertos: 2,
+      taxaAcerto: 0.6667,
+      taxasPagas: "1.2",
+    };
+    await api.banco.backtests.concluir(b!.id, { metricas, curva: [{ em: 1, patrimonio: "1000" }] });
+    const lido = await chamar(ana, "GET", `/backtests/${b!.id}`);
+    expect(lido.json()).toMatchObject({
+      estado: "concluido",
+      metricas,
+      curva: [{ em: 1, patrimonio: "1000" }],
+    });
   });
 
   it("conhecimento: nota vira documento com trechos; repetida não duplica", async () => {
     const nota = { titulo: "Fim de semana", texto: "Liquidez baixa no sábado.\n\nSpread alto." };
     const criada = await chamar(ana, "POST", "/conhecimento/notas", nota);
     expect(criada.statusCode).toBe(201);
-    const repetida = await chamar(ana, "POST", "/conhecimento/notas", nota);
+    expect(criada.json()).toMatchObject({ titulo: "Fim de semana", fonte: "nota", novo: true, trechos: 1 });
+    // Mesmo conteúdo com espaços e quebras diferentes: o normalizador do RAG deduplica.
+    const repetida = await chamar(ana, "POST", "/conhecimento/notas", {
+      ...nota,
+      texto: "Liquidez baixa  no sábado.\r\n\r\nSpread alto.  ",
+    });
     expect(repetida.statusCode).toBe(200);
+    expect(repetida.json()).toMatchObject({ id: criada.json<{ id: string }>().id, novo: false, trechos: 0 });
     const docs = await chamar(ana, "GET", "/conhecimento/documentos");
     expect(docs.json()).toMatchObject([{ titulo: "Fim de semana", fonte: "nota" }]);
     expect((await chamar(beto, "GET", "/conhecimento/documentos")).json()).toEqual([]);

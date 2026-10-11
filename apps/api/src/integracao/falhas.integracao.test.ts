@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { comSessao, montarApi, type Api, type Pessoa } from "./ajuda.js";
+import { assinar } from "@zentrade/contratos";
+import { comSessao, montarApi, SEGREDO_WEBHOOK, type Api, type Pessoa } from "./ajuda.js";
 
 describe("quando algo de fora falha", () => {
   let api: Api;
@@ -36,7 +37,7 @@ describe("quando algo de fora falha", () => {
     expect(b!.estado).toBe("falhou");
   });
 
-  it("sem serviço de embeddings, notas e conhecimento do n8n explicam como configurar", async () => {
+  it("sem chave de embeddings, a nota explica como configurar o RAG", async () => {
     const r = await api.app.inject({
       method: "POST",
       url: "/api/v1/conhecimento/notas",
@@ -44,6 +45,23 @@ describe("quando algo de fora falha", () => {
       payload: { titulo: "x", texto: "y" },
     });
     expect(r.statusCode).toBe(503);
-    expect(r.json<{ erro: { mensagem: string } }>().erro.mensagem).toMatch(/EMBEDDINGS_URL/);
+    expect(r.json<{ erro: { mensagem: string } }>().erro.mensagem).toMatch(
+      /VOYAGE_API_KEY|EMBEDDINGS_PROVEDOR/,
+    );
+  });
+
+  it("conhecimento do n8n numa instalação de uma pessoa vai para ela; sem embeddings, 503 explicado", async () => {
+    const corpo = JSON.stringify({ fonte: "noticia", titulo: "x", publicadoEm: 1, texto: "y" });
+    const r = await api.app.inject({
+      method: "POST",
+      url: "/webhooks/n8n/conhecimento",
+      headers: {
+        "content-type": "application/json",
+        "x-zentrade-assinatura": assinar(corpo, SEGREDO_WEBHOOK, api.relogio.t),
+      },
+      payload: corpo,
+    });
+    expect(r.statusCode).toBe(503);
+    expect(r.json()).toMatchObject({ erro: { codigo: "conhecimento_indisponivel" } });
   });
 });

@@ -30,6 +30,7 @@
     "@fastify/websocket": "^11.3.4",
     "@node-rs/argon2": "^2.2.2",
     "@zentrade/banco": "workspace:*",
+    "@zentrade/conhecimento": "workspace:*",
     "@zentrade/contratos": "workspace:*",
     "@zentrade/dominio": "workspace:*",
     "bullmq": "^6.3.12",
