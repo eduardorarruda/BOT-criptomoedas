@@ -33,24 +33,33 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
   const l = robo.limites;
 
   return (
-    <li className={`robo ${robo.pausado ? "robo--pausado" : ""}`}>
-      <div className="robo__identidade">
-        <h2 className="robo__nome">{robo.nome}</h2>
-        <p className="robo__meta">
-          <span className="num">{robo.simbolo}</span> · {robo.intervalo} · {nomeEstrategia} v
-          {robo.estrategiaVersao} · desde {formatarData(robo.criadoEm)}
-        </p>
-        <div className="robo__selos">
-          <Selo tom={REDE[robo.rede].tom}>{REDE[robo.rede].texto}</Selo>
-          {robo.pausado ? (
-            <Selo tom="atencao" icone={Pause}>
-              Pausado
-            </Selo>
-          ) : null}
+    <li className={`robo ${robo.pausado ? "robo--pausado" : ""} ${robo.modo === "auto" ? "robo--auto" : ""}`}>
+      <div className="robo__topo">
+        <div className="robo__identidade">
+          <h2 className="robo__nome">{robo.nome}</h2>
+          <p className="robo__meta">
+            <span className="num">{robo.simbolo}</span> · {robo.intervalo} · {nomeEstrategia} v
+            {robo.estrategiaVersao}
+          </p>
+        </div>
+        <div className="robo__cotacao">
           <span className="robo__preco">
             <PrecoAoVivo simbolo={robo.simbolo} />
           </span>
+          <span className="robo__desde">desde {formatarData(robo.criadoEm)}</span>
         </div>
+      </div>
+      <div className="robo__selos">
+        <Selo tom={REDE[robo.rede].tom}>{REDE[robo.rede].texto}</Selo>
+        {robo.pausado ? (
+          <Selo tom="atencao" icone={Pause}>
+            Pausado
+          </Selo>
+        ) : (
+          <Selo tom={robo.modo === "auto" ? "marca" : "neutro"} ponto>
+            Ativo
+          </Selo>
+        )}
       </div>
       <div className="robo__modo">
         <Segmentado
@@ -66,45 +75,54 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
         />
         <p className="robo__modo-descricao">{MODO_ROBO[robo.modo].descricao}</p>
       </div>
-      <div className="robo__acoes">
-        <Botao
-          pequeno
-          icone={robo.pausado ? Play : Pause}
-          carregando={atualizar.isPending}
-          onClick={() =>
-            mudar(
-              { pausado: !robo.pausado },
-              robo.pausado
-                ? `${robo.nome} voltou a trabalhar.`
-                : `${robo.nome} pausado. Nada é analisado até você retomar.`,
-            )
-          }
-        >
-          {robo.pausado ? "Retomar" : "Pausar"}
-        </Botao>
-        <Link
-          to="/aovivo"
-          search={{ robo: robo.id }}
-          className="botao botao--fantasma botao--pequeno"
-          aria-label={`Ver ${robo.nome} ao vivo`}
-        >
-          <Radio size={15} aria-hidden="true" />
-          Ao vivo
-        </Link>
+      <div className="robo__rodape">
+        <details className="robo__limites">
+          <summary>
+            <SlidersHorizontal size={15} aria-hidden="true" />
+            <span className="so-leitor">Limites de risco:</span>
+            <span className="robo__limite">
+              perda diária <span className="num">{formatarDinheiro(l.perdaDiariaMaxima)}</span>
+            </span>
+            <span className="robo__limite">
+              exposição <span className="num">{formatarDinheiro(l.exposicaoMaxima)}</span>
+            </span>
+            <span className="robo__limite">
+              confiança <span className="num">{formatarPercentual(l.confiancaMinima, { casas: 0 })}</span>
+            </span>
+          </summary>
+          <EditorLimites
+            limites={l}
+            salvando={atualizar.isPending}
+            aoSalvar={(limites) => mudar({ limites }, `Limites de ${robo.nome} salvos.`)}
+          />
+        </details>
+        <div className="robo__acoes">
+          <Link
+            to="/aovivo"
+            search={{ robo: robo.id }}
+            className="botao botao--fantasma botao--pequeno"
+            aria-label={`Ver ${robo.nome} ao vivo`}
+          >
+            <Radio size={15} aria-hidden="true" />
+            Ao vivo
+          </Link>
+          <Botao
+            pequeno
+            icone={robo.pausado ? Play : Pause}
+            carregando={atualizar.isPending}
+            onClick={() =>
+              mudar(
+                { pausado: !robo.pausado },
+                robo.pausado
+                  ? `${robo.nome} voltou a trabalhar.`
+                  : `${robo.nome} pausado. Nada é analisado até você retomar.`,
+              )
+            }
+          >
+            {robo.pausado ? "Retomar" : "Pausar"}
+          </Botao>
+        </div>
       </div>
-      <details className="robo__limites">
-        <summary>
-          <SlidersHorizontal size={15} aria-hidden="true" /> Limites de risco: perda diária{" "}
-          <span className="num">{formatarDinheiro(l.perdaDiariaMaxima)}</span> · exposição{" "}
-          <span className="num">{formatarDinheiro(l.exposicaoMaxima)}</span> · confiança mínima{" "}
-          <span className="num">{formatarPercentual(l.confiancaMinima, { casas: 0 })}</span>
-        </summary>
-        <EditorLimites
-          limites={l}
-          salvando={atualizar.isPending}
-          aoSalvar={(limites) => mudar({ limites }, `Limites de ${robo.nome} salvos.`)}
-        />
-      </details>
       <Dialogo
         aberto={confirmarAuto}
         aoFechar={() => setConfirmarAuto(false)}
@@ -150,7 +168,7 @@ export function Robos() {
       >
         Cada robô segue uma estratégia num par. Você escolhe se ele só observa, sugere ou opera sozinho.
       </Cabecalho>
-      {robos.isPending ? <Esqueleto linhas={6} rotulo="Carregando robôs" /> : null}
+      {robos.isPending ? <Esqueleto forma="cartoes" quantidade={4} rotulo="Carregando robôs" /> : null}
       {robos.error ? <ErroCarregar erro={robos.error} tentarDeNovo={() => void robos.refetch()} /> : null}
       {robos.data?.length === 0 ? (
         <EstadoVazio

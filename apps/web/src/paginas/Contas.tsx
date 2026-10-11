@@ -136,8 +136,8 @@ export function Contas() {
         chave.
       </Cabecalho>
       <div className="grade-dupla">
-        <Painel titulo="Chaves cadastradas" id="titulo-chaves">
-          {contas.isPending ? <Esqueleto linhas={3} /> : null}
+        <Painel titulo="Chaves cadastradas" id="titulo-chaves" icone={KeyRound}>
+          {contas.isPending ? <Esqueleto forma="lista" linhas={2} rotulo="Carregando chaves" /> : null}
           {contas.error ? (
             <ErroCarregar erro={contas.error} tentarDeNovo={() => void contas.refetch()} />
           ) : null}
@@ -149,13 +149,17 @@ export function Contas() {
           ) : null}
           <ul role="list" className="chaves">
             {contas.data?.map((c) => (
-              <li key={c.id}>
-                <KeyRound size={16} aria-hidden="true" />
-                <span>
-                  Binance <span className="num apagado">{c.apiKeyFinal}</span>
+              <li key={c.id} className="chave">
+                <span className="chave__icone" aria-hidden="true">
+                  <KeyRound size={16} />
                 </span>
-                <Selo tom={REDE[c.rede].tom}>{REDE[c.rede].texto}</Selo>
-                <span className="apagado">desde {formatarData(c.criadaEm)}</span>
+                <span className="chave__textos">
+                  <span className="chave__nome">
+                    Binance <span className="num apagado">{c.apiKeyFinal}</span>
+                    <Selo tom={REDE[c.rede].tom}>{REDE[c.rede].texto}</Selo>
+                  </span>
+                  <span className="chave__meta">desde {formatarData(c.criadaEm)}</span>
+                </span>
                 <Botao
                   pequeno
                   variante="fantasma"
@@ -169,7 +173,7 @@ export function Contas() {
             ))}
           </ul>
         </Painel>
-        <Painel titulo="Cadastrar chave da Binance" id="titulo-cadastrar">
+        <Painel titulo="Cadastrar chave da Binance" id="titulo-cadastrar" icone={Plus}>
           <FormConta />
         </Painel>
       </div>

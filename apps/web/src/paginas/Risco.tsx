@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { OctagonX, Play, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ArrowRight, Gauge, OctagonX, Play, ShieldAlert, ShieldCheck } from "lucide-react";
 import { mensagemDe } from "../api/erros";
 import { useAvisos } from "../componentes/Avisos";
 import { Botao } from "../componentes/Botao";
 import { BotaoSegurar } from "../componentes/BotaoSegurar";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
-import { ErroCarregar, Esqueleto } from "../componentes/Estados";
+import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
 import { useDecisoes, useResumo, useRobos } from "../ganchos/consultas";
 import { lojaBarreiras } from "../ganchos/lojas";
 import { useParadaTotal } from "../ganchos/mutacoes";
@@ -35,7 +35,9 @@ function ParadaTotal() {
   if (ligada) {
     return (
       <section className="parada parada--ligada" aria-labelledby="titulo-parada">
-        <OctagonX size={28} aria-hidden="true" />
+        <span className="parada__simbolo" aria-hidden="true">
+          <OctagonX size={26} />
+        </span>
         <div>
           <h2 id="titulo-parada" className="parada__titulo">
             Parada total ligada
@@ -59,6 +61,9 @@ function ParadaTotal() {
   }
   return (
     <section className="parada" aria-labelledby="titulo-parada">
+      <span className="parada__simbolo" aria-hidden="true">
+        <OctagonX size={26} />
+      </span>
       <div>
         <h2 id="titulo-parada" className="parada__titulo">
           Parada total
@@ -77,7 +82,7 @@ function ParadaTotal() {
 
 function Limites() {
   const robos = useRobos();
-  if (robos.isPending) return <Esqueleto linhas={4} />;
+  if (robos.isPending) return <Esqueleto forma="lista" linhas={4} rotulo="Carregando limites" />;
   if (robos.error)
     return <ErroCarregar erro={robos.error} tentarDeNovo={() => void robos.refetch()} compacto />;
   return (
@@ -151,15 +156,17 @@ function Barreiras() {
     .slice(0, 12);
   if (itens.length === 0)
     return (
-      <p className="apagado">
-        <ShieldCheck size={15} aria-hidden="true" /> Nada barrado recentemente.
-      </p>
+      <EstadoVazio compacto icone={ShieldCheck} titulo="Nada barrado recentemente">
+        Quando o motor de risco barrar uma ordem, o motivo aparece aqui.
+      </EstadoVazio>
     );
   return (
     <ul role="list" className="barreiras">
       {itens.map((b) => (
         <li key={b.chave}>
-          <ShieldAlert size={15} aria-hidden="true" className="atencao" />
+          <span className="barreiras__icone" aria-hidden="true">
+            <ShieldAlert size={15} />
+          </span>
           <span>
             <strong>{robos.find((r) => r.id === b.roboId)?.nome ?? "Robô"}</strong> — {b.mensagem}
           </span>
@@ -182,15 +189,17 @@ export function Risco() {
         <Painel
           titulo="Limites por robô"
           id="titulo-limites"
+          icone={Gauge}
+          descricao="O motor confere cada ordem contra estes números antes de enviar."
           acoes={
             <Link to="/robos" className="link-seta">
-              Editar nos robôs
+              Editar nos robôs <ArrowRight size={14} aria-hidden="true" />
             </Link>
           }
         >
           <Limites />
         </Painel>
-        <Painel titulo="Barrado recentemente" id="titulo-barreiras">
+        <Painel titulo="Barrado recentemente" id="titulo-barreiras" icone={ShieldAlert}>
           <Barreiras />
         </Painel>
       </div>

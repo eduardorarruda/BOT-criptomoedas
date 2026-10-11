@@ -1,24 +1,39 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Bot, OctagonX, ScrollText } from "lucide-react";
+import {
+  ArrowRight,
+  Bot,
+  Layers,
+  ChartLine,
+  OctagonX,
+  Receipt,
+  ScrollText,
+  Sparkles,
+  TrendingDown,
+} from "lucide-react";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
 import { AnalisesAoVivo } from "../componentes/decisao/AnalisesAoVivo";
 import { CartaoDecisao } from "../componentes/decisao/CartaoDecisao";
 import { Dinheiro } from "../componentes/Dinheiro";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
 import { GraficoLinha } from "../componentes/graficos/GraficoLinha";
+import { CartaoKpi, GradeKpi } from "../componentes/Kpi";
+import { Minigrafico } from "../componentes/Minigrafico";
 import { NumeroAnimado } from "../componentes/NumeroAnimado";
 import { PrecoAoVivo } from "../componentes/PrecoAoVivo";
 import { Selo } from "../componentes/Selo";
 import { useDecisoes, usePatrimonio, useResumo, useRobos } from "../ganchos/consultas";
-import { formatarCustoIa, formatarDinheiro } from "../lib/formatar";
+import { formatarCustoIa, formatarDinheiro, sinalDe } from "../lib/formatar";
 import { variacao } from "../lib/metricas";
 import { MODO_ROBO, REDE } from "../lib/rotulos";
 
 function Metricas() {
   const { data: r, error, refetch, isPending } = useResumo();
-  if (isPending) return <Esqueleto altura={92} rotulo="Carregando o resumo do dia" />;
+  const curva = usePatrimonio().data;
+  if (isPending) return <Esqueleto forma="kpis" quantidade={5} rotulo="Carregando o resumo do dia" />;
   if (error) return <ErroCarregar erro={error} tentarDeNovo={() => void refetch()} />;
   const queda = r.maiorQueda30d.startsWith("-") ? r.maiorQueda30d : `-${r.maiorQueda30d}`;
+  const valores = curva && curva.length > 1 ? curva.map((p) => Number(p.valor)) : null;
+  const mes = curva && curva.length > 1 ? variacao(curva.map((p) => p.valor)) : null;
   return (
     <>
       {r.paradaTotal ? (
@@ -32,54 +47,63 @@ function Metricas() {
           </Link>
         </div>
       ) : null}
-      <dl className="metricas">
-        <div className="metrica metrica--destaque">
-          <dt>Resultado do dia</dt>
-          <dd>
-            <Dinheiro valor={r.resultadoHoje} sinal colorir animar />
-          </dd>
-          <dd className="metrica__nota">inclui posições abertas pelo preço atual</dd>
-        </div>
-        <div className="metrica">
-          <dt>Exposição</dt>
-          <dd>
-            <NumeroAnimado valor={r.exposicao} formatar={(t) => formatarDinheiro(t)} />
-          </dd>
-          <dd className="metrica__nota">em posições abertas</dd>
-        </div>
-        <div className="metrica">
-          <dt>Maior queda</dt>
-          <dd>
-            <Dinheiro valor={queda} colorir />
-          </dd>
-          <dd className="metrica__nota">nos últimos 30 dias</dd>
-        </div>
-        <div className="metrica">
-          <dt>Taxas hoje</dt>
-          <dd>
-            {r.taxasHoje ? (
+      <GradeKpi colunas={5} rotulo="Resumo do dia">
+        <CartaoKpi
+          destaque
+          rotulo="Resultado do dia"
+          valor={<Dinheiro valor={r.resultadoHoje} sinal colorir animar />}
+          nota="inclui posições abertas pelo preço atual"
+          {...(mes
+            ? {
+                variacao: (
+                  <>
+                    {formatarDinheiro(mes.absoluta, { sinal: true })}{" "}
+                    <span className="apagado">em 30 dias</span>
+                  </>
+                ),
+                tomVariacao: sinalDe(mes.absoluta),
+              }
+            : {})}
+          grafico={valores ? <Minigrafico valores={valores} largura={240} altura={44} /> : undefined}
+        />
+        <CartaoKpi
+          icone={Layers}
+          rotulo="Exposição"
+          valor={<NumeroAnimado valor={r.exposicao} formatar={(t) => formatarDinheiro(t)} />}
+          nota="em posições abertas"
+        />
+        <CartaoKpi
+          icone={TrendingDown}
+          rotulo="Maior queda"
+          valor={<Dinheiro valor={queda} colorir />}
+          nota="nos últimos 30 dias"
+        />
+        <CartaoKpi
+          icone={Receipt}
+          rotulo="Taxas hoje"
+          valor={
+            r.taxasHoje ? (
               <NumeroAnimado valor={r.taxasHoje} formatar={(t) => formatarDinheiro(t)} />
             ) : (
               <span className="apagado">—</span>
-            )}
-          </dd>
-          <dd className="metrica__nota">pagas à corretora</dd>
-        </div>
-        <div className="metrica">
-          <dt>Custo de IA hoje</dt>
-          <dd>
-            <NumeroAnimado valor={r.custoIaHoje} formatar={formatarCustoIa} />
-          </dd>
-          <dd className="metrica__nota">análises do agente</dd>
-        </div>
-      </dl>
+            )
+          }
+          nota="pagas à corretora"
+        />
+        <CartaoKpi
+          icone={Sparkles}
+          rotulo="Custo de IA hoje"
+          valor={<NumeroAnimado valor={r.custoIaHoje} formatar={formatarCustoIa} />}
+          nota="análises do agente"
+        />
+      </GradeKpi>
     </>
   );
 }
 
 function Curva() {
   const { data, error, refetch, isPending } = usePatrimonio();
-  if (isPending) return <Esqueleto altura={260} rotulo="Carregando a curva de patrimônio" />;
+  if (isPending) return <Esqueleto forma="grafico" altura={260} rotulo="Carregando a curva de patrimônio" />;
   if (error) return <ErroCarregar erro={error} tentarDeNovo={() => void refetch()} />;
   if (data.length < 2)
     return (
@@ -105,7 +129,7 @@ function Curva() {
 
 function Robos() {
   const { data, isPending, error, refetch } = useRobos();
-  if (isPending) return <Esqueleto linhas={4} />;
+  if (isPending) return <Esqueleto forma="lista" linhas={4} rotulo="Carregando robôs" />;
   if (error) return <ErroCarregar erro={error} tentarDeNovo={() => void refetch()} compacto />;
   if (data.length === 0)
     return (
@@ -176,7 +200,7 @@ function Decisoes() {
           </Link>
         }
       >
-        {ultimas.isPending ? <Esqueleto linhas={5} /> : null}
+        {ultimas.isPending ? <Esqueleto forma="lista" linhas={5} rotulo="Carregando decisões" /> : null}
         {ultimas.error ? (
           <ErroCarregar erro={ultimas.error} tentarDeNovo={() => void ultimas.refetch()} compacto />
         ) : null}
@@ -204,12 +228,13 @@ export function VisaoGeral() {
       <Metricas />
       <div className="grade-visao">
         <div className="pilha">
-          <Painel titulo="Curva de patrimônio" id="titulo-curva">
+          <Painel titulo="Curva de patrimônio" id="titulo-curva" icone={ChartLine} variante="destaque">
             <Curva />
           </Painel>
           <Painel
             titulo="Robôs"
             id="titulo-robos"
+            icone={Bot}
             acoes={
               <Link to="/robos" className="link-seta">
                 Gerenciar <ArrowRight size={14} aria-hidden="true" />

@@ -60,7 +60,7 @@ export function Entrar() {
         <p className="entrar__lema titulo-serif">
           Regras decidem.
           <br />A IA argumenta.
-          <br />O risco tem a palavra final.
+          <br />O risco tem a <span className="entrar__lema-destaque">palavra final.</span>
         </p>
       </section>
       <section className="entrar__formulario" aria-labelledby="titulo-entrar">

@@ -1,5 +1,6 @@
 import type { RoboDTO } from "@zentrade/contratos/esquemas";
 import {
+  Activity,
   ArrowLeftRight,
   Bot,
   ChartCandlestick,
@@ -127,10 +128,12 @@ export function LinhaDoTempo(p: Props) {
     setAtivas((a) => (a.has(c) ? new Set([...a].filter((x) => x !== c)) : new Set([...a, c])));
 
   return (
-    <Painel titulo="Linha do tempo" id="titulo-linha-tempo" className="aovivo-linha">
+    <Painel titulo="Linha do tempo" id="titulo-linha-tempo" className="aovivo-linha" icone={Activity}>
       <Filtros ativas={ativas} contagem={contagem} alternar={alternar} />
       {p.erro ? <ErroCarregar compacto erro={p.erro} tentarDeNovo={p.tentarDeNovo} /> : null}
-      {p.carregando ? <Esqueleto linhas={5} rotulo="Carregando o que aconteceu há pouco" /> : null}
+      {p.carregando ? (
+        <Esqueleto forma="lista" linhas={5} rotulo="Carregando o que aconteceu há pouco" />
+      ) : null}
       {!p.carregando && visiveis.length === 0 ? (
         <EstadoVazio
           icone={Radio}

@@ -25,9 +25,6 @@
 
 .aovivo-conexao {
   padding: 6px 12px;
-  border: 1px solid var(--linha);
-  border-radius: 999px;
-  background: var(--superficie);
 }
 .aovivo-conexao__idade {
   font-variant-numeric: tabular-nums;
@@ -290,18 +287,28 @@
   padding: var(--espaco-4);
   border: 1px solid var(--linha);
   border-radius: var(--raio-g);
-  background: var(--superficie);
+  background: var(--superficie-relevo), var(--superficie);
+  box-shadow: var(--brilho-borda), var(--sombra-1);
   text-align: left;
   cursor: pointer;
   transition:
     border-color var(--dur-curta),
-    transform var(--dur-curta) var(--curva),
+    transform var(--dur-media) var(--curva-saida),
     box-shadow var(--dur-media);
 }
 .cartao-robo:hover {
-  border-color: var(--linha-forte);
-  transform: translateY(-1px);
-  box-shadow: var(--sombra-flutuante);
+  border-color: color-mix(in oklab, var(--marca) 30%, var(--linha-forte));
+  transform: translateY(-2px);
+  box-shadow: var(--brilho-borda), var(--sombra-2);
+}
+.cartao-robo:hover .cartao-robo__topo svg {
+  color: var(--marca);
+  transform: translateX(2px);
+}
+.cartao-robo__topo svg {
+  transition:
+    color var(--dur-curta),
+    transform var(--dur-curta) var(--curva);
 }
 .cartao-robo:active {
   transform: translateY(0) scale(0.99);

@@ -2,7 +2,7 @@ import type { DecisaoDTO, Intervalo } from "@zentrade/contratos/esquemas";
 import { useCallback, useMemo, useState } from "react";
 import type { CoresGrafico } from "../componentes/graficos/cores";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
-import { CandlestickChart } from "lucide-react";
+import { CandlestickChart, ScrollText } from "lucide-react";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
 import { GraficoCandles } from "../componentes/graficos/GraficoCandles";
 import { estiloDecisao, marcadores } from "../componentes/graficos/velas";
@@ -83,7 +83,7 @@ export function Mercado() {
             <PrecoAoVivo simbolo={simbolo} {...(ultimaVela ? { reserva: ultimaVela.fecha } : {})} />
           </span>
         </div>
-        {velas.isPending ? <Esqueleto altura={420} rotulo="Carregando os candles" /> : null}
+        {velas.isPending ? <Esqueleto forma="grafico" altura={420} rotulo="Carregando os candles" /> : null}
         {velas.error ? <ErroCarregar erro={velas.error} tentarDeNovo={() => void velas.refetch()} /> : null}
         {velas.data?.length === 0 ? (
           <EstadoVazio
@@ -116,7 +116,7 @@ export function Mercado() {
           uma decisão de outro tipo. A tabela abaixo mostra cada uma.
         </p>
       </Painel>
-      <Painel titulo="Decisões neste par" id="titulo-decisoes-par">
+      <Painel titulo="Decisões neste par" id="titulo-decisoes-par" icone={ScrollText}>
         {decisoes.length === 0 ? (
           <p className="apagado">Nenhum robô decidiu nada em {simbolo} ainda.</p>
         ) : (
