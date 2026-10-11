@@ -227,7 +227,9 @@ describe("fonte demo: dados", () => {
 
   it("lista ordens por robô, automações, saúde e patrimônio", async () => {
     const { fonte } = nova();
-    expect((await fonte.ordens("r-sol")).length).toBe(3);
+    const comOrdem = (await fonte.decisoes({ roboId: "r-sol" })).filter((d) => d.ordemId).length;
+    expect((await fonte.ordens("r-sol")).length).toBe(comOrdem);
+    expect(comOrdem).toBeGreaterThan(3); // o diário de exemplo tem semanas de histórico
     expect((await fonte.ordens()).length).toBeGreaterThan(3);
     expect((await fonte.automacoes()).length).toBe(5);
     expect((await fonte.saude()).ok).toBe(true);

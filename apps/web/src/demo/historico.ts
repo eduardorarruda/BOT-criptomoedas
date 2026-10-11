@@ -2,7 +2,7 @@ import type { DecisaoDTO, OrdemDTO, PropostaAgente } from "@zentrade/contratos/e
 import { dec, precoAlvo, precoStop } from "@zentrade/dominio";
 import type { Backtest, PontoCurvaBacktest, PontoPatrimonio } from "../api/esquemas";
 import { metricasDaCurva } from "../lib/metricas";
-import { criarAleatorio, normal } from "./aleatorio";
+import { criarAleatorio, escolher, normal, type Aleatorio } from "./aleatorio";
 import { PROPOSTAS } from "./propostas";
 
 const MIN = 60_000;
@@ -219,6 +219,107 @@ const MODELOS: readonly Modelo[] = [
   },
 ];
 
+/** Como cada robô do exemplo costuma agir: par, faixa de preço, tamanho e o texto do gatilho. */
+const PERFIS = [
+  {
+    roboId: "r-btc",
+    simbolo: "BTCUSDT",
+    base: 61_000,
+    oscila: 3_500,
+    quantidade: "0.00250",
+    casas: 2,
+    proposta: "btcCompra" as const,
+    compra: (p: string) => `(RSI(14) (28,${p.slice(-1)}) < 30: sim) e (preço (${p}) > SMA(200): sim)`,
+    finais: ["executada", "executada", "recusada", "expirada"] as const,
+  },
+  {
+    roboId: "r-sol",
+    simbolo: "SOLUSDT",
+    base: 145,
+    oscila: 14,
+    quantidade: "1.00",
+    casas: 2,
+    proposta: "solCompra" as const,
+    compra: (p: string) => `(preço cruzou acima de SMA(20): sim) e (RSI(14) (5${p.slice(-1)},0) ≥ 55: sim)`,
+    finais: ["executada", "executada", "executada", "barrada"] as const,
+  },
+  {
+    roboId: "r-eth",
+    simbolo: "ETHUSDT",
+    base: 2_450,
+    oscila: 160,
+    quantidade: "0.080",
+    casas: 2,
+    proposta: "ethObservar" as const,
+    compra: (p: string) => `(EMA(9) cruzou acima de EMA(21) em ${p}: sim) e não (RSI(14) > 70: não)`,
+    finais: ["registrada"] as const,
+  },
+];
+
+const BARREIRA_EXPOSICAO = [
+  { codigo: "exposicao", mensagem: "A exposição passaria do limite do robô (US$ 500,00)." },
+];
+
+function rodada(a: Aleatorio, i: number, haMs: number): Modelo[] {
+  const perfil = escolher(a, PERFIS);
+  const estado = escolher(a, perfil.finais);
+  const preco = (perfil.base + normal(a) * perfil.oscila).toFixed(perfil.casas);
+  const id = `d-h${String(i).padStart(2, "0")}`;
+  const variacao = 1 + (normal(a) * 0.018 + 0.004);
+  const venda = (Number(preco) * variacao).toFixed(perfil.casas);
+  const resultado = dec(venda).minus(preco).times(perfil.quantidade).toFixed(2);
+  const compra: Modelo = {
+    id,
+    haMs,
+    roboId: perfil.roboId,
+    simbolo: perfil.simbolo,
+    acao: "COMPRAR",
+    estado,
+    preco,
+    quantidade: perfil.quantidade,
+    proposta: perfil.proposta,
+    explicacao: perfil.compra(preco.replace(".", ",")),
+    custoIa: (0.012 + a() * 0.005).toFixed(4),
+    ...(estado === "barrada" ? { barreiras: BARREIRA_EXPOSICAO } : {}),
+    ...(estado === "executada" ? { desfecho: resultado } : {}),
+  };
+  if (estado !== "executada" && estado !== "registrada") return [compra];
+  const saida = Number(venda) >= Number(preco) ? "alvo" : "stop";
+  return [
+    {
+      id: `${id}v`,
+      haMs: haMs - Math.round((3 + a() * 30) * HORA),
+      roboId: perfil.roboId,
+      simbolo: perfil.simbolo,
+      acao: "VENDER",
+      estado,
+      preco: venda,
+      quantidade: perfil.quantidade,
+      explicacao: `preço ${venda.replace(".", ",")} chegou ao ${saida}`,
+      custoIa: (0.004 + a() * 0.002).toFixed(4),
+    },
+    compra,
+  ];
+}
+
+/**
+ * Dois meses e meio de diário antes dos últimos três dias, para os filtros de
+ * período, robô e desfecho terem o que mostrar. Cada compra executada fecha com a
+ * venda dela: a posição atual dos robôs não muda, só o realizado e as taxas.
+ */
+function historicoAntigo(): Modelo[] {
+  const a = criarAleatorio(2026);
+  const modelos: Modelo[] = [];
+  let ha = 80 * HORA;
+  for (let i = 1; i <= 26; i++) {
+    ha += Math.round((40 + a() * 60) * HORA);
+    modelos.push(...rodada(a, i, ha));
+  }
+  return modelos.sort((x, y) => x.haMs - y.haMs);
+}
+
+const TODOS: readonly Modelo[] = [...MODELOS, ...historicoAntigo()];
+
 function proposta(m: Modelo): PropostaAgente | undefined {
   if (!m.proposta) return undefined;
   const base = PROPOSTAS[m.proposta];
@@ -272,10 +373,10 @@ function paraOrdem(m: Modelo, agora: number): OrdemDTO {
   };
 }
 
-export const decisoesIniciais = (agora: number): DecisaoDTO[] => MODELOS.map((m) => paraDecisao(m, agora));
+export const decisoesIniciais = (agora: number): DecisaoDTO[] => TODOS.map((m) => paraDecisao(m, agora));
 
 export const ordensIniciais = (agora: number): OrdemDTO[] =>
-  MODELOS.filter((m) => m.estado === "executada" || m.estado === "falhou").map((m) => paraOrdem(m, agora));
+  TODOS.filter((m) => m.estado === "executada" || m.estado === "falhou").map((m) => paraOrdem(m, agora));
 
 /** Curva de patrimônio real (30 dias, a cada 6 h), somada em Decimal. */
 export function patrimonioInicial(agora: number, inicial = "1000"): PontoPatrimonio[] {

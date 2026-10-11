@@ -40,7 +40,8 @@ describe("consultas", () => {
     expect(r.robos.data).toHaveLength(4);
     expect(r.posicoes.map((p) => p.data?.roboId)).toEqual(["r-sol", "r-btc"]);
     expect(r.decisoes.data?.every((d) => d.estado === "barrada")).toBe(true);
-    expect(r.ordens.data).toHaveLength(3);
+    expect(r.ordens.data?.length).toBeGreaterThan(3);
+    expect(r.ordens.data?.every((o) => o.idCliente.startsWith("zt-d-"))).toBe(true);
     expect(r.candles.data).toHaveLength(240);
     expect(r.contas.data).toHaveLength(1);
     expect(r.tokens.data).toHaveLength(2);
