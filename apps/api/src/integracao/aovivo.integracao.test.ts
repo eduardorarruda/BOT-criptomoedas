@@ -107,9 +107,9 @@ describe("ao vivo: histórico recente por robô", () => {
       em: 4,
     });
 
-    await expect
-      .poll(() => eventosDe(ana, `${roboAna}/recentes`))
-      .toEqual(["candle", "sinal", "ordem", "decisao"]);
+    // O último publicado é o sinal do outro robô: só depois dele o histórico está completo.
+    await expect.poll(async () => (await eventosDe(ana, "recentes")).length, { timeout: 10_000 }).toBe(5);
+    expect(await eventosDe(ana, `${roboAna}/recentes`)).toEqual(["candle", "sinal", "ordem", "decisao"]);
     expect(await eventosDe(ana, `${outroRoboAna}/recentes`)).toEqual(["sinal"]);
     expect(await eventosDe(ana, `${roboAna}/recentes?limite=2`)).toEqual(["ordem", "decisao"]);
     const todos = await eventosDe(ana, "recentes");
