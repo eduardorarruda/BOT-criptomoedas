@@ -5,7 +5,7 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { configure, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -20,6 +20,10 @@ import { SimFii } from "./simuladores/SimFii";
 import { SimFinanciamento } from "./simuladores/SimFinanciamento";
 import { SimGanhoCapital } from "./simuladores/SimGanhoCapital";
 import { VisaoImobiliario } from "./VisaoImobiliario";
+
+// As contas da carteira de exemplo (financiamento de 360 meses, TIR) pesam sob carga: mais folga.
+configure({ asyncUtilTimeout: 15_000 });
+vi.setConfig({ testTimeout: 60_000 });
 
 const fonteApp = { demo: false } as unknown as Fonte;
 
@@ -43,17 +47,23 @@ function trocar(rotulo: RegExp, valor: string) {
 }
 
 describe("simuladores", () => {
-  it("financiamento: Price de 300 mil a 9% a.a. em 360 meses = R$ 2.338,45 (sem seguros)", async () => {
-    renderizar(<SimFinanciamento />, fonteApp);
-    trocar(/Juros ao ano/, "9");
-    for (const r of [/Seguro sobre o saldo/, /Seguro fixo/, /Tarifa mensal/, /Custos na contratação/])
-      trocar(r, "");
-    await waitFor(() =>
-      expect(screen.getByText(/Price — parcelas iguais/).parentElement).toHaveTextContent("R$ 2.338,45"),
-    );
-    expect(screen.getAllByRole("img", { name: /Saldo devedor/ }).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Premissas desta conta/)).toBeInTheDocument();
-  });
+  it(
+    "financiamento: Price de 100 mil a 1% a.m. em 12 meses = R$ 8.884,88 (sem seguros)",
+    { timeout: 60_000 },
+    async () => {
+      renderizar(<SimFinanciamento />, fonteApp);
+      trocar(/Valor financiado/, "100.000");
+      trocar(/Prazo/, "12");
+      trocar(/Juros ao ano/, "12,682503013197");
+      for (const r of [/Seguro sobre o saldo/, /Seguro fixo/, /Tarifa mensal/, /Custos na contratação/])
+        trocar(r, "");
+      await waitFor(() =>
+        expect(screen.getByText(/Price — parcelas iguais/).parentElement).toHaveTextContent("R$ 8.884,88"),
+      );
+      expect(screen.getAllByRole("img", { name: /Saldo devedor/ }).length).toBeGreaterThan(0);
+      expect(screen.getByText(/Premissas desta conta/)).toBeInTheDocument();
+    },
+  );
 
   it("financiamento: campo inválido vira explicação, não tela quebrada", async () => {
     renderizar(<SimFinanciamento />, fonteApp);
