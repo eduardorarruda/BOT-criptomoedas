@@ -12,6 +12,9 @@ export interface BancoDescartavel {
   descartar(): Promise<void>;
 }
 
+/** Chave do advisory lock que serializa as migrações dos bancos descartáveis. */
+const TRAVA_MIGRACOES_DE_TESTE = 7_412_903;
+
 export function urlDeTeste(): string {
   const url = process.env.ZT_TESTE_BANCO_URL;
   if (!url) {
@@ -38,15 +41,23 @@ async function esperarServidor(admin: postgres.Sql): Promise<void> {
 export async function criarBancoDescartavel(urlAdmin = urlDeTeste()): Promise<BancoDescartavel> {
   const nome = `zt_${randomBytes(6).toString("hex")}`;
   const admin = postgres(urlAdmin, { max: 1, onnotice: () => undefined });
+  const url = new URL(urlAdmin);
+  url.pathname = `/${nome}`;
   try {
     await esperarServidor(admin);
     await admin.unsafe(`create database ${nome}`);
+    // Uma migração por vez no servidor: o papel zentrade_app vale para o servidor
+    // inteiro, e duas migrações paralelas num servidor novo brigavam para criá-lo
+    // ("pg_authid_rolname_index"). Em produção só um migrador roda.
+    await admin`select pg_advisory_lock(${TRAVA_MIGRACOES_DE_TESTE})`;
+    try {
+      await migrar(url.toString());
+    } finally {
+      await admin`select pg_advisory_unlock(${TRAVA_MIGRACOES_DE_TESTE})`;
+    }
   } finally {
     await admin.end({ timeout: 5 });
   }
-  const url = new URL(urlAdmin);
-  url.pathname = `/${nome}`;
-  await migrar(url.toString());
   return {
     url: url.toString(),
     descartar: async () => {
