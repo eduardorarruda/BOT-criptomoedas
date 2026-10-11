@@ -37,6 +37,12 @@ export const MetricasBacktestEsquema = z.object({
   taxaAcerto: Fracao,
   taxasPagas: TextoDecimal,
   ordens: z.number().int().nonnegative().optional(),
+  /** Capital simulado no início e o resultado como fração dele (pode ser negativo). */
+  saldoInicial: TextoDecimal.optional(),
+  resultadoPercentual: z.number().optional(),
+  /** Quanto o backtest aceitou perder por operação, para comparar com o robô real. */
+  riscoPorOperacao: TextoDecimal.optional(),
+  candles: z.number().int().nonnegative().optional(),
 });
 export type MetricasBacktest = z.infer<typeof MetricasBacktestEsquema>;
 

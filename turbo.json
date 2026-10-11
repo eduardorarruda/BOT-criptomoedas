@@ -14,7 +14,8 @@
     },
     "test:integracao": {
       "dependsOn": ["^build"],
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["ZT_TESTE_*"]
     },
     "dev": {
       "dependsOn": ["^build"],

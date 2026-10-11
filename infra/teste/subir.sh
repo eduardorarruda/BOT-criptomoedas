@@ -26,9 +26,14 @@ subir "$PREFIXO-redis" -p "127.0.0.1:$PORTA_REDIS:6379" redis:8-alpine
 for _ in $(seq 1 90); do
   if docker exec "$PREFIXO-pg" pg_isready -U postgres -h 127.0.0.1 >/dev/null 2>&1 &&
     docker exec "$PREFIXO-redis" redis-cli ping 2>/dev/null | grep -q PONG; then
+    # Banco separado para os testes do RAG e do agente, que criam as próprias tabelas.
+    docker exec "$PREFIXO-pg" psql -U postgres -h 127.0.0.1 -tAc \
+      "select 1 from pg_database where datname = 'rag_teste'" | grep -q 1 ||
+      docker exec "$PREFIXO-pg" psql -U postgres -h 127.0.0.1 -qc "create database rag_teste" >/dev/null
     echo "pronto: postgres em 127.0.0.1:$PORTA_PG, redis em 127.0.0.1:$PORTA_REDIS"
     echo "export ZT_TESTE_BANCO_URL=postgres://postgres:$SENHA_PG@127.0.0.1:$PORTA_PG/postgres"
     echo "export ZT_TESTE_REDIS_URL=redis://127.0.0.1:$PORTA_REDIS"
+    echo "export ZT_TESTE_DATABASE_URL=postgres://postgres:$SENHA_PG@127.0.0.1:$PORTA_PG/rag_teste"
     exit 0
   fi
   sleep 1

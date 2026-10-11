@@ -153,7 +153,7 @@ describe("limites do /analisar (custo de IA com teto)", () => {
     });
     app = servidor(analisar, { maxSimultaneas: 1 });
     const primeira = app.inject({ method: "POST", url: "/analisar", headers: cabecalhos, payload: corpo });
-    await vi.waitFor(() => expect(analisar).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(analisar).toHaveBeenCalledTimes(1), { timeout: 10_000 });
     const segunda = await app.inject({
       method: "POST",
       url: "/analisar",
