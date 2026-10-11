@@ -14,7 +14,8 @@
     "test": "turbo run test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "check": "pnpm lint && pnpm typecheck && pnpm test"
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "test:integracao": "infra/teste/subir.sh && turbo run test:integracao --concurrency=1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

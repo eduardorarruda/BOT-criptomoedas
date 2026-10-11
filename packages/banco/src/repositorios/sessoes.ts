@@ -17,8 +17,23 @@ export interface Sessao {
  */
 export function repositorioSessoes(db: Db) {
   return {
-    async criar(s: { id: string; usuarioId: string; csrf: string; expiraEm: number }): Promise<void> {
-      await db.insert(sessoes).values({ ...s, expiraEm: new Date(s.expiraEm) });
+    /** `em` é o instante do login: conta como autenticação recente (reautenticada_em). */
+    async criar(s: {
+      id: string;
+      usuarioId: string;
+      csrf: string;
+      expiraEm: number;
+      em?: number;
+    }): Promise<void> {
+      const em = new Date(s.em ?? Date.now());
+      await db.insert(sessoes).values({
+        id: s.id,
+        usuarioId: s.usuarioId,
+        csrf: s.csrf,
+        expiraEm: new Date(s.expiraEm),
+        criadaEm: em,
+        reautenticadaEm: em,
+      });
     },
 
     async obter(id: string, agora: number): Promise<Sessao | null> {
