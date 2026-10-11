@@ -76,6 +76,7 @@ function Negociacoes({ negociacoes }: { readonly negociacoes: readonly Negociaca
       </p>
     );
   return (
+    // eslint-disable-next-line jsx-a11y-x/no-noninteractive-tabindex -- região rolável: o foco é o que permite rolar pelo teclado (WCAG 2.1.1)
     <div className="tabela-rolagem" tabIndex={0} role="region" aria-label="Negociações da moeda">
       <table className="tabela">
         <thead>

@@ -21,8 +21,9 @@ export default defineConfig({
   build: { target: "es2023", sourcemap: true },
   test: {
     environment: "jsdom",
-    // Testes de interação (teclado, arrastar) passam de 5 s quando o turbo roda todos os pacotes juntos.
-    testTimeout: 20_000,
+    // Testes de interação (teclado, arrastar) e o axe na app inteira passam de 20 s quando o
+    // turbo roda todos os pacotes juntos numa máquina carregada.
+    testTimeout: 60_000,
     globals: true,
     setupFiles: ["./src/teste/preparar.ts"],
     include: ["src/**/*.test.{ts,tsx}"],

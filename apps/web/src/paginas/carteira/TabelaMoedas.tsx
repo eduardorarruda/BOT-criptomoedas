@@ -118,6 +118,7 @@ export function TabelaMoedas({
   return (
     <div
       className="tabela-rolagem"
+      // eslint-disable-next-line jsx-a11y-x/no-noninteractive-tabindex -- região rolável: o foco é o que permite rolar pelo teclado (WCAG 2.1.1)
       tabIndex={0}
       role="region"
       aria-label="Moedas da carteira (role para os lados)"
