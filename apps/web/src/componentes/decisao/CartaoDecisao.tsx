@@ -1,4 +1,4 @@
-import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos";
+import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { dec } from "@zentrade/dominio";
 import { ArrowDownRight, ArrowUpRight, Check, ShieldCheck, ShieldX, X } from "lucide-react";
 import { mensagemDe } from "../../api/erros";

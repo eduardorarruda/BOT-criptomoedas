@@ -53,7 +53,34 @@ const RESUMO = {
   maiorQueda30d: "48.1",
   robosAtivos: 2,
   custoIaHoje: "0.43",
+  taxasHoje: "1.2",
   paradaTotal: false,
+};
+
+const BACKTEST = {
+  id: "bt-1",
+  estado: "na_fila",
+  estrategiaId: "7b0c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59",
+  versao: 2,
+  simbolo: "BTCUSDT",
+  intervalo: "1h",
+  inicio: Date.UTC(2026, 0, 1),
+  fim: Date.UTC(2026, 5, 1),
+  metricas: null,
+  curva: null,
+  erro: null,
+  criadoEm: Date.UTC(2026, 6, 1),
+  concluidoEm: null,
+};
+
+const METRICAS = {
+  resultadoLiquido: "42",
+  maiorQueda: "18.5",
+  maiorQuedaPercentual: 0.0185,
+  operacoes: 17,
+  acertos: 9,
+  taxaAcerto: 0.5294,
+  taxasPagas: "6.8",
 };
 
 function responder(res: ServerResponse, status: number, corpo: unknown) {
@@ -85,9 +112,10 @@ function rotear(metodo: string, url: URL, corpo: unknown): [number, unknown] {
     }
     return [200, { ligada: true }];
   }
-  if (metodo === "POST" && caminho === "/api/v1/backtests") return [201, { id: "bt-1", estado: "na_fila" }];
+  if (metodo === "POST" && caminho === "/api/v1/backtests") return [202, BACKTEST];
   if (metodo === "GET" && caminho === "/api/v1/backtests/bt-1") {
-    return [200, { id: "bt-1", estado: "concluido", metricas: { retorno: "0.042", operacoes: 17 } }];
+    const curva = [{ em: BACKTEST.inicio, patrimonio: "1000" }];
+    return [200, { ...BACKTEST, estado: "concluido", metricas: METRICAS, curva, concluidoEm: BACKTEST.fim }];
   }
   return [404, naoEncontrado("A rota")];
 }

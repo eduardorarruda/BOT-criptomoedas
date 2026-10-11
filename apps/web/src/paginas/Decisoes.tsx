@@ -1,4 +1,4 @@
-import type { EstadoDecisao } from "@zentrade/contratos";
+import type { EstadoDecisao } from "@zentrade/contratos/esquemas";
 import { ScrollText } from "lucide-react";
 import { useState } from "react";
 import { Cabecalho } from "../componentes/Cabecalho";

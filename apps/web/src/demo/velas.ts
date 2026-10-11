@@ -1,4 +1,4 @@
-import { MS_POR_INTERVALO, type Intervalo } from "@zentrade/contratos";
+import { MS_POR_INTERVALO, type Intervalo } from "@zentrade/contratos/esquemas";
 import type { CandleApi } from "../api/esquemas";
 import { criarAleatorio, normal } from "./aleatorio";
 import { PRECO_BASE, VOLATILIDADE, type SimboloDemo } from "./dados";

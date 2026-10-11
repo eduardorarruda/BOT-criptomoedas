@@ -1,35 +1,24 @@
-import { DecisaoEsquema, Id, Intervalo, OrdemEsquema, TextoDecimal } from "@zentrade/contratos";
+import {
+  BacktestEsquema,
+  DecisaoDetalheEsquema,
+  DecisaoEsquema,
+  ErroRespostaEsquema,
+  ParadaTotalEsquema,
+  PedidoBacktestEsquema,
+  ResumoEsquema,
+  type BacktestDTO,
+  type DecisaoDetalhe,
+  type PedidoBacktestDTO,
+  type Resumo,
+} from "@zentrade/contratos";
 import { z } from "zod";
 
-/** Formato do GET /resumo (docs/contrato-api.md); ainda não há esquema em @zentrade/contratos. */
-export const ResumoEsquema = z.object({
-  resultadoHoje: TextoDecimal,
-  exposicao: TextoDecimal,
-  maiorQueda30d: TextoDecimal,
-  robosAtivos: z.number().int().nonnegative(),
-  custoIaHoje: TextoDecimal,
-  paradaTotal: z.boolean(),
-});
-export type Resumo = z.infer<typeof ResumoEsquema>;
-
-export const DecisaoDetalheEsquema = DecisaoEsquema.extend({ ordem: OrdemEsquema.optional() });
-export type DecisaoDetalhe = z.infer<typeof DecisaoDetalheEsquema>;
-
-/** O resultado completo do backtest não está fixado no contrato: guardamos o resto como veio. */
-export const BacktestEsquema = z.looseObject({ id: Id, estado: z.string() });
-export type Backtest = z.infer<typeof BacktestEsquema>;
-
-export const NovoBacktestEsquema = z.object({
-  estrategiaId: Id,
-  versao: z.number().int().positive(),
-  simbolo: z.string().regex(/^[A-Z0-9]{5,20}$/, "símbolo em maiúsculas, ex.: BTCUSDT"),
-  intervalo: Intervalo,
-  inicio: z.number().int().nonnegative(),
-  fim: z.number().int().nonnegative(),
-});
-export type NovoBacktest = z.infer<typeof NovoBacktestEsquema>;
-
-const ErroJson = z.object({ erro: z.object({ codigo: z.string(), mensagem: z.string() }) });
+/** Os formatos vêm de @zentrade/contratos: a CLI e o MCP leem exatamente o que a API devolve. */
+export { BacktestEsquema, DecisaoDetalheEsquema, ResumoEsquema };
+export const NovoBacktestEsquema = PedidoBacktestEsquema;
+export type Backtest = BacktestDTO;
+export type NovoBacktest = PedidoBacktestDTO;
+export type { DecisaoDetalhe, Resumo };
 
 export class ErroApi extends Error {
   override name = "ErroApi";
@@ -94,7 +83,7 @@ export class ClienteApi {
   }
 
   paradaTotal(ligada: boolean): Promise<{ ligada: boolean }> {
-    return this.#pedir("POST", "/parada-total", z.object({ ligada: z.boolean() }), { ligada });
+    return this.#pedir("POST", "/parada-total", ParadaTotalEsquema, { ligada });
   }
 
   criarBacktest(b: NovoBacktest): Promise<Backtest> {
@@ -137,7 +126,7 @@ export class ClienteApi {
   }
 
   #erro(status: number, json: unknown): ErroApi {
-    const e = ErroJson.safeParse(json);
+    const e = ErroRespostaEsquema.safeParse(json);
     const codigo = e.success ? e.data.erro.codigo : `http_${status}`;
     const mensagem = e.success ? e.data.erro.mensagem : `A API respondeu ${status}.`;
     const dica = status === 401 ? " Confira o ZENTRADE_TOKEN (crie um novo na tela, em Tokens)." : "";

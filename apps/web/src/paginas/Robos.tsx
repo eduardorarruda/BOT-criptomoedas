@@ -1,4 +1,4 @@
-import type { ModoRobo, RoboDTO } from "@zentrade/contratos";
+import type { ModoRobo, RoboDTO } from "@zentrade/contratos/esquemas";
 import { Bot, Pause, Play, Plus, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { mensagemDe } from "../api/erros";

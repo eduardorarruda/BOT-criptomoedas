@@ -1,4 +1,4 @@
-import type { Intervalo } from "@zentrade/contratos";
+import type { Intervalo } from "@zentrade/contratos/esquemas";
 import { useMemo, useState } from "react";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
 import { ErroCarregar, Esqueleto } from "../componentes/Estados";

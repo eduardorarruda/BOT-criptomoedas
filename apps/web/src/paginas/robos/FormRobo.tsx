@@ -1,4 +1,4 @@
-import type { EstrategiaDTO, Intervalo, Rede } from "@zentrade/contratos";
+import type { EstrategiaDTO, Intervalo, Rede } from "@zentrade/contratos/esquemas";
 import { Eye, Plus, TriangleAlert } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Botao } from "../../componentes/Botao";

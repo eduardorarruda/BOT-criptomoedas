@@ -1,4 +1,4 @@
-import type { Intervalo } from "@zentrade/contratos";
+import type { Intervalo } from "@zentrade/contratos/esquemas";
 import type { FiltroDecisoes } from "../api/fonte";
 
 /** Chaves do TanStack Query, num lugar só para os eventos ao vivo acharem os dados. */

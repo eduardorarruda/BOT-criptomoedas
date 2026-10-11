@@ -1,11 +1,16 @@
-import type { EstrategiaDTO, LimitesRiscoDTO, RoboDTO } from "@zentrade/contratos";
+import type { EstrategiaDTO, LimitesRiscoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import type { Automacao, ContaCorretora, Documento, TokenApi, Usuario } from "../api/esquemas";
 
 /** Dados fixos do modo de demonstração. Tudo é fictício. */
 const HORA = 3_600_000;
 const DIA = 24 * HORA;
 
-export const USUARIO_DEMO: Usuario = { id: "u-demo", email: "voce@exemplo.com", nome: "Você" };
+export const USUARIO_DEMO: Usuario = {
+  id: "u-demo",
+  email: "voce@exemplo.com",
+  nome: "Você",
+  doisFatores: false,
+};
 
 export const SIMBOLOS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"] as const;
 export type SimboloDemo = (typeof SIMBOLOS)[number];
@@ -198,8 +203,9 @@ export function documentosIniciais(agora: number): Documento[] {
       id: "doc-1",
       fonte: "diario",
       titulo: "Diário: BTC barrado por exposição em 02/10",
+      url: null,
       publicadoEm: agora - 8 * DIA,
-      trechos: 3,
+      criadoEm: agora - 8 * DIA,
     },
     {
       id: "doc-2",
@@ -207,7 +213,7 @@ export function documentosIniciais(agora: number): Documento[] {
       titulo: "Fluxo em fundos de BTC à vista desacelera na semana",
       url: "https://exemplo.com/noticia-1",
       publicadoEm: agora - 1 * DIA,
-      trechos: 5,
+      criadoEm: agora - 1 * DIA,
     },
     {
       id: "doc-3",
@@ -215,7 +221,7 @@ export function documentosIniciais(agora: number): Documento[] {
       titulo: "Rede Solana registra lentidão por duas horas",
       url: "https://exemplo.com/noticia-2",
       publicadoEm: agora - 2 * DIA,
-      trechos: 4,
+      criadoEm: agora - 2 * DIA,
     },
     {
       id: "doc-4",
@@ -223,28 +229,31 @@ export function documentosIniciais(agora: number): Documento[] {
       titulo: "Binance: filtros LOT_SIZE e MIN_NOTIONAL por par",
       url: "https://exemplo.com/regras",
       publicadoEm: agora - 30 * DIA,
-      trechos: 12,
+      criadoEm: agora - 30 * DIA,
     },
     {
       id: "doc-5",
       fonte: "estrategia",
       titulo: "Retorno à média com RSI — por que exigir preço acima da SMA(200)",
+      url: null,
       publicadoEm: agora - 12 * DIA,
-      trechos: 2,
+      criadoEm: agora - 12 * DIA,
     },
     {
       id: "doc-6",
       fonte: "nota",
       titulo: "Não operar SOL em dia de atualização da rede",
+      url: null,
       publicadoEm: agora - 5 * DIA,
-      trechos: 1,
+      criadoEm: agora - 5 * DIA,
     },
     {
       id: "doc-7",
       fonte: "diario",
       titulo: "Diário: alvo atingido em ETH depois de 31 h",
+      url: null,
       publicadoEm: agora - 4 * DIA,
-      trechos: 2,
+      criadoEm: agora - 4 * DIA,
     },
     {
       id: "doc-8",
@@ -252,7 +261,7 @@ export function documentosIniciais(agora: number): Documento[] {
       titulo: "Binance: limites de pedidos por minuto da API",
       url: "https://exemplo.com/limites",
       publicadoEm: agora - 45 * DIA,
-      trechos: 6,
+      criadoEm: agora - 45 * DIA,
     },
   ];
 }

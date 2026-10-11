@@ -1,4 +1,4 @@
-import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos";
+import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { dec, precoAlvo, precoStop } from "@zentrade/dominio";
 import type { EventoAnalise } from "../api/esquemas";
 import { formatarDinheiro, formatarPreco } from "../lib/formatar";

@@ -1,4 +1,4 @@
-import { EventoEsquema } from "@zentrade/contratos";
+import { EventoEsquema } from "@zentrade/contratos/esquemas";
 import { EventoAnaliseEsquema } from "./esquemas";
 import type { EventoTela, OuvintesTempoReal } from "./fonte";
 

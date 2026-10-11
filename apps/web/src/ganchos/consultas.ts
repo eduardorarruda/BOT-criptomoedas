@@ -1,4 +1,4 @@
-import type { Intervalo } from "@zentrade/contratos";
+import type { Intervalo } from "@zentrade/contratos/esquemas";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useFonte } from "../api/contexto";
 import type { FiltroDecisoes } from "../api/fonte";

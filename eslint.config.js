@@ -16,7 +16,21 @@ export default tseslint.config(
   {
     files: ["apps/web/**/*.{ts,tsx}"],
     plugins: { "react-hooks": reactHooks },
-    rules: reactHooks.configs.recommended.rules,
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      // A raiz do pacote leva node:crypto (assinatura dos webhooks); a tela usa o subcaminho.
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@zentrade/contratos",
+              message: "Na tela, importe de @zentrade/contratos/esquemas (sem código de servidor).",
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     files: ["**/*.test.ts", "**/*.test.tsx"],

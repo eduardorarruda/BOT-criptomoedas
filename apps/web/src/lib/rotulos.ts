@@ -1,4 +1,4 @@
-import type { EstadoDecisao, EstadoOrdem, ModoRobo, Rede } from "@zentrade/contratos";
+import type { EstadoDecisao, EstadoOrdem, ModoRobo, Rede } from "@zentrade/contratos/esquemas";
 import {
   Ban,
   CircleCheck,

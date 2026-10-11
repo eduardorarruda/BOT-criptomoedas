@@ -94,7 +94,7 @@ describe("CLI zentrade", () => {
     const criar = await rodar([
       "backtest",
       "--estrategia",
-      "est-1",
+      "7b0c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59",
       "--versao",
       "2",
       "--simbolo",
@@ -108,7 +108,7 @@ describe("CLI zentrade", () => {
     ]);
     expect(criar.codigo).toBe(0);
     expect(api.pedidos.at(-1)!.corpo).toEqual({
-      estrategiaId: "est-1",
+      estrategiaId: "7b0c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59",
       versao: 2,
       simbolo: "BTCUSDT",
       intervalo: "1h",
@@ -118,7 +118,8 @@ describe("CLI zentrade", () => {
     expect(criar.saida).toMatch(/zentrade backtest bt-1/);
     const ver = await rodar(["backtest", "bt-1"]);
     expect(ver.saida).toMatch(/concluido/);
-    expect(ver.saida).toMatch(/"operacoes": 17/);
+    expect(ver.saida).toMatch(/Operações: 17 · acertos 9 \(53%\)/);
+    expect(ver.saida).toMatch(/Resultado líquido \(simulado\)/);
   });
 
   it("backtest com data inválida ou faltando opção é erro de uso", async () => {

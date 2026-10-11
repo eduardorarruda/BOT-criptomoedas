@@ -1,4 +1,4 @@
-import type { Rede } from "@zentrade/contratos";
+import type { Rede } from "@zentrade/contratos/esquemas";
 import { KeyRound, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { mensagemDe } from "../api/erros";

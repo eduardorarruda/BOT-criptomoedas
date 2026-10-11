@@ -1,4 +1,4 @@
-import type { DecisaoDTO } from "@zentrade/contratos";
+import type { DecisaoDTO } from "@zentrade/contratos/esquemas";
 import { describe, expect, it } from "vitest";
 import {
   aplicarAnalise,

@@ -1,7 +1,7 @@
-import type { DecisaoDTO, OrdemDTO, PropostaAgente } from "@zentrade/contratos";
+import type { DecisaoDTO, OrdemDTO, PropostaAgente } from "@zentrade/contratos/esquemas";
 import { dec, precoAlvo, precoStop } from "@zentrade/dominio";
-import type { Backtest, PontoPatrimonio } from "../api/esquemas";
-import { maiorQueda, variacao } from "../lib/metricas";
+import type { Backtest, PontoCurvaBacktest, PontoPatrimonio } from "../api/esquemas";
+import { metricasDaCurva } from "../lib/metricas";
 import { criarAleatorio, normal } from "./aleatorio";
 import { PROPOSTAS } from "./propostas";
 
@@ -290,42 +290,37 @@ export function patrimonioInicial(agora: number, inicial = "1000"): PontoPatrimo
   return pontos;
 }
 
-function curvaBacktest(semente: number, inicio: number, fim: number, deriva: number): PontoPatrimonio[] {
+function curvaBacktest(semente: number, inicio: number, fim: number, deriva: number): PontoCurvaBacktest[] {
   const aleatorio = criarAleatorio(semente);
   const n = 90;
   const passo = (fim - inicio) / (n - 1);
   let valor = dec(1000);
   return Array.from({ length: n }, (_, i) => {
-    const ponto = { em: Math.round(inicio + i * passo), valor: valor.toFixed(2) };
+    const ponto = { em: Math.round(inicio + i * passo), patrimonio: valor.toFixed(2) };
     valor = valor.plus((normal(aleatorio) * 6 + deriva).toFixed(2));
     return ponto;
   });
 }
 
+type PedidoDemo = Pick<Backtest, "estrategiaId" | "versao" | "simbolo" | "intervalo" | "inicio" | "fim">;
+
 function concluido(
   id: string,
-  extra: Omit<Backtest, "id" | "estado">,
-  curva: PontoPatrimonio[],
+  pedido: PedidoDemo,
+  curva: PontoCurvaBacktest[],
   taxas: string,
   operacoes: number,
   acertos: number,
 ): Backtest {
-  const valores = curva.map((p) => p.valor);
-  const v = variacao(valores);
   return {
     id,
     estado: "concluido",
-    ...extra,
-    capitalInicial: "1000",
+    ...pedido,
     curva,
-    metricas: {
-      resultado: v.absoluta,
-      resultadoPercentual: v.fracao,
-      maiorQueda: maiorQueda(valores),
-      taxas,
-      operacoes,
-      acertos,
-    },
+    metricas: metricasDaCurva(curva, taxas, operacoes, acertos),
+    erro: null,
+    criadoEm: pedido.fim,
+    concluidoEm: pedido.fim,
   };
 }
 

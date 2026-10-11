@@ -1,4 +1,4 @@
-import type { LimitesRiscoDTO } from "@zentrade/contratos";
+import type { LimitesRiscoDTO } from "@zentrade/contratos/esquemas";
 import { erroInteiro, erroValorPositivo, lerDecimalDigitado, paraCampo } from "./entrada";
 
 /** Campos do formulário de limites de risco (texto como digitado) e sua validação. */

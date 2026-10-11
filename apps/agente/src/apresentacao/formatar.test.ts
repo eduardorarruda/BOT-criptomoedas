@@ -21,6 +21,7 @@ describe("formatação para gente", () => {
       maiorQueda30d: "0",
       robosAtivos: 0,
       custoIaHoje: "0",
+      taxasHoje: "0.5",
       paradaTotal: true,
     });
     expect(t).toMatch(/Parada total: LIGADA/);
@@ -66,7 +67,25 @@ describe("formatação para gente", () => {
     expect(explicarDecisao(DECISOES[1]!)).toMatch(/nenhuma \(decisão só por regras\)/);
   });
 
-  it("backtest sem detalhes mostra só o estado", () => {
-    expect(formatarBacktest({ id: "b", estado: "na_fila" })).toBe("Backtest b: na_fila");
+  it("backtest na fila mostra o pedido; falha mostra o erro", () => {
+    const b = {
+      id: "b",
+      estado: "na_fila" as const,
+      estrategiaId: "e",
+      versao: 1,
+      simbolo: "BTCUSDT",
+      intervalo: "1h" as const,
+      inicio: 0,
+      fim: 3_600_000,
+      metricas: null,
+      curva: null,
+      erro: null,
+      criadoEm: 0,
+      concluidoEm: null,
+    };
+    expect(formatarBacktest(b)).toBe(
+      "Backtest b: na_fila — BTCUSDT 1h, 1970-01-01 00:00 UTC a 1970-01-01 01:00 UTC",
+    );
+    expect(formatarBacktest({ ...b, estado: "falhou", erro: "sem candles" })).toMatch(/Erro: sem candles/);
   });
 });

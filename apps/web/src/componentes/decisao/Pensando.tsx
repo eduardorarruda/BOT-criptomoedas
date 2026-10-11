@@ -1,6 +1,6 @@
 import { Activity, History, Landmark, ListTree, Newspaper, Search, type LucideIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
-import type { RoboDTO } from "@zentrade/contratos";
+import type { RoboDTO } from "@zentrade/contratos/esquemas";
 import type { AnaliseAoVivo } from "../../ganchos/atualizarCache";
 import { formatarHora } from "../../lib/tempo";
 import { Enso } from "../Enso";

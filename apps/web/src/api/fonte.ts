@@ -10,13 +10,14 @@ import type {
   PosicaoDTO,
   Rede,
   RoboDTO,
-} from "@zentrade/contratos";
+} from "@zentrade/contratos/esquemas";
 import type {
   Automacao,
   Backtest,
   CandleApi,
   ContaCorretora,
   Documento,
+  DocumentoIngerido,
   EscopoToken,
   EventoAnalise,
   PontoPatrimonio,
@@ -67,7 +68,8 @@ export interface PedidoBacktest {
 }
 export interface NovaConta {
   readonly corretora: "binance";
-  readonly rede: Rede;
+  /** Papel não precisa de chave: só testnet e real. */
+  readonly rede: Exclude<Rede, "papel">;
   readonly apiKey: string;
   readonly apiSecret: string;
 }
@@ -123,7 +125,7 @@ export interface Fonte {
   backtest(id: string): Promise<Backtest>;
 
   documentos(): Promise<Documento[]>;
-  criarNota(n: NovaNota): Promise<Documento>;
+  criarNota(n: NovaNota): Promise<DocumentoIngerido>;
   automacoes(): Promise<Automacao[]>;
 
   /** Assina os eventos ao vivo; devolve a função que encerra a assinatura. */

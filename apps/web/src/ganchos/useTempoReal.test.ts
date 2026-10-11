@@ -1,4 +1,4 @@
-import type { DecisaoDTO, OrdemDTO } from "@zentrade/contratos";
+import type { DecisaoDTO, OrdemDTO } from "@zentrade/contratos/esquemas";
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { chaves } from "./chaves";

@@ -1,4 +1,4 @@
-import type { EstrategiaDTO } from "@zentrade/contratos";
+import type { EstrategiaDTO } from "@zentrade/contratos/esquemas";
 import { validarEstrategia, validarRegra } from "@zentrade/dominio";
 import type { NovaEstrategia } from "../api/fonte";
 import { paraDominio } from "../lib/estrategia";

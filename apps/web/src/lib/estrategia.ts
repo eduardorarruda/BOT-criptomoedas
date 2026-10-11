@@ -1,4 +1,4 @@
-import type { EstrategiaDTO } from "@zentrade/contratos";
+import type { EstrategiaDTO } from "@zentrade/contratos/esquemas";
 import type { Estrategia } from "@zentrade/dominio";
 
 /** O DTO tem `saida?: Regra | undefined`; o domínio quer a chave ausente quando não há saída. */

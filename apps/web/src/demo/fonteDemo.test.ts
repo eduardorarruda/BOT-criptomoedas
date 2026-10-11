@@ -1,4 +1,4 @@
-import type { Evento } from "@zentrade/contratos";
+import type { Evento } from "@zentrade/contratos/esquemas";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventoTela } from "../api/fonte";
 import { ESTRATEGIAS } from "./dados";
@@ -251,7 +251,7 @@ describe("fonte demo: backtests", () => {
     vi.advanceTimersByTime(4000);
     const pronto = await fonte.backtest(b.id);
     expect(pronto.estado).toBe("concluido");
-    expect(pronto.metricas?.taxas).toBeDefined();
+    expect(pronto.metricas?.taxasPagas).toBeDefined();
     expect((await fonte.backtests()).length).toBe(3);
     await expect(fonte.backtest("x")).rejects.toMatchObject({ codigo: "nao_encontrado" });
   });
