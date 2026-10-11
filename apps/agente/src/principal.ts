@@ -74,7 +74,15 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
   const provedorPadrao = cliente || !executor ? "api" : "cli";
   const configDaPessoa = configComPadrao(banco.configGravada, provedorPadrao);
   const analista = new AnalistaPorPessoa({
-    api: cliente ? new Analista({ cliente, dependencias, modelo: config.modelo }) : null,
+    api: cliente
+      ? new Analista({
+          cliente,
+          dependencias,
+          modelo: config.modelo,
+          aoFalharFerramenta: (erro, ferramenta) =>
+            logger.error({ err: erro, ferramenta }, "ferramenta do analista falhou"),
+        })
+      : null,
     cli: executor ? new AnalistaCli({ executor, dependencias, tempoMs: config.timeoutMs }) : null,
     config: configDaPessoa,
   });
@@ -84,7 +92,10 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
     config: configDaPessoa,
     api: cliente ? new ChatApi({ cliente, modeloPadrao: config.modelo }) : null,
     cli: executor ? new ChatCli({ executor, tempoMs: config.chat.timeoutMs }) : null,
-    aoFalhar: (erro) => logger.error({ err: erro }, "falha no assistente"),
+    aoFalhar: (erro, ferramenta) =>
+      ferramenta
+        ? logger.error({ err: erro, ferramenta }, "ferramenta do assistente falhou")
+        : logger.error({ err: erro }, "falha no assistente"),
   });
   const estado = (): EstadoAgenteAssistente => ({
     provedores: { api: cliente !== null, cli: executor !== null },

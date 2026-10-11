@@ -8,6 +8,7 @@ import {
   texto,
   usoFerramenta,
 } from "../teste/anthropic-falso.js";
+import { investimentosFalsos } from "../teste/investimentos-falsos.js";
 import { USUARIO_TESTE } from "../teste/pedido.js";
 import { ChatApi } from "./chat-api.js";
 import type { ChatCli } from "./chat-cli.js";
@@ -51,6 +52,7 @@ function dados(): DadosDaPessoa {
     decisoes: vi.fn(async () => [decisao]),
     decisao: vi.fn(async () => decisao),
     ordens: vi.fn(async () => []),
+    ...investimentosFalsos(),
   };
 }
 
@@ -141,8 +143,47 @@ describe("ServicoChat com a API (Tool Runner em streaming, cliente falso)", () =
       "explicar_decisao",
       "ordens_recentes",
       "buscar_conhecimento",
+      "carteira_cripto",
+      "renda_fixa",
+      "investimentos_imobiliarios",
     ]);
     for (const n of nomes) expect(n).not.toMatch(/enviar|ordem_nova|aprovar|parada/);
+  });
+
+  it("falha ao ler os investimentos: o modelo recebe a frase curta, o log recebe o erro", async () => {
+    const falso = anthropicFalso([
+      emStreaming(mensagemFalsa({ content: [usoFerramenta("renda_fixa", {})], stop_reason: "tool_use" })),
+      emStreaming(
+        mensagemFalsa({ content: [texto("Não consegui ler a renda fixa agora.")], stop_reason: "end_turn" }),
+      ),
+    ]);
+    const quebrado = new Error("connect ECONNREFUSED 10.0.0.5:5432");
+    const aoFalhar = vi.fn();
+    const servico = new ServicoChat({
+      dados: {
+        ...dados(),
+        titulosRendaFixa: vi.fn(async () => {
+          throw quebrado;
+        }),
+      },
+      busca,
+      config: async () => ({ provedor: "api", modelo: null, contaCli: null }),
+      api: new ChatApi({ cliente: falso.cliente }),
+      cli: null,
+      aoFalhar,
+    });
+    const eventos = await responder(servico);
+    expect(eventos.at(-1)).toMatchObject({ tipo: "concluido" });
+    expect(eventos).toContainEqual({
+      tipo: "ferramenta",
+      nome: "renda_fixa",
+      descricao: "Lendo os seus títulos de renda fixa",
+    });
+    const resultado = JSON.stringify(falso.pedidos[1]!.corpo.messages.at(-1));
+    expect(resultado).toContain("A ferramenta renda_fixa falhou agora");
+    expect(resultado).toContain('"is_error":true');
+    expect(resultado).not.toMatch(/ECONNREFUSED|10\.0\.0\.5/);
+    expect(aoFalhar).toHaveBeenCalledWith(quebrado, "renda_fixa");
   });
 
   it("parada por limite de tokens vira aviso no fim do texto", async () => {
@@ -204,6 +245,11 @@ describe("ServicoChat: escolha do provedor", () => {
       modelo: "opus",
       pergunta: "Como foi ontem?",
     });
+    // As mesmas ferramentas vão para a ponte MCP, inclusive as de investimentos.
+    const { ferramentas } = responderCli.mock.calls[0]![0] as unknown as { ferramentas: { nome: string }[] };
+    expect(ferramentas.map((f) => f.nome)).toEqual(
+      expect.arrayContaining(["carteira_cripto", "renda_fixa", "investimentos_imobiliarios"]),
+    );
     expect(eventos.at(-1)).toEqual({ tipo: "concluido", provedor: "cli", modelo: "opus" });
   });
 

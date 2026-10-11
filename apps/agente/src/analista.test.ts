@@ -47,6 +47,33 @@ function analista(respostas: Parameters<typeof anthropicFalso>[0], maxIteracoes?
 const analisar = (a: Analista) => a.analisar(pedidoExemplo(), { usuarioId: USUARIO_TESTE });
 
 describe("Analista", () => {
+  it("ferramenta que falha vai para o log; o modelo lê só a frase curta", async () => {
+    const falso = anthropicFalso([
+      mensagemFalsa({ content: [usoFerramenta("historico_decisoes", {})], stop_reason: "tool_use" }),
+      mensagemFalsa({ content: [texto(JSON.stringify(propostaValida))], stop_reason: "end_turn" }),
+    ]);
+    const quebrado = new Error("connect ECONNREFUSED 10.0.0.5:5432");
+    const aoFalharFerramenta = vi.fn();
+    const a = new Analista({
+      cliente: falso.cliente,
+      dependencias: {
+        ...dependencias(),
+        historico: {
+          recentes: vi.fn(async () => {
+            throw quebrado;
+          }),
+        },
+      },
+      agora,
+      aoFalharFerramenta,
+    });
+    await analisar(a);
+    expect(aoFalharFerramenta).toHaveBeenCalledWith(quebrado, "historico_decisoes");
+    const resultado = JSON.stringify(falso.pedidos[1]!.corpo.messages.at(-1));
+    expect(resultado).toContain("A ferramenta historico_decisoes falhou agora");
+    expect(resultado).not.toMatch(/ECONNREFUSED/);
+  });
+
   it("proposta válida passa, depois de usar as ferramentas", async () => {
     const { a, pedidos } = analista([
       mensagemFalsa({

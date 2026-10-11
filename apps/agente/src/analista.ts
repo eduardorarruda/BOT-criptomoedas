@@ -11,6 +11,7 @@ import { custoUsd } from "./custo.js";
 import {
   criarFerramentas,
   RegistroFontes,
+  type AoFalharFerramenta,
   type AoUsarFerramenta,
   type DependenciasFerramentas,
 } from "./ferramentas/index.js";
@@ -33,6 +34,8 @@ export interface OpcoesAnalista {
   /** Teto de chamadas à API numa análise (cada volta do laço de ferramentas é uma). */
   readonly maxIteracoes?: number;
   readonly agora?: () => Date;
+  /** Ferramenta que lançou: o detalhe vai para o log; o modelo lê só uma frase curta. */
+  readonly aoFalharFerramenta?: AoFalharFerramenta;
 }
 
 export interface OpcoesAnalise {
@@ -128,7 +131,12 @@ export class Analista {
         betas: [BETA_FALLBACK],
         fallbacks: "default",
         system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-        tools: criarFerramentas(contexto, this.#o.dependencias, opcoes.aoUsarFerramenta),
+        tools: criarFerramentas(
+          contexto,
+          this.#o.dependencias,
+          opcoes.aoUsarFerramenta,
+          this.#o.aoFalharFerramenta,
+        ),
         output_config: { format: FORMATO_PROPOSTA },
         messages: [
           { role: "user", content: mensagemDoPedido(pedido, (this.#o.agora ?? (() => new Date()))()) },

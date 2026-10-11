@@ -1,6 +1,6 @@
 import type { Intervalo } from "@zentrade/contratos";
 import { paraTexto, type Candle } from "@zentrade/dominio";
-import { and, asc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import type { Db } from "../cliente.js";
 import { decimalTexto, iso, ms } from "../conversao.js";
 import { candles } from "../esquema/index.js";
@@ -15,6 +15,12 @@ export interface CandleDTO {
 }
 
 export const LIMITE_CANDLES = 1000;
+
+/** Último fechamento conhecido de um símbolo: o preço e o instante em que o candle fechou. */
+export interface UltimoFechamento {
+  readonly preco: string;
+  readonly em: number;
+}
 
 interface LinhaCandle extends Record<string, unknown> {
   abertura: Date | string;
@@ -104,6 +110,33 @@ export function repositorioMercado(db: Db) {
       if (visao) return doAgregado(visao, c);
       const regra = REAGRUPADOS[c.intervalo];
       return regra ? reagrupado(regra.passo, regra.fonte, c) : [];
+    },
+
+    /**
+     * Preço de referência: o fechamento do candle de 1m mais recente de cada símbolo,
+     * aberto a partir de `desde`. Símbolo sem candle no período fica de fora do mapa.
+     */
+    async ultimosFechamentos(
+      simbolos: readonly string[],
+      desde: number,
+    ): Promise<Map<string, UltimoFechamento>> {
+      if (simbolos.length === 0) return new Map();
+      const linhas = await db
+        .selectDistinctOn([candles.simbolo], {
+          simbolo: candles.simbolo,
+          fecha: candles.fecha,
+          fechamento: candles.fechamento,
+        })
+        .from(candles)
+        .where(
+          and(
+            inArray(candles.simbolo, [...simbolos]),
+            eq(candles.intervalo, "1m"),
+            gte(candles.abertura, new Date(desde)),
+          ),
+        )
+        .orderBy(candles.simbolo, desc(candles.abertura));
+      return new Map(linhas.map((l) => [l.simbolo, { preco: decimalTexto(l.fecha), em: ms(l.fechamento) }]));
     },
 
     /** Para o motor: grava (ou corrige) candles fechados. */

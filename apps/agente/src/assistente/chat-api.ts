@@ -2,7 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import type { BetaMessage } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import type { PedidoRespostaAgente } from "@zentrade/contratos";
 import { MODELO_PADRAO } from "../analista.js";
-import { paraAnthropic, type FerramentaLeitura } from "../ferramentas/index.js";
+import { paraAnthropic, type AoFalharFerramenta, type FerramentaLeitura } from "../ferramentas/index.js";
 import { SYSTEM_CHAT, turnosAlternados } from "./prompt-chat.js";
 
 const BETA_FALLBACK = "server-side-fallback-2026-07-01";
@@ -12,6 +12,8 @@ export interface PedidoChat extends Pick<PedidoRespostaAgente, "historico" | "pe
   readonly modelo: string | null;
   readonly sinal: AbortSignal;
   readonly aoTexto: (delta: string) => void;
+  /** Ferramenta que lançou: o detalhe vai para o log; o modelo lê só uma frase curta. */
+  readonly aoFalharFerramenta?: AoFalharFerramenta;
 }
 
 /** Como a resposta terminou, quando não terminou do jeito normal: vira aviso no fim do texto. */
@@ -63,7 +65,10 @@ export class ChatApi {
         betas: [BETA_FALLBACK],
         fallbacks: "default",
         system: [{ type: "text", text: SYSTEM_CHAT, cache_control: { type: "ephemeral" } }],
-        tools: p.ferramentas.map((f) => ({ ...paraAnthropic(f), eager_input_streaming: true })),
+        tools: p.ferramentas.map((f) => ({
+          ...paraAnthropic(f, p.aoFalharFerramenta),
+          eager_input_streaming: true,
+        })),
         messages: turnosAlternados(p, this.#agora()),
         stream: true,
       },

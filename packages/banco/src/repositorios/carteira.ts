@@ -123,6 +123,20 @@ async function inserirLote(tx: Tx, linhas: ReturnType<typeof linhaDe>[]): Promis
  * A carteira da Binance no banco. Tudo o que recebe `usuarioId` roda sob RLS
  * (comoUsuario). `contasParaSincronizar` é acesso de sistema, para a sincronização periódica.
  */
+/**
+ * Redes em que a pessoa tem conta cadastrada (só a rede: nada da chave). Fica fora do
+ * repositório: quem lê sem a chave mestra (o agente) não precisa do de contas.
+ */
+export const redesComConta = (db: Db, usuarioId: string): Promise<RedeConta[]> =>
+  comoUsuario(db, usuarioId, async (tx) =>
+    (
+      await tx
+        .selectDistinct({ rede: contasCorretora.rede })
+        .from(contasCorretora)
+        .orderBy(asc(contasCorretora.rede))
+    ).map((l) => l.rede),
+  );
+
 export function repositorioCarteira(db: Db) {
   return {
     /** Grava as negociações; as que já existem são ignoradas. Devolve quantas entraram. */

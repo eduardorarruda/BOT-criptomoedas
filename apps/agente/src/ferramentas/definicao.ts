@@ -1,5 +1,6 @@
 import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { BetaRunnableTool } from "@anthropic-ai/sdk/lib/tools/BetaRunnableTool";
+import { ToolError } from "@anthropic-ai/sdk/lib/tools/ToolError";
 import { z } from "zod";
 
 /**
@@ -42,13 +43,33 @@ export function observar(
   }));
 }
 
-/** Para o Tool Runner do SDK da Anthropic (que valida a entrada com o mesmo Zod). */
-export function paraAnthropic(f: FerramentaLeitura): BetaRunnableTool {
+/** Avisado quando uma ferramenta lança: o detalhe vai para o log, nunca para o modelo. */
+export type AoFalharFerramenta = (erro: unknown, nome: string) => void;
+
+/** O que o modelo lê quando uma ferramenta falha, nos dois provedores. */
+export const mensagemDeFalha = (nome: string): string =>
+  `A ferramenta ${nome} falhou agora. Siga sem esses dados e diga isso na resposta.`;
+
+/**
+ * Para o Tool Runner do SDK da Anthropic (que valida a entrada com o mesmo Zod). Sem o
+ * ToolError, o SDK mandaria "Error: <mensagem>" ao modelo, com o detalhe interno junto.
+ */
+export function paraAnthropic(
+  f: FerramentaLeitura,
+  aoFalhar: AoFalharFerramenta = () => undefined,
+): BetaRunnableTool {
   return betaZodTool({
     name: f.nome,
     description: f.descricao,
     inputSchema: f.entrada,
-    run: async (e) => f.rodar(e as Record<string, unknown>),
+    run: async (e) => {
+      try {
+        return await f.rodar(e as Record<string, unknown>);
+      } catch (erro) {
+        aoFalhar(erro, f.nome);
+        throw new ToolError(mensagemDeFalha(f.nome));
+      }
+    },
   }) as BetaRunnableTool;
 }
 
@@ -70,7 +91,7 @@ export interface ResultadoFerramenta {
 export async function executarFerramenta(
   f: FerramentaLeitura,
   bruta: unknown,
-  aoFalhar: (erro: unknown, nome: string) => void = () => undefined,
+  aoFalhar: AoFalharFerramenta = () => undefined,
 ): Promise<ResultadoFerramenta> {
   const lida = f.entrada.safeParse(bruta ?? {});
   if (!lida.success) {
@@ -81,9 +102,6 @@ export async function executarFerramenta(
     return { ok: true, texto: await f.rodar(lida.data as Record<string, unknown>) };
   } catch (erro) {
     aoFalhar(erro, f.nome);
-    return {
-      ok: false,
-      texto: `A ferramenta ${f.nome} falhou agora. Siga sem esses dados e diga isso na resposta.`,
-    };
+    return { ok: false, texto: mensagemDeFalha(f.nome) };
   }
 }

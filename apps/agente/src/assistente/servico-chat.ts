@@ -16,7 +16,8 @@ export interface OpcoesServicoChat extends DependenciasChat {
   readonly api: ChatApi | null;
   readonly cli: ChatCli | null;
   readonly agora?: () => number;
-  readonly aoFalhar?: (erro: unknown) => void;
+  /** Para o log: falha da resposta inteira ou, com `ferramenta`, de uma ferramenta (provedor "api"). */
+  readonly aoFalhar?: (erro: unknown, ferramenta?: string) => void;
 }
 
 const PROVEDOR_FORA = {
@@ -79,6 +80,7 @@ export class ServicoChat {
         modelo: config.modelo,
         sinal,
         aoTexto: (delta: string) => emitir({ tipo: "texto", delta }),
+        aoFalharFerramenta: (erro: unknown, nome: string) => this.#o.aoFalhar?.(erro, nome),
       };
       if (config.provedor === "cli") {
         if (!this.#o.cli) throw new ErroClaudeCli("indisponivel", PROVEDOR_FORA.cli);
