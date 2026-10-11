@@ -10,9 +10,12 @@ import {
 import { dec, validarEstrategia, type Estrategia } from "@zentrade/dominio";
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
+import { USUARIO_LOCAL } from "./usuario-local.js";
 
 const RoboArquivo = z.object({
   id: Id,
+  /** Opcional: a dona no banco, se o robô do arquivo espelhar um robô de verdade. */
+  usuarioId: z.uuid().default(USUARIO_LOCAL),
   nome: z.string().min(1).max(80),
   simbolo: z.string().regex(/^[A-Z0-9]{5,20}$/, "use o par em maiúsculas, ex.: BTCUSDT"),
   intervalo: Intervalo,
@@ -44,6 +47,7 @@ function paraConfig(r: RoboArquivo): RoboConfig {
   const l = r.limites;
   return {
     id: r.id,
+    usuarioId: r.usuarioId,
     simbolo: r.simbolo,
     intervalo: r.intervalo,
     modo: r.modo,

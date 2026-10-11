@@ -1,4 +1,4 @@
-import type { PortaAgente, RoboConfig } from "@zentrade/contratos";
+import type { PortaAgente, PortaCandles, RoboConfig } from "@zentrade/contratos";
 import { PapelCorretora } from "@zentrade/corretora";
 import { dec, type Estrategia } from "@zentrade/dominio";
 import type { Dependencias, Registro } from "../nucleo/tipos.js";
@@ -62,7 +62,12 @@ export interface OpcoesCenario {
   readonly aoSolicitar?: (decisaoId: string, decisoes: DecisoesMemoria) => void;
   readonly candlesHistorico?: number;
   readonly tamanhoHistorico?: number;
+  /** Troca o "dormir" da consulta de aprovação (padrão: avança o relógio na hora). */
+  readonly dormir?: (ms: number) => Promise<void>;
+  readonly candles?: PortaCandles;
 }
+
+export const USUARIO = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
 
 export function montarCenario(o: OpcoesCenario = {}) {
   const relogio = new RelogioManual(T0);
@@ -74,6 +79,7 @@ export function montarCenario(o: OpcoesCenario = {}) {
   });
   const robo: RoboConfig = {
     id: "r1",
+    usuarioId: USUARIO,
     simbolo: "BTCUSDT",
     intervalo: "15m",
     modo: o.modo ?? "auto",
@@ -100,9 +106,10 @@ export function montarCenario(o: OpcoesCenario = {}) {
     agente,
     eventos: new EventosMemoria(),
     aprovacao: new AprovacaoMemoria((id) => o.aoSolicitar?.(id, decisoes)),
+    ...(o.candles ? { candles: o.candles } : {}),
     relogio,
     registro,
-    dormir: relogio.dormir,
+    dormir: o.dormir ?? relogio.dormir,
     opcoes: {
       ...OPCOES_PADRAO,
       agenteObrigatorio: o.agenteObrigatorio ?? true,
@@ -114,7 +121,9 @@ export function montarCenario(o: OpcoesCenario = {}) {
   for (let t = inicioAoVivo; t < T0; t += QUINZE) papel.alimentar("BTCUSDT", "15m", candle(t, 100, QUINZE));
   let proximo15 = T0;
   let proximo1 = T0;
-  const aoVivo = new RoboAoVivo(robo, deps);
+  let aoVivo = new RoboAoVivo(robo, deps);
+  /** Espera tudo (decisão e aprovação) ou só a decisão em andamento. */
+  const esperar = (tudo: boolean) => (tudo ? aoVivo.ocioso() : aoVivo.nucleo.semDecisaoEmAndamento());
 
   return {
     ...deps,
@@ -123,22 +132,31 @@ export function montarCenario(o: OpcoesCenario = {}) {
     robo,
     agente,
     erros,
-    aoVivo,
+    get aoVivo() {
+      return aoVivo;
+    },
+    /** Simula o processo caindo e voltando: robô novo (memória zerada), mesmas portas e corretora. */
+    async reiniciar() {
+      await aoVivo.parar();
+      aoVivo = new RoboAoVivo(robo, deps);
+      await aoVivo.iniciar();
+      return aoVivo;
+    },
     /** Fecha o próximo candle de 15 min no preço dado e espera o robô decidir. */
-    async fecharIntervalo(preco: number | string, entregar = true) {
+    async fecharIntervalo(preco: number | string, entregar = true, tudo = true) {
       const c = candle(proximo15, preco, QUINZE);
       proximo15 += QUINZE;
-      relogio.definir(c.fechamento + 1);
+      relogio.definir(Math.max(relogio.agora(), c.fechamento + 1));
       if (entregar) papel.alimentar("BTCUSDT", "15m", c);
-      await aoVivo.ocioso();
+      await esperar(tudo);
       return c;
     },
-    async fecharMinuto(preco: number | string) {
+    async fecharMinuto(preco: number | string, tudo = true) {
       const c = candle(proximo1, preco, MIN);
       proximo1 += MIN;
       relogio.definir(Math.max(relogio.agora(), c.fechamento + 1));
       papel.alimentar("BTCUSDT", "1m", c);
-      await aoVivo.ocioso();
+      await esperar(tudo);
       return c;
     },
     ordensEnviadas: () => deps.ordens.todas(),

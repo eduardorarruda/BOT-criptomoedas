@@ -15,6 +15,7 @@ import { OPCOES_PADRAO, type Dependencias, type Registro } from "../nucleo/tipos
 import { AgenteFixo } from "../portas/agente-fixo.js";
 import { AprovacaoMemoria, DecisoesMemoria, OrdensMemoria, RobosMemoria } from "../portas/memoria.js";
 import { RelogioManual } from "../relogio.js";
+import { USUARIO_LOCAL } from "../usuario-local.js";
 import { maiorQueda, metricasDasExecucoes, type MetricasOperacoes, type PontoCurva } from "./metricas.js";
 
 export interface EntradaBacktest {
@@ -58,6 +59,7 @@ function montar(e: EntradaBacktest, aquecimento: number) {
   });
   const robo: RoboConfig = {
     id: ID,
+    usuarioId: USUARIO_LOCAL,
     simbolo: e.simbolo,
     intervalo: e.intervalo,
     modo: "auto",

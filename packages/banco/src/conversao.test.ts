@@ -31,6 +31,8 @@ describe("conversão de linhas do banco para o contrato", () => {
       custoIaUsd: null,
       expiraEm: null,
       decididaPor: null,
+      stopEfetivo: null,
+      alvoEfetivo: null,
       resultado: null,
       avaliadaEm: null,
       atualizadaEm: em,

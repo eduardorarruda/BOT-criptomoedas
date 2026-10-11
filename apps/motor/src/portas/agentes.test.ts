@@ -2,7 +2,8 @@ import { dec, POSICAO_ZERADA } from "@zentrade/dominio";
 import type { PedidoAnalise } from "@zentrade/contratos";
 import { describe, expect, it, vi } from "vitest";
 import { AgenteFixo } from "./agente-fixo.js";
-import { AgenteHttp } from "./agente-http.js";
+import { USUARIO_LOCAL } from "../usuario-local.js";
+import { AgenteHttp, pedidoNoFio } from "./agente-http.js";
 
 const pedido = (acao: "COMPRAR" | "VENDER"): PedidoAnalise => ({
   robo: { id: "r1", simbolo: "BTCUSDT", intervalo: "15m" },
@@ -74,5 +75,40 @@ describe("agente por HTTP", () => {
     await expect(a.analisar(pedido("COMPRAR"))).rejects.toThrow(/HTTP 500/);
     await expect(a.analisar(pedido("COMPRAR"))).rejects.toThrow(/formato/);
     await expect(a.analisar(pedido("COMPRAR"))).rejects.toThrow(/não respondeu/);
+  });
+
+  it("serializa no formato do apps/agente: decimais em texto sem notação científica, usuarioId e orçamento", () => {
+    const fio = pedidoNoFio({
+      ...pedido("COMPRAR"),
+      preco: dec("0.00000012"),
+      posicao: { ...POSICAO_ZERADA, quantidade: dec("0.00000001") },
+      usuarioId: "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b",
+      orcamento: {
+        riscoPorOperacao: dec(10),
+        exposicaoMaxima: dec(1000),
+        perdaDiariaMaxima: dec(50),
+        exposicaoAtual: dec("12.5"),
+        resultadoDoDia: dec("-3.2"),
+      },
+    });
+    expect(fio).toEqual({
+      robo: { id: "r1", simbolo: "BTCUSDT", intervalo: "15m" },
+      sinal: { acao: "COMPRAR", stop: "98", alvo: "101", explicacao: "regra" },
+      preco: "0.00000012",
+      fechamentos: [1, 2, 3],
+      posicao: { quantidade: "0.00000001", precoMedio: "0", resultadoRealizado: "0", taxasPagas: "0" },
+      usuarioId: "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b",
+      orcamento: {
+        riscoPorOperacao: "10",
+        exposicaoMaxima: "1000",
+        perdaDiariaMaxima: "50",
+        exposicaoAtual: "12.5",
+        resultadoDoDia: "-3.2",
+      },
+    });
+    const venda = pedidoNoFio({ ...pedido("VENDER"), usuarioId: USUARIO_LOCAL });
+    expect(venda.sinal).toEqual({ acao: "VENDER", motivo: "alvo", explicacao: "regra" });
+    expect(venda).not.toHaveProperty("usuarioId"); // o agente usa o ZENTRADE_USUARIO_ID dele
+    expect(venda).not.toHaveProperty("orcamento");
   });
 });

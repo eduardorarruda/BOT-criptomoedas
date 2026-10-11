@@ -1,31 +1,47 @@
-import type { RoboConfig } from "@zentrade/contratos";
-import { decidir, paraTexto, posicaoDe, type Candle, type Estrategia, type Posicao } from "@zentrade/dominio";
+import type { ResultadoOrdem, RoboConfig } from "@zentrade/contratos";
+import { decidir, paraTexto, posicaoDe, type Candle, type Posicao } from "@zentrade/dominio";
 import { BufferCandles } from "../buffer.js";
 import { Trava } from "../trava.js";
-import { processarSinal, type ResultadoCiclo } from "./ciclo.js";
-import { publicar } from "./diario.js";
-import type { AjustePosicao } from "./protecao.js";
+import {
+  barrarPorPosicaoZerada,
+  concluirAprovacao,
+  vigiarAprovacao,
+  type FimAprovacao,
+} from "./aprovacao.js";
+import { MemoriaBloqueio } from "./bloqueio.js";
+import { ehStop, processarSinal } from "./ciclo.js";
+import { mudarEstado, publicar } from "./diario.js";
+import type { Plano } from "./plano.js";
+import { PosicaoAberta } from "./posicao-aberta.js";
 import { conferirOrdemIncerta, type OrdemIncerta } from "./reconciliacao.js";
-import type { Dependencias } from "./tipos.js";
+import type { AprovacaoPendente, Dependencias, EntradaCiclo, ResultadoCiclo } from "./tipos.js";
+
+type Contexto = Omit<EntradaCiclo, "fechamentos">;
 
 /**
  * O robô sem rede: recebe candles fechados e decide. É o mesmo código ao vivo e no
  * backtest. Uma trava garante uma decisão por vez; o buffer recusa candle repetido.
+ * A espera pela aprovação (modo sugerir) roda fora da trava: o stop segue vigiado.
  */
 export class NucleoRobo {
   private readonly buffer: BufferCandles;
   private readonly trava = new Trava();
+  private readonly aberta: PosicaoAberta;
+  private readonly bloqueio: MemoriaBloqueio;
   private ultimoMinuto = 0;
-  /** Stop/alvo mais conservadores da compra (agente), aplicados à posição aberta. Some ao reiniciar. */
-  private ajuste: AjustePosicao | null = null;
   private falhas = 0;
-  private incerta: OrdemIncerta | null = null;
+  private incertas: readonly OrdemIncerta[] = [];
+  private aprovacao: AprovacaoPendente | null = null;
+  private vigia: Promise<void> = Promise.resolve();
+  private parando = false;
 
   constructor(
     readonly robo: RoboConfig,
     private readonly deps: Dependencias,
   ) {
     this.buffer = new BufferCandles(deps.opcoes.tamanhoHistorico);
+    this.aberta = new PosicaoAberta(robo, deps);
+    this.bloqueio = new MemoriaBloqueio(() => deps.robos.pausado(robo.id));
   }
 
   get totalFalhas(): number {
@@ -34,6 +50,16 @@ export class NucleoRobo {
 
   historico(): Candle[] {
     return this.buffer.lista();
+  }
+
+  /** Antes de ligar: ordens PENDENTE das portas (o processo pode ter caído no meio de um envio). */
+  async restaurar(): Promise<void> {
+    this.incertas = await this.deps.ordens.pendentes(this.robo.id);
+    if (this.incertas.length > 0)
+      this.deps.registro.warn(
+        { roboId: this.robo.id, pendentes: this.incertas.map((o) => o.idCliente) },
+        "ordens pendentes de antes do reinício: conferindo na corretora antes de decidir",
+      );
   }
 
   /** Backfill (início ou volta da conexão): completa a história sem decidir sobre candles velhos. */
@@ -50,9 +76,10 @@ export class NucleoRobo {
       if (!this.buffer.adicionar(candle)) return null;
       await this.publicarPreco(candle);
       if (!(await this.semOrdemIncerta())) return null;
+      this.bloqueio.novoIntervalo();
       const posicao = await this.posicao();
       const sinal = decidir(
-        this.estrategia(posicao),
+        await this.aberta.estrategia(posicao),
         { fechamentos: this.buffer.fechamentos(), preco: candle.fecha },
         posicao,
       );
@@ -69,50 +96,113 @@ export class NucleoRobo {
       if (!(await this.semOrdemIncerta())) return null;
       const posicao = await this.posicao();
       if (posicao.quantidade.isZero()) return null;
-      const { saida: _ignorada, ...soStopEAlvo } = this.estrategia(posicao);
+      const { saida: _ignorada, ...soStopEAlvo } = await this.aberta.estrategia(posicao);
       const sinal = decidir(
         soStopEAlvo,
         { fechamentos: this.buffer.fechamentos(), preco: candle.fecha },
         posicao,
       );
-      if (sinal.acao !== "VENDER") return null;
+      if (sinal.acao !== "VENDER" || (await this.bloqueio.repetido(sinal, posicao))) return null;
       return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
     });
   }
 
-  /** Resolve quando não há decisão em andamento (desligamento gracioso). */
-  ocioso(): Promise<void> {
+  /** Resolve quando não há decisão nem espera de aprovação em andamento. */
+  async ocioso(): Promise<void> {
+    for (;;) {
+      const vigia = this.vigia;
+      await vigia;
+      await this.trava.ocioso();
+      if (vigia === this.vigia) return;
+    }
+  }
+
+  /** Só a decisão em andamento (a espera por aprovação pode continuar). */
+  semDecisaoEmAndamento(): Promise<void> {
     return this.trava.ocioso();
   }
 
-  private async seguir(
-    e: Omit<Parameters<typeof processarSinal>[2], "fechamentos">,
-  ): Promise<ResultadoCiclo> {
+  /** Para de esperar aprovação: a decisão pendente expira, porque ninguém mais vai executá-la. */
+  async parar(): Promise<void> {
+    this.parando = true;
+    await this.vigia;
+    await this.protegido("encerrar a aprovação pendente", async () => {
+      const p = this.aprovacao;
+      if (!p) return;
+      this.aprovacao = null;
+      await mudarEstado(this.deps, p.registrada, "expirada");
+      this.deps.registro.warn(
+        { roboId: this.robo.id, decisaoId: p.registrada.id },
+        "robô parou: aprovação pendente expirada",
+      );
+    });
+  }
+
+  private async seguir(e: Contexto): Promise<ResultadoCiclo | null> {
+    // Com uma aprovação pendente, só o stop passa: o resto espera a resposta da pessoa.
+    if (this.aprovacao && !ehStop(e.sinal)) return null;
     const r = await processarSinal(this.deps, this.robo, { ...e, fechamentos: this.buffer.fechamentos() });
-    if (r.ordem && r.ordem.execucoes.length > 0 && r.plano?.lado === "COMPRA" && r.plano.ajuste)
-      this.ajuste = r.plano.ajuste;
-    if (r.ordem?.estado === "PENDENTE" && r.ordem.execucoes.length === 0 && r.plano && r.decisaoId)
-      this.incerta = {
-        idCliente: r.ordem.idCliente,
-        decisaoId: r.decisaoId,
-        lado: r.plano.lado,
-        quantidade: r.plano.quantidade,
-        criadaEm: this.deps.relogio.agora(),
-      };
+    await this.bloqueio.registrar(e.sinal, r, e.posicao);
+    if (r.pendente) this.esperarAprovacao(r.pendente);
+    if (r.ordem && r.plano && r.decisaoId) await this.aposOrdem(r.ordem, r.plano, r.decisaoId);
     return r;
   }
 
-  /** Antes de decidir, resolve a ordem de estado incerto (se houver). */
-  private async semOrdemIncerta(): Promise<boolean> {
-    if (!this.incerta) return true;
-    const resolvida = await conferirOrdemIncerta(this.deps, this.robo, this.incerta);
-    if (resolvida) this.incerta = null;
-    return resolvida;
+  private async aposOrdem(ordem: ResultadoOrdem, plano: Plano, decisaoId: string): Promise<void> {
+    if (ordem.estado === "PENDENTE" && ordem.execucoes.length === 0) {
+      const incerta = {
+        idCliente: ordem.idCliente,
+        decisaoId,
+        lado: plano.lado,
+        quantidade: plano.quantidade,
+      };
+      this.incertas = [...this.incertas, { ...incerta, criadaEm: this.deps.relogio.agora() }];
+      return;
+    }
+    if (ordem.execucoes.length === 0) return;
+    if (plano.lado === "COMPRA") this.aberta.aoComprar(decisaoId, plano.ajuste);
+    else await this.aposVenda();
   }
 
-  private estrategia(posicao: Posicao): Estrategia {
-    if (posicao.quantidade.isZero()) this.ajuste = null;
-    return this.ajuste ? { ...this.robo.estrategia, ...this.ajuste } : this.robo.estrategia;
+  /** Venda executada: grava o desfecho e, se a posição zerou, encerra a venda que esperava aprovação. */
+  private async aposVenda(): Promise<void> {
+    if (!(await this.aberta.aoVender())) return;
+    const p = this.aprovacao;
+    if (p?.plano.lado !== "VENDA") return;
+    this.aprovacao = null;
+    await barrarPorPosicaoZerada(this.deps, p);
+  }
+
+  private esperarAprovacao(p: AprovacaoPendente): void {
+    this.aprovacao = p;
+    const ativa = () => !this.parando && this.aprovacao === p;
+    this.vigia = vigiarAprovacao(this.deps, p.registrada.id, p.expiraEm, ativa)
+      .then((fim) => (fim && ativa() ? this.aoResponder(p, fim) : undefined))
+      .catch((erro: unknown) => {
+        this.deps.registro.error({ erro, roboId: this.robo.id }, "falha ao consultar a aprovação");
+      });
+  }
+
+  private async aoResponder(p: AprovacaoPendente, fim: FimAprovacao): Promise<void> {
+    await this.protegido("concluir a aprovação", async () => {
+      if (this.aprovacao !== p) return;
+      this.aprovacao = null;
+      const r = await concluirAprovacao(this.deps, this.robo, p, fim, await this.posicao());
+      if (r.ordem && r.plano && r.decisaoId) await this.aposOrdem(r.ordem, r.plano, r.decisaoId);
+    });
+  }
+
+  /** Antes de decidir, resolve as ordens de estado incerto (se houver). */
+  private async semOrdemIncerta(): Promise<boolean> {
+    for (const incerta of this.incertas) {
+      const resultado = await conferirOrdemIncerta(this.deps, this.robo, incerta);
+      if (!resultado) return false;
+      this.incertas = this.incertas.filter((o) => o !== incerta);
+      if (resultado.execucoes.length === 0) continue;
+      if (incerta.lado === "COMPRA") this.aberta.esquecer();
+      else await this.aposVenda();
+    }
+    return true;
   }
 
   private async posicao(): Promise<Posicao> {

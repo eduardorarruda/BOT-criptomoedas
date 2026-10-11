@@ -1,9 +1,10 @@
 import type { Intervalo } from "@zentrade/contratos";
-import { eq } from "drizzle-orm";
+import type { Estrategia } from "@zentrade/dominio";
+import { and, eq, inArray } from "drizzle-orm";
 import { comoUsuario, type Db } from "../cliente.js";
-import { ms } from "../conversao.js";
+import { estrategiaDominio, ms } from "../conversao.js";
 import { codigoPostgres, ErroDados, umaLinha, VIOLACAO_CHAVE_ESTRANGEIRA } from "../erros.js";
-import { backtests } from "../esquema/index.js";
+import { backtests, estrategiaVersoes } from "../esquema/index.js";
 
 export type EstadoBacktest = "na_fila" | "rodando" | "concluido" | "falhou";
 
@@ -24,6 +25,11 @@ export interface Backtest extends PedidoBacktest {
   readonly erro: string | null;
   readonly criadoEm: number;
   readonly concluidoEm: number | null;
+}
+
+/** O que o motor precisa para rodar um backtest: o pedido e a versão exata da estratégia. */
+export interface BacktestParaRodar extends Backtest {
+  readonly estrategia: Estrategia;
 }
 
 const paraBacktest = (b: typeof backtests.$inferSelect): Backtest => ({
@@ -93,6 +99,30 @@ export function repositorioBacktests(db: Db) {
         .where(eq(backtests.id, id))
         .returning();
       return b ? paraBacktest(b) : null;
+    },
+
+    /**
+     * Para o motor (sistema): marca como rodando e traz a estratégia. Aceita "rodando"
+     * (job repetido depois de uma queda); concluído ou falho devolve null: não roda de novo.
+     */
+    async paraRodar(id: string): Promise<BacktestParaRodar | null> {
+      const [b] = await db
+        .update(backtests)
+        .set({ estado: "rodando" })
+        .where(and(eq(backtests.id, id), inArray(backtests.estado, ["na_fila", "rodando"])))
+        .returning();
+      if (!b) return null;
+      const [v] = await db
+        .select()
+        .from(estrategiaVersoes)
+        .where(
+          and(
+            eq(estrategiaVersoes.estrategiaId, b.estrategiaId),
+            eq(estrategiaVersoes.versao, b.estrategiaVersao),
+          ),
+        );
+      if (!v) throw new ErroDados("nao_encontrado", `a estratégia do backtest ${id} não existe mais`);
+      return { ...paraBacktest(b), estrategia: estrategiaDominio(v) };
     },
 
     async concluir(id: string, resultado: { metricas: unknown; curva: unknown }): Promise<void> {

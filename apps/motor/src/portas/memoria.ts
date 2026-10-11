@@ -1,8 +1,10 @@
 import type {
+  CompraExecutada,
   EstadoDecisao,
   Evento,
   NovaDecisao,
   NovaOrdem,
+  OrdemPendente,
   PortaAprovacao,
   PortaDecisoes,
   PortaEventos,
@@ -25,10 +27,15 @@ export class RobosMemoria implements PortaRobos {
   private pausadosIds: ReadonlySet<string> = new Set();
   private paradaGlobal = false;
 
-  constructor(private readonly robos: readonly RoboConfig[]) {}
+  constructor(private robos: readonly RoboConfig[]) {}
 
   ativos(): Promise<RoboConfig[]> {
     return Promise.resolve([...this.robos]);
+  }
+
+  /** Troca a lista (o motor relê na próxima recarga). */
+  definir(robos: readonly RoboConfig[]): void {
+    this.robos = [...robos];
   }
 
   pausado(roboId: string): Promise<boolean> {
@@ -49,6 +56,7 @@ export class RobosMemoria implements PortaRobos {
 
 export interface DecisaoGuardada extends NovaDecisao {
   readonly id: string;
+  readonly desfecho?: { readonly resultado: Valor; readonly em: number };
 }
 
 export class DecisoesMemoria implements PortaDecisoes {
@@ -70,6 +78,27 @@ export class DecisoesMemoria implements PortaDecisoes {
 
   estado(id: string): Promise<EstadoDecisao | null> {
     return Promise.resolve(this.decisoes.get(id)?.estado ?? null);
+  }
+
+  registrarDesfecho(id: string, resultado: Valor, em: number): Promise<void> {
+    const atual = this.decisoes.get(id);
+    if (!atual) return Promise.reject(new Error(`A decisão ${id} não existe; o desfecho não foi gravado.`));
+    this.decisoes.set(id, { ...atual, desfecho: { resultado, em } });
+    return Promise.resolve();
+  }
+
+  /** A mais recente pelo instante; no empate, a registrada por último. */
+  ultimaCompraExecutada(roboId: string): Promise<CompraExecutada | null> {
+    const compras = this.todas().filter(
+      (d) => d.roboId === roboId && d.estado === "executada" && d.sinal.acao === "COMPRAR",
+    );
+    const ultima = compras.reduce<DecisaoGuardada | null>((m, d) => (!m || d.em >= m.em ? d : m), null);
+    if (!ultima) return Promise.resolve(null);
+    return Promise.resolve({
+      decisaoId: ultima.id,
+      preco: ultima.preco,
+      ...(ultima.protecao ? { protecao: ultima.protecao } : {}),
+    });
   }
 
   todas(): DecisaoGuardada[] {
@@ -102,6 +131,19 @@ export class OrdensMemoria implements PortaOrdens {
       );
     this.ordens.set(idCliente, { ...atual, resultado });
     return Promise.resolve();
+  }
+
+  pendentes(roboId: string): Promise<OrdemPendente[]> {
+    const pendentes = this.doRobo(roboId)
+      .filter((o) => (o.resultado?.estado ?? "PENDENTE") === "PENDENTE")
+      .map((o) => ({
+        idCliente: o.ordem.idCliente,
+        decisaoId: o.ordem.decisaoId,
+        lado: o.ordem.lado,
+        quantidade: o.ordem.quantidade,
+        criadaEm: o.criadaEm,
+      }));
+    return Promise.resolve(pendentes);
   }
 
   execucoes(roboId: string): Promise<Execucao[]> {

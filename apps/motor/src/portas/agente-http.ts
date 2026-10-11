@@ -5,8 +5,9 @@ import {
   type PortaAgente,
   type RespostaAnalise,
 } from "@zentrade/contratos";
-import { dec } from "@zentrade/dominio";
+import { dec, paraTexto, type Posicao, type Sinal } from "@zentrade/dominio";
 import { z } from "zod";
+import { USUARIO_LOCAL } from "../usuario-local.js";
 
 export interface OpcoesAgenteHttp {
   readonly url: string;
@@ -17,8 +18,47 @@ export interface OpcoesAgenteHttp {
 
 const Resposta = z.object({ proposta: PropostaAgenteEsquema, custoUsd: TextoDecimal });
 
+function sinalNoFio(s: Sinal) {
+  return s.acao === "COMPRAR" ? { ...s, stop: paraTexto(s.stop), alvo: paraTexto(s.alvo) } : { ...s };
+}
+
+const posicaoNoFio = (p: Posicao) => ({
+  quantidade: paraTexto(p.quantidade),
+  precoMedio: paraTexto(p.precoMedio),
+  resultadoRealizado: paraTexto(p.resultadoRealizado),
+  taxasPagas: paraTexto(p.taxasPagas),
+});
+
 /**
- * Cliente do apps/agente (POST /analisar). Decimais vão em texto (Decimal.toJSON).
+ * O corpo do POST /analisar no formato que o apps/agente valida (serializacao.ts de
+ * lá): decimais sempre em texto plano (nunca "1e-7"), `usuarioId` e `orcamento`
+ * opcionais. A dona local (arquivo, backtest) não vai: o agente usa a configurada nele.
+ */
+export function pedidoNoFio(p: PedidoAnalise) {
+  const o = p.orcamento;
+  return {
+    robo: { ...p.robo },
+    sinal: sinalNoFio(p.sinal),
+    preco: paraTexto(p.preco),
+    fechamentos: [...p.fechamentos],
+    posicao: posicaoNoFio(p.posicao),
+    ...(p.usuarioId && p.usuarioId !== USUARIO_LOCAL ? { usuarioId: p.usuarioId } : {}),
+    ...(o
+      ? {
+          orcamento: {
+            riscoPorOperacao: paraTexto(o.riscoPorOperacao),
+            exposicaoMaxima: paraTexto(o.exposicaoMaxima),
+            perdaDiariaMaxima: paraTexto(o.perdaDiariaMaxima),
+            exposicaoAtual: paraTexto(o.exposicaoAtual),
+            resultadoDoDia: paraTexto(o.resultadoDoDia),
+          },
+        }
+      : {}),
+  };
+}
+
+/**
+ * Cliente do apps/agente (POST /analisar). Decimais vão em texto (pedidoNoFio).
  * Qualquer falha vira erro: o motor decide, pela configuração, se isso barra a operação.
  */
 export class AgenteHttp implements PortaAgente {
@@ -45,7 +85,7 @@ export class AgenteHttp implements PortaAgente {
       return await this.fetch(`${this.o.url}/analisar`, {
         method: "POST",
         headers: { "content-type": "application/json", Authorization: `Bearer ${this.o.segredo}` },
-        body: JSON.stringify(pedido),
+        body: JSON.stringify(pedidoNoFio(pedido)),
         signal: AbortSignal.timeout(this.o.timeoutMs ?? 60_000),
       });
     } catch (erro) {

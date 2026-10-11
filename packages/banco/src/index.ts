@@ -5,7 +5,12 @@ export * from "./cliente.js";
 export * from "./config.js";
 export * from "./erros.js";
 export * from "./migrar.js";
-export type { Backtest, EstadoBacktest, PedidoBacktest } from "./repositorios/backtests.js";
+export type {
+  Backtest,
+  BacktestParaRodar,
+  EstadoBacktest,
+  PedidoBacktest,
+} from "./repositorios/backtests.js";
 export type { Documento, Fonte, NovoDocumento } from "./repositorios/conhecimento.js";
 export { hashConteudo } from "./repositorios/conhecimento.js";
 export type { ContaCorretora, NovaConta, RedeConta } from "./repositorios/contas.js";

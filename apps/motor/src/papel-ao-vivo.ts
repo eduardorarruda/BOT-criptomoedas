@@ -6,7 +6,7 @@ import type {
   ResultadoOrdem,
 } from "@zentrade/contratos";
 import type { PapelCorretora } from "@zentrade/corretora";
-import type { Candle, FiltrosAtivo, NivelLivro, Valor } from "@zentrade/dominio";
+import type { Candle, Execucao, FiltrosAtivo, NivelLivro, Valor } from "@zentrade/dominio";
 
 /**
  * Modo papel ao vivo: mercado (candles, filtros, livro) de uma corretora de verdade e
@@ -36,6 +36,11 @@ export class CorretoraPapelAoVivo implements Corretora {
 
   livro(simbolo: string, profundidade: number): Promise<{ compras: NivelLivro[]; vendas: NivelLivro[] }> {
     return this.dados.livro(simbolo, profundidade);
+  }
+
+  /** Papel com banco: o saldo simulado sobrevive ao reinício (refeito das execuções gravadas). */
+  restaurarExecucoes(simbolo: string, execucoes: readonly Execucao[]): void {
+    this.papel.restaurarExecucoes(simbolo, execucoes);
   }
 
   saldoLivre(ativo: string): Promise<Valor> {

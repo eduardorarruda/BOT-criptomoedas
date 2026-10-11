@@ -22,6 +22,13 @@
       "when": 1791678381756,
       "tag": "0002_timescale_rls_indices",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791683362805,
+      "tag": "0003_protecao_efetiva",
+      "breakpoints": true
     }
   ]
 }

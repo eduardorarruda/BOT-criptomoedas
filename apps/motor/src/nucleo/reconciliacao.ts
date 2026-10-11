@@ -1,28 +1,22 @@
-import type { ResultadoOrdem, RoboConfig } from "@zentrade/contratos";
-import type { Lado, Valor } from "@zentrade/dominio";
+import type { OrdemPendente, ResultadoOrdem, RoboConfig } from "@zentrade/contratos";
 import { publicar } from "./diario.js";
 import { ordemDTO } from "./execucao.js";
 import type { Dependencias } from "./tipos.js";
 
-/** Ordem enviada sem resposta: pode ter entrado ou não. */
-export interface OrdemIncerta {
-  readonly idCliente: string;
-  readonly decisaoId: string;
-  readonly lado: Lado;
-  readonly quantidade: Valor;
-  readonly criadaEm: number;
-}
+/** Ordem enviada sem resposta (ou reservada e o processo caiu): pode ter entrado ou não. */
+export type OrdemIncerta = OrdemPendente;
 
 /**
  * Confere na corretora uma ordem de estado incerto, pelo idCliente, e grava o que de
  * fato aconteceu. Enquanto não der para conferir, o robô não decide: decidir com a
- * posição errada é o caminho da compra em dobro. `true` quando resolveu.
+ * posição errada é o caminho da compra em dobro. Devolve o que de fato aconteceu, ou
+ * `null` se ainda não deu para conferir.
  */
 export async function conferirOrdemIncerta(
   deps: Dependencias,
   robo: RoboConfig,
   incerta: OrdemIncerta,
-): Promise<boolean> {
+): Promise<ResultadoOrdem | null> {
   let encontrada: ResultadoOrdem | null;
   try {
     encontrada = await deps.corretora.consultarOrdem(robo.simbolo, incerta.idCliente);
@@ -31,7 +25,7 @@ export async function conferirOrdemIncerta(
       { erro, roboId: robo.id, idCliente: incerta.idCliente },
       "não deu para conferir a ordem incerta; decisões suspensas até conferir",
     );
-    return false;
+    return null;
   }
   const resultado: ResultadoOrdem = encontrada ?? {
     idCliente: incerta.idCliente,
@@ -50,5 +44,5 @@ export async function conferirOrdemIncerta(
     { roboId: robo.id, idCliente: incerta.idCliente, estado: resultado.estado },
     "ordem incerta conferida",
   );
-  return true;
+  return resultado;
 }

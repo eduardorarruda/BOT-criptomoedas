@@ -1,13 +1,19 @@
 import type {
   Corretora,
+  EstadoDecisao,
   PortaAgente,
   PortaAprovacao,
+  PortaCandles,
   PortaDecisoes,
   PortaEventos,
   PortaOrdens,
   PortaRobos,
   Relogio,
+  ResultadoOrdem,
 } from "@zentrade/contratos";
+import type { Posicao, Sinal, Valor } from "@zentrade/dominio";
+import type { DecisaoRegistrada } from "./diario.js";
+import type { Plano } from "./plano.js";
 
 /** O que o motor usa de um logger (pino cumpre). Nada de console.log. */
 export interface Registro {
@@ -33,6 +39,31 @@ export const OPCOES_PADRAO: OpcoesNucleo = {
   tamanhoHistorico: 500,
 };
 
+/** O que o ciclo recebe do robô: o sinal da regra e o contexto em que ele saiu. */
+export interface EntradaCiclo {
+  readonly sinal: Sinal;
+  readonly preco: Valor;
+  readonly fechamentos: readonly number[];
+  readonly posicao: Posicao;
+  readonly em: number;
+}
+
+/** Decisão do modo sugerir esperando a pessoa. O robô segue vigiando o stop enquanto isso. */
+export interface AprovacaoPendente {
+  readonly registrada: DecisaoRegistrada;
+  readonly plano: Plano;
+  readonly entrada: EntradaCiclo;
+  readonly expiraEm: number;
+}
+
+export interface ResultadoCiclo {
+  readonly estado: EstadoDecisao | null;
+  readonly plano?: Plano;
+  readonly ordem?: ResultadoOrdem;
+  readonly decisaoId?: string;
+  readonly pendente?: AprovacaoPendente;
+}
+
 export interface Dependencias {
   readonly corretora: Corretora;
   readonly robos: PortaRobos;
@@ -41,6 +72,8 @@ export interface Dependencias {
   readonly agente: PortaAgente;
   readonly eventos: PortaEventos;
   readonly aprovacao: PortaAprovacao;
+  /** Onde gravar os candles fechados (gráfico e backtest). Sem banco, não grava. */
+  readonly candles?: PortaCandles;
   readonly relogio: Relogio;
   readonly registro: Registro;
   readonly dormir: (ms: number) => Promise<void>;

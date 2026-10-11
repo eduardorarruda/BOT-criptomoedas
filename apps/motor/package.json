@@ -18,12 +18,16 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
-    "start": "node --env-file-if-exists=../../.env dist/main.js"
+    "start": "node --env-file-if-exists=../../.env dist/main.js",
+    "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts"
   },
   "dependencies": {
+    "@zentrade/banco": "workspace:*",
     "@zentrade/contratos": "workspace:*",
     "@zentrade/corretora": "workspace:*",
     "@zentrade/dominio": "workspace:*",
+    "bullmq": "^6.3.12",
+    "ioredis": "^6.0.0",
     "pino": "^10.4.0",
     "zod": "^4.6.5"
   }
