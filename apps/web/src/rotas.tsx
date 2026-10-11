@@ -79,6 +79,14 @@ const arvore = raiz.addChildren([
     pagina("/automacoes", () => import("./paginas/Automacoes"), "Automacoes"),
     pagina("/contas", () => import("./paginas/Contas"), "Contas"),
     pagina("/tokens", () => import("./paginas/Tokens"), "Tokens"),
+    pagina("/imobiliario", () => import("./paginas/imobiliario/VisaoImobiliario"), "VisaoImobiliario"),
+    pagina("/imobiliario/novo", () => import("./paginas/imobiliario/NovoInvestimento"), "NovoInvestimento"),
+    pagina("/imobiliario/simuladores", () => import("./paginas/imobiliario/Simuladores"), "Simuladores"),
+    pagina(
+      "/imobiliario/$id",
+      () => import("./paginas/imobiliario/DetalheInvestimento"),
+      "DetalheInvestimento",
+    ),
   ]),
 ]);
 

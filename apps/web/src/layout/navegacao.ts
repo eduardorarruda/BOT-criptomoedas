@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   BookOpen,
   Bot,
+  Building2,
   ChartCandlestick,
   Gauge,
   History,
@@ -19,6 +20,7 @@ export type RotaApp =
   | "/mercado"
   | "/decisoes"
   | "/ordens"
+  | "/imobiliario"
   | "/robos"
   | "/estrategias"
   | "/backtests"
@@ -47,6 +49,7 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
       { para: "/mercado", rotulo: "Mercado", icone: ChartCandlestick },
       { para: "/decisoes", rotulo: "Decisões", icone: ScrollText },
       { para: "/ordens", rotulo: "Ordens e posições", icone: ArrowLeftRight },
+      { para: "/imobiliario", rotulo: "Imobiliário", icone: Building2 },
     ],
   },
   {

@@ -1,0 +1,489 @@
+/*
+ * Imobiliário: só papéis da marca (tokens.css) mais a paleta categórica dos
+ * gráficos, validada para o fundo escuro e para o claro (5 cores, sem coral, que
+ * é reservado para perda).
+ */
+:root {
+  --imob-serie-1: #1fa36a;
+  --imob-serie-2: #3987e5;
+  --imob-serie-3: #c98500;
+  --imob-serie-4: #9085e9;
+  --imob-serie-5: #d55181;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-tema="escuro"]) {
+    --imob-serie-1: #0e7a50;
+    --imob-serie-2: #2a78d6;
+    --imob-serie-3: #c78a00;
+    --imob-serie-4: #4a3aa7;
+    --imob-serie-5: #d4618f;
+  }
+}
+:root[data-tema="claro"] {
+  --imob-serie-1: #0e7a50;
+  --imob-serie-2: #2a78d6;
+  --imob-serie-3: #c78a00;
+  --imob-serie-4: #4a3aa7;
+  --imob-serie-5: #d4618f;
+}
+
+/* ---------- premissas e avisos ---------- */
+.imob-premissas {
+  display: grid;
+  gap: var(--espaco-2);
+  padding: var(--espaco-3) var(--espaco-4);
+  border: 1px solid color-mix(in oklab, var(--atencao) 35%, transparent);
+  border-radius: var(--raio);
+  background: var(--atencao-tenue);
+  font-size: 13px;
+}
+.imob-premissas__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  font-weight: 600;
+}
+.imob-premissas__titulo svg {
+  color: var(--atencao);
+  flex: none;
+}
+.imob-premissas ul {
+  display: grid;
+  gap: 4px;
+  padding-left: 18px;
+  color: var(--apagado);
+}
+.imob-premissas li {
+  list-style: disc;
+}
+
+/* ---------- barra de ações e premissa de CDI ---------- */
+.imob-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--espaco-4);
+}
+.imob-cdi {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--espaco-2);
+  max-width: 340px;
+}
+.imob-cdi .campo {
+  flex: 1;
+}
+
+/* ---------- visão geral ---------- */
+.imob-topo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--espaco-5);
+  align-items: start;
+}
+.imob-metricas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  overflow: hidden;
+  background: var(--linha);
+}
+.imob-metricas > div {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: var(--espaco-4);
+  background: var(--superficie);
+  min-width: 0;
+}
+.imob-metricas dt {
+  font-size: 12.5px;
+  color: var(--apagado);
+}
+.imob-metricas dd {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.imob-metricas__destaque {
+  grid-column: 1 / -1;
+}
+.imob-metricas__destaque dd {
+  font-size: 34px;
+}
+.imob-metricas .metrica__nota {
+  font-size: 12px;
+}
+
+.imob-lista {
+  display: grid;
+  gap: var(--espaco-2);
+}
+.imob-cartao {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--espaco-3) var(--espaco-4);
+  align-items: center;
+  padding: var(--espaco-3) var(--espaco-4);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color var(--dur-curta) var(--curva),
+    background var(--dur-curta) var(--curva);
+}
+.imob-cartao:hover {
+  border-color: var(--linha-forte);
+  background: var(--superficie-2);
+}
+.imob-cartao:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+.imob-cartao__icone {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--marca-tenue);
+  color: var(--marca);
+}
+.imob-cartao__nome {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.imob-cartao__meta {
+  font-size: 12.5px;
+  color: var(--apagado);
+}
+.imob-cartao__numeros {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  text-align: right;
+}
+.imob-cartao__numeros small {
+  font-size: 12px;
+}
+
+/* ---------- rosca ---------- */
+.imob-rosca {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: var(--espaco-4);
+  align-items: center;
+  margin: 0;
+}
+.imob-rosca__svg {
+  width: 100%;
+  max-width: 180px;
+}
+.imob-rosca__trilho {
+  stroke: var(--superficie-2);
+}
+.imob-rosca__centro {
+  fill: var(--texto);
+  font-family: var(--fonte-numero);
+  font-size: 15px;
+}
+.imob-rosca__legenda-centro {
+  fill: var(--apagado);
+  font-size: 10px;
+}
+.imob-rosca__lista {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.imob-rosca__lista li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: var(--espaco-2);
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: var(--raio-p);
+}
+.imob-rosca__item--ativo {
+  background: var(--superficie-2);
+}
+.imob-rosca__valor {
+  text-align: right;
+}
+
+/* ---------- gráficos ---------- */
+.imob-grafico {
+  display: grid;
+  gap: var(--espaco-2);
+  margin: 0;
+  min-width: 0;
+}
+.imob-grafico__area {
+  position: relative;
+}
+.imob-grafico svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+.imob-grafico__eixo line {
+  stroke: var(--linha);
+  stroke-width: 1;
+}
+.imob-grafico__eixo text {
+  fill: var(--apagado);
+  font-family: var(--fonte-numero);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.imob-grafico__zero {
+  stroke: var(--linha-forte);
+  stroke-width: 1;
+}
+.imob-grafico__mira {
+  stroke: var(--apagado);
+  stroke-dasharray: 3 3;
+}
+.imob-grafico__ponto {
+  stroke: var(--superficie);
+  stroke-width: 2;
+}
+.imob-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2) var(--espaco-4);
+  font-size: 12.5px;
+  color: var(--apagado);
+}
+.imob-legenda li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.imob-legenda__marca {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+.imob-dica {
+  position: absolute;
+  top: 8px;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+  padding: var(--espaco-2) var(--espaco-3);
+  border-radius: var(--raio);
+  background: var(--superficie-2);
+  box-shadow: var(--sombra-flutuante);
+  font-size: 12.5px;
+  pointer-events: none;
+}
+.imob-dica__titulo {
+  font-weight: 600;
+}
+.imob-dica__linha {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+.imob-tabela-dados summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--apagado);
+}
+.imob-tabela-dados summary:hover {
+  color: var(--texto);
+}
+.imob-tabela-dados[open] summary {
+  margin-bottom: var(--espaco-2);
+}
+.imob-tabela-dados .tabela-rolagem {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* ---------- formulário guiado ---------- */
+.imob-tipos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--espaco-3);
+}
+.imob-tipo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px var(--espaco-3);
+  padding: var(--espaco-3) var(--espaco-4);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.imob-tipo:hover {
+  border-color: var(--linha-forte);
+}
+.imob-tipo[aria-pressed="true"] {
+  border-color: var(--marca);
+  background: var(--marca-tenue);
+}
+.imob-tipo:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+.imob-tipo svg {
+  grid-row: span 2;
+  color: var(--marca);
+}
+.imob-tipo strong {
+  font-weight: 600;
+}
+.imob-tipo span {
+  font-size: 12.5px;
+  color: var(--apagado);
+}
+.imob-passos {
+  display: flex;
+  gap: var(--espaco-2);
+  font-size: 12.5px;
+  color: var(--apagado);
+}
+.imob-passos [aria-current="step"] {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+/* ---------- detalhe ---------- */
+.imob-lancamentos .tabela td,
+.imob-lancamentos .tabela th {
+  white-space: nowrap;
+}
+.imob-lancamentos__descricao {
+  white-space: normal;
+  color: var(--apagado);
+  font-size: 12.5px;
+}
+.imob-lancamento-novo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--espaco-3);
+  align-items: start;
+}
+.imob-lancamento-novo > .botao {
+  align-self: end;
+}
+.imob-fatos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: var(--espaco-3) var(--espaco-4);
+  margin: 0;
+}
+.imob-fatos dt {
+  font-size: 12px;
+  color: var(--apagado);
+}
+.imob-fatos dd {
+  margin: 2px 0 0;
+}
+
+/* ---------- simuladores ---------- */
+.imob-sim {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: var(--espaco-5);
+  align-items: start;
+}
+.imob-sim__campos {
+  display: grid;
+  gap: var(--espaco-3);
+}
+.imob-sim__resultado {
+  display: grid;
+  gap: var(--espaco-4);
+  min-width: 0;
+}
+.imob-lado-a-lado {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espaco-3);
+}
+.imob-lado-a-lado > div {
+  display: grid;
+  gap: 4px;
+  padding: var(--espaco-3) var(--espaco-4);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+}
+.imob-lado-a-lado h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.imob-lado-a-lado p {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espaco-2);
+  font-size: 13px;
+}
+
+@media (max-width: 1180px) {
+  .imob-topo,
+  .imob-sim {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .imob-metricas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .imob-metricas__destaque dd {
+    font-size: 28px;
+  }
+  .imob-cartao {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .imob-cartao__numeros {
+    grid-column: 1 / -1;
+    justify-items: start;
+    text-align: left;
+  }
+  .imob-rosca {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  .imob-rosca__lista {
+    width: 100%;
+  }
+  .imob-lado-a-lado {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .imob-cdi {
+    max-width: none;
+    width: 100%;
+  }
+}
+.imob-grafico__titulo {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.imob-passos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.imob-passos li {
+  list-style: none;
+}
