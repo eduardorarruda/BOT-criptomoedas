@@ -22,30 +22,31 @@ const EsquemaApi = z.object({
   N8N_WEBHOOK_SEGREDO: z
     .string({ error: "defina N8N_WEBHOOK_SEGREDO (gere com: openssl rand -hex 32)" })
     .min(32, "N8N_WEBHOOK_SEGREDO precisa ter pelo menos 32 caracteres (gere com: openssl rand -hex 32)"),
+  // Obrigatório quando houver mais de uma pessoa cadastrada: diz de quem é o conhecimento do n8n.
   N8N_USUARIO_ID: z.uuid("N8N_USUARIO_ID precisa ser o UUID de uma pessoa").optional(),
   AGENTE_URL: url("AGENTE_URL", "http://127.0.0.1:8081").optional(),
-  EMBEDDINGS_URL: url("EMBEDDINGS_URL", "http://127.0.0.1:11434/v1/embeddings").optional(),
-  EMBEDDINGS_MODELO: z.string().min(1).default("bge-m3"),
-  EMBEDDINGS_CHAVE: z.string().min(1).optional(),
+  // O provedor é conferido aqui (erro de digitação derruba cedo); as chaves e URLs de
+  // cada provedor (VOYAGE_*, OLLAMA_*) são lidas por @zentrade/conhecimento.
+  EMBEDDINGS_PROVEDOR: z
+    .enum(["voyage", "ollama"], { error: "EMBEDDINGS_PROVEDOR aceita voyage ou ollama" })
+    .default("voyage"),
   APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(1440).default(15),
-  LOG_NIVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
 
-const Esquema = ConfigBancoEsquema.extend(EsquemaApi.shape).transform((c) => ({
-  ...c,
-  embeddings: c.EMBEDDINGS_URL
-    ? {
-        url: c.EMBEDDINGS_URL,
-        modelo: c.EMBEDDINGS_MODELO,
-        ...(c.EMBEDDINGS_CHAVE ? { chave: c.EMBEDDINGS_CHAVE } : {}),
-      }
-    : null,
-}));
+const Esquema = ConfigBancoEsquema.extend(EsquemaApi.shape);
 
 export type Config = z.infer<typeof Esquema>;
 
+/** Variável vazia (`N8N_USUARIO_ID=` no .env, `${X:-}` no compose) conta como ausente, como no motor. */
+export function semVazias(env: Readonly<Record<string, string | undefined>>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(env).filter((par): par is [string, string] => par[1] !== undefined && par[1] !== ""),
+  );
+}
+
 export function lerConfig(env: NodeJS.ProcessEnv): Config {
-  const lido = Esquema.safeParse(env);
+  const lido = Esquema.safeParse(semVazias(env));
   if (!lido.success) {
     const problemas = lido.error.issues.map((i) => `- ${i.path.join(".")}: ${i.message}`);
     throw new Error(`configuração da API inválida (veja .env.example):\n${problemas.join("\n")}`);

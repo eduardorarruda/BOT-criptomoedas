@@ -1,4 +1,4 @@
-import type { OrdemDTO, PosicaoDTO, RoboDTO } from "@zentrade/contratos";
+import type { OrdemDTO, PosicaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { ArrowLeftRight, Wallet } from "lucide-react";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
 import { Dinheiro } from "../componentes/Dinheiro";

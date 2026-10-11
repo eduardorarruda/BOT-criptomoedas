@@ -1,19 +1,15 @@
 import {
+  AlertaEsquema,
   assinar,
   CABECALHO_ASSINATURA,
   PropostaCriadaEsquema,
+  type Alerta,
   type PropostaCriada,
 } from "@zentrade/contratos";
-import { z } from "zod";
+import type { RegistroAutomacoes } from "./automacoes.js";
 import type { Buscar } from "./tipos.js";
 
-export const AlertaEsquema = z.object({
-  tipo: z.string().min(1).max(40),
-  titulo: z.string().min(1).max(120),
-  mensagem: z.string().min(1).max(1000),
-  em: z.number().int().nonnegative(),
-});
-export type Alerta = z.infer<typeof AlertaEsquema>;
+export type { Alerta };
 
 export interface ClienteN8n {
   enviarProposta(p: PropostaCriada): Promise<void>;
@@ -53,5 +49,25 @@ export function criarClienteN8n(o: OpcoesN8n): ClienteN8n {
     enviarProposta: async (p) =>
       enviar("zentrade-proposta", JSON.stringify(PropostaCriadaEsquema.parse(p)), "a proposta"),
     enviarAlerta: async (a) => enviar("zentrade-alerta", JSON.stringify(AlertaEsquema.parse(a)), "o alerta"),
+  };
+}
+
+/** Anota cada envio ao n8n (deu certo ou não) no status das automações. */
+export function n8nComRegistro(
+  cliente: ClienteN8n,
+  registro: Pick<RegistroAutomacoes, "registrar">,
+): ClienteN8n {
+  async function medir(fluxo: "zentrade-aprovacao" | "zentrade-alertas", enviar: () => Promise<void>) {
+    try {
+      await enviar();
+    } catch (erro) {
+      await registro.registrar(fluxo, false);
+      throw erro;
+    }
+    await registro.registrar(fluxo, true);
+  }
+  return {
+    enviarProposta: (p) => medir("zentrade-aprovacao", () => cliente.enviarProposta(p)),
+    enviarAlerta: (a) => medir("zentrade-alertas", () => cliente.enviarAlerta(a)),
   };
 }

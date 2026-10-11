@@ -1,10 +1,18 @@
-import type { Intervalo } from "@zentrade/contratos";
+import {
+  MetricasBacktestEsquema,
+  PontoCurvaBacktestEsquema,
+  type Intervalo,
+  type MetricasBacktest,
+  type PontoCurvaBacktest,
+} from "@zentrade/contratos";
 import type { Estrategia } from "@zentrade/dominio";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { z } from "zod";
 import { comoUsuario, type Db } from "../cliente.js";
 import { estrategiaDominio, ms } from "../conversao.js";
 import { codigoPostgres, ErroDados, umaLinha, VIOLACAO_CHAVE_ESTRANGEIRA } from "../erros.js";
 import { backtests, estrategiaVersoes } from "../esquema/index.js";
+import { limitar } from "./lista.js";
 
 export type EstadoBacktest = "na_fila" | "rodando" | "concluido" | "falhou";
 
@@ -20,11 +28,27 @@ export interface PedidoBacktest {
 export interface Backtest extends PedidoBacktest {
   readonly id: string;
   readonly estado: EstadoBacktest;
-  readonly metricas: unknown;
-  readonly curva: unknown;
+  readonly metricas: MetricasBacktest | null;
+  readonly curva: PontoCurvaBacktest[] | null;
   readonly erro: string | null;
   readonly criadoEm: number;
   readonly concluidoEm: number | null;
+}
+
+const CurvaEsquema = z.array(PontoCurvaBacktestEsquema);
+const RESULTADO_FORA_DO_CONTRATO =
+  "o motor gravou métricas ou curva fora do contrato (BacktestEsquema); rode o backtest de novo";
+
+/** O jsonb gravado pelo motor só sai se bater com o contrato; se não bater, o erro diz por quê. */
+function lerResultado(b: typeof backtests.$inferSelect) {
+  const metricas = b.metricas === null ? null : MetricasBacktestEsquema.safeParse(b.metricas);
+  const curva = b.curva === null ? null : CurvaEsquema.safeParse(b.curva);
+  const foraDoContrato = metricas?.success === false || curva?.success === false;
+  return {
+    metricas: metricas?.success ? metricas.data : null,
+    curva: curva?.success ? curva.data : null,
+    erro: b.erro ?? (foraDoContrato ? RESULTADO_FORA_DO_CONTRATO : null),
+  };
 }
 
 /** O que o motor precisa para rodar um backtest: o pedido e a versão exata da estratégia. */
@@ -41,9 +65,7 @@ const paraBacktest = (b: typeof backtests.$inferSelect): Backtest => ({
   inicio: ms(b.inicio),
   fim: ms(b.fim),
   estado: b.estado,
-  metricas: b.metricas,
-  curva: b.curva,
-  erro: b.erro,
+  ...lerResultado(b),
   criadoEm: ms(b.criadoEm),
   concluidoEm: b.concluidoEm ? ms(b.concluidoEm) : null,
 });
@@ -84,6 +106,14 @@ export function repositorioBacktests(db: Db) {
         throw erro;
       }
     },
+
+    /** Mais recentes primeiro. */
+    listar: (usuarioId: string, limite?: number): Promise<Backtest[]> =>
+      comoUsuario(db, usuarioId, async (tx) =>
+        (await tx.select().from(backtests).orderBy(desc(backtests.criadoEm)).limit(limitar(limite))).map(
+          paraBacktest,
+        ),
+      ),
 
     obter: (usuarioId: string, id: string): Promise<Backtest | null> =>
       comoUsuario(db, usuarioId, async (tx) => {

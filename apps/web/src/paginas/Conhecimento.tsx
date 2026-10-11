@@ -139,15 +139,7 @@ export function Conhecimento() {
                     d.titulo
                   )}
                 </p>
-                <p className="documento__meta apagado">
-                  {formatarData(d.publicadoEm)}
-                  {d.trechos ? (
-                    <>
-                      {" "}
-                      · <span className="num">{d.trechos}</span> {d.trechos === 1 ? "trecho" : "trechos"}
-                    </>
-                  ) : null}
-                </p>
+                <p className="documento__meta apagado">{formatarData(d.publicadoEm)}</p>
               </li>
             ))}
           </ul>

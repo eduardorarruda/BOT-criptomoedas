@@ -1,7 +1,20 @@
-# Ambiente de desenvolvimento do ZenTrade: banco, Redis e n8n.
-# Uso: docker compose --env-file .env -f infra/docker-compose.yml up -d
-# As portas ficam presas em 127.0.0.1: nada disso deve ficar exposto na rede.
+# ZenTrade com Docker.
+#
+# Só a infra de desenvolvimento (banco, Redis e n8n), para rodar os serviços com `pnpm dev`:
+#   docker compose --env-file .env -f infra/docker-compose.yml up -d
+# Tudo junto (perfil "app": migração, api, motor, agente e tela, além da infra):
+#   docker compose --env-file .env -f infra/docker-compose.yml --profile app up -d --build
+#
+# As portas ficam presas em 127.0.0.1: nada disso deve ficar exposto na rede. O agente
+# e o motor não publicam porta nenhuma. As portas do host mudam por variável (*_PORTA_HOST).
+# Senhas entram em URLs (postgres://, redis://): use as geradas com `openssl rand -hex 32`.
 name: zentrade
+
+x-ambiente-comum: &ambiente-comum
+  DATABASE_URL: postgres://${POSTGRES_USER:-zentrade}:${POSTGRES_PASSWORD:-}@banco:5432/${POSTGRES_DB:-zentrade}
+  REDIS_URL: redis://:${REDIS_SENHA:-}@redis:6379
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  TZ: UTC
 
 services:
   banco:
@@ -13,11 +26,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       POSTGRES_DB: ${POSTGRES_DB:-zentrade}
     ports:
-      - "127.0.0.1:55432:5432"
+      - "127.0.0.1:${BANCO_PORTA_HOST:-55432}:5432"
     volumes:
       - banco:/home/postgres/pgdata
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      # Por TCP: durante a inicialização o servidor temporário só ouve no socket local,
+      # e o pg_isready pelo socket diria "pronto" antes da hora (a migração falharia).
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -29,7 +44,7 @@ services:
     command:
       ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_SENHA:?defina REDIS_SENHA no .env}"]
     ports:
-      - "127.0.0.1:56379:6379"
+      - "127.0.0.1:${REDIS_PORTA_HOST:-56379}:6379"
     volumes:
       - redis:/data
     healthcheck:
@@ -58,11 +73,18 @@ services:
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       # O n8n assina e confere os webhooks com o mesmo segredo da API.
       N8N_WEBHOOK_SEGREDO: ${N8N_WEBHOOK_SEGREDO:?defina N8N_WEBHOOK_SEGREDO no .env}
+      # Com o perfil app, use http://api:8080; com a API rodando no host (pnpm dev), o padrão.
       ZENTRADE_API_URL: ${ZENTRADE_API_URL_PARA_N8N:-http://host.docker.internal:8080}
+      # Usadas pelos fluxos de infra/n8n (veja infra/n8n/README.md); tokens vão em credenciais.
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      TELEGRAM_APROVADORES_IDS: ${TELEGRAM_APROVADORES_IDS:-}
+      ZENTRADE_FEEDS_RSS: ${ZENTRADE_FEEDS_RSS:-}
+      ZENTRADE_ALERTA_EMAIL: ${ZENTRADE_ALERTA_EMAIL:-}
+      ZENTRADE_ALERTA_EMAIL_DE: ${ZENTRADE_ALERTA_EMAIL_DE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "127.0.0.1:5678:5678"
+      - "127.0.0.1:${N8N_PORTA_HOST:-5678}:5678"
     volumes:
       - n8n:/home/node/.n8n
     healthcheck:
@@ -71,6 +93,113 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
+
+  # --- Perfil "app": os serviços do ZenTrade ---
+
+  # Aplica as migrações e sai. A API só sobe depois que ela termina bem.
+  migrar:
+    profiles: ["app"]
+    build: { context: .., dockerfile: infra/docker/api.Dockerfile }
+    image: ${ZENTRADE_IMAGEM:-zentrade}-api:local
+    command: ["node", "node_modules/@zentrade/banco/dist/comandos/migrar.js"]
+    environment:
+      <<: *ambiente-comum
+    depends_on:
+      banco: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    profiles: ["app"]
+    build: { context: .., dockerfile: infra/docker/api.Dockerfile }
+    image: ${ZENTRADE_IMAGEM:-zentrade}-api:local
+    restart: unless-stopped
+    environment:
+      <<: *ambiente-comum
+      ZENTRADE_CHAVE_MESTRA: ${ZENTRADE_CHAVE_MESTRA:-}
+      # A origem da tela servida pelo nginx (CORS e WebSocket só aceitam esta).
+      ZENTRADE_ORIGEM_WEB: ${ZENTRADE_ORIGEM_WEB_DOCKER:-http://localhost:${WEB_PORTA_HOST:-8088}}
+      COOKIE_SEGURO: ${COOKIE_SEGURO:-true}
+      APROVACAO_VALIDADE_MIN: ${APROVACAO_VALIDADE_MIN:-15}
+      N8N_URL: http://n8n:5678
+      N8N_WEBHOOK_SEGREDO: ${N8N_WEBHOOK_SEGREDO:-}
+      N8N_USUARIO_ID: ${N8N_USUARIO_ID:-}
+      AGENTE_URL: http://agente:8081
+      EMBEDDINGS_PROVEDOR: ${EMBEDDINGS_PROVEDOR:-voyage}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+      VOYAGE_MODELO: ${VOYAGE_MODELO:-voyage-4}
+      OLLAMA_URL: ${OLLAMA_URL_DOCKER:-http://host.docker.internal:11434}
+      OLLAMA_MODELO: ${OLLAMA_MODELO:-bge-m3}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${API_PORTA_HOST:-8080}:8080"
+    # Healthcheck na imagem (infra/docker/api.Dockerfile): GET /api/v1/saude.
+    depends_on:
+      migrar: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  motor:
+    profiles: ["app"]
+    build: { context: .., dockerfile: infra/docker/motor.Dockerfile }
+    image: ${ZENTRADE_IMAGEM:-zentrade}-motor:local
+    restart: unless-stopped
+    environment:
+      <<: *ambiente-comum
+      # Dinheiro real não liga por aqui: papel (simulado) ou testnet.
+      MOTOR_REDE: ${MOTOR_REDE:-papel}
+      MOTOR_PAPEL_DADOS: ${MOTOR_PAPEL_DADOS:-testnet}
+      MOTOR_PAPEL_SALDO: ${MOTOR_PAPEL_SALDO:-1000}
+      MOTOR_PAPEL_TAXA: ${MOTOR_PAPEL_TAXA:-0.001}
+      MOTOR_PAPEL_DESLIZAMENTO_BPS: ${MOTOR_PAPEL_DESLIZAMENTO_BPS:-5}
+      MOTOR_ROBOS_ARQUIVO: ${MOTOR_ROBOS_ARQUIVO_DOCKER:-robos.exemplo.json}
+      MOTOR_HISTORICO: ${MOTOR_HISTORICO:-500}
+      MOTOR_AGENTE_OBRIGATORIO: ${MOTOR_AGENTE_OBRIGATORIO:-true}
+      MOTOR_AGENTE_FIXO: ${MOTOR_AGENTE_FIXO:-nunca_concorda}
+      # Vazio = agente fixo acima. Para usar a IA: http://agente:8081 (exige AGENTE_SEGREDO).
+      AGENTE_URL: ${MOTOR_AGENTE_URL:-}
+      AGENTE_SEGREDO: ${AGENTE_SEGREDO:-}
+      BINANCE_API_KEY: ${BINANCE_API_KEY:-}
+      BINANCE_API_SECRET: ${BINANCE_API_SECRET:-}
+      BINANCE_TAXA_ESTIMADA: ${BINANCE_TAXA_ESTIMADA:-0.001}
+    depends_on:
+      migrar: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  agente:
+    profiles: ["app"]
+    build: { context: .., dockerfile: infra/docker/agente.Dockerfile }
+    image: ${ZENTRADE_IMAGEM:-zentrade}-agente:local
+    restart: unless-stopped
+    # Sem "ports": o agente só é alcançado pela rede interna (motor e API).
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-zentrade}:${POSTGRES_PASSWORD:-}@banco:5432/${POSTGRES_DB:-zentrade}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AGENTE_SEGREDO: ${AGENTE_SEGREDO:-}
+      AGENTE_MODELO: ${AGENTE_MODELO:-claude-opus-5}
+      AGENTE_TIMEOUT_MS: ${AGENTE_TIMEOUT_MS:-55000}
+      AGENTE_MAX_SIMULTANEAS: ${AGENTE_MAX_SIMULTANEAS:-4}
+      AGENTE_MAX_POR_MINUTO: ${AGENTE_MAX_POR_MINUTO:-30}
+      ZENTRADE_USUARIO_ID: ${ZENTRADE_USUARIO_ID:-}
+      EMBEDDINGS_PROVEDOR: ${EMBEDDINGS_PROVEDOR:-voyage}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+      VOYAGE_MODELO: ${VOYAGE_MODELO:-voyage-4}
+      OLLAMA_URL: ${OLLAMA_URL_DOCKER:-http://host.docker.internal:11434}
+      OLLAMA_MODELO: ${OLLAMA_MODELO:-bge-m3}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      migrar: { condition: service_completed_successfully }
+
+  web:
+    profiles: ["app"]
+    build: { context: .., dockerfile: infra/docker/web.Dockerfile }
+    image: ${ZENTRADE_IMAGEM:-zentrade}-web:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEB_PORTA_HOST:-8088}:8080"
+    depends_on:
+      api: { condition: service_healthy }
 
 volumes:
   banco:

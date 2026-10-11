@@ -1,4 +1,4 @@
-import type { Intervalo } from "@zentrade/contratos";
+import type { Intervalo } from "@zentrade/contratos/esquemas";
 import { FlaskConical, History, Play } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import type { Backtest } from "../api/esquemas";
@@ -15,6 +15,7 @@ import { Selo } from "../componentes/Selo";
 import { useBacktests, useEstrategias } from "../ganchos/consultas";
 import { useCriarBacktest } from "../ganchos/mutacoes";
 import { formatarDinheiro, formatarPercentual } from "../lib/formatar";
+import { capitalInicial, curvaParaGrafico, fracaoSobre } from "../lib/metricas";
 import { formatarData } from "../lib/tempo";
 
 const DIA = 86_400_000;
@@ -104,49 +105,51 @@ function FormBacktest() {
 function Resultado({ b, nome }: { readonly b: Backtest; readonly nome: string }) {
   const m = b.metricas;
   if (!m || !b.curva) return null;
-  const acerto = m.operacoes ? m.acertos / m.operacoes : 0;
+  const capital = capitalInicial(m, b.curva);
   return (
     <section className="simulacao" aria-labelledby={`sim-${b.id}`}>
       <p className="simulacao__selo">
         <FlaskConical size={14} aria-hidden="true" /> Simulação com dados passados · não é dinheiro real
       </p>
       <h2 id={`sim-${b.id}`} className="simulacao__titulo">
-        {nome} v{b.versao} · {b.simbolo} {b.intervalo} · {b.inicio ? formatarData(b.inicio) : ""} a{" "}
-        {b.fim ? formatarData(b.fim) : ""}
+        {nome} v{b.versao} · {b.simbolo} {b.intervalo} · {formatarData(b.inicio)} a {formatarData(b.fim)}
       </h2>
       <dl className="metricas metricas--simulacao">
         <div className="metrica">
           <dt>Resultado simulado</dt>
           <dd>
-            <Dinheiro valor={m.resultado} sinal colorir />
+            <Dinheiro valor={m.resultadoLiquido} sinal colorir />
           </dd>
-          <p className="metrica__nota num">
-            {formatarPercentual(m.resultadoPercentual, { sinal: true })} sobre{" "}
-            {formatarDinheiro(b.capitalInicial ?? "1000")}
-          </p>
+          {capital ? (
+            <p className="metrica__nota num">
+              {formatarPercentual(fracaoSobre(m.resultadoLiquido, capital), { sinal: true })} sobre{" "}
+              {formatarDinheiro(capital)}
+            </p>
+          ) : null}
         </div>
         <div className="metrica">
           <dt>Maior queda</dt>
           <dd>
-            <Dinheiro valor={m.maiorQueda} colorir />
+            <Dinheiro valor={`-${m.maiorQueda}`} colorir />
           </dd>
+          <p className="metrica__nota num">{formatarPercentual(m.maiorQuedaPercentual)} do pico</p>
         </div>
         <div className="metrica">
           <dt>Taxas simuladas</dt>
-          <dd className="num perda">{formatarDinheiro(m.taxas)}</dd>
+          <dd className="num perda">{formatarDinheiro(m.taxasPagas)}</dd>
         </div>
         <div className="metrica">
           <dt>Operações</dt>
           <dd className="num">{m.operacoes}</dd>
           <p className="metrica__nota">
-            <span className="num">{formatarPercentual(acerto, { casas: 0 })}</span> terminaram no lucro
+            <span className="num">{formatarPercentual(m.taxaAcerto, { casas: 0 })}</span> terminaram no lucro
           </p>
         </div>
       </dl>
       <GraficoLinha
-        pontos={b.curva}
+        pontos={curvaParaGrafico(b.curva)}
         tipo="backtest"
-        rotulo={`Curva simulada do backtest de ${nome}: resultado ${formatarDinheiro(m.resultado, { sinal: true })}, maior queda ${formatarDinheiro(m.maiorQueda)}.`}
+        rotulo={`Curva simulada do backtest de ${nome}: resultado ${formatarDinheiro(m.resultadoLiquido, { sinal: true })}, maior queda ${formatarDinheiro(m.maiorQueda)}.`}
       />
       <p className="simulacao__aviso">
         Resultado passado, mesmo simulado com taxas, não garante resultado futuro. O mercado real tem atrasos
@@ -200,7 +203,8 @@ export function Backtests() {
                     {b.simbolo} · {b.intervalo}
                   </span>
                   <Selo tom={ESTADO[b.estado].tom}>{ESTADO[b.estado].texto}</Selo>
-                  {b.metricas ? <Dinheiro valor={b.metricas.resultado} sinal colorir /> : null}
+                  {b.metricas ? <Dinheiro valor={b.metricas.resultadoLiquido} sinal colorir /> : null}
+                  {b.estado === "falhou" && b.erro ? <span className="perda">{b.erro}</span> : null}
                 </button>
               </li>
             ))}

@@ -4,7 +4,7 @@ import {
   OrdemEsquema,
   PosicaoEsquema,
   RoboEsquema,
-} from "@zentrade/contratos";
+} from "@zentrade/contratos/esquemas";
 import { z } from "zod";
 import { criarCliente, type ClienteApi } from "./cliente";
 import { ehErroApi } from "./erros";
@@ -14,6 +14,7 @@ import {
   CandleApiEsquema,
   ContaCorretoraEsquema,
   DocumentoEsquema,
+  DocumentoIngeridoEsquema,
   ParadaTotalEsquema,
   PontoPatrimonioEsquema,
   ResumoEsquema,
@@ -21,8 +22,8 @@ import {
   SessaoEsquema,
   TokenApiEsquema,
   TokenCriadoEsquema,
-  type Usuario,
 } from "./esquemas";
+import type { Sessao, Usuario } from "@zentrade/contratos/esquemas";
 import type { Fonte } from "./fonte";
 import { conectarTempoReal } from "./tempoReal";
 
@@ -31,9 +32,15 @@ export function criarFonteApi(cliente: ClienteApi = criarCliente()): Fonte {
   const { pedir } = cliente;
   const lista = <T>(e: z.ZodType<T>) => z.array(e);
 
+  /** Toda escrita leva o csrf da sessão: guardamos o que a API devolve. */
+  function lembrar(s: Sessao): Usuario {
+    cliente.definirCsrf?.(s.csrf);
+    return s.usuario;
+  }
+
   async function obterSessao(): Promise<Usuario | null> {
     try {
-      return (await pedir("GET", "/sessao", SessaoEsquema)).usuario;
+      return lembrar(await pedir("GET", "/sessao", SessaoEsquema));
     } catch (e) {
       if (ehErroApi(e) && e.codigo === "nao_autenticado") return null;
       throw e;
@@ -43,9 +50,10 @@ export function criarFonteApi(cliente: ClienteApi = criarCliente()): Fonte {
   return {
     demo: false,
     obterSessao,
-    entrar: async (c) => (await pedir("POST", "/sessao", SessaoEsquema, c)).usuario,
+    entrar: async (c) => lembrar(await pedir("POST", "/sessao", SessaoEsquema, c)),
     sair: async () => {
       await pedir("DELETE", "/sessao", null);
+      cliente.definirCsrf?.(null);
     },
     confirmarIdentidade: async (c) => {
       await pedir("POST", "/sessao/confirmar", null, c);
@@ -94,7 +102,7 @@ export function criarFonteApi(cliente: ClienteApi = criarCliente()): Fonte {
     backtest: (id) => pedir("GET", `/backtests/${encodeURIComponent(id)}`, BacktestEsquema),
 
     documentos: () => pedir("GET", "/conhecimento/documentos", lista(DocumentoEsquema)),
-    criarNota: (n) => pedir("POST", "/conhecimento/notas", DocumentoEsquema, n),
+    criarNota: (n) => pedir("POST", "/conhecimento/notas", DocumentoIngeridoEsquema, n),
     automacoes: () => pedir("GET", "/automacoes", lista(AutomacaoEsquema)),
 
     tempoReal: (o) => conectarTempoReal(o),

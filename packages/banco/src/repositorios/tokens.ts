@@ -63,6 +63,12 @@ export function repositorioTokens(db: Db) {
         return removidos.length > 0;
       }),
 
+    /** Acesso de sistema: o token ainda existe (não foi revogado)? Não marca uso. */
+    async existe(id: string): Promise<boolean> {
+      const [t] = await db.select({ id: tokensApi.id }).from(tokensApi).where(eq(tokensApi.id, id));
+      return t !== undefined;
+    },
+
     /** Acesso de sistema: o token é o que diz quem é a pessoa. Marca o último uso. */
     async porHash(hash: string): Promise<{ id: string; usuarioId: string; escopo: Escopo } | null> {
       const [t] = await db

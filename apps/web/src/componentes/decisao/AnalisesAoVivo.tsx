@@ -1,4 +1,4 @@
-import type { RoboDTO } from "@zentrade/contratos";
+import type { RoboDTO } from "@zentrade/contratos/esquemas";
 import { lojaAnalises } from "../../ganchos/lojas";
 import { useLoja } from "../../lib/loja";
 import { Pensando } from "./Pensando";

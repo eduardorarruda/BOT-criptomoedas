@@ -1,6 +1,6 @@
 import { verificar, type PropostaCriada } from "@zentrade/contratos";
 import { describe, expect, it, vi } from "vitest";
-import { criarClienteN8n } from "./n8n.js";
+import { criarClienteN8n, n8nComRegistro } from "./n8n.js";
 
 const SEGREDO = "s".repeat(40);
 const proposta: PropostaCriada = {
@@ -53,5 +53,24 @@ describe("envio para o n8n", () => {
     const n8n = criarClienteN8n({ url: "http://n8n:5678", segredo: SEGREDO, buscar, agora: () => 1 });
     await expect(n8n.enviarProposta({ ...proposta, resumo: "x".repeat(1001) })).rejects.toThrow();
     expect(buscar).not.toHaveBeenCalled();
+  });
+});
+
+describe("status das automações a partir dos envios", () => {
+  it("anota sucesso e falha de cada envio, sem engolir o erro", async () => {
+    const registro = { registrar: vi.fn(async () => undefined) };
+    const cliente = {
+      enviarProposta: vi.fn(async () => undefined),
+      enviarAlerta: vi.fn(async () => Promise.reject(new Error("n8n fora"))),
+    };
+    const comRegistro = n8nComRegistro(cliente, registro);
+    await comRegistro.enviarProposta(proposta);
+    await expect(comRegistro.enviarAlerta({ tipo: "x", titulo: "t", mensagem: "m", em: 1 })).rejects.toThrow(
+      /n8n fora/,
+    );
+    expect(registro.registrar.mock.calls).toEqual([
+      ["zentrade-aprovacao", true],
+      ["zentrade-alertas", false],
+    ]);
   });
 });

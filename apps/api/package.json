@@ -20,7 +20,8 @@
     "test": "vitest run --coverage",
     "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts",
     "iniciar": "node --env-file-if-exists=../../.env dist/servidor.js",
-    "criar-usuario": "node --env-file-if-exists=../../.env dist/comandos/criar-usuario.js"
+    "criar-usuario": "node --env-file-if-exists=../../.env dist/comandos/criar-usuario.js",
+    "dev": "tsc -p tsconfig.build.json && (tsc -p tsconfig.build.json --watch --preserveWatchOutput & node --env-file-if-exists=../../.env --watch dist/servidor.js)"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.3",
@@ -30,6 +31,7 @@
     "@fastify/websocket": "^11.3.4",
     "@node-rs/argon2": "^2.2.2",
     "@zentrade/banco": "workspace:*",
+    "@zentrade/conhecimento": "workspace:*",
     "@zentrade/contratos": "workspace:*",
     "@zentrade/dominio": "workspace:*",
     "bullmq": "^6.3.12",

@@ -3,7 +3,7 @@ import { criarBuscaHibrida, criarRepositorioPostgres, embeddingsDoAmbiente } fro
 import pino from "pino";
 import postgres from "postgres";
 import { Analista } from "./analista.js";
-import { configDoAgente } from "./config.js";
+import { configDoAgente, semVazias } from "./config.js";
 import { criarHistoricoPostgres } from "./postgres/historico.js";
 import { criarServidor } from "./servidor.js";
 
@@ -14,7 +14,7 @@ async function iniciar(): Promise<void> {
   const sql = postgres(config.urlBanco, { max: 5 });
   const busca = criarBuscaHibrida({
     repositorio: criarRepositorioPostgres(sql),
-    embeddings: embeddingsDoAmbiente(process.env),
+    embeddings: embeddingsDoAmbiente(semVazias(process.env)),
   });
   const analista = new Analista({
     cliente: new Anthropic({ apiKey: config.chaveAnthropic }),

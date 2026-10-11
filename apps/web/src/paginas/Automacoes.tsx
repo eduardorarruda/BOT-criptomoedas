@@ -64,8 +64,10 @@ export function Automacoes() {
             <ErroCarregar erro={consulta.error} tentarDeNovo={() => void consulta.refetch()} />
           ) : null}
           {consulta.data?.length === 0 ? (
-            <EstadoVazio icone={Workflow} titulo="Nenhum fluxo">
-              Importe os fluxos de exemplo no n8n para receber aprovações e alertas.
+            <EstadoVazio icone={Workflow} titulo="Nenhum sinal dos fluxos ainda">
+              A API mostra aqui os fluxos do n8n que já falaram com ela: webhooks assinados recebidos (vigia
+              de saúde, notícias, aprovação) e avisos que ela enviou (propostas, alertas). Importe e ative os
+              fluxos de infra/n8n; o status aparece depois da primeira execução.
             </EstadoVazio>
           ) : null}
           <ul role="list" className="fluxos">

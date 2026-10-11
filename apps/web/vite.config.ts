@@ -1,17 +1,12 @@
-import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 /**
- * O @zentrade/contratos reexporta a assinatura dos webhooks, que usa node:crypto.
- * A tela nunca assina nada: o stub troca o módulo por funções que recusam, e o
- * navegador não carrega código de servidor.
+ * A tela importa só `@zentrade/contratos/esquemas`, que não tem código de servidor
+ * (node:crypto fica na assinatura dos webhooks, fora desse subcaminho).
  */
-const stubCrypto = fileURLToPath(new URL("./src/lib/stub-crypto.ts", import.meta.url));
-
 export default defineConfig({
   plugins: [react()],
-  resolve: { alias: { "node:crypto": stubCrypto } },
   server: {
     port: 5173,
     proxy: {
@@ -37,7 +32,7 @@ export default defineConfig({
         "src/demo/**/*.ts",
         "src/componentes/graficos/velas.ts",
       ],
-      exclude: ["src/**/*.test.{ts,tsx}", "src/lib/stub-crypto.ts"],
+      exclude: ["src/**/*.test.{ts,tsx}"],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
   },

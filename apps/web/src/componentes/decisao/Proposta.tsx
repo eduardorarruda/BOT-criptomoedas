@@ -1,4 +1,4 @@
-import type { PropostaAgente } from "@zentrade/contratos";
+import type { PropostaAgente } from "@zentrade/contratos/esquemas";
 import {
   BookOpen,
   FileText,

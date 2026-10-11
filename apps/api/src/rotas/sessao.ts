@@ -1,4 +1,5 @@
 import type { Usuario } from "@zentrade/banco";
+import { CODIGOS_ERRO, SessaoEsquema } from "@zentrade/contratos";
 import type { FastifyReply } from "fastify";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -22,7 +23,12 @@ const credenciaisInvalidas = () =>
 
 async function conferirSegundoFator(deps: Dependencias, usuario: Usuario, codigo?: string): Promise<void> {
   if (!usuario.doisFatores) return;
-  if (!codigo) throw new ErroApi(401, "2fa_necessario", "informe o código de 6 dígitos do app autenticador");
+  if (!codigo)
+    throw new ErroApi(
+      401,
+      CODIGOS_ERRO.codigo2faNecessario,
+      "informe o código de 6 dígitos do app autenticador",
+    );
   const segredo = await deps.banco.usuarios.segredo2fa(usuario.id);
   if (!segredo || !(await verificarCodigoTotp(segredo, codigo))) {
     throw new ErroApi(
@@ -54,7 +60,10 @@ export const rotasSessao: FastifyPluginAsyncZod<{ deps: Dependencias }> = async 
 
   app.post(
     "/sessao",
-    { config: { acesso: "publico", rateLimit: LIMITE_LOGIN }, schema: { body: Login } },
+    {
+      config: { acesso: "publico", rateLimit: LIMITE_LOGIN },
+      schema: { body: Login, response: { 200: SessaoEsquema } },
+    },
     async (req, reply) => {
       const encontrado = await deps.banco.usuarios.porEmail(req.body.email);
       // Confere contra um hash falso quando o e-mail não existe: mesmo tempo de resposta.
@@ -71,7 +80,8 @@ export const rotasSessao: FastifyPluginAsyncZod<{ deps: Dependencias }> = async 
     },
   );
 
-  app.get("/sessao", { config: { acesso: "sessao" } }, async (req) => {
+  const resposta = { response: { 200: SessaoEsquema } };
+  app.get("/sessao", { config: { acesso: "sessao" }, schema: resposta }, async (req) => {
     const s = sessaoDe(req);
     return { usuario: publico(s.usuario), csrf: s.csrf };
   });

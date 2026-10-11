@@ -1,4 +1,4 @@
-import type { DecisaoDTO, OrdemDTO, RoboDTO } from "@zentrade/contratos";
+import type { DecisaoDTO, OrdemDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useFonte } from "../api/contexto";

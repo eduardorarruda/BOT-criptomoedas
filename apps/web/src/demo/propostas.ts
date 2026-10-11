@@ -1,4 +1,4 @@
-import type { Fonte as FonteProposta, PropostaAgente } from "@zentrade/contratos";
+import type { Fonte as FonteProposta, PropostaAgente } from "@zentrade/contratos/esquemas";
 
 /** Textos das propostas de exemplo: o tipo de raciocínio que o agente devolve. */
 const F = {

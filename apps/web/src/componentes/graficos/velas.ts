@@ -1,5 +1,5 @@
-import type { DecisaoDTO } from "@zentrade/contratos";
-import { MS_POR_INTERVALO, type Intervalo } from "@zentrade/contratos";
+import type { DecisaoDTO } from "@zentrade/contratos/esquemas";
+import { MS_POR_INTERVALO, type Intervalo } from "@zentrade/contratos/esquemas";
 import type { CandlestickData, SeriesMarker, UTCTimestamp } from "lightweight-charts";
 import type { CandleApi } from "../../api/esquemas";
 import type { CoresGrafico } from "./cores";

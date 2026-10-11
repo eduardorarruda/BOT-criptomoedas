@@ -1,4 +1,4 @@
-import type { DecisaoDTO, Intervalo } from "@zentrade/contratos";
+import type { DecisaoDTO, Intervalo } from "@zentrade/contratos/esquemas";
 import {
   CandlestickSeries,
   createChart,

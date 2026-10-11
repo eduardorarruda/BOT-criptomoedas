@@ -1,6 +1,7 @@
-import type { DecisaoDTO, OrdemDTO, RoboDTO } from "@zentrade/contratos";
+import type { DecisaoDTO, OrdemDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { dec, validarEstrategia } from "@zentrade/dominio";
 import { ErroApi } from "../api/erros";
+import type { Backtest } from "../api/esquemas";
 import type { Fonte, OuvintesTempoReal } from "../api/fonte";
 import { criarAleatorio, type Aleatorio } from "./aleatorio";
 import { decisaoDaAnalise, etapasPara, eventoEtapa } from "./analise";
@@ -327,7 +328,16 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
 
     backtests: comAtraso(() => [...estado.backtests]),
     criarBacktest: comAtraso((p) => {
-      const b = { id: novoId("b"), estado: "na_fila" as const, ...p, capitalInicial: "1000" };
+      const b: Backtest = {
+        id: novoId("b"),
+        estado: "na_fila",
+        ...p,
+        metricas: null,
+        curva: null,
+        erro: null,
+        criadoEm: agora(),
+        concluidoEm: null,
+      };
       mudar((e) => ({ ...e, backtests: [b, ...e.backtests] }));
       setTimeout(
         () =>
@@ -341,7 +351,7 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
         () =>
           mudar((e) => ({
             ...e,
-            backtests: e.backtests.map((x) => (x.id === b.id ? simularBacktest(b) : x)),
+            backtests: e.backtests.map((x) => (x.id === b.id ? simularBacktest(b, agora()) : x)),
           })),
         5000,
       );
@@ -359,11 +369,12 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
         id: novoId("doc"),
         fonte: "nota" as const,
         titulo: n.titulo,
+        url: null,
         publicadoEm: agora(),
-        trechos: Math.max(1, Math.ceil(n.texto.length / 800)),
+        criadoEm: agora(),
       };
       mudar((e) => ({ ...e, documentos: [doc, ...e.documentos] }));
-      return doc;
+      return { ...doc, novo: true, trechos: Math.max(1, Math.ceil(n.texto.length / 800)) };
     }),
     automacoes: comAtraso(() => [...estado.automacoes]),
 

@@ -1,6 +1,5 @@
-import { createHash } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
-import { comoUsuario, type Db } from "../cliente.js";
+import { comoUsuario, type Db, type Tx } from "../cliente.js";
 import { ms } from "../conversao.js";
 import { ErroDados } from "../erros.js";
 import { DIMENSOES_EMBEDDING, documentos, FONTES, trechos } from "../esquema/index.js";
@@ -17,20 +16,28 @@ export interface Documento {
   readonly criadoEm: number;
 }
 
-export interface NovoDocumento {
+/**
+ * Documento pronto para gravar, no formato da porta `RepositorioConhecimento` de
+ * @zentrade/conhecimento (que normaliza o texto, calcula o hash e gera os ids).
+ */
+export interface DocumentoParaGravar {
+  readonly id: string;
+  readonly usuarioId: string;
   readonly fonte: Fonte;
   readonly titulo: string;
-  readonly url?: string;
-  readonly publicadoEm: number;
-  /** Texto completo: define o hash que evita ingerir o mesmo conteúdo duas vezes. */
-  readonly texto: string;
-  readonly trechos: readonly { readonly texto: string; readonly embedding: readonly number[] }[];
+  readonly url: string | null;
+  readonly publicadoEm: Date;
+  readonly hashConteudo: string;
 }
 
-export const hashConteudo = (texto: string): string =>
-  createHash("sha256").update(texto, "utf8").digest("hex");
+export interface TrechoParaGravar {
+  readonly id: string;
+  readonly ordem: number;
+  readonly texto: string;
+  readonly embedding: readonly number[];
+}
 
-function validarTrechos(lista: NovoDocumento["trechos"]): void {
+function validarTrechos(lista: readonly TrechoParaGravar[]): void {
   if (lista.length === 0) throw new ErroDados("invalido", "o documento precisa de pelo menos um trecho");
   const errado = lista.find((t) => t.embedding.length !== DIMENSOES_EMBEDDING);
   if (errado) {
@@ -41,6 +48,27 @@ function validarTrechos(lista: NovoDocumento["trechos"]): void {
   }
 }
 
+const paraDocumento = (d: typeof documentos.$inferSelect): Documento => ({
+  id: d.id,
+  fonte: d.fonte,
+  titulo: d.titulo,
+  url: d.url,
+  publicadoEm: ms(d.publicadoEm),
+  criadoEm: ms(d.criadoEm),
+});
+
+async function idPorHash(tx: Tx, usuarioId: string, hash: string): Promise<string | null> {
+  const [linha] = await tx
+    .select({ id: documentos.id })
+    .from(documentos)
+    .where(and(eq(documentos.usuarioId, usuarioId), eq(documentos.hashConteudo, hash)));
+  return linha?.id ?? null;
+}
+
+/**
+ * O RAG visto pela API. A gravação segue a porta de @zentrade/conhecimento (a API
+ * usa a mesma ingestão do agente: mesmo divisor, mesmo hash), mas roda sob RLS.
+ */
 export function repositorioConhecimento(db: Db) {
   return {
     listar: (usuarioId: string, limite?: number): Promise<Documento[]> =>
@@ -50,51 +78,46 @@ export function repositorioConhecimento(db: Db) {
           .from(documentos)
           .orderBy(desc(documentos.publicadoEm))
           .limit(limitar(limite));
-        return linhas.map((d) => ({
-          id: d.id,
-          fonte: d.fonte,
-          titulo: d.titulo,
-          url: d.url,
-          publicadoEm: ms(d.publicadoEm),
-          criadoEm: ms(d.criadoEm),
-        }));
+        return linhas.map(paraDocumento);
       }),
 
+    obter: (usuarioId: string, id: string): Promise<Documento | null> =>
+      comoUsuario(db, usuarioId, async (tx) => {
+        const [d] = await tx.select().from(documentos).where(eq(documentos.id, id));
+        return d ? paraDocumento(d) : null;
+      }),
+
+    documentoPorHash: (usuarioId: string, hash: string): Promise<string | null> =>
+      comoUsuario(db, usuarioId, (tx) => idPorHash(tx, usuarioId, hash)),
+
     /** Grava documento e trechos juntos. Conteúdo repetido não duplica: devolve o documento que já existe. */
-    async ingerir(usuarioId: string, doc: NovoDocumento): Promise<{ id: string; novo: boolean }> {
-      validarTrechos(doc.trechos);
-      const hash = hashConteudo(doc.texto);
-      return comoUsuario(db, usuarioId, async (tx) => {
+    async gravarDocumento(
+      doc: DocumentoParaGravar,
+      lista: readonly TrechoParaGravar[],
+    ): Promise<{ documentoId: string; novo: boolean }> {
+      validarTrechos(lista);
+      return comoUsuario(db, doc.usuarioId, async (tx) => {
         const [criado] = await tx
           .insert(documentos)
-          .values({
-            usuarioId,
-            fonte: doc.fonte,
-            titulo: doc.titulo,
-            url: doc.url ?? null,
-            publicadoEm: new Date(doc.publicadoEm),
-            hashConteudo: hash,
-          })
+          .values(doc)
           .onConflictDoNothing({ target: [documentos.usuarioId, documentos.hashConteudo] })
           .returning({ id: documentos.id });
         if (!criado) {
-          const [existente] = await tx
-            .select({ id: documentos.id })
-            .from(documentos)
-            .where(and(eq(documentos.usuarioId, usuarioId), eq(documentos.hashConteudo, hash)));
+          const existente = await idPorHash(tx, doc.usuarioId, doc.hashConteudo);
           if (!existente) throw new Error("documento repetido sumiu durante a ingestão");
-          return { id: existente.id, novo: false };
+          return { documentoId: existente, novo: false };
         }
         await tx.insert(trechos).values(
-          doc.trechos.map((t, ordem) => ({
+          lista.map((t) => ({
+            id: t.id,
             documentoId: criado.id,
-            usuarioId,
-            ordem,
+            usuarioId: doc.usuarioId,
+            ordem: t.ordem,
             texto: t.texto,
             embedding: [...t.embedding],
           })),
         );
-        return { id: criado.id, novo: true };
+        return { documentoId: criado.id, novo: true };
       });
     },
   };

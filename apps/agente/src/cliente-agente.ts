@@ -4,6 +4,7 @@ import {
   type PedidoAnalise,
   type PortaAgente,
   type RespostaAnalise,
+  ErroRespostaEsquema,
 } from "@zentrade/contratos";
 import { dec } from "@zentrade/dominio";
 import { z } from "zod";
@@ -24,10 +25,9 @@ export interface OpcoesClienteAgente {
 }
 
 const RespostaJson = z.object({ proposta: PropostaAgenteEsquema, custoUsd: TextoDecimal });
-const ErroJson = z.object({ erro: z.object({ codigo: z.string(), mensagem: z.string() }) });
 
 async function lerErro(r: Response): Promise<string> {
-  const corpo = ErroJson.safeParse(await r.json().catch(() => null));
+  const corpo = ErroRespostaEsquema.safeParse(await r.json().catch(() => null));
   const detalhe = corpo.success ? `${corpo.data.erro.codigo}: ${corpo.data.erro.mensagem}` : "sem detalhe";
   const dica = r.status === 401 ? " Confira se AGENTE_SEGREDO é o mesmo no motor e no agente." : "";
   return `O agente respondeu ${r.status} (${detalhe}).${dica}`;

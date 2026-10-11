@@ -2,7 +2,7 @@
 
 Como colocar o ZenTrade de pé e conduzir um robô da observação até o modo automático, com segurança. Leia também [segurança](seguranca.md) e [estratégias](estrategias.md).
 
-> **Estado do projeto.** Os serviços (`apps/api`, `apps/motor`, `apps/agente`, `apps/web`) e o `docker-compose` ainda estão em construção. Os passos abaixo seguem o [contrato entre os serviços](contrato-api.md); onde um comando depende de algo que ainda não existe, isso está marcado como **pendente**.
+> **Estado do projeto.** Os quatro serviços (`apps/api`, `apps/motor`, `apps/agente`, `apps/web`) existem, têm testes e sobem juntos pelo `docker-compose` (perfil `app`). O que ainda **não** foi exercitado de ponta a ponta: ordens na testnet da Binance com chave de verdade, análises com a API da Anthropic de verdade e os fluxos do n8n contra o Telegram. Os passos abaixo seguem o [contrato entre os serviços](contrato-api.md); o que ainda falta está marcado como **pendente**.
 
 ## Subir o ambiente
 
@@ -17,18 +17,51 @@ corepack pnpm check         # lint, tipos e testes
 
 Segredos que você gera (cada um com `openssl rand -hex 32`, guardados num gerenciador de senhas):
 
-| Variável              | Para quê                                                     |
-| --------------------- | ------------------------------------------------------------ |
-| `N8N_WEBHOOK_SEGREDO` | assinatura dos webhooks entre a API e o n8n (32+ caracteres) |
-| `AGENTE_SEGREDO`      | autenticação do motor no agente de IA                        |
+| Variável                | Para quê                                                           |
+| ----------------------- | ------------------------------------------------------------------ |
+| `N8N_WEBHOOK_SEGREDO`   | assinatura dos webhooks entre a API e o n8n (32+ caracteres)       |
+| `AGENTE_SEGREDO`        | autenticação do motor no agente de IA                              |
+| `ZENTRADE_CHAVE_MESTRA` | cifra das chaves da corretora e do 2FA (`openssl rand -base64 32`) |
 
-Serviços e portas em desenvolvimento: API `8080`, agente `8081` (só rede interna), tela `5173`, PostgreSQL `55432`, Redis `56379`, n8n `5678`. **Pendente:** o `docker-compose` que sobe tudo junto.
+### Tudo em containers (perfil `app`)
 
-Confira a saúde: `GET /api/v1/saude` responde `{ ok, servicos: { banco, redis, motor, agente } }` sem precisar de login.
+```bash
+docker compose --env-file .env -f infra/docker-compose.yml --profile app up -d --build
+```
+
+Sobe banco, Redis e n8n, aplica as migrações (serviço `migrar`, que sai ao terminar) e só então a API, o motor, o agente e a tela. A tela fica em <http://localhost:8088> (nginx, com a API atrás de `/api`); a API também responde em `127.0.0.1:8080` para a CLI. Tudo preso em `127.0.0.1`; o agente e o motor não publicam porta. As portas mudam por `*_PORTA_HOST` no `.env`. Com o perfil `app`, ponha `ZENTRADE_API_URL_PARA_N8N=http://api:8080` para o n8n achar a API.
+
+O motor sobe em papel com o agente fixo (`MOTOR_AGENTE_FIXO`); para usar a IA, defina `MOTOR_AGENTE_URL=http://agente:8081` e `AGENTE_SEGREDO`. O agente precisa de `ANTHROPIC_API_KEY` para subir, e os embeddings de `VOYAGE_API_KEY` (ou `EMBEDDINGS_PROVEDOR=ollama` com o Ollama no host).
+
+Para derrubar: `docker compose -f infra/docker-compose.yml --profile app down` (com `-v` apaga também os dados).
+
+### Desenvolvimento sem Docker para os serviços
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.yml up -d   # só banco, Redis e n8n
+corepack pnpm --filter @zentrade/banco build && corepack pnpm --filter @zentrade/banco migrar
+corepack pnpm dev           # API (8080) e tela (5173) com recarga
+corepack pnpm dev:motor     # motor, em outro terminal
+corepack pnpm dev:agente    # agente, em outro terminal (opcional)
+```
+
+Serviços e portas em desenvolvimento: API `8080`, agente `8081` (só rede interna), tela `5173`, PostgreSQL `55432`, Redis `56379`, n8n `5678`.
+
+Confira a saúde: `GET /api/v1/saude` responde `{ ok, servicos: { banco, redis, motor, agente } }` sem precisar de login. `motor: true` depende da batida que o motor grava no Redis (`zentrade:motor:batida`); **pendente:** o motor desta versão ainda não grava essa batida, então aparece `false` mesmo no ar.
 
 ## Criar o primeiro usuário
 
-**Pendente:** o comando de criação do primeiro usuário será definido em `apps/api`. Depois de criado:
+A pessoa é criada por linha de comando (não há cadastro aberto pela tela). A senha é pedida sem eco (mínimo 12 caracteres):
+
+```bash
+corepack pnpm --filter @zentrade/api build
+corepack pnpm --filter @zentrade/api criar-usuario -- --email voce@exemplo.com --nome "Você"
+# no Docker:
+docker compose --env-file .env -f infra/docker-compose.yml --profile app run --rm api \
+  node dist/comandos/criar-usuario.js --email voce@exemplo.com --nome "Você"
+```
+
+Com mais de uma pessoa cadastrada, defina `N8N_USUARIO_ID` com o id de quem recebe as notícias do n8n (o comando mostra o id); sem isso, a API recusa o conhecimento que chega pelo n8n. Depois de criada:
 
 1. Entre pela tela (`POST /api/v1/sessao` por trás).
 2. Ligue o **2FA** logo no primeiro acesso.
@@ -37,8 +70,8 @@ Confira a saúde: `GET /api/v1/saude` responde `{ ok, servicos: { banco, redis, 
 ## Conectar a testnet
 
 1. Crie uma conta em <https://testnet.binance.vision> e gere uma chave de API (o saldo é fictício).
-2. No `.env`, deixe `BINANCE_REDE=testnet`.
-3. Na tela, cadastre a conta da corretora (rede `testnet`, chave e segredo). A tela pede sua senha ou código 2FA de novo (reautenticação), e depois só mostra o final da chave (`…a1b2`).
+2. No `.env`, use `MOTOR_REDE=testnet` e preencha `BINANCE_API_KEY` e `BINANCE_API_SECRET` (o motor desta versão lê as chaves do ambiente).
+3. Na tela, cadastre a conta da corretora (rede `testnet`, chave e segredo). A tela pede sua senha ou código 2FA de novo (reautenticação), e depois só mostra o final da chave (`…a1b2`). **Pendente:** o motor passar a usar a conta cifrada no banco em vez das variáveis de ambiente.
 
 Quando for para a rede real, repita com uma chave **sem permissão de saque** e **restrita ao IP do servidor**.
 
@@ -109,16 +142,17 @@ O Redis não precisa de backup: eventos e fila se refazem.
 
 Primeiro passo, sempre: **na dúvida, ligue a parada total**. Depois investigue.
 
-| Sintoma                                | O que fazer                                                                                                                                                          |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Aviso "motor sem sinal" no Telegram    | A parada total já foi ligada. Veja os logs do motor e `GET /api/v1/saude`. Com o motor de volta, confira posições e decisões e só então desligue a parada pela tela. |
-| Aviso "API não respondeu"              | O vigia não consegue ligar a parada por ela. Entre no servidor; se precisar, pare o motor (`docker stop`) — sem motor, nenhuma ordem sai.                            |
-| Decisões sem proposta da IA            | O agente caiu, demorou mais de 60 s ou respondeu fora do esquema. O robô não opera nesses casos. Veja os logs do agente e o custo de IA no relatório.                |
-| Ordem rejeitada pela corretora         | O motivo fica na ordem (`GET /api/v1/ordens`). Comum: filtros de lote ou valor mínimo mudaram, saldo insuficiente, chave sem permissão de negociar.                  |
-| Posição na tela diferente da corretora | A posição é calculada das execuções confirmadas. Procure ordem pendente ou parcial; o motor reconcilia pelo `idCliente`. Não "corrija" a posição na mão.             |
-| Perda diária atingida                  | Compras param até o dia seguinte; vendas que encerram posição continuam. Use a pausa para revisar a estratégia antes de mexer nos limites.                           |
-| Webhook do n8n devolvendo 401          | O segredo da credencial do n8n não é o mesmo de `N8N_WEBHOOK_SEGREDO`, ou o relógio de um dos servidores está errado (a assinatura vale 5 min).                      |
-| Telegram não recebe nada               | Confira a credencial do bot, `TELEGRAM_CHAT_ID` e se você mandou mensagem ao bot antes. Veja as execuções com erro no n8n.                                           |
-| O n8n caiu                             | O núcleo segue. Propostas em `sugerir` expiram sem resposta; alertas e relatório atrasam. Suba o n8n de novo.                                                        |
-| Suspeita de chave vazada               | Ligue a parada total, **apague a chave na Binance**, remova a conta-corretora na tela, gere uma nova (sem saque, com IP) e troque os segredos do `.env`.             |
-| Suspeita de token vazado               | Revogue na tela (Tokens) e crie outro. Se for o do n8n, atualize a credencial.                                                                                       |
+| Sintoma                                | O que fazer                                                                                                                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Aviso "motor sem sinal" no Telegram    | A parada total já foi ligada. Veja os logs do motor e `GET /api/v1/saude`. Com o motor de volta, confira posições e decisões e só então desligue a parada pela tela.     |
+| Aviso "API não respondeu"              | O vigia não consegue ligar a parada por ela. Entre no servidor; se precisar, pare o motor (`docker stop`) — sem motor, nenhuma ordem sai.                                |
+| Decisões sem proposta da IA            | O agente caiu, demorou mais de 60 s ou respondeu fora do esquema. O robô não opera nesses casos. Veja os logs do agente e o custo de IA no relatório.                    |
+| Ordem rejeitada pela corretora         | O motivo fica na ordem (`GET /api/v1/ordens`). Comum: filtros de lote ou valor mínimo mudaram, saldo insuficiente, chave sem permissão de negociar.                      |
+| Posição na tela diferente da corretora | A posição é calculada das execuções confirmadas. Procure ordem pendente ou parcial; o motor reconcilia pelo `idCliente`. Não "corrija" a posição na mão.                 |
+| Perda diária atingida                  | Compras param até o dia seguinte; vendas que encerram posição continuam. Use a pausa para revisar a estratégia antes de mexer nos limites.                               |
+| Webhook do n8n devolvendo 401          | O segredo da credencial do n8n não é o mesmo de `N8N_WEBHOOK_SEGREDO`, ou o relógio de um dos servidores está errado (a assinatura vale 5 min).                          |
+| Webhook do n8n devolvendo 409          | `webhook_repetido`: a mesma requisição assinada chegou duas vezes (retentativa do n8n). Assine de novo a cada envio. `n8n_usuario_obrigatorio`: defina `N8N_USUARIO_ID`. |
+| Telegram não recebe nada               | Confira a credencial do bot, `TELEGRAM_CHAT_ID` e se você mandou mensagem ao bot antes. Veja as execuções com erro no n8n.                                               |
+| O n8n caiu                             | O núcleo segue. Propostas em `sugerir` expiram sem resposta; alertas e relatório atrasam. Suba o n8n de novo.                                                            |
+| Suspeita de chave vazada               | Ligue a parada total, **apague a chave na Binance**, remova a conta-corretora na tela, gere uma nova (sem saque, com IP) e troque os segredos do `.env`.                 |
+| Suspeita de token vazado               | Revogue na tela (Tokens) e crie outro. Se for o do n8n, atualize a credencial.                                                                                           |

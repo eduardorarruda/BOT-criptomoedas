@@ -110,7 +110,20 @@ describe("cliente da API", () => {
 
 describe("lerCookieCsrf", () => {
   it("lê o cookie do token CSRF", () => {
-    expect(lerCookieCsrf("a=1; zentrade_csrf=abc%3D; b=2")).toBe("abc=");
+    expect(lerCookieCsrf("a=1; zt_csrf=abc%3D; b=2")).toBe("abc=");
     expect(lerCookieCsrf("a=1")).toBeNull();
+  });
+});
+
+describe("csrf da sessão", () => {
+  it("usa o csrf guardado da sessão e esquece ao sair", async () => {
+    const fetchFalso = vi.fn(async (..._a: Parameters<typeof fetch>) => new Response(null, { status: 204 }));
+    const cliente = criarCliente({ fetch: fetchFalso });
+    cliente.definirCsrf?.("da-sessao");
+    await cliente.pedir("POST", "/x", null, {});
+    expect(new Headers(fetchFalso.mock.calls[0]![1]!.headers).get(CABECALHO_CSRF)).toBe("da-sessao");
+    cliente.definirCsrf?.(null);
+    await cliente.pedir("POST", "/x", null, {});
+    expect(new Headers(fetchFalso.mock.calls[1]![1]!.headers).has(CABECALHO_CSRF)).toBe(false);
   });
 });

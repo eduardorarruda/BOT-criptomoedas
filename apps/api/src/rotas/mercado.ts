@@ -1,4 +1,10 @@
-import { Intervalo, MS_POR_INTERVALO } from "@zentrade/contratos";
+import {
+  CandleApiEsquema,
+  Intervalo,
+  MS_POR_INTERVALO,
+  PontoPatrimonioEsquema,
+  ResumoEsquema,
+} from "@zentrade/contratos";
 import { LIMITE_MAXIMO_LISTA } from "@zentrade/banco";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -12,11 +18,15 @@ const Periodo = z.object({
   inicio: z.coerce.number().int().nonnegative().optional(),
   fim: z.coerce.number().int().nonnegative().optional(),
 });
+const Dias = z.object({ dias: z.coerce.number().int().min(1).max(365).optional() });
 
 export const rotasMercado: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (app, { deps }) => {
   app.get(
     "/mercado/:simbolo/candles",
-    { config: { acesso: "leitura" }, schema: { params: Simbolo, querystring: Periodo } },
+    {
+      config: { acesso: "leitura" },
+      schema: { params: Simbolo, querystring: Periodo, response: { 200: z.array(CandleApiEsquema) } },
+    },
     async (req) => {
       const { intervalo } = req.query;
       const fim = req.query.fim ?? deps.agora();
@@ -27,7 +37,19 @@ export const rotasMercado: FastifyPluginAsyncZod<{ deps: Dependencias }> = async
     },
   );
 
-  app.get("/resumo", { config: { acesso: "leitura" } }, async (req) =>
-    deps.banco.resumo.resumo(usuarioIdDe(req), deps.agora()),
+  app.get(
+    "/resumo",
+    { config: { acesso: "leitura" }, schema: { response: { 200: ResumoEsquema } } },
+    async (req) => deps.banco.resumo.resumo(usuarioIdDe(req), deps.agora()),
+  );
+
+  // Curva real: resultado realizado acumulado por dia, das execuções confirmadas.
+  app.get(
+    "/patrimonio",
+    {
+      config: { acesso: "leitura" },
+      schema: { querystring: Dias, response: { 200: z.array(PontoPatrimonioEsquema) } },
+    },
+    async (req) => deps.banco.resumo.patrimonio(usuarioIdDe(req), deps.agora(), req.query.dias ?? 30),
   );
 };

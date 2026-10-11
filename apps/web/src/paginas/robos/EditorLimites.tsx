@@ -1,5 +1,5 @@
 /** Os limites que o motor de risco aplica ao robô. Valores em dólar aceitam vírgula. */
-import type { LimitesRiscoDTO } from "@zentrade/contratos";
+import type { LimitesRiscoDTO } from "@zentrade/contratos/esquemas";
 import { Save } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Botao } from "../../componentes/Botao";

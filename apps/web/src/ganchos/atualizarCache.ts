@@ -1,4 +1,4 @@
-import type { DecisaoDTO, OrdemDTO, RoboDTO } from "@zentrade/contratos";
+import type { DecisaoDTO, OrdemDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import type { EventoAnalise } from "../api/esquemas";
 import type { FiltroDecisoes } from "../api/fonte";
 

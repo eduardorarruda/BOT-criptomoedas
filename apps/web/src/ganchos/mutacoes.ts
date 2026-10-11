@@ -1,4 +1,4 @@
-import type { DecisaoDTO } from "@zentrade/contratos";
+import type { DecisaoDTO } from "@zentrade/contratos/esquemas";
 import { useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useFonte } from "../api/contexto";
 import type { EscopoToken } from "../api/esquemas";

@@ -17,6 +17,7 @@ function resumoBruto(r: Resumo): string {
     `Maior queda (30 dias): ${dolar(r.maiorQueda30d)}`,
     `Robôs ativos: ${r.robosAtivos}`,
     `Custo de IA hoje: ${dolar(r.custoIaHoje)}`,
+    `Taxas pagas hoje: ${dolar(r.taxasHoje)}`,
   ].join("\n");
 }
 
@@ -75,10 +76,21 @@ function explicacaoBruta(d: DecisaoDetalhe): string {
   ].join("\n");
 }
 
+function metricasBrutas(m: NonNullable<Backtest["metricas"]>): string[] {
+  return [
+    `Resultado líquido (simulado): ${dolar(m.resultadoLiquido)}`,
+    `Maior queda: ${dolar(m.maiorQueda)} (${porcento(m.maiorQuedaPercentual)} do pico)`,
+    `Operações: ${m.operacoes} · acertos ${m.acertos} (${porcento(m.taxaAcerto)})`,
+    `Taxas pagas: ${dolar(m.taxasPagas)}`,
+  ];
+}
+
 function backtestBruto(b: Backtest): string {
-  const { id, estado, ...resto } = b;
-  const detalhes = Object.keys(resto).length > 0 ? `\n${JSON.stringify(resto, null, 2)}` : "";
-  return `Backtest ${id}: ${estado}${detalhes}`;
+  return [
+    `Backtest ${b.id}: ${b.estado} — ${b.simbolo} ${b.intervalo}, ${quando(b.inicio)} a ${quando(b.fim)}`,
+    ...(b.metricas ? metricasBrutas(b.metricas) : []),
+    ...(b.erro ? [`Erro: ${b.erro}`] : []),
+  ].join("\n");
 }
 
 // Justificativa, riscos e títulos de fonte podem trazer texto de notícia: nada de

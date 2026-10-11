@@ -250,6 +250,9 @@ importers:
       '@zentrade/banco':
         specifier: workspace:*
         version: link:../../packages/banco
+      '@zentrade/conhecimento':
+        specifier: workspace:*
+        version: link:../../packages/conhecimento
       '@zentrade/contratos':
         specifier: workspace:*
         version: link:../../packages/contratos

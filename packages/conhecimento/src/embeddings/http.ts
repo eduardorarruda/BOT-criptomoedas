@@ -8,7 +8,11 @@ export interface PedidoHttp {
   readonly esperar?: Esperar;
   readonly tentativas?: number;
   readonly esperaBaseMs?: number;
+  /** Tempo máximo de cada tentativa. Sem isso, um host que descarta pacotes prende a ingestão. */
+  readonly limiteMs?: number;
 }
+
+export const LIMITE_TENTATIVA_MS = 20_000;
 
 const ehTemporario = (status: number): boolean => status === 429 || status >= 500;
 
@@ -32,16 +36,17 @@ export async function postarJson(p: PedidoHttp): Promise<unknown> {
   const esperar = p.esperar ?? esperarDeVerdade;
   const tentativas = p.tentativas ?? 4;
   const baseMs = p.esperaBaseMs ?? 500;
-  const init: RequestInit = {
+  const init = (): RequestInit => ({
     method: "POST",
     headers: { "content-type": "application/json", ...p.cabecalhos },
     body: JSON.stringify(p.corpo),
-  };
+    signal: AbortSignal.timeout(p.limiteMs ?? LIMITE_TENTATIVA_MS),
+  });
   let ultimoProblema = "";
   let esperaAntes = 0;
   for (let tentativa = 0; tentativa < tentativas; tentativa++) {
     if (esperaAntes > 0) await esperar(esperaAntes);
-    const resposta = await buscar(p.url, init).catch((e: unknown) => {
+    const resposta = await buscar(p.url, init()).catch((e: unknown) => {
       ultimoProblema = `falha de rede (${e instanceof Error ? e.message : String(e)})`;
       return null;
     });

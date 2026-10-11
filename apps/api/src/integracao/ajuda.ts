@@ -9,10 +9,14 @@ import { construirApp } from "../app.js";
 import { criarUsuario } from "../comandos/usuario.js";
 import { lerConfig } from "../config.js";
 import type { Dependencias, FilaBacktests } from "../dependencias.js";
-import type { Embeddings } from "../integracoes/embeddings.js";
+import type { Embeddings } from "@zentrade/conhecimento";
+import { antiReplayRedis } from "../integracoes/anti-replay.js";
+import { armazemMemoria, criarRegistroAutomacoes } from "../integracoes/automacoes.js";
+import { criarServicoConhecimento, repositorioRag } from "../integracoes/conhecimento.js";
 import { criarHubEventos } from "../integracoes/eventos.js";
 import { criarFilaBacktests } from "../integracoes/fila.js";
 import { assinarEventos, conectarRedis, verificadorSaude } from "../integracoes/redis.js";
+import { n8nComRegistro } from "../integracoes/n8n.js";
 import { criarRetransmissorN8n } from "../integracoes/retransmissor.js";
 
 export const SEGREDO_WEBHOOK = "w".repeat(40);
@@ -45,7 +49,21 @@ export interface Api {
 export const cookiesDe = (r: LightMyRequestResponse): string =>
   r.cookies.map((c) => `${c.name}=${c.value}`).join("; ");
 
-export async function montarApi(o: { embeddings?: Embeddings; fila?: FilaBacktests } = {}): Promise<Api> {
+/** Embeddings determinísticos de teste (1024 dimensões): nada de serviço pago. */
+export const embeddingsFalsos: Embeddings = {
+  dimensoes: 1024,
+  gerar: async (textos) =>
+    textos.map((t) => Array.from({ length: 1024 }, (_, i) => ((t.length + i) % 7) / 7)),
+};
+
+export interface OpcoesApi {
+  readonly embeddings?: Embeddings;
+  readonly fila?: FilaBacktests;
+  /** Variáveis de ambiente a mais (ex.: N8N_USUARIO_ID). */
+  readonly ambiente?: Readonly<Record<string, string>>;
+}
+
+export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
   const descartavel = await criarBancoDescartavel();
   const redisUrl = process.env.ZT_TESTE_REDIS_URL ?? "redis://127.0.0.1:56390";
   const config = lerConfig({
@@ -54,7 +72,8 @@ export async function montarApi(o: { embeddings?: Embeddings; fila?: FilaBacktes
     REDIS_URL: redisUrl,
     N8N_WEBHOOK_SEGREDO: SEGREDO_WEBHOOK,
     ZENTRADE_ORIGEM_WEB: ORIGEM,
-    LOG_NIVEL: process.env.ZT_TESTE_LOG ?? "silent",
+    LOG_LEVEL: process.env.ZT_TESTE_LOG ?? "silent",
+    ...o.ambiente,
   });
   const banco = criarBanco({
     url: config.DATABASE_URL,
@@ -65,12 +84,16 @@ export async function montarApi(o: { embeddings?: Embeddings; fila?: FilaBacktes
   const assinante = conectarRedis(redisUrl, "teste-api-eventos");
   const filaReal = criarFilaBacktests(redis);
   const n8n = { propostas: [] as PropostaCriada[], alertas: [] as Alerta[] };
-  const clienteN8n = {
-    enviarProposta: async (p: PropostaCriada) => void n8n.propostas.push(p),
-    enviarAlerta: async (a: Alerta) => void n8n.alertas.push(a),
-  };
   const relogio = { t: Date.now() };
   const agora = () => relogio.t;
+  const automacoes = criarRegistroAutomacoes({ armazem: armazemMemoria(), agora, log: silencioso });
+  const clienteN8n = n8nComRegistro(
+    {
+      enviarProposta: async (p: PropostaCriada) => void n8n.propostas.push(p),
+      enviarAlerta: async (a: Alerta) => void n8n.alertas.push(a),
+    },
+    automacoes,
+  );
   const hub = criarHubEventos({ donos: banco.sistema, log: silencioso });
   hub.aoEvento(criarRetransmissorN8n({ decisoes: banco.decisoes, n8n: clienteN8n, log: silencioso }));
   await assinarEventos(assinante, hub);
@@ -79,10 +102,19 @@ export async function montarApi(o: { embeddings?: Embeddings; fila?: FilaBacktes
     banco,
     fila: o.fila ?? filaReal,
     n8n: clienteN8n,
-    embeddings: o.embeddings ?? null,
+    conhecimento: criarServicoConhecimento({
+      repositorio: repositorioRag(banco),
+      documentos: banco.conhecimento,
+      embeddings: o.embeddings
+        ? { embeddings: o.embeddings }
+        : { indisponivel: "VOYAGE_API_KEY não está definida (use EMBEDDINGS_PROVEDOR=ollama para local)" },
+    }),
+    automacoes,
+    antiReplay: antiReplayRedis(redis),
     hub,
     saude: verificadorSaude({ redis, log: silencioso, agora }),
     agora,
+    verificacaoTempoRealMs: 50,
   };
   const app = await construirApp(deps);
 

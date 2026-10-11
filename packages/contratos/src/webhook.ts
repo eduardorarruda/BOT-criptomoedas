@@ -1,11 +1,12 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { z } from "zod";
-import { Id, Instante } from "./comum.js";
+
+export * from "./webhook-esquemas.js";
 
 /**
  * Webhooks entre a API e o n8n são assinados (HMAC-SHA256 sobre "carimbo.corpo") e
  * expiram: quem copiar uma requisição não consegue reenviá-la depois de 5 minutos.
- * Cabeçalho: `X-ZenTrade-Assinatura: t=<segundos>,v1=<hex>`.
+ * Cabeçalho: `X-ZenTrade-Assinatura: t=<segundos>,v1=<hex>`. A assinatura é sobre o
+ * corpo bruto, byte a byte; corpo vazio assina a string vazia.
  */
 export const CABECALHO_ASSINATURA = "x-zentrade-assinatura";
 export const TOLERANCIA_SEGUNDOS = 300;
@@ -19,37 +20,35 @@ export function assinar(corpo: string, segredo: string, agoraMs: number): string
   return `t=${t},v1=${assinatura(corpo, segredo, t)}`;
 }
 
+/** Partes do cabeçalho, sem conferir nada. `null` se o formato não for `t=<inteiro>,v1=<64 hex>`. */
+export function lerCabecalhoAssinatura(
+  cabecalho: string | undefined,
+): { readonly carimbo: number; readonly v1: string } | null {
+  if (!cabecalho) return null;
+  const partes = Object.fromEntries(cabecalho.split(",").map((p) => p.split("=", 2) as [string, string]));
+  const t = Number(partes.t);
+  const v1 = partes.v1;
+  if (!Number.isInteger(t) || !v1 || !/^[0-9a-f]{64}$/.test(v1)) return null;
+  return { carimbo: t, v1 };
+}
+
 export function verificar(
   corpo: string,
   cabecalho: string | undefined,
   segredo: string,
   agoraMs: number,
 ): boolean {
-  if (!cabecalho) return false;
-  const partes = Object.fromEntries(cabecalho.split(",").map((p) => p.split("=", 2) as [string, string]));
-  const t = Number(partes.t);
-  const recebida = partes.v1;
-  if (!Number.isInteger(t) || !recebida || !/^[0-9a-f]{64}$/.test(recebida)) return false;
-  if (Math.abs(Math.floor(agoraMs / 1000) - t) > TOLERANCIA_SEGUNDOS) return false;
-  const esperada = Buffer.from(assinatura(corpo, segredo, t), "hex");
-  return timingSafeEqual(esperada, Buffer.from(recebida, "hex"));
+  const lido = lerCabecalhoAssinatura(cabecalho);
+  if (!lido) return false;
+  if (Math.abs(Math.floor(agoraMs / 1000) - lido.carimbo) > TOLERANCIA_SEGUNDOS) return false;
+  const esperada = Buffer.from(assinatura(corpo, segredo, lido.carimbo), "hex");
+  return timingSafeEqual(esperada, Buffer.from(lido.v1, "hex"));
 }
 
-export const PropostaCriadaEsquema = z.object({
-  decisaoId: Id,
-  roboId: Id,
-  simbolo: z.string(),
-  acao: z.enum(["COMPRAR", "VENDER"]),
-  quantidade: z.string(),
-  preco: z.string(),
-  resumo: z.string().max(1000),
-  expiraEm: Instante,
-});
-export type PropostaCriada = z.infer<typeof PropostaCriadaEsquema>;
-
-export const RespostaAprovacaoEsquema = z.object({
-  decisaoId: Id,
-  aprovada: z.boolean(),
-  porQuem: z.string().max(80),
-});
-export type RespostaAprovacao = z.infer<typeof RespostaAprovacaoEsquema>;
+/**
+ * Por quantos segundos ainda vale uma assinatura com este carimbo: o tempo que o
+ * anti-replay precisa lembrar dela. Nunca menos que 1.
+ */
+export function segundosDeValidade(carimbo: number, agoraMs: number): number {
+  return Math.max(1, carimbo + TOLERANCIA_SEGUNDOS - Math.floor(agoraMs / 1000) + 1);
+}

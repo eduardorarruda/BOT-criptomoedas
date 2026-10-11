@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./esquemas": {
+      "types": "./dist/esquemas.d.ts",
+      "default": "./dist/esquemas.js"
     }
   },
   "files": [

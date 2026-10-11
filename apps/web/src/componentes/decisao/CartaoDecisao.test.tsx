@@ -1,4 +1,4 @@
-import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos";
+import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";

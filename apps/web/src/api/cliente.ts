@@ -5,12 +5,13 @@ import { ErroRespostaEsquema } from "./esquemas";
 /**
  * Cliente HTTP da API (`/api/v1`). Toda resposta passa pelo esquema Zod: se a API
  * mudar de formato, a tela avisa em vez de mostrar dado errado. Métodos que alteram
- * levam o token CSRF (cookie legível `zentrade_csrf` → cabeçalho `X-CSRF-Token`).
+ * levam o token CSRF no cabeçalho `X-CSRF-Token`: o `csrf` que a API devolve em
+ * `POST /sessao` e `GET /sessao` (ou, na falta dele, o cookie legível `zt_csrf`).
  */
 export type Metodo = "GET" | "POST" | "PATCH" | "DELETE";
 export type Consulta = Record<string, string | number | boolean | undefined>;
 
-export const COOKIE_CSRF = "zentrade_csrf";
+export const COOKIE_CSRF = "zt_csrf";
 export const CABECALHO_CSRF = "X-CSRF-Token";
 const TEMPO_LIMITE_MS = 15_000;
 
@@ -43,6 +44,8 @@ export interface ClienteApi {
     corpo?: unknown,
     consulta?: Consulta,
   ): Promise<undefined>;
+  /** Guarda o `csrf` da sessão (ou esquece, com `null`, ao sair). */
+  definirCsrf?(csrf: string | null): void;
 }
 
 function montarUrl(base: string, caminho: string, consulta?: Consulta): string {
@@ -80,7 +83,8 @@ async function erroDaResposta(r: Response): Promise<ErroApi> {
 export function criarCliente(opcoes: OpcoesCliente = {}): ClienteApi {
   const base = opcoes.base ?? "/api/v1";
   const buscar = opcoes.fetch ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
-  const lerCsrf = opcoes.lerCsrf ?? (() => lerCookieCsrf());
+  let csrfDaSessao: string | null = null;
+  const lerCsrf = opcoes.lerCsrf ?? (() => csrfDaSessao ?? lerCookieCsrf());
 
   async function pedir<T>(
     metodo: Metodo,
@@ -115,5 +119,10 @@ export function criarCliente(opcoes: OpcoesCliente = {}): ClienteApi {
     return lido.data;
   }
 
-  return { pedir } as ClienteApi;
+  return {
+    pedir,
+    definirCsrf: (csrf: string | null) => {
+      csrfDaSessao = csrf;
+    },
+  } as ClienteApi;
 }

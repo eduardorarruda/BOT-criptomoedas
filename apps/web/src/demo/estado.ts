@@ -1,4 +1,4 @@
-import type { DecisaoDTO, EstrategiaDTO, OrdemDTO, PosicaoDTO, RoboDTO } from "@zentrade/contratos";
+import type { DecisaoDTO, EstrategiaDTO, OrdemDTO, PosicaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { aplicarExecucao, dec, POSICAO_ZERADA, type Posicao } from "@zentrade/dominio";
 import type {
   Automacao,
