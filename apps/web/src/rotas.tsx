@@ -68,6 +68,8 @@ const arvore = raiz.addChildren([
   entrar,
   app.addChildren([
     pagina("/", () => import("./paginas/VisaoGeral"), "VisaoGeral"),
+    pagina("/assistente", () => import("./paginas/assistente/Assistente"), "Assistente"),
+    pagina("/assistente/configuracoes", () => import("./paginas/assistente/Configuracoes"), "Configuracoes"),
     pagina("/mercado", () => import("./paginas/Mercado"), "Mercado"),
     pagina("/decisoes", () => import("./paginas/Decisoes"), "Decisoes"),
     pagina("/ordens", () => import("./paginas/Ordens"), "Ordens"),

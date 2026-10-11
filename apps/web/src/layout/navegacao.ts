@@ -8,6 +8,7 @@ import {
   KeyRound,
   KeySquare,
   ListTree,
+  MessagesSquare,
   ScrollText,
   ShieldAlert,
   Workflow,
@@ -16,6 +17,7 @@ import {
 
 export type RotaApp =
   | "/"
+  | "/assistente"
   | "/mercado"
   | "/decisoes"
   | "/ordens"
@@ -47,6 +49,7 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
       { para: "/mercado", rotulo: "Mercado", icone: ChartCandlestick },
       { para: "/decisoes", rotulo: "Decisões", icone: ScrollText },
       { para: "/ordens", rotulo: "Ordens e posições", icone: ArrowLeftRight },
+      { para: "/assistente", rotulo: "Assistente", icone: MessagesSquare },
     ],
   },
   {
