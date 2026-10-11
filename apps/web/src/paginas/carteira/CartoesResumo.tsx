@@ -10,9 +10,12 @@ const dinheiro = (t: string): string => formatarDinheiro(t);
 export function CartoesResumo({
   resumo,
   parcela,
+  recorte = null,
 }: {
   readonly resumo: ResumoCarteira;
   readonly parcela: Parcela;
+  /** Quantas moedas o filtro deixou: os cartões somam só elas. null = a conta inteira. */
+  readonly recorte?: number | null;
 }) {
   const r = resumo[parcela];
   return (
@@ -23,7 +26,7 @@ export function CartoesResumo({
           <dd>
             <Dinheiro valor={r.resultadoLiquido} sinal colorir animar />
           </dd>
-          <p className="metrica__nota">
+          <dd className="metrica__nota">
             realizado − taxas + não realizado
             {r.retorno !== null ? (
               <>
@@ -34,37 +37,43 @@ export function CartoesResumo({
                 sobre o total comprado
               </>
             ) : null}
-          </p>
+          </dd>
         </div>
         <div className="metrica">
           <dt>Total investido</dt>
           <dd>
             <NumeroAnimado valor={r.custoPosicao} formatar={dinheiro} />
           </dd>
-          <p className="metrica__nota">custo das posições abertas</p>
+          <dd className="metrica__nota">custo das posições abertas</dd>
         </div>
         <div className="metrica">
           <dt>Valor atual</dt>
           <dd>
             <NumeroAnimado valor={r.valorAtual} formatar={dinheiro} />
           </dd>
-          <p className="metrica__nota">dessas posições, a preço de mercado</p>
+          <dd className="metrica__nota">dessas posições, a preço de mercado</dd>
         </div>
         <div className="metrica">
           <dt>Resultado bruto</dt>
           <dd>
             <Dinheiro valor={r.resultadoBruto} sinal colorir />
           </dd>
-          <p className="metrica__nota">antes das taxas</p>
+          <dd className="metrica__nota">antes das taxas</dd>
         </div>
         <div className="metrica">
           <dt>Taxas pagas</dt>
           <dd>
             <NumeroAnimado valor={r.taxas} formatar={dinheiro} />
           </dd>
-          <p className="metrica__nota">convertidas para USDT no instante</p>
+          <dd className="metrica__nota">convertidas para USDT no instante</dd>
         </div>
       </dl>
+      {recorte !== null ? (
+        <p className="carteira-recorte" role="status">
+          Somando só {recorte === 1 ? "a moeda filtrada" : `as ${recorte} moedas filtradas`} (sem o caixa em
+          USDT).
+        </p>
+      ) : null}
       <p className="carteira-conta">
         Valor da conta <span className="num">{formatarDinheiro(resumo.valorConta)}</span>
         <span aria-hidden="true"> · </span>

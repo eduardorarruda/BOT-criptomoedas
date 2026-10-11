@@ -20,7 +20,7 @@ const DESCONECTADA: CarteiraDTO = {
   avisos: [],
 };
 
-function montar(sobrescrever: Partial<FonteCarteira> = {}) {
+function montar(sobrescrever: Partial<FonteCarteira> = {}, caminho = "/") {
   const fonte: FonteCarteira = { ...criarFonteCarteiraDemo(), ...sobrescrever };
   const raiz = createRootRoute({
     component: () => (
@@ -29,9 +29,12 @@ function montar(sobrescrever: Partial<FonteCarteira> = {}) {
       </ContextoFonteCarteira.Provider>
     ),
   });
-  const roteador = createRouter({ routeTree: raiz, history: createMemoryHistory({ initialEntries: ["/"] }) });
+  const roteador = createRouter({
+    routeTree: raiz,
+    history: createMemoryHistory({ initialEntries: [caminho] }),
+  });
   renderizar(<RouterProvider router={roteador} />, criarFonteDemo({ latenciaMs: [0, 0] }));
-  return fonte;
+  return { fonte, roteador };
 }
 
 describe("tela Carteira", () => {
@@ -62,19 +65,31 @@ describe("tela Carteira", () => {
     montar();
     const botao = await screen.findByRole("button", { name: "Moeda" });
     await userEvent.click(botao);
-    expect(botao.closest("th")).toHaveAttribute("aria-sort", "ascending");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Moeda" }).closest("th")).toHaveAttribute(
+        "aria-sort",
+        "ascending",
+      ),
+    );
     const tabela = screen.getByRole("table", { name: /Carteira por moeda/ });
-    expect(within(tabela).getAllByRole("row")[1]).toHaveTextContent("BTC");
-    await userEvent.click(botao);
-    expect(botao.closest("th")).toHaveAttribute("aria-sort", "descending");
-    expect(within(tabela).getAllByRole("row")[1]).toHaveTextContent("USDT");
+    expect(within(tabela).getAllByRole("row")[1]).toHaveTextContent("ADA");
+    await userEvent.click(screen.getByRole("button", { name: "Moeda" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Moeda" }).closest("th")).toHaveAttribute(
+        "aria-sort",
+        "descending",
+      ),
+    );
+    expect(
+      within(screen.getByRole("table", { name: /Carteira por moeda/ })).getAllByRole("row")[1],
+    ).toHaveTextContent("USDT");
   });
 
   it("troca a parcela (robô × manual) sem sair da tela", async () => {
     montar();
     await screen.findByText("Resultado líquido");
     await userEvent.click(screen.getByRole("radio", { name: "Manual" }));
-    expect(screen.getByRole("radio", { name: "Manual" })).toBeChecked();
+    await waitFor(() => expect(screen.getByRole("radio", { name: "Manual" })).toBeChecked());
   });
 
   it("sincronizar agora: mostra o estado e avisa o resultado", async () => {
@@ -155,5 +170,25 @@ describe("tela Carteira", () => {
     });
     expect(await screen.findByText("A Binance não respondeu.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Tentar de novo" })).toBeInTheDocument();
+  });
+
+  it("filtros na URL: só com saldo, resultado realizado e totais do recorte", async () => {
+    const { roteador } = montar({}, "/?realizado=true&parcela=manual");
+    const tabela = await screen.findByRole("table", { name: /Carteira por moeda/ });
+    const linhas = within(tabela).getAllByRole("row");
+    // cabeçalho, ADA (vendida à mão) e a linha de total
+    expect(linhas).toHaveLength(3);
+    expect(linhas[1]).toHaveTextContent("ADA");
+    expect(screen.getByText(/Somando só a moeda filtrada/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("switch", { name: /Com saldo/ }));
+    await waitFor(() => expect(roteador.state.location.search).toMatchObject({ saldo: true }));
+    expect(await screen.findByText("Nenhum item com esses filtros")).toBeInTheDocument();
+  });
+
+  it("visão em cartões e na alocação, pela URL", async () => {
+    montar({}, "/?visao=cartoes&q=btc");
+    const cartoes = await screen.findByRole("list", { name: "Moedas da carteira" });
+    expect(within(cartoes).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(cartoes).getByRole("button", { name: "Ver detalhes de BTC" })).toBeInTheDocument();
   });
 });

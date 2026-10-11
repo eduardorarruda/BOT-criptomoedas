@@ -1,14 +1,13 @@
-import type { MoedaCarteira, ResumoCarteira } from "@zentrade/contratos/esquemas";
+import type { MoedaCarteira, ResumoParcela } from "@zentrade/contratos/esquemas";
 import { ArrowDown, ArrowUp, ArrowUpDown, TriangleAlert } from "lucide-react";
-import { useMemo, useState } from "react";
-import { formatarDinheiro, formatarQuantidade } from "../../lib/formatar";
+import { useMemo } from "react";
+import { formatarDinheiro, formatarPercentual, formatarQuantidade } from "../../lib/formatar";
 import { Numero } from "./Numero";
 import {
   alternarOrdem,
   COLUNAS,
-  ORDEM_PADRAO,
   ordenarMoedas,
-  totalDaColuna,
+  totalDaParcela,
   valorDaColuna,
   type Coluna,
   type DefinicaoColuna,
@@ -101,19 +100,28 @@ function Linha({
   );
 }
 
-/** Tabela por moeda com todas as colunas do cálculo; ordenável e com a linha de totais. */
+/**
+ * Tabela por moeda com todas as colunas do cálculo; ordenável (a ordem mora na URL)
+ * e com a linha de totais das moedas mostradas.
+ */
 export function TabelaMoedas({
   moedas,
-  resumo,
+  totais,
+  alocacaoTotal,
   parcela,
+  ordem,
+  aoOrdenar,
   aoAbrir,
 }: {
   readonly moedas: readonly MoedaCarteira[];
-  readonly resumo: ResumoCarteira;
+  readonly totais: ResumoParcela;
+  /** Fatia da conta somada das moedas mostradas ("1" sem filtro). */
+  readonly alocacaoTotal: string;
   readonly parcela: Parcela;
+  readonly ordem: Ordem;
+  readonly aoOrdenar: (ordem: Ordem) => void;
   readonly aoAbrir: (ativo: string) => void;
 }) {
-  const [ordem, setOrdem] = useState<Ordem>(ORDEM_PADRAO);
   const ordenadas = useMemo(() => ordenarMoedas(moedas, parcela, ordem), [moedas, parcela, ordem]);
   return (
     <div
@@ -134,7 +142,7 @@ export function TabelaMoedas({
                 key={c.chave}
                 c={c}
                 ordem={ordem}
-                aoOrdenar={(col) => setOrdem((o) => alternarOrdem(o, col))}
+                aoOrdenar={(col) => aoOrdenar(alternarOrdem(ordem, col))}
               />
             ))}
           </tr>
@@ -150,10 +158,10 @@ export function TabelaMoedas({
             {COLUNAS.slice(1).map((c) => (
               <td key={c.chave} className="tabela__num">
                 {c.chave === "alocacao" ? (
-                  <span className="num">100%</span>
+                  <span className="num">{formatarPercentual(alocacaoTotal)}</span>
                 ) : (
                   <Numero
-                    valor={totalDaColuna(resumo, parcela, c.chave)}
+                    valor={totalDaParcela(totais, c.chave)}
                     formato={c.formato}
                     porQueVazio="não soma entre moedas"
                   />

@@ -6,6 +6,10 @@ vi.mock("lightweight-charts", () => import("../teste/graficoFalso"));
 /** axe nas telas de investimento, com os filtros e as visões alternativas abertas pela URL. */
 describe("acessibilidade: investimentos", () => {
   it.each<[string, RegExp]>([
+    ["/carteira", /carteira/i],
+    ["/carteira?visao=cartoes&saldo=true", /carteira/i],
+    ["/carteira?visao=alocacao&parcela=robo", /carteira/i],
+    ["/carteira?q=nada-disso", /carteira/i],
     ["/renda-fixa", /renda fixa/i],
     ["/renda-fixa?aba=titulos", /renda fixa/i],
     ["/renda-fixa?aba=titulos&visao=tabela&indexador=CDI", /renda fixa/i],

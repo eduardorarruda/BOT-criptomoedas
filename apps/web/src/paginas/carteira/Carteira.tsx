@@ -1,29 +1,47 @@
 import type { Carteira as CarteiraDTO, RedeConta, StatusContaBinance } from "@zentrade/contratos/esquemas";
 import { Link } from "@tanstack/react-router";
-import { CircleCheck, KeyRound, RefreshCw, ShieldAlert, TriangleAlert, Wallet } from "lucide-react";
+import { dec } from "@zentrade/dominio";
+import {
+  ChartPie,
+  CircleCheck,
+  KeyRound,
+  LayoutGrid,
+  RefreshCw,
+  ShieldAlert,
+  Table2,
+  TriangleAlert,
+  Wallet,
+} from "lucide-react";
 import { useState } from "react";
 import { mensagemDe } from "../../api/erros";
 import { useAvisos } from "../../componentes/Avisos";
 import { Botao } from "../../componentes/Botao";
 import { Cabecalho, Painel } from "../../componentes/Cabecalho";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../../componentes/Estados";
-import { Segmentado } from "../../componentes/Segmentado";
+import {
+  AlternarVisao,
+  BarraFiltros,
+  filtrarCom,
+  FiltroOpcao,
+  GrupoFiltro,
+  Interruptor,
+  SeletorOrdem,
+  SemResultados,
+  useFiltrosUrl,
+  VisoesSalvas,
+} from "../../componentes/filtros";
 import { Selo } from "../../componentes/Selo";
 import { REDE } from "../../lib/rotulos";
 import { formatarRelativo } from "../../lib/tempo";
+import { CartoesMoedas } from "./CartoesMoedas";
 import { CartoesResumo } from "./CartoesResumo";
+import { buscaCarteira, NAO_CONTAM, ordemDaBusca, predicadosCarteira, resumirMoedas } from "./filtros";
 import { DetalheMoeda } from "./DetalheMoeda";
 import { useCarteira, useSincronizar, useStatusBinance } from "./ganchos";
 import { GraficoAlocacao } from "./GraficoAlocacao";
 import { TabelaMoedas } from "./TabelaMoedas";
 import type { Parcela } from "./tabela";
 import "./carteira.css";
-
-const PARCELAS: readonly { valor: Parcela; rotulo: string }[] = [
-  { valor: "total", rotulo: "Total" },
-  { valor: "robo", rotulo: "Robô" },
-  { valor: "manual", rotulo: "Manual" },
-];
 
 function BotaoSincronizar({ rede }: { readonly rede: RedeConta | undefined }) {
   const sincronizar = useSincronizar();
@@ -138,16 +156,137 @@ function ComoCalculamos() {
   );
 }
 
+const ORDENACOES = [
+  { valor: "alocacao", rotulo: "Fatia da conta", direcao: "desc" },
+  { valor: "valorAtual", rotulo: "Valor atual", direcao: "desc" },
+  { valor: "naoRealizado", rotulo: "Não realizado", direcao: "desc" },
+  { valor: "realizadoLiquido", rotulo: "Realizado líquido", direcao: "desc" },
+  { valor: "retorno", rotulo: "Retorno", direcao: "desc" },
+  { valor: "taxas", rotulo: "Taxas", direcao: "desc" },
+  { valor: "ativo", rotulo: "Moeda (A–Z)", direcao: "asc" },
+] as const;
+
+const VISOES = [
+  { valor: "tabela", rotulo: "Tabela", icone: Table2 },
+  { valor: "cartoes", rotulo: "Cartões", icone: LayoutGrid },
+  { valor: "alocacao", rotulo: "Alocação", icone: ChartPie },
+] as const;
+
+type Filtros = ReturnType<typeof useFiltrosUrl<typeof buscaCarteira>>;
+
+function BarraMoedas({
+  c,
+  f,
+  parcela,
+  mostradas,
+}: {
+  readonly c: CarteiraDTO;
+  readonly f: Filtros;
+  readonly parcela: Parcela;
+  readonly mostradas: number;
+}) {
+  const { busca: b, mudar, limpar, aplicar, ativos } = f;
+  const ordem = ordemDaBusca(b);
+  // Quantas moedas ficariam com o interruptor ligado (e os outros filtros como estão).
+  const contar = (nome: "saldo" | "realizado" | "avisos") =>
+    filtrarCom(c.moedas, predicadosCarteira({ ...b, [nome]: true }, parcela)).length;
+  return (
+    <BarraFiltros
+      rotulo="Filtros das moedas"
+      busca={{
+        valor: b.q,
+        aoMudar: (q) => mudar({ q }, { substituir: true }),
+        rotulo: "Buscar moeda",
+        sugestao: "Buscar moeda: BTC, ETH…",
+      }}
+      ativos={ativos}
+      aoLimpar={limpar}
+      resumo={
+        <>
+          <span className="num">{mostradas}</span> de <span className="num">{c.moedas.length}</span> moedas
+        </>
+      }
+      extra={<VisoesSalvas tela="carteira" buscaAtual={b} aoAplicar={aplicar} />}
+      ferramentas={
+        <>
+          <SeletorOrdem
+            opcoes={ORDENACOES}
+            valor={ORDENACOES.some((o) => o.valor === ordem.coluna) ? ordem.coluna : "alocacao"}
+            direcao={ordem.direcao}
+            aoMudar={(o, dir) => mudar({ ordem: o === "alocacao" ? undefined : o, dir })}
+          />
+          <AlternarVisao
+            opcoes={VISOES}
+            valor={b.visao ?? "tabela"}
+            aoMudar={(v) => mudar({ visao: v === "tabela" ? undefined : v })}
+          />
+        </>
+      }
+    >
+      {c.redes.length > 1 ? (
+        <FiltroOpcao
+          rotulo="Conta"
+          rotuloTodos={null}
+          opcoes={c.redes.map((r) => ({ valor: r, rotulo: REDE[r].texto }))}
+          valor={b.rede ?? c.rede ?? undefined}
+          aoMudar={(rede) => mudar({ rede })}
+        />
+      ) : null}
+      <FiltroOpcao
+        rotulo="Parcela"
+        rotuloTodos="Total"
+        opcoes={[
+          { valor: "robo", rotulo: "Robô" },
+          { valor: "manual", rotulo: "Manual" },
+        ]}
+        valor={b.parcela}
+        aoMudar={(p) => mudar({ parcela: p })}
+      />
+      <GrupoFiltro rotulo="Mostrar só">
+        <Interruptor
+          rotulo="Com saldo"
+          ligado={b.saldo === true}
+          contagem={contar("saldo")}
+          aoMudar={(l) => mudar({ saldo: l || undefined })}
+        />
+        <Interruptor
+          rotulo="Com resultado realizado"
+          ligado={b.realizado === true}
+          contagem={contar("realizado")}
+          aoMudar={(l) => mudar({ realizado: l || undefined })}
+        />
+        <Interruptor
+          rotulo="Com aviso"
+          ligado={b.avisos === true}
+          contagem={contar("avisos")}
+          aoMudar={(l) => mudar({ avisos: l || undefined })}
+        />
+      </GrupoFiltro>
+    </BarraFiltros>
+  );
+}
+
 function Conteudo({
   c,
+  f,
   parcela,
   aoAbrir,
 }: {
-  c: CarteiraDTO;
-  parcela: Parcela;
-  aoAbrir: (a: string) => void;
+  readonly c: CarteiraDTO;
+  readonly f: Filtros;
+  readonly parcela: Parcela;
+  readonly aoAbrir: (a: string) => void;
 }) {
   if (!c.conectada) return <SemConta />;
+  const b = f.busca;
+  const filtradas = filtrarCom(c.moedas, predicadosCarteira(b, parcela));
+  const recorte = filtradas.length !== c.moedas.length;
+  const totais = recorte ? resumirMoedas(filtradas, parcela) : c.resumo[parcela];
+  const alocacaoTotal = recorte
+    ? filtradas.reduce((s, m) => s.plus(m.alocacao ?? "0"), dec(0)).toFixed(6)
+    : "1";
+  const ordem = ordemDaBusca(b);
+  const visao = b.visao ?? "tabela";
   return (
     <div className="pilha">
       <Situacao c={c} />
@@ -156,19 +295,50 @@ function Conteudo({
           <TriangleAlert size={14} aria-hidden="true" className="atencao" /> {a}
         </p>
       ))}
-      <CartoesResumo resumo={c.resumo} parcela={parcela} />
+      <CartoesResumo
+        resumo={recorte ? { ...c.resumo, [parcela]: totais } : c.resumo}
+        parcela={parcela}
+        recorte={recorte ? filtradas.filter((m) => !m.referencia).length : null}
+      />
       {c.moedas.length === 0 ? (
         <EstadoVazio icone={Wallet} titulo="Conta vazia">
           A Binance não mostrou saldo nem negociação nesta conta. Depois de comprar ou depositar, sincronize
           de novo.
         </EstadoVazio>
       ) : (
-        <Painel titulo="Por moeda" id="titulo-moedas" semBorda>
-          <TabelaMoedas moedas={c.moedas} resumo={c.resumo} parcela={parcela} aoAbrir={aoAbrir} />
-        </Painel>
+        <>
+          <BarraMoedas c={c} f={f} parcela={parcela} mostradas={filtradas.length} />
+          {filtradas.length === 0 ? <SemResultados aoLimpar={f.limpar} /> : null}
+          {filtradas.length > 0 && visao === "tabela" ? (
+            <TabelaMoedas
+              moedas={filtradas}
+              totais={totais}
+              alocacaoTotal={alocacaoTotal}
+              parcela={parcela}
+              ordem={ordem}
+              aoOrdenar={(o) =>
+                f.mudar({ ordem: o.coluna === "alocacao" ? undefined : o.coluna, dir: o.direcao })
+              }
+              aoAbrir={aoAbrir}
+            />
+          ) : null}
+          {filtradas.length > 0 && visao === "cartoes" ? (
+            <CartoesMoedas moedas={filtradas} parcela={parcela} ordem={ordem} aoAbrir={aoAbrir} />
+          ) : null}
+          {filtradas.length > 0 && visao === "alocacao" ? (
+            <Painel titulo="Alocação" id="titulo-alocacao">
+              <GraficoAlocacao moedas={filtradas} />
+              {recorte ? (
+                <p className="apagado carteira-nota">
+                  Fatias da conta inteira; as moedas fora do filtro não aparecem.
+                </p>
+              ) : null}
+            </Painel>
+          ) : null}
+        </>
       )}
       <div className="grade-dupla carteira-grade">
-        {c.moedas.length > 0 ? (
+        {c.moedas.length > 0 && visao !== "alocacao" ? (
           <Painel titulo="Alocação" id="titulo-alocacao">
             <GraficoAlocacao moedas={c.moedas} />
           </Painel>
@@ -182,8 +352,9 @@ function Conteudo({
 }
 
 export function Carteira() {
-  const [rede, setRede] = useState<RedeConta | undefined>(undefined);
-  const [parcela, setParcela] = useState<Parcela>("total");
+  const f = useFiltrosUrl(buscaCarteira, NAO_CONTAM);
+  const rede: RedeConta | undefined = f.busca.rede;
+  const parcela: Parcela = f.busca.parcela ?? "total";
   const [aberta, setAberta] = useState<string | null>(null);
   const carteira = useCarteira(rede);
   const status = useStatusBinance();
@@ -201,22 +372,11 @@ export function Carteira() {
       {status.data?.contas.map((conta) => (
         <StatusChave key={conta.id} conta={conta} />
       ))}
-      {c && c.redes.length > 1 ? (
-        <Segmentado
-          rotulo="Conta"
-          opcoes={c.redes.map((r) => ({ valor: r, rotulo: REDE[r].texto }))}
-          valor={redeAtual ?? "real"}
-          aoMudar={setRede}
-        />
-      ) : null}
-      {c?.conectada ? (
-        <Segmentado rotulo="Parcela" opcoes={PARCELAS} valor={parcela} aoMudar={setParcela} />
-      ) : null}
       {carteira.isPending ? <Esqueleto altura={320} rotulo="Carregando a carteira" /> : null}
       {carteira.error ? (
         <ErroCarregar erro={carteira.error} tentarDeNovo={() => void carteira.refetch()} />
       ) : null}
-      {c ? <Conteudo c={c} parcela={parcela} aoAbrir={setAberta} /> : null}
+      {c ? <Conteudo c={c} f={f} parcela={parcela} aoAbrir={setAberta} /> : null}
       <DetalheMoeda ativo={aberta} rede={redeAtual ?? undefined} aoFechar={() => setAberta(null)} />
     </>
   );

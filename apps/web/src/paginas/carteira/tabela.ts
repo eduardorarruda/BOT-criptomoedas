@@ -1,4 +1,9 @@
-import type { MoedaCarteira, ParcelaCarteira, ResumoCarteira } from "@zentrade/contratos/esquemas";
+import type {
+  MoedaCarteira,
+  ParcelaCarteira,
+  ResumoCarteira,
+  ResumoParcela,
+} from "@zentrade/contratos/esquemas";
 import { dec } from "@zentrade/dominio";
 
 /**
@@ -155,7 +160,11 @@ export function alternarOrdem(atual: Ordem, coluna: Coluna): Ordem {
 
 /** A linha de totais: soma das moedas na parcela (o resumo da API), na mesma coluna. */
 export function totalDaColuna(r: ResumoCarteira, parcela: Parcela, coluna: Coluna): string | null {
-  const p = r[parcela];
+  return totalDaParcela(r[parcela], coluna);
+}
+
+/** O total de uma coluna a partir dos totais de uma parcela (da API ou do recorte filtrado). */
+export function totalDaParcela(p: ResumoParcela, coluna: Coluna): string | null {
   const totais: Partial<Record<Coluna, string | null>> = {
     custoPosicao: p.custoPosicao,
     valorAtual: p.valorAtual,

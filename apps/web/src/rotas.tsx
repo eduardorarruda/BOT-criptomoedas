@@ -12,6 +12,7 @@ import type { Fonte } from "./api/fonte";
 import { validarBusca } from "./componentes/filtros/esquemas";
 import { chaves } from "./ganchos/chaves";
 import { Casca } from "./layout/Casca";
+import { buscaCarteira } from "./paginas/carteira/filtros";
 import { buscaDecisoes } from "./paginas/decisoes/filtros";
 import { NaoEncontrada } from "./paginas/NaoEncontrada";
 import { buscaOrdens } from "./paginas/ordens/filtros";
@@ -102,6 +103,13 @@ const rendaFixa = createRoute({
   component: lazyRouteComponent(() => import("./paginas/renda-fixa/RendaFixa"), "RendaFixa"),
 });
 
+const carteira = createRoute({
+  getParentRoute: () => app,
+  path: "/carteira",
+  validateSearch: validarBusca(buscaCarteira),
+  component: lazyRouteComponent(() => import("./paginas/carteira/Carteira"), "Carteira"),
+});
+
 const arvore = raiz.addChildren([
   entrar,
   app.addChildren([
@@ -113,7 +121,7 @@ const arvore = raiz.addChildren([
     decisoes,
     ordens,
     pagina("/patrimonio", () => import("./paginas/patrimonio/Patrimonio"), "Patrimonio"),
-    pagina("/carteira", () => import("./paginas/carteira/Carteira"), "Carteira"),
+    carteira,
     rendaFixa,
     pagina("/robos", () => import("./paginas/Robos"), "Robos"),
     pagina("/estrategias", () => import("./paginas/Estrategias"), "Estrategias"),
