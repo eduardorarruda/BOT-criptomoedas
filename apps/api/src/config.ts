@@ -30,6 +30,11 @@ const EsquemaApi = z.object({
   EMBEDDINGS_PROVEDOR: z
     .enum(["voyage", "ollama"], { error: "EMBEDDINGS_PROVEDOR aceita voyage ou ollama" })
     .default("voyage"),
+  // Opcional: cotações de FIIs pela brapi.dev. Sem ele, o preço é informado à mão.
+  BRAPI_TOKEN: z
+    .string()
+    .min(8, "BRAPI_TOKEN parece curto demais; copie o token do painel da brapi.dev")
+    .optional(),
   APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(1440).default(15),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });

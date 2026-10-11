@@ -4,6 +4,7 @@ import type { AntiReplay } from "./integracoes/anti-replay.js";
 import type { RegistroAutomacoes } from "./integracoes/automacoes.js";
 import type { ServicoConhecimento } from "./integracoes/conhecimento.js";
 import type { HubEventos } from "./integracoes/eventos.js";
+import type { ClienteCotacoesB3 } from "./integracoes/cotacoes-b3.js";
 import type { ClienteN8n } from "./integracoes/n8n.js";
 
 export interface FilaBacktests {
@@ -31,6 +32,8 @@ export interface Dependencias {
   readonly hub: HubEventos;
   readonly saude: VerificadorSaude;
   readonly agora: () => number;
+  /** Cotações de FIIs (brapi). Ausente = sem cotação automática. */
+  readonly cotacoesB3?: ClienteCotacoesB3;
   /** De quanto em quanto tempo o WebSocket confere se a sessão (ou o token) ainda vale. Padrão 30 s. */
   readonly verificacaoTempoRealMs?: number;
 }

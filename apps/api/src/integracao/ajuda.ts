@@ -11,6 +11,7 @@ import { lerConfig } from "../config.js";
 import type { Dependencias, FilaBacktests } from "../dependencias.js";
 import type { Embeddings } from "@zentrade/conhecimento";
 import { antiReplayRedis } from "../integracoes/anti-replay.js";
+import type { ClienteCotacoesB3 } from "../integracoes/cotacoes-b3.js";
 import { armazemMemoria, criarRegistroAutomacoes } from "../integracoes/automacoes.js";
 import { criarServicoConhecimento, repositorioRag } from "../integracoes/conhecimento.js";
 import { criarHubEventos } from "../integracoes/eventos.js";
@@ -61,6 +62,7 @@ export interface OpcoesApi {
   readonly fila?: FilaBacktests;
   /** Variáveis de ambiente a mais (ex.: N8N_USUARIO_ID). */
   readonly ambiente?: Readonly<Record<string, string>>;
+  readonly cotacoesB3?: ClienteCotacoesB3;
 }
 
 export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
@@ -115,6 +117,7 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     saude: verificadorSaude({ redis, log: silencioso, agora }),
     agora,
     verificacaoTempoRealMs: 50,
+    ...(o.cotacoesB3 ? { cotacoesB3: o.cotacoesB3 } : {}),
   };
   const app = await construirApp(deps);
 

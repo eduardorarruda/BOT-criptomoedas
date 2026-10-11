@@ -259,6 +259,9 @@ importers:
       '@zentrade/dominio':
         specifier: workspace:*
         version: link:../../packages/dominio
+      '@zentrade/financas':
+        specifier: workspace:*
+        version: link:../../packages/financas
       bullmq:
         specifier: ^6.3.12
         version: 6.3.12(ioredis@6.0.0)
