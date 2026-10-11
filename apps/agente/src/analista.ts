@@ -8,7 +8,12 @@ import {
   type RespostaAnalise,
 } from "@zentrade/contratos";
 import { custoUsd } from "./custo.js";
-import { criarFerramentas, RegistroFontes, type DependenciasFerramentas } from "./ferramentas/index.js";
+import {
+  criarFerramentas,
+  RegistroFontes,
+  type AoUsarFerramenta,
+  type DependenciasFerramentas,
+} from "./ferramentas/index.js";
 import { mensagemDoPedido, SYSTEM_PROMPT } from "./prompt.js";
 import type { OrcamentoRisco } from "./serializacao.js";
 
@@ -34,12 +39,18 @@ export interface OpcoesAnalise {
   readonly usuarioId: string;
   readonly orcamento?: OrcamentoRisco;
   readonly signal?: AbortSignal;
+  /** Modelo escolhido pela pessoa; sem ele, o do serviço (AGENTE_MODELO). */
+  readonly modelo?: string;
+  /** Conta do Claude Code (só no provedor "cli"). */
+  readonly contaCli?: string;
+  /** Avisado a cada ferramenta consultada (eventos "analise" ao vivo). */
+  readonly aoUsarFerramenta?: AoUsarFerramenta;
 }
 
 const LIMITE_JUSTIFICATIVA = 2000;
 
 /** Proposta conservadora quando a análise não chega a uma resposta utilizável. */
-function aguardar(motivo: string): PropostaAgente {
+export function aguardar(motivo: string): PropostaAgente {
   return {
     acao: "aguardar",
     confianca: 0,
@@ -81,7 +92,8 @@ function lerProposta(final: BetaMessage): PropostaAgente {
   }
 }
 
-function semFontesInventadas(p: PropostaAgente, registro: RegistroFontes): PropostaAgente {
+/** Fonte citada que nenhuma ferramenta devolveu é descartada, com aviso nos riscos. */
+export function semFontesInventadas(p: PropostaAgente, registro: RegistroFontes): PropostaAgente {
   const { fontes, removidas } = registro.filtrar(p.fontes);
   if (removidas === 0) return p;
   const aviso = `${removidas} fonte(s) citada(s) sem ter sido consultada(s) foram descartadas.`;
@@ -109,14 +121,14 @@ export class Analista {
     };
     const runner = this.#o.cliente.beta.messages.toolRunner(
       {
-        model: this.#o.modelo ?? MODELO_PADRAO,
+        model: opcoes.modelo ?? this.#o.modelo ?? MODELO_PADRAO,
         max_tokens: this.#o.maxTokens ?? 16_000,
         max_iterations: this.#o.maxIteracoes ?? 8,
         thinking: { type: "adaptive" },
         betas: [BETA_FALLBACK],
         fallbacks: "default",
         system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-        tools: criarFerramentas(contexto, this.#o.dependencias),
+        tools: criarFerramentas(contexto, this.#o.dependencias, opcoes.aoUsarFerramenta),
         output_config: { format: FORMATO_PROPOSTA },
         messages: [
           { role: "user", content: mensagemDoPedido(pedido, (this.#o.agora ?? (() => new Date()))()) },

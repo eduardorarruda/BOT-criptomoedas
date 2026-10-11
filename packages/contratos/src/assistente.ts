@@ -61,6 +61,8 @@ export type ModeloSugerido = z.infer<typeof ModeloSugeridoEsquema>;
 /** O que o agente informa (`GET /assistente/estado` do agente, rede interna). */
 export const EstadoAgenteAssistenteEsquema = z.object({
   provedores: z.object({ api: z.boolean(), cli: z.boolean() }),
+  /** Quem atende quem ainda não escolheu: a API se o agente tem a chave; senão o Claude Code. */
+  provedorPadrao: ProvedorIa,
   contasCli: z.array(ContaCliEsquema),
   modelos: z.object({ api: z.array(ModeloSugeridoEsquema), cli: z.array(ModeloSugeridoEsquema) }),
 });

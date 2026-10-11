@@ -6,7 +6,7 @@ export interface PedidoRegistrado {
   readonly corpo: Record<string, unknown> & { messages: { role: string; content: unknown }[] };
 }
 
-type Resposta = { readonly status?: number; readonly corpo: unknown };
+type Resposta = { readonly status?: number; readonly corpo: unknown; readonly sse?: boolean };
 
 /**
  * Cliente da Anthropic de verdade com `fetch` falso: o Tool Runner do SDK roda inteiro,
@@ -22,6 +22,12 @@ export function anthropicFalso(respostas: readonly Resposta[]) {
     });
     const r = respostas[pedidos.length - 1];
     if (!r) throw new Error(`o teste não previu a chamada nº ${pedidos.length} à Anthropic`);
+    if (r.sse) {
+      return new Response(eventosSse(r.corpo as MensagemFalsa), {
+        status: 200,
+        headers: { "content-type": "text/event-stream", "request-id": "req_teste" },
+      });
+    }
     return new Response(JSON.stringify(r.corpo), {
       status: r.status ?? 200,
       headers: { "content-type": "application/json", "request-id": "req_teste" },
@@ -72,3 +78,56 @@ export const usoFerramenta = (nome: string, entrada: unknown, id = `toolu_${nome
 });
 
 export const texto = (t: string) => ({ type: "text", text: t });
+
+type Bloco = { type: string; text?: string; id?: string; name?: string; input?: unknown };
+type MensagemFalsa = { content: Bloco[]; stop_reason: string; usage: Record<string, unknown> } & Record<
+  string,
+  unknown
+>;
+
+const sse = (tipo: string, dados: unknown) =>
+  `event: ${tipo}\ndata: ${JSON.stringify({ type: tipo, ...(dados as object) })}\n\n`;
+
+function eventosBloco(b: Bloco, index: number): string[] {
+  if (b.type === "text") {
+    const texto = b.text ?? "";
+    const meio = Math.ceil(texto.length / 2);
+    return [
+      sse("content_block_start", { index, content_block: { type: "text", text: "" } }),
+      ...[texto.slice(0, meio), texto.slice(meio)]
+        .filter((t) => t !== "")
+        .map((t) => sse("content_block_delta", { index, delta: { type: "text_delta", text: t } })),
+      sse("content_block_stop", { index }),
+    ];
+  }
+  return [
+    sse("content_block_start", {
+      index,
+      content_block: { type: "tool_use", id: b.id, name: b.name, input: {} },
+    }),
+    sse("content_block_delta", {
+      index,
+      delta: { type: "input_json_delta", partial_json: JSON.stringify(b.input) },
+    }),
+    sse("content_block_stop", { index }),
+  ];
+}
+
+/** A mesma mensagem que `mensagemFalsa` monta, em eventos de streaming (SSE) da API. */
+function eventosSse(m: MensagemFalsa): string {
+  const { content, stop_reason, usage, ...resto } = m;
+  return [
+    sse("message_start", {
+      message: { ...resto, content: [], stop_reason: null, usage: { ...usage, output_tokens: 1 } },
+    }),
+    ...content.flatMap(eventosBloco),
+    sse("message_delta", {
+      delta: { stop_reason, stop_sequence: null },
+      usage: { output_tokens: usage["output_tokens"] },
+    }),
+    sse("message_stop", {}),
+  ].join("");
+}
+
+/** Resposta em streaming (para o Tool Runner com `stream: true`). */
+export const emStreaming = (r: { corpo: unknown }) => ({ ...r, sse: true });

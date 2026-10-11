@@ -1,6 +1,7 @@
 import type { BetaRunnableTool } from "@anthropic-ai/sdk/lib/tools/BetaRunnableTool";
 import { buscarConhecimento } from "./buscar-conhecimento.js";
 import type { ContextoAnalise, DependenciasFerramentas } from "./contexto.js";
+import { observar, paraAnthropic, type AoUsarFerramenta, type FerramentaLeitura } from "./definicao.js";
 import { historicoDecisoes } from "./historico-decisoes.js";
 import { posicaoEOrcamento } from "./posicao-orcamento.js";
 import { retratoMercado } from "./retrato-mercado.js";
@@ -11,6 +12,16 @@ export type {
   DependenciasFerramentas,
   PortaHistoricoDecisoes,
 } from "./contexto.js";
+export {
+  definirFerramenta,
+  esquemaJson,
+  executarFerramenta,
+  observar,
+  paraAnthropic,
+  type AoUsarFerramenta,
+  type FerramentaLeitura,
+  type ResultadoFerramenta,
+} from "./definicao.js";
 export { RegistroFontes } from "./registro.js";
 
 export const NOMES_FERRAMENTAS = [
@@ -25,11 +36,27 @@ export const NOMES_FERRAMENTAS = [
  * prefixo (ferramentas + system) fica idêntico entre pedidos e o cache de prompt pega.
  * Nenhuma delas envia ordem.
  */
-export function criarFerramentas(ctx: ContextoAnalise, deps: DependenciasFerramentas): BetaRunnableTool[] {
-  return [
-    retratoMercado(ctx),
-    posicaoEOrcamento(ctx),
-    buscarConhecimento(ctx, deps),
-    historicoDecisoes(ctx, deps),
-  ];
+export function ferramentasDaAnalise(
+  ctx: ContextoAnalise,
+  deps: DependenciasFerramentas,
+  aoUsar?: AoUsarFerramenta,
+): FerramentaLeitura[] {
+  return observar(
+    [
+      retratoMercado(ctx),
+      posicaoEOrcamento(ctx),
+      buscarConhecimento(ctx, deps),
+      historicoDecisoes(ctx, deps),
+    ],
+    aoUsar,
+  );
+}
+
+/** As mesmas ferramentas no formato do Tool Runner do SDK da Anthropic. */
+export function criarFerramentas(
+  ctx: ContextoAnalise,
+  deps: DependenciasFerramentas,
+  aoUsar?: AoUsarFerramenta,
+): BetaRunnableTool[] {
+  return ferramentasDaAnalise(ctx, deps, aoUsar).map(paraAnthropic);
 }

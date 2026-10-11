@@ -17,6 +17,7 @@ export default defineConfig({
         "src/principal.ts",
         "src/cli/bin.ts",
         "src/mcp/bin.ts",
+        "src/ponte/bin.ts",
       ],
       thresholds: { lines: 85, functions: 85, branches: 80, statements: 85 },
     },

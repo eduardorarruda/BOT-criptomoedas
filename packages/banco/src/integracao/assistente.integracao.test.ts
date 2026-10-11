@@ -39,6 +39,7 @@ describe("configuração do assistente", () => {
   });
 
   it("sem linha, vale o padrão (API, modelo e conta do serviço)", async () => {
+    expect(await agente.configGravada(c.ana.id)).toBeNull();
     expect(await c.banco.assistente.config(c.ana.id)).toEqual({
       provedor: "api",
       modelo: null,

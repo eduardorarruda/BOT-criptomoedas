@@ -205,6 +205,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.1
         version: 1.32.1(zod@4.6.5)
+      '@zentrade/banco':
+        specifier: workspace:*
+        version: link:../../packages/banco
       '@zentrade/conhecimento':
         specifier: workspace:*
         version: link:../../packages/conhecimento
@@ -217,6 +220,9 @@ importers:
       fastify:
         specifier: ^5.12.5
         version: 5.12.5
+      ioredis:
+        specifier: ^6.0.0
+        version: 6.0.0
       pino:
         specifier: ^10.4.0
         version: 10.4.0

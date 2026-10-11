@@ -26,7 +26,6 @@ describe("configDoAgente", () => {
       }
       return "";
     })();
-    expect(erro).toMatch(/ANTHROPIC_API_KEY/);
     expect(erro).toMatch(/AGENTE_SEGREDO.*32/);
     expect(erro).toMatch(/DATABASE_URL/);
     expect(erro).not.toMatch(/curto-demais-segredo/);
@@ -44,5 +43,32 @@ describe("configDoAgente", () => {
     const c = configDoAgente({ ...valido, ZENTRADE_USUARIO_ID: "", LOG_LEVEL: "" });
     expect(c.usuarioIdPadrao).toBeUndefined();
     expect(c.nivelLog).toBe("info");
+  });
+
+  it("a chave da Anthropic e o Redis são opcionais; o Claude Code tem padrões e contas validadas", () => {
+    const { ANTHROPIC_API_KEY: _k, ...semChave } = valido;
+    const c = configDoAgente(semChave);
+    expect(c.chaveAnthropic).toBeUndefined();
+    expect(c.urlRedis).toBeUndefined();
+    expect(c.cli).toEqual({
+      caminho: "claude",
+      contas: [{ id: "padrao", nome: "Login padrão do Claude Code", pasta: null }],
+      maxTurnos: 8,
+      tetoUsd: 1,
+    });
+    expect(c.chat).toEqual({ timeoutMs: 300_000, maxSimultaneas: 4, maxPorMinuto: 20 });
+    const com = configDoAgente({
+      ...valido,
+      REDIS_URL: "redis://:s@127.0.0.1:56379",
+      AGENTE_CLAUDE_CONTAS: "pessoal=/dados/claude/pessoal",
+      AGENTE_CLI_TETO_USD: "0.5",
+    });
+    expect(com.urlRedis).toBe("redis://:s@127.0.0.1:56379");
+    expect(com.cli.contas.map((x) => x.id)).toEqual(["pessoal"]);
+    expect(com.cli.tetoUsd).toBe(0.5);
+    expect(() => configDoAgente({ ...valido, REDIS_URL: "http://x" })).toThrow(/REDIS_URL/);
+    expect(() => configDoAgente({ ...valido, AGENTE_CLAUDE_CONTAS: "x=relativa" })).toThrow(
+      /AGENTE_CLAUDE_CONTAS/,
+    );
   });
 });

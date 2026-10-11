@@ -31,6 +31,7 @@ export function criarBancoDoAgente(opcoes: OpcoesBancoDoAgente) {
   return {
     conexao,
     config: assistente.config,
+    configGravada: assistente.configGravada,
     resumo: resumo.resumo,
     robos: robos.listar,
     decisoes: decisoes.listar,

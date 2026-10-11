@@ -1,6 +1,6 @@
-import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { ema, paraTexto, rsi, sma } from "@zentrade/dominio";
 import { z } from "zod";
+import { definirFerramenta } from "./definicao.js";
 import { json, type ContextoAnalise } from "./contexto.js";
 
 const periodo = (padrao: number) => z.number().int().min(2).max(500).default(padrao);
@@ -26,13 +26,13 @@ function variacao(fechamentos: readonly number[], janela: number): number | null
 }
 
 export function retratoMercado(ctx: ContextoAnalise) {
-  return betaZodTool({
-    name: "retrato_mercado",
-    description:
+  return definirFerramenta({
+    nome: "retrato_mercado",
+    descricao:
       "Preço atual, últimos fechamentos e indicadores (SMA, EMA, RSI) calculados pelo domínio do ZenTrade " +
       "sobre os fechamentos do pedido, mais a variação percentual numa janela de candles.",
-    inputSchema: Entrada,
-    run: (e) => {
+    entrada: Entrada,
+    rodar: (e) => {
       const f = ctx.pedido.fechamentos;
       return json({
         simbolo: ctx.pedido.robo.simbolo,

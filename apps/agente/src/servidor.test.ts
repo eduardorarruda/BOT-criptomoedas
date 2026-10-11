@@ -5,6 +5,9 @@ import { ErroPropostaInvalida, type OpcoesAnalise } from "./analista.js";
 import { pedidoParaJson } from "./serializacao.js";
 import { criarServidor, type AnalistaServico } from "./servidor.js";
 import { pedidoExemplo, USUARIO_TESTE } from "./teste/pedido.js";
+import { ErroClaudeCli } from "./claude-cli/analista-cli.js";
+import { ErroProvedorIndisponivel } from "./provedores/analista-por-pessoa.js";
+import type { EventoAnalise } from "@zentrade/contratos";
 
 const SEGREDO = "s".repeat(40);
 const proposta: PropostaAgente = {
@@ -196,5 +199,58 @@ describe("limites do /analisar (custo de IA com teto)", () => {
       payload: JSON.stringify({ lixo: "x".repeat(600_000) }),
     });
     expect(r.statusCode).toBe(413);
+  });
+
+  it("publica cada ferramenta consultada como etapa ligada ao analiseId do pedido", async () => {
+    const publicados: EventoAnalise[] = [];
+    const analisar = vi.fn(async (_p: unknown, o: OpcoesAnalise) => {
+      o.aoUsarFerramenta?.("retrato_mercado", {});
+      return { proposta, custoUsd: dec(0) };
+    });
+    app = criarServidor({
+      analista: { analisar },
+      segredo: SEGREDO,
+      logger: false,
+      publicador: { publicar: async (e) => void publicados.push(e) },
+    });
+    const comAnalise = { ...corpo, analiseId: "analise-7" };
+    await app.inject({ method: "POST", url: "/analisar", headers: cabecalhos, payload: comAnalise });
+    expect(publicados).toMatchObject([
+      {
+        tipo: "analise",
+        analiseId: "analise-7",
+        roboId: "robo-1",
+        concluida: false,
+        etapa: { ferramenta: "retrato_mercado" },
+      },
+    ]);
+    await app.inject({ method: "POST", url: "/analisar", headers: cabecalhos, payload: corpo });
+    expect(publicados).toHaveLength(1);
+  });
+
+  it("provedor indisponível vira 503 e falha do Claude Code vira 502 com a explicação", async () => {
+    app = servidor(async () => {
+      throw new ErroProvedorIndisponivel("sem CLI");
+    });
+    const r = await app.inject({ method: "POST", url: "/analisar", headers: cabecalhos, payload: corpo });
+    expect(r.statusCode).toBe(503);
+    expect(r.json().erro).toEqual({ codigo: "provedor_indisponivel", mensagem: "sem CLI" });
+    await app.close();
+    app = servidor(async () => {
+      throw new ErroClaudeCli("autenticacao", "faça o login");
+    });
+    const r2 = await app.inject({ method: "POST", url: "/analisar", headers: cabecalhos, payload: corpo });
+    expect(r2.statusCode).toBe(502);
+    expect(r2.json().erro.codigo).toBe("falha_claude_cli");
+  });
+
+  it("registra rotas extras no mesmo serviço", async () => {
+    app = criarServidor({
+      analista: { analisar: vi.fn() },
+      segredo: SEGREDO,
+      logger: false,
+      extras: [(a) => a.get("/extra", async () => ({ ok: 1 }))],
+    });
+    expect((await app.inject({ method: "GET", url: "/extra" })).json()).toEqual({ ok: 1 });
   });
 });
