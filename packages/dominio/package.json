@@ -1,0 +1,25 @@
+{
+  "name": "@zentrade/dominio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Regras puras do ZenTrade: dinheiro exato, indicadores, árvore de regras, risco, dimensionamento e posição. Sem rede, sem banco.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0"
+  }
+}
