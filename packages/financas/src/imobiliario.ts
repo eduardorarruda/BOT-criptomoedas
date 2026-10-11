@@ -7,3 +7,4 @@ export * from "./imobiliario-indicadores.js";
 export * from "./imobiliario-investimento.js";
 export * from "./imobiliario-rentabilidade.js";
 export { diaUtc, isoDeMs, somarMeses } from "./imobiliario-comum.js";
+export * from "./imobiliario-texto.js";
