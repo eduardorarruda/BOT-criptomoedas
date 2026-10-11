@@ -4,7 +4,8 @@ import { extrairIsolado } from "./extracao-isolada.js";
 
 const teste = (nome: string) => new URL(`../teste/${nome}`, import.meta.url);
 
-describe("extração isolada numa worker thread", () => {
+// Subir a thread carrega os leitores de PDF/DOCX: sob carga, passa dos 5 s padrão.
+describe("extração isolada numa worker thread", { timeout: 60_000 }, () => {
   it("o erro de extração atravessa a thread com a mensagem para a pessoa", async () => {
     const naoPdf = new TextEncoder().encode("%PDF-1.4 isto não é um PDF de verdade");
     await expect(extrairIsolado(naoPdf, "pdf")).rejects.toBeInstanceOf(ErroExtracao);

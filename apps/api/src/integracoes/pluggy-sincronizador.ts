@@ -73,11 +73,21 @@ const instante = (v: string | null | undefined): Date | null => {
   return d && !Number.isNaN(d.getTime()) ? d : null;
 };
 
+/** Só guarda logo em https; qualquer outra coisa vinda de fora vira "sem logo". */
+const logoSegura = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  try {
+    return new URL(url).protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+};
+
 const dadosDoItem = (i: ItemPluggyApi): DadosItem => ({
   id: i.id,
   instituicao: i.connector.name,
   conectorId: i.connector.id,
-  logoUrl: i.connector.imageUrl ?? null,
+  logoUrl: logoSegura(i.connector.imageUrl),
   situacao: i.status,
   erro: i.error?.message ?? null,
   atualizadoNoBanco: instante(i.lastUpdatedAt),

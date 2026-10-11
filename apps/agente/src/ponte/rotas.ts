@@ -12,7 +12,12 @@ const negar = (resposta: FastifyReply) =>
     .code(401)
     .send({ erro: { codigo: "nao_autorizado", mensagem: "sessão da ponte inválida ou encerrada" } });
 
-/** Só a ponte rodando nesta máquina, com o token da execução, alcança as ferramentas. */
+/**
+ * Só a ponte rodando nesta máquina, com o token da execução, alcança as ferramentas.
+ * Premissa: o agente fala direto com o socket (sem proxy reverso na frente). Atrás de um
+ * proxy no mesmo host, todo pedido chegaria de 127.0.0.1 e esta barreira viraria só o
+ * token; nesse caso, não exponha /ponte no proxy.
+ */
 function sessao(req: FastifyRequest, sessoes: SessoesPonte): ReadonlyMap<string, FerramentaLeitura> | null {
   if (!LOCAIS.has(req.socket.remoteAddress ?? "")) return null;
   const acesso = req.headers[CABECALHO_PONTE];

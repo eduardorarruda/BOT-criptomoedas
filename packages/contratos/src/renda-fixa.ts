@@ -328,7 +328,7 @@ export type SimularPreIpca = z.infer<typeof SimularPreIpcaEsquema>;
 export const ItemPluggyEsquema = z.object({
   id: z.string(),
   instituicao: z.string(),
-  logoUrl: z.string().nullable(),
+  logoUrl: z.url({ protocol: /^https$/ }).nullable(),
   situacao: z.string(),
   erro: z.string().nullable(),
   atualizadoNoBanco: Instante.nullable(),

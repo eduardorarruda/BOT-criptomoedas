@@ -106,6 +106,18 @@ describe("sincronizador da Pluggy", () => {
     expect(m.itens.get(ITEM)?.logoUrl).toBe("https://cdn/nu.png");
   });
 
+  it.each(["javascript:alert(1)", "http://cdn/nu.png", "não é url"])(
+    "logo %s não é guardada",
+    async (logo) => {
+      const m = armazemMemoria();
+      const cliente = clienteFalso({
+        item: async () => ({ ...item(), connector: { id: 612, name: "Nubank", imageUrl: logo } }),
+      });
+      await criarSincronizadorPluggy({ ...base, cliente, armazem: m.armazem }).registrar(ANA, ITEM);
+      expect(m.itens.get(ITEM)?.logoUrl).toBeNull();
+    },
+  );
+
   it.each([
     ["outra pessoa", "outra-pessoa"],
     ["sem dono", null],
