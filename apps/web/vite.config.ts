@@ -37,6 +37,7 @@ export default defineConfig({
         "src/ganchos/**/*.ts",
         "src/demo/**/*.ts",
         "src/componentes/graficos/velas.ts",
+        "src/paginas/patrimonio/**/*.ts",
       ],
       exclude: ["src/**/*.test.{ts,tsx}"],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
