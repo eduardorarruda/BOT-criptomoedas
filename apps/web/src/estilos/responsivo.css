@@ -33,8 +33,9 @@
   .grade-kpi--5 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-  .grade-kpi--5 .kpi--destaque {
+  .grade-kpi--5 > .kpi--destaque {
     grid-column: 1 / -1;
+    grid-row: auto;
   }
 }
 

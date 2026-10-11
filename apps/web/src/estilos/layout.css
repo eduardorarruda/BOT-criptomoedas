@@ -496,12 +496,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--espaco-3);
+  flex-wrap: wrap;
+  gap: var(--espaco-2) var(--espaco-3);
   min-width: 0;
 }
 .painel__cabeca {
   display: flex;
   align-items: center;
+  flex: 1 1 260px;
   gap: var(--espaco-3);
   min-width: 0;
 }

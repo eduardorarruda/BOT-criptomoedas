@@ -406,8 +406,12 @@
 .grade-kpi--4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
+/* cinco indicadores: o principal fica alto à esquerda e os outros quatro em 2 × 2 */
 .grade-kpi--5 {
-  grid-template-columns: 1.35fr repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.25fr) repeat(2, minmax(0, 1fr));
+}
+.grade-kpi--5 > .kpi--destaque {
+  grid-row: span 2;
 }
 .grade-kpi > * {
   animation: subir var(--dur-longa) var(--curva-saida) backwards;
@@ -527,4 +531,7 @@
 }
 .minigrafico--neutro {
   color: var(--apagado);
+}
+.grade-kpi--5 > .kpi--destaque .kpi__grafico svg {
+  height: 76px;
 }
