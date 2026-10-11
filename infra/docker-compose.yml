@@ -165,6 +165,10 @@ services:
       BINANCE_API_KEY: ${BINANCE_API_KEY:-}
       BINANCE_API_SECRET: ${BINANCE_API_SECRET:-}
       BINANCE_TAXA_ESTIMADA: ${BINANCE_TAXA_ESTIMADA:-0.001}
+      # A mesma chave mestra da API: decifra a chave da Binance de cada pessoa (obrigatória na testnet).
+      ZENTRADE_CHAVE_MESTRA: ${ZENTRADE_CHAVE_MESTRA:-}
+      # "desenvolvimento" libera BINANCE_API_KEY/SECRET acima para quem não cadastrou chave.
+      ZENTRADE_AMBIENTE: ${ZENTRADE_AMBIENTE:-producao}
     depends_on:
       migrar: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
