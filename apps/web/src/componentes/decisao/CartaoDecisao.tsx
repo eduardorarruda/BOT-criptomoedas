@@ -113,17 +113,37 @@ function Risco({ decisao: d }: Pick<Props, "decisao">) {
       </p>
     );
   }
+  // O motor também registra aqui quando a IA não concordou (agente_*): não é o risco que barrou.
+  const daIa = d.risco.barreiras.filter((b) => b.codigo.startsWith("agente_"));
+  const doRisco = d.risco.barreiras.filter((b) => !b.codigo.startsWith("agente_"));
   return (
     <div className="decisao__risco decisao__risco--barrada">
+      {daIa.length > 0 ? (
+        <ListaBarreiras titulo="A IA não concordou, então nada foi enviado:" itens={daIa} />
+      ) : null}
+      {doRisco.length > 0 ? <ListaBarreiras titulo="O risco barrou:" itens={doRisco} /> : null}
+    </div>
+  );
+}
+
+function ListaBarreiras({
+  titulo,
+  itens,
+}: {
+  readonly titulo: string;
+  readonly itens: readonly { codigo: string; mensagem: string }[];
+}) {
+  return (
+    <>
       <p>
-        <ShieldX size={16} aria-hidden="true" /> O risco barrou:
+        <ShieldX size={16} aria-hidden="true" /> {titulo}
       </p>
       <ul role="list">
-        {d.risco.barreiras.map((b) => (
+        {itens.map((b) => (
           <li key={b.codigo}>{b.mensagem}</li>
         ))}
       </ul>
-    </div>
+    </>
   );
 }
 

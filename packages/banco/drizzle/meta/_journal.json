@@ -29,6 +29,13 @@
       "when": 1791683362805,
       "tag": "0003_protecao_efetiva",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791700000000,
+      "tag": "0004_candles_tempo_real",
+      "breakpoints": true
     }
   ]
 }

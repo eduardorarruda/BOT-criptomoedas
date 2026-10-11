@@ -34,8 +34,18 @@ const paraDTO = (l: LinhaCandle): CandleDTO => ({
   volume: decimalTexto(l.volume),
 });
 
-/** Agregados contínuos montados a partir dos candles de 1m (migração manual). */
+/** Agregados contínuos montados a partir dos candles de 1m (migração manual), em tempo real. */
 const AGREGADOS: Partial<Record<Intervalo, string>> = { "5m": "candles_5m", "1h": "candles_1h" };
+
+/**
+ * Intervalos sem agregado próprio: saem de time_bucket sobre a fonte mais fina que
+ * ainda é barata (15m a partir de 1m; 4h e 1d a partir do agregado de 1h).
+ */
+const REAGRUPADOS: Partial<Record<Intervalo, { readonly passo: string; readonly fonte: "1m" | "1h" }>> = {
+  "15m": { passo: "15 minutes", fonte: "1m" },
+  "4h": { passo: "4 hours", fonte: "1h" },
+  "1d": { passo: "1 day", fonte: "1h" },
+};
 
 export interface ConsultaCandles {
   readonly simbolo: string;
@@ -55,8 +65,26 @@ export function repositorioMercado(db: Db) {
     return linhas.map(paraDTO);
   }
 
+  async function reagrupado(passo: string, fonte: "1m" | "1h", c: ConsultaCandles): Promise<CandleDTO[]> {
+    const origem =
+      fonte === "1m"
+        ? sql`(select * from candles where intervalo = '1m') as base`
+        : sql`${sql.identifier("candles_1h")} as base`;
+    const linhas = await db.execute<LinhaCandle>(sql`
+      select time_bucket(${passo}::interval, abertura) as abertura,
+             first(abre, abertura)::text as abre, max(maxima)::text as maxima, min(minima)::text as minima,
+             last(fecha, abertura)::text as fecha, sum(volume)::text as volume
+      from ${origem}
+      where simbolo = ${c.simbolo} and abertura >= ${iso(c.inicio)}::timestamptz and abertura < ${iso(c.fim)}::timestamptz
+      group by 1 order by 1 limit ${LIMITE_CANDLES}`);
+    return linhas.map(paraDTO);
+  }
+
   return {
-    /** Do mais antigo ao mais recente; `fim` exclusivo. 5m e 1h caem no agregado se não houver candle gravado. */
+    /**
+     * Do mais antigo ao mais recente; `fim` exclusivo. Sem candle gravado no próprio
+     * intervalo, 5m e 1h vêm do agregado contínuo e 15m, 4h e 1d são reagrupados.
+     */
     async candles(c: ConsultaCandles): Promise<CandleDTO[]> {
       const linhas = await db
         .select()
@@ -71,9 +99,11 @@ export function repositorioMercado(db: Db) {
         )
         .orderBy(asc(candles.abertura))
         .limit(LIMITE_CANDLES);
+      if (linhas.length > 0) return linhas.map(paraDTO);
       const visao = AGREGADOS[c.intervalo];
-      if (linhas.length === 0 && visao) return doAgregado(visao, c);
-      return linhas.map(paraDTO);
+      if (visao) return doAgregado(visao, c);
+      const regra = REAGRUPADOS[c.intervalo];
+      return regra ? reagrupado(regra.passo, regra.fonte, c) : [];
     },
 
     /** Para o motor: grava (ou corrige) candles fechados. */

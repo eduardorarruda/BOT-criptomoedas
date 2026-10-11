@@ -178,6 +178,45 @@ describe("repositórios da API: decisões, ordens, mercado, backtests, conhecime
     ]);
   });
 
+  it("candles: 1h sem esperar a materialização; 15m, 4h e 1d agregados a partir de 1m", async () => {
+    const base = Date.UTC(2026, 1, 1, 0, 0);
+    const minutos = 5 * 60;
+    await c.banco.mercado.gravar(
+      "ETHUSDT",
+      "1m",
+      Array.from({ length: minutos }, (_, i) => ({
+        abertura: base + i * 60_000,
+        fechamento: base + (i + 1) * 60_000 - 1,
+        abre: dec(1000 + i),
+        maxima: dec(1000 + i + 5),
+        minima: dec(1000 + i - 5),
+        fecha: dec(1000 + i + 1),
+        volume: dec("1.5"),
+      })),
+    );
+    const ler = (intervalo: "15m" | "1h" | "4h" | "1d", horas: number) =>
+      c.banco.mercado.candles({ simbolo: "ETHUSDT", intervalo, inicio: base, fim: base + horas * HORA });
+
+    const quinze = await ler("15m", 1);
+    expect(quinze.map((k) => k.abertura)).toEqual([0, 1, 2, 3].map((i) => base + i * 15 * 60_000));
+    expect(quinze[0]).toMatchObject({
+      abre: "1000",
+      fecha: "1015",
+      maxima: "1019",
+      minima: "995",
+      volume: "22.5",
+    });
+
+    // Nenhum refresh do agregado: a hora mais recente ainda não foi materializada e precisa aparecer.
+    expect(await ler("1h", 5)).toHaveLength(5);
+
+    const quatro = await ler("4h", 5);
+    expect(quatro.map((k) => k.abertura)).toEqual([base, base + 4 * HORA]);
+    expect(await ler("1d", 24)).toEqual([
+      { abertura: base, abre: "1000", maxima: "1304", minima: "995", fecha: "1300", volume: "450" },
+    ]);
+  });
+
   it("backtest nasce na fila e o motor conclui ou falha", async () => {
     const pedido = {
       estrategiaId: c.ana.estrategia.id,

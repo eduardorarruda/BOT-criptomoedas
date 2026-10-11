@@ -67,4 +67,25 @@ describe("CartaoDecisao", () => {
     expect(screen.getByText("sem IA")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Barrada pelo risco")).toBeInTheDocument());
   });
+
+  it("quando quem recusou foi a IA, diz isso — não culpa o risco", async () => {
+    const { fonte } = await preparar();
+    const robo = { id: "r", nome: "Robô", simbolo: "SOLUSDT" } as RoboDTO;
+    const semIa: DecisaoDTO = {
+      id: "d2",
+      roboId: "r",
+      em: Date.now(),
+      sinal: { acao: "COMPRAR", explicacao: "x" },
+      preco: "150",
+      risco: {
+        aprovada: false,
+        barreiras: [{ codigo: "agente_aguardar", mensagem: "O agente propôs aguardar." }],
+      },
+      estado: "registrada",
+    };
+    renderizar(<CartaoDecisao decisao={semIa} robo={robo} />, fonte);
+    expect(screen.getByText(/A IA não concordou/)).toBeInTheDocument();
+    expect(screen.getByText("O agente propôs aguardar.")).toBeInTheDocument();
+    expect(screen.queryByText(/O risco barrou/)).toBeNull();
+  });
 });
