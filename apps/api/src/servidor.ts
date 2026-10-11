@@ -2,7 +2,7 @@ import { criarBanco, type Banco } from "@zentrade/banco";
 import type { FastifyBaseLogger } from "fastify";
 import type { Redis } from "ioredis";
 import { construirApp } from "./app.js";
-import { lerConfig, type Config } from "./config.js";
+import { lerConfig, semVazias, type Config } from "./config.js";
 import type { Dependencias } from "./dependencias.js";
 import { antiReplayRedis } from "./integracoes/anti-replay.js";
 import { armazemRedis, criarRegistroAutomacoes } from "./integracoes/automacoes.js";
@@ -17,7 +17,7 @@ import { criarLog } from "./log.js";
 const HORA_MS = 3_600_000;
 
 function conhecimentoDe(banco: Banco, log: FastifyBaseLogger) {
-  const embeddings = prepararEmbeddings(process.env);
+  const embeddings = prepararEmbeddings(semVazias(process.env));
   if ("indisponivel" in embeddings) log.warn({ motivo: embeddings.indisponivel }, "RAG desligado na API");
   return criarServicoConhecimento({
     repositorio: repositorioRag(banco),

@@ -27,7 +27,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts",
-    "start": "node dist/principal.js"
+    "start": "node dist/principal.js",
+    "dev": "tsc -p tsconfig.build.json && (tsc -p tsconfig.build.json --watch --preserveWatchOutput & node --env-file-if-exists=../../.env --watch dist/principal.js)"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",

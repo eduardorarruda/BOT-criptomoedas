@@ -44,6 +44,18 @@ describe("postarJson", () => {
     expect(esperar.mock.calls.map((c) => c[0])).toEqual([2000, 200]);
   });
 
+  it("cada tentativa tem prazo: host que não responde vira falha de rede", async () => {
+    const fetch = vi.fn(
+      (_u: string, init: RequestInit) =>
+        new Promise<Response>((_, rejeitar) =>
+          init.signal?.addEventListener("abort", () => rejeitar(new Error("tempo esgotado"))),
+        ),
+    );
+    const erro = await falha(postarJson({ ...base, fetch, esperar: vi.fn(), tentativas: 2, limiteMs: 10 }));
+    expect(erro.message).toMatch(/tempo esgotado/);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it("tenta de novo quando a rede falha", async () => {
     const fetch = vi
       .fn()

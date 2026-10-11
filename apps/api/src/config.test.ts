@@ -48,4 +48,11 @@ describe("configuração da API", () => {
     expect(lerConfig({ ...valido, COOKIE_SEGURO: "false" }).COOKIE_SEGURO).toBe(false);
     expect(() => lerConfig({ ...valido, COOKIE_SEGURO: "talvez" })).toThrow();
   });
+
+  it("variável vazia conta como ausente (como .env.example e o docker-compose deixam)", () => {
+    const c = lerConfig({ ...valido, N8N_USUARIO_ID: "", AGENTE_URL: "", LOG_LEVEL: "" });
+    expect(c.N8N_USUARIO_ID).toBeUndefined();
+    expect(c.AGENTE_URL).toBeUndefined();
+    expect(c.LOG_LEVEL).toBe("info");
+  });
 });

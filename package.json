@@ -9,6 +9,9 @@
   },
   "type": "module",
   "scripts": {
+    "dev": "turbo run dev --filter=@zentrade/api --filter=@zentrade/web",
+    "dev:agente": "turbo run dev --filter=@zentrade/agente",
+    "dev:motor": "turbo run build --filter=@zentrade/motor... && pnpm --filter @zentrade/motor start",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",

@@ -38,8 +38,15 @@ const Esquema = ConfigBancoEsquema.extend(EsquemaApi.shape);
 
 export type Config = z.infer<typeof Esquema>;
 
+/** Variável vazia (`N8N_USUARIO_ID=` no .env, `${X:-}` no compose) conta como ausente, como no motor. */
+export function semVazias(env: Readonly<Record<string, string | undefined>>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(env).filter((par): par is [string, string] => par[1] !== undefined && par[1] !== ""),
+  );
+}
+
 export function lerConfig(env: NodeJS.ProcessEnv): Config {
-  const lido = Esquema.safeParse(env);
+  const lido = Esquema.safeParse(semVazias(env));
   if (!lido.success) {
     const problemas = lido.error.issues.map((i) => `- ${i.path.join(".")}: ${i.message}`);
     throw new Error(`configuração da API inválida (veja .env.example):\n${problemas.join("\n")}`);

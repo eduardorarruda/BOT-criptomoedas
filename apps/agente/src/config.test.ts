@@ -39,4 +39,10 @@ describe("configDoAgente", () => {
         .usuarioIdPadrao,
     ).toBe("7b0c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59");
   });
+
+  it("variável vazia conta como ausente (como .env.example e o docker-compose deixam)", () => {
+    const c = configDoAgente({ ...valido, ZENTRADE_USUARIO_ID: "", LOG_LEVEL: "" });
+    expect(c.usuarioIdPadrao).toBeUndefined();
+    expect(c.nivelLog).toBe("info");
+  });
 });

@@ -38,8 +38,15 @@ export class ErroConfiguracao extends Error {
 }
 
 /** Lê e valida o ambiente no início; a mensagem diz o nome da variável, nunca o valor. */
+/** Variável vazia (`ZENTRADE_USUARIO_ID=` no .env, `${X:-}` no compose) conta como ausente. */
+export function semVazias(env: Readonly<Record<string, string | undefined>>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(env).filter((par): par is [string, string] => par[1] !== undefined && par[1] !== ""),
+  );
+}
+
 export function configDoAgente(env: Readonly<Record<string, string | undefined>>): ConfigAgente {
-  const lido = Ambiente.safeParse(env);
+  const lido = Ambiente.safeParse(semVazias(env));
   if (!lido.success) {
     const problemas = lido.error.issues.map((i) => `${String(i.path[0])}: ${i.message}`).join("; ");
     throw new ErroConfiguracao(`Configuração do agente inválida — ${problemas}. Veja o .env.example.`);
