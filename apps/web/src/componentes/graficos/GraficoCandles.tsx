@@ -4,6 +4,7 @@ import {
   createChart,
   createSeriesMarkers,
   LineStyle,
+  type AutoscaleInfo,
   type CandlestickData,
   type IChartApi,
   type IPriceLine,
@@ -100,6 +101,17 @@ function criar(el: HTMLElement, velas: readonly CandleApi[], intervalo: Interval
   return { estado, dados };
 }
 
+function incluir(base: AutoscaleInfo | null, precos: readonly number[]): AutoscaleInfo | null {
+  if (!base?.priceRange || precos.length === 0) return base;
+  return {
+    ...base,
+    priceRange: {
+      minValue: Math.min(base.priceRange.minValue, ...precos),
+      maxValue: Math.max(base.priceRange.maxValue, ...precos),
+    },
+  };
+}
+
 /** Preço ao vivo: estica a última vela ou abre a próxima. */
 function aplicar(r: Estado, vela: Vela): void {
   if (r.ultima && vela.time < r.ultima.time) return;
@@ -168,6 +180,11 @@ export function GraficoCandles(p: Props) {
   useEffect(() => {
     const r = refs.current;
     if (!r) return;
+    const precos = (linhas ?? []).map((l) => Number(l.preco));
+    // A escala de preço inclui as linhas: stop e alvo ficam sempre à vista.
+    r.serie.applyOptions({
+      autoscaleInfoProvider: (original: () => AutoscaleInfo | null) => incluir(original(), precos),
+    });
     r.linhas.forEach((l) => r.serie.removePriceLine(l));
     r.linhas = (linhas ?? []).map((l) =>
       r.serie.createPriceLine({

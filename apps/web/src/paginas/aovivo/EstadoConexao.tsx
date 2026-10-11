@@ -25,7 +25,7 @@ export function EstadoConexao() {
       {/* Só o estado é anunciado; a idade muda a cada segundo e não entra na região viva. */}
       <span role="status">{TEXTO[estado]}</span>
       <span className="apagado aovivo-conexao__idade">
-        {idade === null ? "· nenhum evento ainda" : `· último evento há ${formatarDuracao(idade)}`}
+        {idade === null ? "· esperando o próximo evento" : `· último evento há ${formatarDuracao(idade)}`}
       </span>
     </p>
   );

@@ -8,6 +8,7 @@ const serie = {
   data: () => [],
   createPriceLine: () => ({}),
   removePriceLine: () => undefined,
+  applyOptions: () => undefined,
 };
 const chart = {
   addSeries: () => serie,

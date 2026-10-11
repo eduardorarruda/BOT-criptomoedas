@@ -10,7 +10,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": { target: "http://localhost:8080", changeOrigin: false, ws: true },
+      // ZENTRADE_API_ALVO aponta a tela de desenvolvimento para outra API (ex.: http://127.0.0.1:8095).
+      "/api": { target: process.env.ZENTRADE_API_ALVO ?? "http://localhost:8080", changeOrigin: false, ws: true },
     },
   },
   build: { target: "es2023", sourcemap: true },
