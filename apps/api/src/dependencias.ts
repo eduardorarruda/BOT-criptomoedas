@@ -3,6 +3,7 @@ import type { Config } from "./config.js";
 import type { AntiReplay } from "./integracoes/anti-replay.js";
 import type { RegistroAutomacoes } from "./integracoes/automacoes.js";
 import type { ServicoConhecimento } from "./integracoes/conhecimento.js";
+import type { ServicoCarteira } from "./integracoes/binance-carteira.js";
 import type { HubEventos } from "./integracoes/eventos.js";
 import type { ClienteN8n } from "./integracoes/n8n.js";
 
@@ -31,6 +32,8 @@ export interface Dependencias {
   readonly hub: HubEventos;
   readonly saude: VerificadorSaude;
   readonly agora: () => number;
+  /** Carteira da Binance. Sem isto, as rotas montam a padrão (Binance de verdade, pelo fetch global). */
+  readonly carteira?: ServicoCarteira;
   /** De quanto em quanto tempo o WebSocket confere se a sessão (ou o token) ainda vale. Padrão 30 s. */
   readonly verificacaoTempoRealMs?: number;
 }

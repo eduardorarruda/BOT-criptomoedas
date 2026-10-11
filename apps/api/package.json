@@ -33,6 +33,7 @@
     "@zentrade/banco": "workspace:*",
     "@zentrade/conhecimento": "workspace:*",
     "@zentrade/contratos": "workspace:*",
+    "@zentrade/corretora": "workspace:*",
     "@zentrade/dominio": "workspace:*",
     "bullmq": "^6.3.12",
     "fastify": "^5.12.5",

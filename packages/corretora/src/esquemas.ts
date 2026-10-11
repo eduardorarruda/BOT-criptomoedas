@@ -64,3 +64,46 @@ export const RespostaConsultaOrdem = z.object({
 });
 
 export const RespostaNegocios = z.array(Fill.extend({ orderId: z.number(), time: z.number() }));
+
+/** /api/v3/account com o que a carteira e o status usam. */
+export const RespostaContaCompleta = RespostaConta.extend({
+  canTrade: z.boolean(),
+  canWithdraw: z.boolean().optional(),
+});
+
+/** /api/v3/myTrades: um fill por linha. */
+export const RespostaMinhasNegociacoes = z.array(
+  z.object({
+    symbol: z.string(),
+    id: z.number().int(),
+    orderId: z.number().int(),
+    price: z.string(),
+    qty: z.string(),
+    quoteQty: z.string(),
+    commission: z.string(),
+    commissionAsset: z.string(),
+    time: z.number().int(),
+    isBuyer: z.boolean(),
+  }),
+);
+
+/** /api/v3/allOrders: só o que liga a ordem ao clientOrderId. */
+export const RespostaTodasOrdens = z.array(
+  z.object({ orderId: z.number().int(), clientOrderId: z.string() }),
+);
+
+/** /api/v3/ticker/price sem símbolo: todos os pares. */
+export const RespostaPrecos = z.array(z.object({ symbol: z.string(), price: z.string() }));
+
+/** /api/v3/exchangeInfo de todos os pares, só nomes (o completo tem filtros que a carteira não usa). */
+export const RespostaPares = z.object({
+  symbols: z.array(z.object({ symbol: z.string(), baseAsset: z.string(), quoteAsset: z.string() })),
+});
+
+/** /sapi/v1/account/apiRestrictions: permissões da chave (só na rede real). */
+export const RespostaRestricoes = z.object({
+  ipRestrict: z.boolean(),
+  enableReading: z.boolean(),
+  enableWithdrawals: z.boolean(),
+  enableSpotAndMarginTrading: z.boolean(),
+});

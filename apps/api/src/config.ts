@@ -31,6 +31,8 @@ const EsquemaApi = z.object({
     .enum(["voyage", "ollama"], { error: "EMBEDDINGS_PROVEDOR aceita voyage ou ollama" })
     .default("voyage"),
   APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(1440).default(15),
+  // De quantos em quantos minutos a API importa a carteira da Binance de cada pessoa (0 = só sob demanda).
+  CARTEIRA_SINCRONIZAR_MIN: z.coerce.number().int().min(0).max(1440).default(30),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
 

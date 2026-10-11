@@ -21,6 +21,7 @@ function abrirInfra(config: Config, registro: Logger): Infra {
     ? criarBancoDoMotor({
         url: config.DATABASE_URL,
         validadeAprovacaoMs: config.APROVACAO_VALIDADE_MIN * 60_000,
+        ...(config.ZENTRADE_CHAVE_MESTRA ? { chaveMestra: config.ZENTRADE_CHAVE_MESTRA } : {}),
         aoAviso: (mensagem) => registro.debug({ mensagem }, "aviso do PostgreSQL"),
       })
     : undefined;
@@ -59,7 +60,9 @@ async function principal(): Promise<void> {
   const arquivo = infra.banco
     ? undefined
     : await carregarRobos(resolve(config.MOTOR_ROBOS_ARQUIVO), config.MOTOR_REDE);
-  const banco = infra.banco ? { portas: infra.banco.portas, mercado: infra.banco.mercado } : undefined;
+  const banco = infra.banco
+    ? { portas: infra.banco.portas, mercado: infra.banco.mercado, credenciais: infra.banco.credenciais }
+    : undefined;
   const fontes = {
     ...(banco ? { banco } : {}),
     ...(infra.redis ? { redis: infra.redis } : {}),

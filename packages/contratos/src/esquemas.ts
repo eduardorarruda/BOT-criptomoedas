@@ -5,6 +5,7 @@
  */
 export * from "./api.js";
 export * from "./backtest.js";
+export * from "./carteira.js";
 export * from "./comum.js";
 export * from "./dados.js";
 export * from "./eventos.js";

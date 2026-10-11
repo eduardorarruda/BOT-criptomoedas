@@ -1,4 +1,4 @@
-import type { RoboConfig } from "@zentrade/contratos";
+import type { Corretora, RoboConfig } from "@zentrade/contratos";
 import { publicar } from "./nucleo/diario.js";
 import type { Dependencias } from "./nucleo/tipos.js";
 import { RoboAoVivo } from "./robo.js";
@@ -13,6 +13,8 @@ export interface OpcoesMotor {
   readonly bater?: (em: number) => Promise<void>;
   /** Antes de ligar cada robô (ex.: o papel refaz o saldo a partir das execuções gravadas). */
   readonly preparar?: (robo: RoboConfig) => Promise<void>;
+  /** A corretora do robô (a da pessoa dona dele, com a chave dela). Sem isto, a de `deps`. */
+  readonly corretoraDe?: (robo: RoboConfig) => Promise<Corretora>;
 }
 
 export interface ResultadoRecarga {
@@ -128,15 +130,17 @@ export class Motor {
   }
 
   private async ligar(config: RoboConfig): Promise<Ligado | null> {
-    const robo = new RoboAoVivo(config, this.deps);
+    let robo: RoboAoVivo | null = null;
     try {
+      const corretora = this.opcoes.corretoraDe ? await this.opcoes.corretoraDe(config) : this.deps.corretora;
+      robo = new RoboAoVivo(config, { ...this.deps, corretora });
       await this.opcoes.preparar?.(config);
       await robo.iniciar();
       return { robo, assinatura: assinatura(config) };
     } catch (erro) {
       this.deps.registro.error({ erro, roboId: config.id }, "robô não ligou");
       await robo
-        .parar()
+        ?.parar()
         .catch((e: unknown) =>
           this.deps.registro.warn({ erro: e, roboId: config.id }, "falha ao limpar o robô que não ligou"),
         );

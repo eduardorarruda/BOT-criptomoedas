@@ -3,6 +3,8 @@ import { lerConfig } from "./config.js";
 
 const BANCO = "postgres://zentrade:x@127.0.0.1:55432/zentrade";
 const TESTNET = { MOTOR_REDE: "testnet", DATABASE_URL: BANCO };
+const CHAVE_MESTRA = Buffer.alloc(32, 7).toString("base64");
+const DEV = { ZENTRADE_AMBIENTE: "desenvolvimento" };
 
 describe("configuração do motor (variáveis de ambiente)", () => {
   it("padrões seguros: papel, agente obrigatório, agente fixo que nunca concorda", () => {
@@ -25,11 +27,26 @@ describe("configuração do motor (variáveis de ambiente)", () => {
     expect(lerConfig({ MOTOR_AGENTE_OBRIGATORIO: "false" }).MOTOR_AGENTE_OBRIGATORIO).toBe(false);
   });
 
-  it("testnet exige as chaves; agente HTTP exige segredo de 32+ caracteres", () => {
-    expect(() => lerConfig({ MOTOR_REDE: "testnet" })).toThrow(/BINANCE_API_KEY/);
-    expect(lerConfig({ ...TESTNET, BINANCE_API_KEY: "k", BINANCE_API_SECRET: "s" }).MOTOR_REDE).toBe(
-      "testnet",
+  it("testnet usa a chave de cada pessoa: exige a chave mestra para decifrá-la", () => {
+    expect(() => lerConfig(TESTNET)).toThrow(/ZENTRADE_CHAVE_MESTRA/);
+    const c = lerConfig({ ...TESTNET, ZENTRADE_CHAVE_MESTRA: CHAVE_MESTRA });
+    expect(c.MOTOR_REDE).toBe("testnet");
+    expect(c.ZENTRADE_CHAVE_MESTRA?.length).toBe(32);
+    expect(c.ZENTRADE_AMBIENTE).toBe("producao");
+    expect(() => lerConfig({ ...TESTNET, ZENTRADE_CHAVE_MESTRA: "curta" })).toThrow(/32 bytes/);
+  });
+
+  it("chaves do ambiente só em desenvolvimento (e aí dispensam a chave mestra)", () => {
+    const comChaves = { ...TESTNET, BINANCE_API_KEY: "k", BINANCE_API_SECRET: "s" };
+    expect(() => lerConfig({ ...comChaves, ZENTRADE_CHAVE_MESTRA: CHAVE_MESTRA })).toThrow(
+      /só valem com ZENTRADE_AMBIENTE=desenvolvimento/,
     );
+    expect(lerConfig({ ...comChaves, ...DEV }).BINANCE_API_KEY).toBe("k");
+    expect(() => lerConfig({ ...TESTNET, ...DEV, BINANCE_API_KEY: "k" })).toThrow(/ZENTRADE_CHAVE_MESTRA/);
+    expect(() => lerConfig({ ZENTRADE_AMBIENTE: "teste" })).toThrow(/ZENTRADE_AMBIENTE/);
+  });
+
+  it("agente HTTP exige segredo de 32+ caracteres", () => {
     expect(() => lerConfig({ AGENTE_URL: "http://agente:8081" })).toThrow(/AGENTE_SEGREDO/);
     expect(() => lerConfig({ AGENTE_URL: "http://agente:8081", AGENTE_SEGREDO: "curto" })).toThrow(
       /AGENTE_SEGREDO/,
@@ -43,7 +60,7 @@ describe("configuração do motor (variáveis de ambiente)", () => {
   });
 
   it("testnet sem banco não sobe: estado durável é obrigatório fora do papel", () => {
-    expect(() => lerConfig({ MOTOR_REDE: "testnet", BINANCE_API_KEY: "k", BINANCE_API_SECRET: "s" })).toThrow(
+    expect(() => lerConfig({ MOTOR_REDE: "testnet", ZENTRADE_CHAVE_MESTRA: CHAVE_MESTRA })).toThrow(
       /DATABASE_URL: a testnet exige banco/,
     );
     expect(lerConfig({}).DATABASE_URL).toBeUndefined();

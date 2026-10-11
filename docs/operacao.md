@@ -70,8 +70,9 @@ Com mais de uma pessoa cadastrada, defina `N8N_USUARIO_ID` com o id de quem rece
 ## Conectar a testnet
 
 1. Crie uma conta em <https://testnet.binance.vision> e gere uma chave de API (o saldo é fictício).
-2. No `.env`, use `MOTOR_REDE=testnet` e preencha `BINANCE_API_KEY` e `BINANCE_API_SECRET` (o motor desta versão lê as chaves do ambiente).
-3. Na tela, cadastre a conta da corretora (rede `testnet`, chave e segredo). A tela pede sua senha ou código 2FA de novo (reautenticação), e depois só mostra o final da chave (`…a1b2`). **Pendente:** o motor passar a usar a conta cifrada no banco em vez das variáveis de ambiente.
+2. Na tela, cadastre a conta da corretora (rede `testnet`, chave e segredo). A tela pede sua senha ou código 2FA de novo (reautenticação), e depois só mostra o final da chave (`…a1b2`).
+3. No `.env` do motor, use `MOTOR_REDE=testnet` e a **mesma** `ZENTRADE_CHAVE_MESTRA` da API: cada robô opera com a chave da pessoa dona dele, decifrada do banco. `BINANCE_API_KEY`/`BINANCE_API_SECRET` só valem com `ZENTRADE_AMBIENTE=desenvolvimento` (atalho para quem ainda não cadastrou chave).
+4. Em **Carteira**, use "Sincronizar agora" para importar saldos e negociações (uma chave só de leitura basta para isso). Detalhes em [carteira.md](carteira.md).
 
 Quando for para a rede real, repita com uma chave **sem permissão de saque** e **restrita ao IP do servidor**.
 

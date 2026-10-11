@@ -256,6 +256,9 @@ importers:
       '@zentrade/contratos':
         specifier: workspace:*
         version: link:../../packages/contratos
+      '@zentrade/corretora':
+        specifier: workspace:*
+        version: link:../../packages/corretora
       '@zentrade/dominio':
         specifier: workspace:*
         version: link:../../packages/dominio

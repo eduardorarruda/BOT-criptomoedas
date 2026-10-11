@@ -5,3 +5,5 @@ export * from "./erros.js";
 export * from "./papel.js";
 export * from "./urls.js";
 export { assinarKlines, calcularEspera, type OpcoesAssinatura } from "./websocket.js";
+export * from "./carteira/index.js";
+export * from "./conta-binance.js";
