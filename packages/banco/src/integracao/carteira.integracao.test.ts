@@ -194,10 +194,10 @@ describe("carteira no banco", () => {
     const u = await banco.usuarios.criar({ email: "carla@exemplo.com", nome: "Carla", senhaHash: "x" });
     await banco.carteira.gravarNegociacoes(u.id, "real", [negociacao(1)]);
     await banco.conexao.sql`delete from usuarios where id = ${u.id}`;
-    const [{ n }] = await banco.conexao.sql<
+    const [linha] = await banco.conexao.sql<
       { n: number }[]
     >`select count(*)::int as n from carteira_negociacoes where usuario_id = ${u.id}`;
-    expect(n).toBe(0);
+    expect(linha?.n).toBe(0);
     await banco.fechar();
   });
 });
