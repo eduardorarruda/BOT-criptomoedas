@@ -1,0 +1,15 @@
+# Contexto de build das imagens (infra/docker/*.Dockerfile): o mínimo, sem segredo.
+**/node_modules
+**/dist
+**/coverage
+**/.turbo
+**/*.log
+.git
+.github
+.env
+.env.*
+!.env.example
+**/*.test.ts
+**/*.test.tsx
+docs
+brand
