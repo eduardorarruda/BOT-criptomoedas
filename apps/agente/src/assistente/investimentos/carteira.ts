@@ -89,16 +89,8 @@ function resumo(r: ResumoCarteira) {
   };
 }
 
-async function lerCarteira(
-  ctx: ContextoInvestimentos,
-  dados: LeituraInvestimentos,
-  e: { rede?: RedeConta | undefined; ativo?: string | undefined; limite: number },
-) {
-  const redes = await dados.redesCarteira(ctx.usuarioId);
-  if (redes.length === 0) return { conectada: false, aviso: SEM_CONTA };
-  const rede = e.rede ?? redePadrao(redes);
-  if (!redes.includes(rede))
-    return { conectada: false, redes, aviso: `Sem conta da Binance na rede ${rede} para esta pessoa.` };
+/** A carteira da rede, calculada como na API, com os preços de referência dos candles. */
+async function calcular(ctx: ContextoInvestimentos, dados: LeituraInvestimentos, rede: RedeConta) {
   const [saldos, negociacoes, sincronizacao] = await Promise.all([
     dados.saldosCarteira(ctx.usuarioId, rede),
     dados.negociacoesCarteira(ctx.usuarioId, rede),
@@ -116,6 +108,20 @@ async function lerCarteira(
     saldos: new Map(saldos.map((s) => [s.ativo, s])),
     precos: p.precos,
   });
+  return { r, p, sincronizacao };
+}
+
+async function lerCarteira(
+  ctx: ContextoInvestimentos,
+  dados: LeituraInvestimentos,
+  e: { rede?: RedeConta | undefined; ativo?: string | undefined; limite: number },
+) {
+  const redes = await dados.redesCarteira(ctx.usuarioId);
+  if (redes.length === 0) return { conectada: false, aviso: SEM_CONTA };
+  const rede = e.rede ?? redePadrao(redes);
+  if (!redes.includes(rede))
+    return { conectada: false, redes, aviso: `Sem conta da Binance na rede ${rede} para esta pessoa.` };
+  const { r, p, sincronizacao } = await calcular(ctx, dados, rede);
   const todas = r.moedas.filter((m) => !m.referencia && (!e.ativo || m.ativo === e.ativo));
   const { itens, omitidos } = cortar(todas, e.limite);
   // O aviso do cálculo fala da Binance; aqui o preço vem dos candles gravados.
