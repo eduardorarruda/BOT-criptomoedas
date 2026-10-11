@@ -11,7 +11,8 @@ export function Marca({
   return (
     <span className="marca">
       <Enso tamanho={tamanho} animar={animar} />
-      <span className="marca__palavra" aria-label="ZenTrade">
+      <span className="marca__palavra">
+        <span className="so-leitor">ZenTrade</span>
         <span className="marca__zen" aria-hidden="true">
           Zen
         </span>

@@ -121,10 +121,10 @@ function Resultado({ b, nome }: { readonly b: Backtest; readonly nome: string })
             <Dinheiro valor={m.resultadoLiquido} sinal colorir />
           </dd>
           {capital ? (
-            <p className="metrica__nota num">
+            <dd className="metrica__nota num">
               {formatarPercentual(fracaoSobre(m.resultadoLiquido, capital), { sinal: true })} sobre{" "}
               {formatarDinheiro(capital)}
-            </p>
+            </dd>
           ) : null}
         </div>
         <div className="metrica">
@@ -132,7 +132,7 @@ function Resultado({ b, nome }: { readonly b: Backtest; readonly nome: string })
           <dd>
             <Dinheiro valor={`-${m.maiorQueda}`} colorir />
           </dd>
-          <p className="metrica__nota num">{formatarPercentual(m.maiorQuedaPercentual)} do pico</p>
+          <dd className="metrica__nota num">{formatarPercentual(m.maiorQuedaPercentual)} do pico</dd>
         </div>
         <div className="metrica">
           <dt>Taxas simuladas</dt>
@@ -141,9 +141,9 @@ function Resultado({ b, nome }: { readonly b: Backtest; readonly nome: string })
         <div className="metrica">
           <dt>Operações</dt>
           <dd className="num">{m.operacoes}</dd>
-          <p className="metrica__nota">
+          <dd className="metrica__nota">
             <span className="num">{formatarPercentual(m.taxaAcerto, { casas: 0 })}</span> terminaram no lucro
-          </p>
+          </dd>
         </div>
       </dl>
       <GraficoLinha

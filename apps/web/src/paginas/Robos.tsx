@@ -1,5 +1,6 @@
 import type { ModoRobo, RoboDTO } from "@zentrade/contratos/esquemas";
-import { Bot, Pause, Play, Plus, SlidersHorizontal } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Bot, Pause, Play, Plus, Radio, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { mensagemDe } from "../api/erros";
 import { useAvisos } from "../componentes/Avisos";
@@ -81,6 +82,15 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
         >
           {robo.pausado ? "Retomar" : "Pausar"}
         </Botao>
+        <Link
+          to="/aovivo"
+          search={{ robo: robo.id }}
+          className="botao botao--fantasma botao--pequeno"
+          aria-label={`Ver ${robo.nome} ao vivo`}
+        >
+          <Radio size={15} aria-hidden="true" />
+          Ao vivo
+        </Link>
       </div>
       <details className="robo__limites">
         <summary>

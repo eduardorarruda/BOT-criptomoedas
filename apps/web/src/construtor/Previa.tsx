@@ -19,9 +19,9 @@ const PARES = ["BTCUSDT", "ETHUSDT", "SOLUSDT"] as const;
 function EmPalavras({ estado }: { readonly estado: EstadoConstrutor }) {
   return (
     <section className="previa__bloco" aria-labelledby="previa-palavras">
-      <h3 id="previa-palavras" className="previa__titulo">
+      <h2 id="previa-palavras" className="previa__titulo">
         Em palavras
-      </h3>
+      </h2>
       <p className="previa__frase">
         <strong>Compra quando</strong> {frase(estado.entrada)}.
       </p>
@@ -53,9 +53,9 @@ function SeFosseAgora({ estado }: { readonly estado: EstadoConstrutor }) {
   const taxa = fracaoDe(estado.taxa);
   return (
     <section className="previa__bloco" aria-labelledby="previa-agora">
-      <h3 id="previa-agora" className="previa__titulo">
+      <h2 id="previa-agora" className="previa__titulo">
         Se fosse agora
-      </h3>
+      </h2>
       <Segmentado
         rotulo="Par para testar"
         ocultarRotulo
@@ -96,9 +96,9 @@ function Validacao({ estado, montagem }: { readonly estado: EstadoConstrutor; re
   const partes = contarNos(estado.entrada) + (estado.saida ? contarNos(estado.saida) : 0);
   return (
     <section className="previa__bloco" aria-labelledby="previa-validacao">
-      <h3 id="previa-validacao" className="previa__titulo">
+      <h2 id="previa-validacao" className="previa__titulo">
         Pronta para salvar?
-      </h3>
+      </h2>
       {montagem.problemas.length === 0 ? (
         <p className="previa__ok">
           <CircleCheck size={16} aria-hidden="true" /> Tudo certo. A regra passou nas validações do domínio.
