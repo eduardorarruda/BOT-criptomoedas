@@ -1,0 +1,15 @@
+{
+  "name": "@zentrade/n8n-validacao",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Testes dos fluxos n8n do ZenTrade: estrutura, ausência de segredos, aderência ao contrato da API e equivalência do HMAC com @zentrade/contratos.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@zentrade/contratos": "workspace:*"
+  }
+}

@@ -1,0 +1,302 @@
+{
+  "name": "zentrade-noticias",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "176ad3b5-34d9-4c02-a842-c0817810fd64",
+      "name": "A cada 15 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6bde7bbf-d9c1-4590-a6d4-37f24b1472d9",
+              "name": "feedsExtras",
+              "value": "={{ $env.ZENTRADE_FEEDS_RSS ?? '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "711d1603-fbb6-4d4f-ac16-8eded3089735",
+      "name": "Configuração",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.binance.com/bapi/composite/v1/public/cms/article/list/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "1"
+            },
+            {
+              "name": "pageNo",
+              "value": "1"
+            },
+            {
+              "name": "pageSize",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "fef2880e-a93c-48a4-aba5-4b464c24f777",
+      "name": "Anúncios da Binance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lista de feeds RSS lidos a cada 15 minutos. Para acrescentar fontes sem editar o\n// fluxo, use a variável ZENTRADE_FEEDS_RSS (URLs https separadas por vírgula).\nconst PADRAO = [\n  { nome: 'Cointelegraph', url: 'https://cointelegraph.com/rss' },\n  { nome: 'Decrypt', url: 'https://decrypt.co/feed' },\n];\n\nconst extras = String($('Configuração').first().json.feedsExtras || '')\n  .split(/[\\s,]+/)\n  .filter((url) => /^https:\\/\\/[^\\s/?#]+\\.[^\\s]*$/.test(url))\n  .map((url) => ({ nome: url.replace(/^https:\\/\\/(www\\.)?/, '').split(/[/?#:]/)[0], url }));\n\nconst vistas = new Set();\nreturn [...PADRAO, ...extras]\n  .filter((f) => !vistas.has(f.url) && vistas.add(f.url))\n  .map((f) => ({ json: f }));"
+      },
+      "id": "448ed861-6191-4225-a6f8-a3327b7dceff",
+      "name": "Fontes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "id": "e69f2358-ada0-4b11-a712-c46f59a29814",
+      "name": "Ler feed RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        300
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta anúncios da Binance e itens dos feeds RSS, descarta o que é velho ou já foi\n// enviado e monta um resumo CURTO com link. Nunca envia a matéria inteira.\nconst JANELA_MS = 48 * 60 * 60 * 1000;\nconst FUTURO_TOLERADO_MS = 60 * 60 * 1000;\nconst MAXIMO_POR_RODADA = 30;\nconst RESUMO_MAX = 280;\nconst TITULO_MAX = 200;\n\nconst agora = Date.now();\nconst enviados = $getWorkflowStaticData('global').noticiasEnviadas || {};\n\nconst limpar = (s) =>\n  String(s ?? '')\n    .replace(/<[^>]*>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#0?39;|&apos;/g, \"'\")\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&amp;/g, '&')\n    .replace(/[\\u0000-\\u001f\\u007f]/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\nconst cortar = (s, max) => (s.length <= max ? s : `${s.slice(0, max - 1).replace(/\\s+\\S*$/, '')}…`);\nconst hostDe = (url) => url.replace(/^https?:\\/\\/(www\\.)?/, '').split(/[/?#:]/)[0];\n\nconst candidatos = [];\n\nfor (const item of $('Anúncios da Binance').all()) {\n  const catalogos = item.json && item.json.data && Array.isArray(item.json.data.catalogs) ? item.json.data.catalogs : [];\n  for (const catalogo of catalogos) {\n    for (const artigo of Array.isArray(catalogo.articles) ? catalogo.articles : []) {\n      if (typeof artigo.code !== 'string' || !/^[0-9a-f]{32}$/.test(artigo.code)) continue;\n      const titulo = cortar(limpar(artigo.title), TITULO_MAX);\n      if (!titulo) continue;\n      const url = `https://www.binance.com/pt-BR/support/announcement/detail/${artigo.code}`;\n      candidatos.push({\n        titulo: `Binance: ${titulo}`.slice(0, TITULO_MAX),\n        url,\n        publicadoEm: Number(artigo.releaseDate),\n        texto: `Anúncio oficial da Binance (${limpar(catalogo.catalogName) || 'anúncios'}): ${titulo}. Detalhes em ${url}`,\n      });\n    }\n  }\n}\n\nfor (const item of $input.all()) {\n  const n = item.json || {};\n  if (n.error || typeof n.link !== 'string' || !/^https?:\\/\\//.test(n.link)) continue;\n  const titulo = cortar(limpar(n.title), TITULO_MAX);\n  if (!titulo) continue;\n  const resumo = cortar(limpar(n.contentSnippet || n.summary || n.content || ''), RESUMO_MAX);\n  candidatos.push({\n    titulo,\n    url: n.link,\n    publicadoEm: Date.parse(n.isoDate || n.pubDate || ''),\n    texto: `${resumo || titulo}\\n\\nResumo curto de ${hostDe(n.link)}. Matéria completa: ${n.link}`,\n  });\n}\n\nconst vistos = new Set();\nconst carimbo = Math.floor(agora / 1000);\nreturn candidatos\n  .filter((c) => Number.isFinite(c.publicadoEm))\n  .filter((c) => agora - c.publicadoEm <= JANELA_MS && c.publicadoEm - agora <= FUTURO_TOLERADO_MS)\n  .filter((c) => enviados[c.url] === undefined && !vistos.has(c.url) && vistos.add(c.url))\n  .sort((a, b) => b.publicadoEm - a.publicadoEm)\n  .slice(0, MAXIMO_POR_RODADA)\n  .map((c) => {\n    const corpo = JSON.stringify({\n      fonte: 'noticia',\n      titulo: c.titulo,\n      url: c.url,\n      publicadoEm: Math.trunc(c.publicadoEm),\n      texto: c.texto,\n    });\n    return { json: { chave: c.url, corpo, carimbo, mensagem: `${carimbo}.${corpo}` } };\n  });"
+      },
+      "id": "d31d0360-d988-48c8-a731-ce6d8923e11b",
+      "name": "Resumir e filtrar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "binaryData": false,
+        "type": "SHA256",
+        "value": "={{ $json.mensagem }}",
+        "dataPropertyName": "assinatura",
+        "encoding": "hex"
+      },
+      "id": "bbcf70ec-c45a-493d-a3a4-0644d33dcea1",
+      "name": "Assinar",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ],
+      "credentials": {
+        "crypto": {
+          "id": "ztCredHmac000001",
+          "name": "ZenTrade assinatura dos webhooks"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ZENTRADE_API_URL }}/webhooks/n8n/conhecimento",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-ZenTrade-Assinatura",
+              "value": "={{ 't=' + $json.carimbo + ',v1=' + $json.assinatura }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.corpo }}",
+        "options": {
+          "timeout": 10000,
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 1000
+            }
+          }
+        }
+      },
+      "id": "ce72d5b9-d8fa-4cb2-a538-12746632ab8d",
+      "name": "Enviar ao conhecimento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        300
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lembra o que a API aceitou, para não reenviar nas próximas rodadas. O que falhou\n// fica de fora e é tentado de novo em 15 minutos.\nconst ESQUECER_APOS_MS = 7 * 24 * 60 * 60 * 1000;\n\nconst agora = Date.now();\nconst estado = $getWorkflowStaticData('global');\nconst enviados = { ...(estado.noticiasEnviadas || {}) };\nconst pedidos = $('Resumir e filtrar').all();\n\nlet aceitas = 0;\nlet falhas = 0;\n$input.all().forEach((resposta, i) => {\n  const chave = pedidos[i] && pedidos[i].json.chave;\n  if (!chave) return;\n  if (resposta.json && resposta.json.error) {\n    falhas++;\n    return;\n  }\n  enviados[chave] = agora;\n  aceitas++;\n});\nfor (const [chave, em] of Object.entries(enviados)) {\n  if (agora - em > ESQUECER_APOS_MS) delete enviados[chave];\n}\nestado.noticiasEnviadas = enviados;\n\nreturn [{ json: { aceitas, falhas } }];"
+      },
+      "id": "05690643-8a1d-4c7a-a4c8-32d8684e76e7",
+      "name": "Registrar enviados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "A cada 15 minutos": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuração": {
+      "main": [
+        [
+          {
+            "node": "Anúncios da Binance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anúncios da Binance": {
+      "main": [
+        [
+          {
+            "node": "Fontes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fontes": {
+      "main": [
+        [
+          {
+            "node": "Ler feed RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler feed RSS": {
+      "main": [
+        [
+          {
+            "node": "Resumir e filtrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumir e filtrar": {
+      "main": [
+        [
+          {
+            "node": "Assinar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assinar": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao conhecimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar ao conhecimento": {
+      "main": [
+        [
+          {
+            "node": "Registrar enviados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "dc9a21a1-b6a2-4774-a471-7128b51314e5",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "ztNoticias000001",
+  "tags": []
+}

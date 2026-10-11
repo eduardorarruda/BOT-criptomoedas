@@ -1,0 +1,371 @@
+{
+  "name": "zentrade-revalidacao-semanal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "fed9326e-be1a-4f5b-abda-61bfcb6e6b53",
+      "name": "Domingo às 8h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.ZENTRADE_API_URL }}/api/v1/robos",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "3b5bb4b0-535f-4640-a518-84212a9ad9e6",
+      "name": "Listar robôs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ztCredLeitura001",
+          "name": "ZenTrade token leitura"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Para cada combinação ativa (estratégia + versão + símbolo + intervalo), dois\n// backtests: os últimos 30 dias e os 90 dias anteriores, para comparar.\nconst DIA_MS = 24 * 60 * 60 * 1000;\nconst RECENTE_DIAS = 30;\nconst BASE_DIAS = 90;\n\nconst escaparHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst entrada = $input.all();\nconst erro = entrada.find((i) => i.json && i.json.error);\nif (erro) {\n  return [{ json: { semBacktests: true, motivo: escaparHtml(`não consegui listar os robôs (${erro.json.error.message || 'erro'}).`) } }];\n}\n\nconst fim = Math.floor(Date.now() / DIA_MS) * DIA_MS; // meia-noite UTC: janelas estáveis\nconst grupos = new Map();\nfor (const r of entrada.map((i) => i.json)) {\n  if (!r || typeof r.id !== 'string' || r.pausado !== false) continue;\n  const chave = `${r.estrategiaId}@${r.estrategiaVersao}|${r.simbolo}|${r.intervalo}`;\n  const grupo = grupos.get(chave) || {\n    chave,\n    robos: [],\n    base: { estrategiaId: r.estrategiaId, versao: r.estrategiaVersao, simbolo: r.simbolo, intervalo: r.intervalo },\n  };\n  grupo.robos.push(r.nome || r.id);\n  grupos.set(chave, grupo);\n}\n\nconst janelas = [\n  { janela: 'recente', inicio: fim - RECENTE_DIAS * DIA_MS, fim },\n  { janela: 'base', inicio: fim - (RECENTE_DIAS + BASE_DIAS) * DIA_MS, fim: fim - RECENTE_DIAS * DIA_MS },\n];\nconst itens = [];\nfor (const g of grupos.values()) {\n  for (const j of janelas) {\n    itens.push({\n      json: {\n        chave: g.chave,\n        janela: j.janela,\n        robos: g.robos,\n        corpoBacktest: { ...g.base, inicio: j.inicio, fim: j.fim },\n      },\n    });\n  }\n}\n\nif (itens.length === 0) return [{ json: { semBacktests: true, motivo: 'nenhum robô ativo para revalidar.' } }];\nreturn itens;"
+      },
+      "id": "102639db-c827-483d-ab6d-4d49a3866fa9",
+      "name": "Planejar backtests",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ad22b57e-114d-47de-a67a-e79d27efec5c",
+              "leftValue": "={{ $json.semBacktests !== true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0e3a778b-a33f-4392-ae5a-80955aaa170f",
+      "name": "Há backtests?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ 'ZenTrade — revalidação semanal: ' + $json.motivo }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "9548e6c1-82a1-4042-a488-de0d151f0ad7",
+      "name": "Avisar que não há o que revalidar",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        500
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "ztCredTelegram01",
+          "name": "ZenTrade Telegram"
+        }
+      },
+      "webhookId": "6b379a6a-7736-4407-a9b6-052f2400c491"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ZENTRADE_API_URL }}/api/v1/backtests",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.corpoBacktest) }}",
+        "options": {
+          "timeout": 15000,
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 500
+            }
+          }
+        }
+      },
+      "id": "3b922102-65b2-4812-a776-141407591a53",
+      "name": "Disparar backtest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ztCredOperar0001",
+          "name": "ZenTrade token operar"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 15,
+        "unit": "minutes"
+      },
+      "id": "d71cd2a8-2eb4-487c-ace8-54ce5a958273",
+      "name": "Esperar os backtests",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        200
+      ],
+      "webhookId": "b3b8fcfc-0f49-4fd7-ac45-4044875baef3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Casa cada backtest planejado com a resposta de POST /api/v1/backtests (mesma ordem).\nconst planos = $('Planejar backtests').all();\nconst disparos = $('Disparar backtest').all();\n\nreturn planos.map((plano, i) => {\n  const d = (disparos[i] && disparos[i].json) || {};\n  const id = typeof d.id === 'string' && d.id.length > 0 ? d.id : null;\n  const erro = d.error ? String(d.error.message || 'erro') : id ? null : 'a API não devolveu o id';\n  return { json: { ...plano.json, backtestId: id, erroDisparo: erro } };\n});"
+      },
+      "id": "f4c6eeb8-fdc2-4eb9-abe5-c4ceebe9a9cf",
+      "name": "Ids para consultar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.ZENTRADE_API_URL }}/api/v1/backtests/{{ encodeURIComponent($json.backtestId ?? 'sem-id') }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "9230766f-8cd8-4bc0-a910-f07fc04391e5",
+      "name": "Consultar backtest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ztCredLeitura001",
+          "name": "ZenTrade token leitura"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Compara, por combinação, os últimos 30 dias com os 90 anteriores (normalizados\n// para 30 dias). Lê as métricas com tolerância a nomes, porque o formato do\n// resultado do backtest ainda não está fixado em @zentrade/contratos.\nconst RECENTE_DIAS = 30;\nconst BASE_DIAS = 90;\nconst CONCLUIDO = ['concluido', 'concluído', 'pronto', 'finalizado', 'sucesso'];\nconst NOMES = {\n  retorno: ['retornoTotal', 'retorno', 'resultado', 'resultadoLiquido'],\n  queda: ['maiorQueda', 'quedaMaxima', 'drawdownMaximo'],\n  operacoes: ['operacoes', 'numeroOperacoes', 'totalOperacoes'],\n  acerto: ['taxaAcerto', 'acerto'],\n};\n\nconst escaparHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nconst planos = $('Ids para consultar').all().map((i) => i.json);\nconst resultados = $input.all().map((i) => i.json || {});\n\nconst pegar = (m, nomes) => {\n  for (const n of nomes) if (m[n] !== undefined && m[n] !== null) return m[n];\n  return undefined;\n};\nconst metricasDe = (r) => (r.metricas && typeof r.metricas === 'object' ? r.metricas : r);\nconst numero = (v) => (typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' ? Number(v) : NaN);\nconst mostrar = (v) => (v === undefined ? '—' : String(v));\n\nconst grupos = new Map();\nplanos.forEach((p, i) => {\n  const g = grupos.get(p.chave) || { robos: p.robos, corpo: p.corpoBacktest };\n  const r = resultados[i] || {};\n  let situacao;\n  if (!p.backtestId) situacao = { tipo: 'erro', texto: `não disparou (${p.erroDisparo})` };\n  else if (r.error) situacao = { tipo: 'erro', texto: `não consegui consultar (${r.error.message || 'erro'})` };\n  else if (!CONCLUIDO.includes(String(r.estado || '').toLowerCase()) && !r.metricas)\n    situacao = { tipo: 'pendente', texto: `ainda rodando (estado: ${r.estado || 'desconhecido'}); veja na tela` };\n  else situacao = { tipo: 'ok', metricas: metricasDe(r) };\n  g[p.janela] = situacao;\n  grupos.set(p.chave, g);\n});\n\nconst linha = (rotulo, s) => {\n  if (!s) return `${rotulo}: sem dados`;\n  if (s.tipo !== 'ok') return `${rotulo}: ${s.texto}`;\n  const m = s.metricas;\n  return `${rotulo}: retorno ${mostrar(pegar(m, NOMES.retorno))} · maior queda ${mostrar(pegar(m, NOMES.queda))} · operações ${mostrar(pegar(m, NOMES.operacoes))} · acerto ${mostrar(pegar(m, NOMES.acerto))}`;\n};\n\nconst blocos = [];\nfor (const [chave, g] of grupos) {\n  const [estrategia, simbolo, intervalo] = chave.split('|');\n  const bloco = [\n    `${estrategia} · ${simbolo} ${intervalo} (robôs: ${g.robos.join(', ')})`,\n    linha(`  Últimos ${RECENTE_DIAS} dias`, g.recente),\n    linha(`  ${BASE_DIAS} dias anteriores`, g.base),\n  ];\n  if (g.recente && g.base && g.recente.tipo === 'ok' && g.base.tipo === 'ok') {\n    const recente = numero(pegar(g.recente.metricas, NOMES.retorno));\n    const base = numero(pegar(g.base.metricas, NOMES.retorno)) * (RECENTE_DIAS / BASE_DIAS);\n    if (Number.isFinite(recente) && Number.isFinite(base)) {\n      bloco.push(\n        recente < base\n          ? '  Atenção: o retorno recente está abaixo do histórico (por 30 dias). Vale revisar a estratégia antes de mantê-la em auto.'\n          : '  O retorno recente está em linha com o histórico ou acima dele.',\n      );\n    }\n  }\n  blocos.push(bloco.join('\\n'));\n}\n\nconst texto = [\n  'ZenTrade — revalidação semanal',\n  '',\n  ...blocos.flatMap((b) => [b, '']),\n  'Backtest mede o passado com as taxas configuradas; não é promessa de resultado futuro.',\n].join('\\n');\n\nreturn [{ json: { texto: escaparHtml(texto) } }];"
+      },
+      "id": "2dc9fd88-7e67-412e-a51f-b21a24f007c2",
+      "name": "Comparar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "bb8b5f32-4398-4c60-a677-482ebcb87da5",
+      "name": "Enviar comparação",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "ztCredTelegram01",
+          "name": "ZenTrade Telegram"
+        }
+      },
+      "webhookId": "e492bfef-67ec-49a5-a522-b9abb3490972"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Domingo às 8h": {
+      "main": [
+        [
+          {
+            "node": "Listar robôs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar robôs": {
+      "main": [
+        [
+          {
+            "node": "Planejar backtests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planejar backtests": {
+      "main": [
+        [
+          {
+            "node": "Há backtests?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Há backtests?": {
+      "main": [
+        [
+          {
+            "node": "Disparar backtest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar que não há o que revalidar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Disparar backtest": {
+      "main": [
+        [
+          {
+            "node": "Esperar os backtests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar os backtests": {
+      "main": [
+        [
+          {
+            "node": "Ids para consultar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ids para consultar": {
+      "main": [
+        [
+          {
+            "node": "Consultar backtest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar backtest": {
+      "main": [
+        [
+          {
+            "node": "Comparar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comparar": {
+      "main": [
+        [
+          {
+            "node": "Enviar comparação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "bfd193b7-a122-4676-a43c-c2f72619b8bf",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "ztRevalidacao001",
+  "tags": []
+}
