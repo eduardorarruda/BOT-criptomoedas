@@ -1,7 +1,13 @@
 import type { BetaRunnableTool } from "@anthropic-ai/sdk/lib/tools/BetaRunnableTool";
 import { buscarConhecimento } from "./buscar-conhecimento.js";
 import type { ContextoAnalise, DependenciasFerramentas } from "./contexto.js";
-import { observar, paraAnthropic, type AoUsarFerramenta, type FerramentaLeitura } from "./definicao.js";
+import {
+  observar,
+  paraAnthropic,
+  type AoFalharFerramenta,
+  type AoUsarFerramenta,
+  type FerramentaLeitura,
+} from "./definicao.js";
 import { historicoDecisoes } from "./historico-decisoes.js";
 import { posicaoEOrcamento } from "./posicao-orcamento.js";
 import { retratoMercado } from "./retrato-mercado.js";
@@ -59,6 +65,7 @@ export function criarFerramentas(
   ctx: ContextoAnalise,
   deps: DependenciasFerramentas,
   aoUsar?: AoUsarFerramenta,
+  aoFalhar?: AoFalharFerramenta,
 ): BetaRunnableTool[] {
-  return ferramentasDaAnalise(ctx, deps, aoUsar).map((f) => paraAnthropic(f));
+  return ferramentasDaAnalise(ctx, deps, aoUsar).map((f) => paraAnthropic(f, aoFalhar));
 }

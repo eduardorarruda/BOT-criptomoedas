@@ -74,7 +74,15 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
   const provedorPadrao = cliente || !executor ? "api" : "cli";
   const configDaPessoa = configComPadrao(banco.configGravada, provedorPadrao);
   const analista = new AnalistaPorPessoa({
-    api: cliente ? new Analista({ cliente, dependencias, modelo: config.modelo }) : null,
+    api: cliente
+      ? new Analista({
+          cliente,
+          dependencias,
+          modelo: config.modelo,
+          aoFalharFerramenta: (erro, ferramenta) =>
+            logger.error({ err: erro, ferramenta }, "ferramenta do analista falhou"),
+        })
+      : null,
     cli: executor ? new AnalistaCli({ executor, dependencias, tempoMs: config.timeoutMs }) : null,
     config: configDaPessoa,
   });
