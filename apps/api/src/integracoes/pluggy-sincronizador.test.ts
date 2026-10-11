@@ -106,13 +106,19 @@ describe("sincronizador da Pluggy", () => {
     expect(m.itens.get(ITEM)?.logoUrl).toBe("https://cdn/nu.png");
   });
 
-  it("item criado para outra pessoa é recusado", async () => {
+  it.each([
+    ["outra pessoa", "outra-pessoa"],
+    ["sem dono", null],
+    ["dono vazio", ""],
+  ])("item criado para %s é recusado", async (_caso, dono) => {
+    const m = armazemMemoria();
     const s = criarSincronizadorPluggy({
       ...base,
-      cliente: clienteFalso({ item: async () => item("UPDATED", "outra-pessoa") }),
-      armazem: armazemMemoria().armazem,
+      cliente: clienteFalso({ item: async () => item("UPDATED", dono) }),
+      armazem: m.armazem,
     });
     await expect(s.registrar(ANA, ITEM)).rejects.toMatchObject({ statusCode: 403 });
+    expect(m.itens.size).toBe(0);
   });
 
   it("item ainda atualizando: grava o que veio sem encerrar nada", async () => {

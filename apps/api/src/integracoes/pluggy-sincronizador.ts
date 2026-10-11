@@ -169,8 +169,9 @@ export function criarSincronizadorPluggy(o: OpcoesSincronizador): SincronizadorP
       const item = await cliente.item(itemId).catch((e: unknown) => {
         throw traduzir(e);
       });
-      // O connect token leva o id da pessoa: um item criado para outra pessoa não entra aqui.
-      if (item.clientUserId && item.clientUserId !== usuarioId) {
+      // O connect token leva o id da pessoa: só entra o item criado para ela. Item sem dono
+      // (criado fora do ZenTrade) também fica de fora, senão qualquer id conhecido entraria.
+      if (item.clientUserId !== usuarioId) {
         throw new ErroApi(403, "item_de_outra_pessoa", "esta conexão da Pluggy foi criada para outra pessoa");
       }
       await o.armazem.registrar(usuarioId, dadosDoItem(item));
