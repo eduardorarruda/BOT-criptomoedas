@@ -21,10 +21,12 @@ export function CampoBusca({
   const id = useId();
   const [texto, setTexto] = useState(valor ?? "");
   const [externo, setExterno] = useState(valor);
-  // A URL mudou por fora (limpar, voltar, visão salva): o campo acompanha.
+  // A URL mudou por fora (limpar, voltar, visão salva): o campo acompanha. Se a pessoa
+  // está no meio da digitação (texto ainda não enviado), só um "limpar" explícito apaga.
   if (valor !== externo) {
+    const digitando = (texto.trim() || undefined) !== externo;
     setExterno(valor);
-    setTexto(valor ?? "");
+    if (!digitando || valor === undefined) setTexto(valor ?? "");
   }
 
   useEffect(() => {

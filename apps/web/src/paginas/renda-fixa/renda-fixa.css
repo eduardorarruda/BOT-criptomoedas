@@ -12,6 +12,8 @@
 .cabecalho__abas .rf-abas {
   margin-bottom: 0;
   border-bottom: 0;
+  /* As abas rolam para o lado no celular; sem isto, a largura delas alargava a página inteira. */
+  contain: inline-size;
 }
 .rf-abas__aba {
   position: relative;

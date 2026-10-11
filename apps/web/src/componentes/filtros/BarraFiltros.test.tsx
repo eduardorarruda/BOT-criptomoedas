@@ -234,4 +234,28 @@ describe("barra de filtros com estado na URL", () => {
       window.matchMedia = original;
     }
   });
+
+  it("mais filtros: o botão sempre aponta para um painel que existe e abre/fecha", async () => {
+    const usuario = userEvent.setup();
+    function ComMais() {
+      return (
+        <BarraFiltros
+          rotulo="Com mais"
+          ativos={0}
+          aoLimpar={() => undefined}
+          maisFiltros={<Interruptor rotulo="Raro" ligado={false} aoMudar={() => undefined} />}
+        >
+          <Interruptor rotulo="Comum" ligado={false} aoMudar={() => undefined} />
+        </BarraFiltros>
+      );
+    }
+    renderizarNaRota(<ComMais />);
+    const botao = await screen.findByRole("button", { name: "Mais filtros" });
+    const alvo = document.getElementById(botao.getAttribute("aria-controls") ?? "");
+    expect(alvo).not.toBeNull();
+    expect(alvo).not.toBeVisible();
+    await usuario.click(botao);
+    expect(screen.getByRole("button", { name: "Menos filtros" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("switch", { name: "Raro" })).toBeVisible();
+  });
 });

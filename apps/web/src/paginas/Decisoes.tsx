@@ -225,7 +225,9 @@ export function Decisoes() {
           ) : null
         }
         extra={<VisoesSalvas tela="decisoes" buscaAtual={b} aoAplicar={aplicar} />}
-        maisAtivos={[b.simbolo, b.acao, b.desfecho, b.agrupar].filter(Boolean).length}
+        maisAtivos={
+          [b.simbolo, b.acao, b.desfecho, b.agrupar === "dia" ? undefined : b.agrupar].filter(Boolean).length
+        }
         maisFiltros={
           <>
             <FiltroChips

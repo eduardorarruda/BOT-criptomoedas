@@ -31,6 +31,9 @@
 .filtros__mais {
   display: contents;
 }
+.filtros__mais[hidden] {
+  display: none;
+}
 .filtros__alternar {
   align-self: flex-end;
   min-height: 30px;
@@ -489,12 +492,13 @@ dialog:has(.filtros-folha) {
 .filtros-folha__acoes {
   position: sticky;
   bottom: 0;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   gap: var(--espaco-2);
-  padding-top: var(--espaco-3);
+  padding: var(--espaco-3) 0 var(--espaco-2);
   border-top: 1px solid var(--linha);
-  background: inherit;
+  background: var(--superficie);
 }
 
 @media (max-width: 720px) {

@@ -149,7 +149,8 @@ function Degrau({
   readonly indice: number;
 }) {
   const menos = useMenosMovimento();
-  const largura = maior > 0 ? Math.max(2, (d.valor / maior) * 100) : 0;
+  // A barra é só desenho (proporção); o número ao lado é o decimal exato.
+  const largura = maior > 0 ? Math.max(2, (Number(d.valor) / maior) * 100) : 0;
   return (
     <li className={`rf-escada__degrau ${d.passado ? "rf-escada__degrau--passado" : ""}`}>
       <p className="rf-escada__mes">
@@ -164,7 +165,7 @@ function Degrau({
           animate={{ width: `${largura}%` }}
           transition={{ duration: menos ? 0 : 0.5, delay: menos ? 0 : Math.min(indice, 10) * 0.04 }}
         />
-        <span className="rf-escada__valor num">{reais(d.valor.toFixed(2))}</span>
+        <span className="rf-escada__valor num">{reais(d.valor)}</span>
       </div>
       <ul role="list" className="rf-escada__titulos">
         {d.titulos.map((t) => (
@@ -200,7 +201,7 @@ export function EscadaVencimentos({
   readonly abrir: (id: string) => void;
 }) {
   const escada = escadaDeVencimentos(titulos, hoje);
-  const maior = Math.max(0, ...escada.map((d) => d.valor));
+  const maior = Math.max(0, ...escada.map((d) => Number(d.valor)));
   return (
     <section className="rf-escada" aria-labelledby="rf-escada-titulo">
       <h2 id="rf-escada-titulo" className="rf-escada__titulo-secao">

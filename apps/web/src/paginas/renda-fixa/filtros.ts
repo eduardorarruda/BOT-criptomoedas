@@ -113,11 +113,19 @@ export function ordenarTitulos(ts: readonly TituloRendaFixa[], b: BuscaRendaFixa
   }
 }
 
+/** Soma exata (decimal) do bruto de hoje, ou do aplicado sem posição, em texto com 2 casas. */
+function somarValores(ts: readonly TituloRendaFixa[]): string {
+  return ts
+    .reduce((s, t) => s.plus(t.posicao.disponivel ? t.posicao.bruto : t.valorAplicado), dec(0))
+    .toFixed(2);
+}
+
 export interface DegrauVencimento {
   /** "2027-02" ou "sem" (caixinha, poupança). */
   readonly mes: string;
   readonly titulos: readonly TituloRendaFixa[];
-  readonly valor: number;
+  /** Em texto decimal (2 casas). */
+  readonly valor: string;
   readonly passado: boolean;
 }
 
@@ -133,14 +141,11 @@ export function escadaDeVencimentos(ts: readonly TituloRendaFixa[], hoje: string
   const degraus = grupos.map((g) => ({
     mes: g.chave,
     titulos: g.itens,
-    valor: g.itens.reduce((s, t) => s + valorDe(t), 0),
+    valor: somarValores(g.itens),
     passado: g.chave < hoje.slice(0, 7) || g.itens.every((t) => encerrado(t, hoje)),
   }));
   if (semData.length === 0) return degraus;
-  return [
-    ...degraus,
-    { mes: "sem", titulos: semData, valor: semData.reduce((s, t) => s + valorDe(t), 0), passado: false },
-  ];
+  return [...degraus, { mes: "sem", titulos: semData, valor: somarValores(semData), passado: false }];
 }
 
 export interface FatiaAlocacao {

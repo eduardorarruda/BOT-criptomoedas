@@ -73,6 +73,7 @@ describe("filtros da renda fixa", () => {
     expect(meses.at(-1)).toBe("sem");
     expect(meses.slice(0, -1)).toEqual([...meses.slice(0, -1)].sort());
     expect(escada.find((d) => d.passado)?.titulos[0]!.nome).toBe("CDB Prefixado 12,4% (vencido)");
+    expect(escada.every((d) => /^\d+\.\d{2}$/.test(d.valor))).toBe(true);
     const soma = escada.reduce((s, d) => s + d.titulos.length, 0);
     expect(soma).toBe(titulos.length);
     expect(

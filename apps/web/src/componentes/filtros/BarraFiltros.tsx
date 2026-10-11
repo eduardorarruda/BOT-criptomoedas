@@ -77,8 +77,8 @@ export function BarraFiltros({
       {!compacta && temGrupos ? (
         <div className="filtros__grupos">
           {children}
-          {maisFiltros && (mais || maisAtivos > 0) ? (
-            <div id={idMais} className="filtros__mais">
+          {maisFiltros ? (
+            <div id={idMais} className="filtros__mais" hidden={!(mais || maisAtivos > 0)}>
               {maisFiltros}
             </div>
           ) : null}
