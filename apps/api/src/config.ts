@@ -30,6 +30,11 @@ const EsquemaApi = z.object({
   EMBEDDINGS_PROVEDOR: z
     .enum(["voyage", "ollama"], { error: "EMBEDDINGS_PROVEDOR aceita voyage ou ollama" })
     .default("voyage"),
+  // Opcional: cotações de FIIs pela brapi.dev. Sem ele, o preço é informado à mão.
+  BRAPI_TOKEN: z
+    .string()
+    .min(8, "BRAPI_TOKEN parece curto demais; copie o token do painel da brapi.dev")
+    .optional(),
   APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(1440).default(15),
   // De quantos em quantos minutos a API importa a carteira da Binance de cada pessoa (0 = só sob demanda).
   CARTEIRA_SINCRONIZAR_MIN: z.coerce.number().int().min(0).max(1440).default(30),

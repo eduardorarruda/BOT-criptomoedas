@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   BookOpen,
   Bot,
+  Building2,
   ChartCandlestick,
   Gauge,
   History,
@@ -27,6 +28,7 @@ export type RotaApp =
   | "/ordens"
   | "/carteira"
   | "/renda-fixa"
+  | "/imobiliario"
   | "/robos"
   | "/estrategias"
   | "/backtests"
@@ -59,6 +61,7 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
       { para: "/carteira", rotulo: "Carteira", icone: Wallet },
       { para: "/assistente", rotulo: "Assistente", icone: MessagesSquare },
       { para: "/renda-fixa", rotulo: "Renda fixa", icone: Landmark },
+      { para: "/imobiliario", rotulo: "Imobiliário", icone: Building2 },
     ],
   },
   {

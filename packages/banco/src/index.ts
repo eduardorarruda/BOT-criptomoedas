@@ -36,6 +36,7 @@ export type { DadosProposta, DecisaoComOrdem, FiltroDecisoes } from "./repositor
 export type { DadosEstrategia, DetalheEstrategia } from "./repositorios/estrategias.js";
 export { validarDadosEstrategia } from "./repositorios/estrategias.js";
 export { LIMITE_MAXIMO_LISTA } from "./repositorios/lista.js";
+export type { RegistroImobiliario, ValidarRegistro } from "./repositorios/imobiliario.js";
 export type { CandleDTO, ConsultaCandles } from "./repositorios/mercado.js";
 export type {
   ContagemSincronizacao,

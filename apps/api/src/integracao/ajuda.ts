@@ -12,6 +12,7 @@ import type { Dependencias, FilaBacktests } from "../dependencias.js";
 import type { ServicoCarteira } from "../integracoes/binance-carteira.js";
 import type { Embeddings } from "@zentrade/conhecimento";
 import { antiReplayRedis } from "../integracoes/anti-replay.js";
+import type { ClienteCotacoesB3 } from "../integracoes/cotacoes-b3.js";
 import { armazemMemoria, criarRegistroAutomacoes } from "../integracoes/automacoes.js";
 import { criarServicoConhecimento, repositorioRag } from "../integracoes/conhecimento.js";
 import { criarHubEventos } from "../integracoes/eventos.js";
@@ -69,6 +70,7 @@ export interface OpcoesApi {
   readonly extras?: (banco: Banco, conhecimento: Dependencias["conhecimento"]) => Partial<Dependencias>;
   /** Índices do BCB e Pluggy (com clientes falsos nos testes). */
   readonly rendaFixa?: (banco: Banco, agora: () => number) => ServicosRendaFixa;
+  readonly cotacoesB3?: ClienteCotacoesB3;
 }
 
 export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
@@ -127,6 +129,7 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     ...(o.carteira ? { carteira: o.carteira(banco, agora) } : {}),
     ...o.extras?.(banco, conhecimento),
     ...(o.rendaFixa ? { rendaFixa: o.rendaFixa(banco, agora) } : {}),
+    ...(o.cotacoesB3 ? { cotacoesB3: o.cotacoesB3 } : {}),
   };
   const app = await construirApp(deps);
 

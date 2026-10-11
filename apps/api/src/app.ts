@@ -28,6 +28,7 @@ import { rotasConhecimentoArquivos } from "./rotas/conhecimento-arquivos.js";
 import { rotasContas } from "./rotas/contas.js";
 import { rotasDecisoes } from "./rotas/decisoes.js";
 import { rotasEstrategias } from "./rotas/estrategias.js";
+import { rotasImobiliario } from "./rotas/imobiliario.js";
 import { rotasMercado } from "./rotas/mercado.js";
 import { rotasParada } from "./rotas/parada.js";
 import { rotasPluggy } from "./rotas/pluggy.js";
@@ -120,6 +121,7 @@ export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger):
         rotasAoVivo,
         rotasRendaFixa,
         rotasPluggy,
+        rotasImobiliario,
       ]) {
         await tipada.register(rotas, { deps });
       }

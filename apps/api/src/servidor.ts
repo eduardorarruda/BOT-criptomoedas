@@ -10,6 +10,7 @@ import { configAssistenteDoAmbiente, criarClienteAssistente } from "./integracoe
 import { criarServicoConhecimento, prepararEmbeddings, repositorioRag } from "./integracoes/conhecimento.js";
 import { criarServicoArquivos } from "./integracoes/conhecimento-arquivos.js";
 import { criarHubEventos } from "./integracoes/eventos.js";
+import { criarClienteCotacoesB3 } from "./integracoes/cotacoes-b3.js";
 import { criarFilaBacktests } from "./integracoes/fila.js";
 import { criarClienteN8n, n8nComRegistro } from "./integracoes/n8n.js";
 import { criarAtualizadorIndicadores } from "./integracoes/bcb-atualizador.js";
@@ -99,6 +100,7 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
     saude,
     agora,
     rendaFixa: rendaFixaDe(banco, log, agora),
+    cotacoesB3: criarClienteCotacoesB3({ token: config.BRAPI_TOKEN }),
   };
   return { deps, fila };
 }

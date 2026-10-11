@@ -14,6 +14,7 @@ import { repositorioConhecimento } from "./repositorios/conhecimento.js";
 import { repositorioContas } from "./repositorios/contas.js";
 import { repositorioDecisoes } from "./repositorios/decisoes.js";
 import { repositorioEstrategias } from "./repositorios/estrategias.js";
+import { repositorioImobiliario } from "./repositorios/imobiliario.js";
 import { repositorioMercado } from "./repositorios/mercado.js";
 import { repositorioOrdens } from "./repositorios/ordens.js";
 import { repositorioPluggy } from "./repositorios/pluggy.js";
@@ -111,6 +112,7 @@ export function criarBanco(opcoes: OpcoesBanco) {
     conhecimentoDetalhe: repositorioConhecimentoDetalhe(db),
     assistente: repositorioAssistente(db),
     resumo: repositorioResumo(db),
+    imobiliario: repositorioImobiliario(db),
     sistema: repositorioSistema(db),
     rendaFixa: repositorioRendaFixa(db),
     indicadores: repositorioIndicadores(db),

@@ -99,6 +99,7 @@ export function EnvioArquivos({ api }: { readonly api: ApiConhecimento }) {
   return (
     <div className="envio">
       <EscolhaFonte valor={fonte} aoMudar={setFonte} />
+      {/* eslint-disable-next-line jsx-a11y-x/no-static-element-interactions -- arrastar é atalho do mouse; pelo teclado, o botão "escolha no computador" faz o mesmo */}
       <div
         className={`envio__zona ${sobre ? "envio__zona--sobre" : ""}`}
         onDragOver={(e) => {

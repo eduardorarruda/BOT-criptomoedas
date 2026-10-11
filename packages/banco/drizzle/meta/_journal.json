@@ -57,6 +57,13 @@
       "when": 1791800000007,
       "tag": "0007_renda_fixa",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791800000008,
+      "tag": "0008_imobiliario",
+      "breakpoints": true
     }
   ]
 }

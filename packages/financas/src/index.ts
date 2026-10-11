@@ -7,3 +7,6 @@ export * from "./renda-fixa.js";
 export * from "./renda-fixa-carteira.js";
 export * from "./renda-fixa-projecao.js";
 export * from "./renda-fixa-simuladores.js";
+export * from "./amortizacao.js";
+export * from "./fluxo-caixa.js";
+export * from "./imobiliario.js";
