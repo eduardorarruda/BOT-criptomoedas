@@ -1,8 +1,9 @@
 import type { RegistroImobiliario } from "@zentrade/banco";
 import { ErroDados } from "@zentrade/banco";
-import type { Cotacao, DetalheImobiliario, ItemImobiliario } from "@zentrade/contratos";
+import type { Cotacao, DetalheImobiliario, ItemImobiliario, VisaoImobiliario } from "@zentrade/contratos";
 import { paraTexto } from "@zentrade/dominio";
-import { ErroParametroFinanceiro, metricasEmTexto, tabelaEmTexto } from "@zentrade/financas";
+import { ErroParametroFinanceiro, metricasEmTexto, tabelaEmTexto, visaoEmTexto } from "@zentrade/financas";
+import type { Dependencias } from "../dependencias.js";
 import type { ClienteCotacoesB3 } from "../integracoes/cotacoes-b3.js";
 import { ErroApi } from "../erros.js";
 
@@ -94,3 +95,28 @@ export async function cotacoesDosFiis(
 export const cotacaoDe = (mapa: Map<string, Cotacao>, r: RegistroImobiliario): Cotacao | null =>
   (r.investimento.tipo === "fii" && r.investimento.ticker ? mapa.get(r.investimento.ticker) : undefined) ??
   null;
+
+/** Os investimentos da pessoa com as métricas na data-base (e a cotação dos FIIs, se houver). */
+export async function itensImobiliarios(
+  deps: Pick<Dependencias, "banco" | "cotacoesB3">,
+  usuarioId: string,
+  o: OpcoesCalculo,
+): Promise<ItemImobiliario[]> {
+  const registros = await deps.banco.imobiliario.listar(usuarioId);
+  const cotacoes = await cotacoesDosFiis(deps.cotacoesB3, registros);
+  return registros.map((r) => item(r, o, cotacaoDe(cotacoes, r)));
+}
+
+/** A visão da carteira (`GET /imobiliario`): somas, alocação e itens. O patrimônio usa a mesma. */
+export async function visaoImobiliaria(
+  deps: Pick<Dependencias, "banco" | "cotacoesB3">,
+  usuarioId: string,
+  o: OpcoesCalculo,
+): Promise<VisaoImobiliario> {
+  const itens = await itensImobiliarios(deps, usuarioId, o);
+  const visao = visaoEmTexto(
+    itens.map((i) => ({ tipo: i.investimento.tipo, metricas: i.metricas })),
+    o,
+  );
+  return { ...visao, itens };
+}

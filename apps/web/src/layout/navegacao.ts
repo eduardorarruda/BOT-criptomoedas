@@ -4,6 +4,7 @@ import {
   Bot,
   Building2,
   ChartCandlestick,
+  ChartPie,
   Gauge,
   History,
   KeyRound,
@@ -26,6 +27,7 @@ export type RotaApp =
   | "/mercado"
   | "/decisoes"
   | "/ordens"
+  | "/patrimonio"
   | "/carteira"
   | "/renda-fixa"
   | "/imobiliario"
@@ -58,6 +60,7 @@ export const NAVEGACAO: readonly GrupoNavegacao[] = [
       { para: "/mercado", rotulo: "Mercado", icone: ChartCandlestick },
       { para: "/decisoes", rotulo: "Decisões", icone: ScrollText },
       { para: "/ordens", rotulo: "Ordens e posições", icone: ArrowLeftRight },
+      { para: "/patrimonio", rotulo: "Patrimônio", icone: ChartPie },
       { para: "/carteira", rotulo: "Carteira", icone: Wallet },
       { para: "/assistente", rotulo: "Assistente", icone: MessagesSquare },
       { para: "/renda-fixa", rotulo: "Renda fixa", icone: Landmark },

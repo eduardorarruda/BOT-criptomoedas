@@ -187,6 +187,21 @@ Investimentos imobiliários de cada pessoa (isolados por RLS) e simuladores. Esq
 - **Cotações:** opcionais, pela [brapi.dev](https://brapi.dev/docs) (`GET /api/quote/{ticker}`, token no cabeçalho `Authorization: Bearer`, um ticker por pedido, cache de 30 min; erro fica 5 min em cache). Sem `BRAPI_TOKEN`, `configurado: false` e vale o preço informado à mão (`valorAtual` = preço por cota).
 - **Ganho de capital:** tabela progressiva da pessoa física (15% até R$ 5 mi; 17,5% até R$ 10 mi; 20% até R$ 30 mi; 22,5% acima — Lei 8.981/1995, art. 21, redação da Lei 13.259/2016), datada e configurável em `TABELA_GANHO_CAPITAL_PF` (conferida na Receita Federal em 11/10/2026). Isenções (único imóvel até R$ 440 mil, reinvestimento em 180 dias, pequeno valor até R$ 35 mil, compra até 1969) entram como declarações da pessoa; o cálculo oficial é o do GCAP.
 
+### Patrimônio consolidado (`/patrimonio/consolidado`)
+
+Tudo o que a pessoa tem, somado em reais: carteira cripto, renda fixa e imobiliário. Esquema em [`patrimonio.ts`](../packages/contratos/src/patrimonio.ts); a soma em `consolidarPatrimonio` (`@zentrade/financas`). Fica em `/patrimonio/consolidado` porque `GET /patrimonio` já é a curva do resultado realizado dos robôs. **Só informa:** cada classe vem das mesmas funções das rotas dela (`GET /carteira`, `GET /renda-fixa/resumo`, `GET /imobiliario`), nada é recalculado nem estimado aqui.
+
+| Método e caminho              | Corpo / consulta | Resposta                                                                                                                                                                                         |
+| ----------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /patrimonio/consolidado` | —                | `Patrimonio`: `{ moeda: "BRL", total, parcial, calculadoEm, cambio, classes[], avisos }`; cada classe `{ classe, situacao, valor, investido, fracao, itens, atualizadoEm, moedaOrigem, avisos }` |
+
+- **Classes**, sempre nesta ordem: `cripto` (a conta **real** da Binance inteira, com USDT e saldo sem custo; testnet não entra), `renda_fixa` (valor bruto, antes de IR e IOF, como no extrato; `investido` = aplicado) e `imobiliario` (patrimônio líquido: valor atual − dívida; `investido` como na visão do imobiliário).
+- **`situacao`:** `vazia` (nada cadastrado; não pesa), `completa`, `parcial` (entra com o que tem valor; o aviso diz o que ficou de fora) e `indisponivel` (sem valor em reais agora; `valor: null`, fora do total). `parcial: true` no topo quando alguma classe é parcial ou indisponível.
+- **Cripto em reais:** o valor da conta em USDT × o último preço do par `USDTBRL` da Binance, lido da mesma tabela de preços da carteira (cache de 10 s, sem peso extra). O par vai em `cambio` (`{ par, preco, em, fonte: "binance" }`). Sem o par (ou com a Binance fora), a cripto aparece só em `moedaOrigem` (USDT) e fica fora do total; nenhuma taxa é inventada. `investido` da cripto é sempre `null`: o custo está em USDT e o câmbio de cada compra não é registrado.
+- **`fracao`:** fatia da composição (6 casas), só das classes somadas e com valor positivo; `null` fora da soma ou com total zero. Dinheiro aos centavos.
+- **`atualizadoEm`:** cripto, quando os preços foram lidos; renda fixa, a última conferência dos índices do Banco Central; imobiliário, a última alteração de cadastro.
+- **Falhas:** a Binance fora não derruba a resposta (a cripto vira `indisponivel` com o motivo); erro de banco segue como nas outras rotas. Escopo `leitura`.
+
 ## Webhooks (`/webhooks/n8n`, assinados, sem sessão)
 
 | Caminho                           | Corpo                                         | Efeito                                                         |

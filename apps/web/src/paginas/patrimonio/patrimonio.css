@@ -1,0 +1,213 @@
+/* Patrimônio: só tokens do tema (tokens.css). Todo número usa .num (Geist Mono, tabular). */
+
+/* Cor fixa por classe: a mesma no donut, na legenda e no cartão. */
+.patrimonio-cor--cripto {
+  stroke: var(--atencao);
+  color: var(--atencao);
+}
+.patrimonio-cor--renda_fixa {
+  stroke: var(--marca);
+  color: var(--marca);
+}
+.patrimonio-cor--imobiliario {
+  stroke: color-mix(in oklab, var(--marca) 45%, var(--texto));
+  color: color-mix(in oklab, var(--marca) 45%, var(--texto));
+}
+
+/* total e composição */
+.patrimonio-resumo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--espaco-6);
+  align-items: center;
+  padding: var(--espaco-5);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  background: var(--superficie);
+}
+.patrimonio-total {
+  display: grid;
+  gap: var(--espaco-2);
+  min-width: 0;
+}
+.patrimonio-total__rotulo {
+  font-size: 13px;
+  color: var(--apagado);
+}
+.patrimonio-total__valor {
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.patrimonio-total__situacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+  font-size: 13px;
+}
+.patrimonio-total__cambio {
+  font-size: 13px;
+}
+
+/* donut */
+.patrimonio-donut {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  gap: var(--espaco-5);
+  align-items: center;
+  margin: 0;
+}
+.patrimonio-donut svg {
+  width: 100%;
+  height: auto;
+}
+.patrimonio-donut__fundo {
+  fill: none;
+  stroke: var(--linha);
+  stroke-width: 20;
+}
+.patrimonio-donut__fatia {
+  fill: none;
+  stroke-width: 20;
+  stroke-linecap: butt;
+}
+.patrimonio-legenda {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.patrimonio-legenda li {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  gap: var(--espaco-2);
+  align-items: center;
+}
+.patrimonio-legenda__cor {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+/* cartões por classe */
+.patrimonio-classes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--espaco-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.patrimonio-classe {
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  gap: var(--espaco-3);
+  min-width: 0;
+  padding: var(--espaco-5);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  background: var(--superficie);
+}
+.patrimonio-classe__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+.patrimonio-classe__marca {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--raio);
+  background: color-mix(in oklab, currentColor 14%, transparent);
+}
+.patrimonio-classe__titulo {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+}
+.patrimonio-classe__valor {
+  font-size: 26px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.patrimonio-classe__dados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espaco-2) var(--espaco-4);
+  margin: 0;
+  font-size: 13px;
+}
+.patrimonio-classe__dados dt {
+  color: var(--apagado);
+}
+.patrimonio-classe__dados dd {
+  margin: 0;
+}
+.patrimonio-classe__nota {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--apagado);
+}
+.patrimonio-classe__link {
+  justify-self: start;
+}
+.patrimonio-aviso {
+  display: flex;
+  gap: var(--espaco-2);
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--apagado);
+}
+.patrimonio-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--espaco-2);
+}
+
+/* como somamos */
+.patrimonio-como {
+  font-size: 13.5px;
+  color: var(--apagado);
+}
+.patrimonio-como ul {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 var(--espaco-3);
+  padding-left: 18px;
+}
+.patrimonio-como strong {
+  color: var(--texto);
+}
+
+@media (max-width: 1180px) {
+  .patrimonio-classes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .patrimonio-resumo {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--espaco-5);
+  }
+}
+@media (max-width: 560px) {
+  .patrimonio-resumo,
+  .patrimonio-classe {
+    padding: var(--espaco-4);
+  }
+  .patrimonio-donut {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  .patrimonio-donut svg {
+    width: min(180px, 100%);
+  }
+}

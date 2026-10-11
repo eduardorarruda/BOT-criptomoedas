@@ -12,6 +12,7 @@ describe("acessibilidade: Acompanhar", () => {
     ["/mercado", /mercado/i],
     ["/decisoes", /decisões/i],
     ["/ordens", /ordens/i],
+    ["/patrimonio", /patrimônio/i],
   ])(
     "%s sem violações",
     async (caminho, titulo) => expect(await violacoesNaTela(caminho, titulo)).toEqual([]),

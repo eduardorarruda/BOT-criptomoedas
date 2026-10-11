@@ -15,3 +15,4 @@ export * from "./regra.js";
 export * from "./renda-fixa.js";
 export * from "./webhook-esquemas.js";
 export * from "./imobiliario.js";
+export * from "./patrimonio.js";

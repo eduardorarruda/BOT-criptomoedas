@@ -4,7 +4,6 @@ import {
   NovoInvestimentoImobiliarioEsquema,
   NovoLancamentoImobiliarioEsquema,
 } from "@zentrade/contratos";
-import { visaoEmTexto } from "@zentrade/financas";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { usuarioIdDe } from "../autenticacao/plugin.js";
@@ -16,7 +15,8 @@ import {
   cotacoesDosFiis,
   detalhe,
   hojeNoBrasil,
-  item,
+  itensImobiliarios,
+  visaoImobiliaria,
   type OpcoesCalculo,
 } from "./imobiliario-servico.js";
 import { rotasSimulacoesImobiliario } from "./imobiliario-simulacoes.js";
@@ -44,11 +44,8 @@ function servico(deps: Dependencias) {
   return {
     opcoes,
     conferir: () => conferidor(deps.agora()),
-    async itens(usuarioId: string, o: OpcoesCalculo) {
-      const registros = await imobiliario.listar(usuarioId);
-      const cotacoes = await cotacoesDosFiis(deps.cotacoesB3, registros);
-      return registros.map((r) => item(r, o, cotacaoDe(cotacoes, r)));
-    },
+    itens: (usuarioId: string, o: OpcoesCalculo) => itensImobiliarios(deps, usuarioId, o),
+    visao: (usuarioId: string, o: OpcoesCalculo) => visaoImobiliaria(deps, usuarioId, o),
     async detalhe(usuarioId: string, investimentoId: string, o: OpcoesCalculo) {
       const r = ouNaoEncontrado(await imobiliario.obter(usuarioId, investimentoId), "investimento");
       return detalhe(r, o, cotacaoDe(await cotacoesDosFiis(deps.cotacoesB3, [r]), r));
@@ -57,18 +54,8 @@ function servico(deps: Dependencias) {
 }
 
 function rotasDeLeitura(app: Tipada, s: ReturnType<typeof servico>): void {
-  app.get(
-    "/imobiliario",
-    { ...leitura, schema: { querystring: ConsultaImobiliarioEsquema } },
-    async (req) => {
-      const o = s.opcoes(req.query);
-      const itens = await s.itens(usuarioIdDe(req), o);
-      const visao = visaoEmTexto(
-        itens.map((i) => ({ tipo: i.investimento.tipo, metricas: i.metricas })),
-        o,
-      );
-      return { ...visao, itens };
-    },
+  app.get("/imobiliario", { ...leitura, schema: { querystring: ConsultaImobiliarioEsquema } }, async (req) =>
+    s.visao(usuarioIdDe(req), s.opcoes(req.query)),
   );
   app.get(BASE, { ...leitura, schema: { querystring: ConsultaImobiliarioEsquema } }, async (req) =>
     s.itens(usuarioIdDe(req), s.opcoes(req.query)),
