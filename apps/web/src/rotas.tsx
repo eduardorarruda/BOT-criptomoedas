@@ -73,12 +73,23 @@ const aoVivo = createRoute({
   component: lazyRouteComponent(() => import("./paginas/aovivo/AoVivo"), "AoVivo"),
 });
 
+/** Assistente: `?conversa=<id>` abre direto numa conversa (sem ele, uma conversa nova). */
+const assistente = createRoute({
+  getParentRoute: () => app,
+  path: "/assistente",
+  validateSearch: (s: Record<string, unknown>): { conversa?: string } =>
+    typeof s.conversa === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(s.conversa)
+      ? { conversa: s.conversa }
+      : {},
+  component: lazyRouteComponent(() => import("./paginas/assistente/RotaAssistente"), "RotaAssistente"),
+});
+
 const arvore = raiz.addChildren([
   entrar,
   app.addChildren([
     pagina("/", () => import("./paginas/VisaoGeral"), "VisaoGeral"),
     aoVivo,
-    pagina("/assistente", () => import("./paginas/assistente/Assistente"), "Assistente"),
+    assistente,
     pagina("/assistente/configuracoes", () => import("./paginas/assistente/Configuracoes"), "Configuracoes"),
     pagina("/mercado", () => import("./paginas/Mercado"), "Mercado"),
     pagina("/decisoes", () => import("./paginas/Decisoes"), "Decisoes"),
