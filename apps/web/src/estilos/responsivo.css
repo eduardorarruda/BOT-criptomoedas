@@ -1,0 +1,132 @@
+/* ---------- telas médias e pequenas ---------- */
+@media (max-width: 1180px) {
+  .grade-visao,
+  .grade-dupla,
+  .grade-dupla--larga {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* O placar (resultado, taxas, IA) desce para uma faixa própria: continua sempre à vista. */
+  .barra-topo {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+  .placar {
+    order: 10;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    gap: var(--espaco-5);
+    padding: 6px 0 8px;
+    border-top: 1px solid var(--linha);
+    overflow-x: auto;
+  }
+  .placar > div {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 900px) {
+  .app__grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lateral {
+    display: none;
+  }
+  .barra-topo {
+    padding: 0 var(--espaco-3);
+    gap: var(--espaco-3);
+  }
+  .barra-topo__menu,
+  .barra-topo__marca {
+    display: inline-flex;
+  }
+  .conteudo {
+    padding: var(--espaco-5) var(--espaco-4) var(--espaco-7);
+  }
+}
+
+@media (max-width: 560px) {
+  .metrica dd {
+    font-size: 20px;
+    white-space: nowrap;
+  }
+  .metrica--destaque dd {
+    font-size: 32px;
+  }
+  .metrica {
+    padding: var(--espaco-3);
+  }
+  .placar {
+    gap: var(--espaco-4);
+  }
+  .placar dd {
+    font-size: 13px;
+  }
+  .conexao {
+    font-size: 0;
+    gap: 0;
+  }
+  .barra-topo__marca .marca__palavra {
+    display: none;
+  }
+  .pilula-parada {
+    padding: 0 10px;
+  }
+  .painel {
+    padding: var(--espaco-4);
+  }
+  .formulario__acoes {
+    justify-content: stretch;
+  }
+  .formulario__acoes > .botao {
+    flex: 1;
+  }
+  .cabecalho__acoes,
+  .cabecalho__acoes .botao {
+    width: 100%;
+  }
+}
+
+/* ---------- gaveta (menu no celular) ---------- */
+.gaveta {
+  margin: 0;
+  width: min(300px, 86vw);
+  height: 100dvh;
+  max-height: none;
+  border-radius: 0 var(--raio-g) var(--raio-g) 0;
+}
+.gaveta[open] {
+  animation: entrar-esquerda var(--dur-media) var(--curva);
+}
+@keyframes entrar-esquerda {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+.gaveta__corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-5);
+  min-height: 100%;
+  padding: var(--espaco-5) var(--espaco-3) var(--espaco-4);
+}
+
+/* ---------- abertura ---------- */
+.abertura {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--espaco-4);
+  background: var(--fundo);
+}
+.abertura__frase {
+  display: flex;
+  align-items: baseline;
+  font-size: 34px;
+}

@@ -1,0 +1,266 @@
+/* ---------- decisão ---------- */
+.decisao {
+  display: grid;
+  gap: var(--espaco-3);
+  padding: var(--espaco-4) var(--espaco-5);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  background: var(--superficie);
+}
+.decisao--compacta {
+  padding: var(--espaco-3) var(--espaco-4);
+  gap: var(--espaco-2);
+  border-radius: var(--raio);
+}
+.decisao--aguardando_aprovacao {
+  border-color: color-mix(in oklab, var(--atencao) 55%, transparent);
+}
+.decisao--barrada,
+.decisao--registrada,
+.decisao--recusada,
+.decisao--expirada {
+  background: transparent;
+}
+.decisao__topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.decisao__acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.decisao__acao--compra {
+  color: var(--marca);
+}
+.decisao__acao--venda {
+  color: var(--texto);
+}
+.decisao__quem {
+  font-size: 14px;
+}
+.decisao__quando {
+  font-size: 13px;
+  margin-left: auto;
+}
+.decisao__numeros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px var(--espaco-5);
+  margin: 0;
+}
+.decisao__numeros > div {
+  display: grid;
+}
+.decisao__numeros dt {
+  font-size: 11.5px;
+  color: var(--apagado);
+}
+.decisao__numeros dd {
+  margin: 0;
+  font-size: 14px;
+}
+.decisao__bloco {
+  display: grid;
+  gap: 8px;
+  padding-top: var(--espaco-3);
+  border-top: 1px dashed var(--linha);
+}
+.decisao__subtitulo {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--apagado);
+}
+.decisao__explicacao {
+  font-family: var(--fonte-numero);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.decisao__justificativa {
+  max-width: 78ch;
+}
+.decisao__medidores {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.medidor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.medidor__rotulo {
+  font-size: 13px;
+  color: var(--apagado);
+  min-width: 76px;
+}
+.medidor__barra {
+  position: relative;
+  flex: 0 1 180px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--superficie-2);
+  overflow: hidden;
+}
+.medidor__barra > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: var(--marca);
+}
+.decisao__detalhes summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--apagado);
+  width: fit-content;
+}
+.decisao__detalhes summary:hover {
+  color: var(--texto);
+}
+.decisao__detalhes[open] summary {
+  margin-bottom: 8px;
+}
+.decisao__riscos,
+.decisao__fontes {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+.decisao__riscos li::before {
+  content: "– ";
+  color: var(--atencao);
+}
+.decisao__fontes {
+  margin-top: 10px;
+}
+.decisao__fontes li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.decisao__fontes svg {
+  color: var(--apagado);
+}
+.decisao__risco {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+.decisao__risco p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.decisao__risco--ok svg {
+  color: var(--marca);
+}
+.decisao__risco--barrada p svg {
+  color: var(--atencao);
+}
+.decisao__risco--barrada ul {
+  padding-left: 22px;
+  display: grid;
+  gap: 4px;
+}
+.decisao__resposta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+  flex-wrap: wrap;
+  padding-top: var(--espaco-3);
+  border-top: 1px solid var(--linha);
+}
+.decisao__pergunta {
+  font-size: 14px;
+}
+.decisao__botoes {
+  display: flex;
+  gap: var(--espaco-2);
+}
+
+/* ---------- pensando ---------- */
+.analises {
+  display: grid;
+  gap: var(--espaco-3);
+}
+.pensando {
+  display: grid;
+  gap: var(--espaco-3);
+  padding: var(--espaco-4);
+  border-radius: var(--raio-g);
+  border: 1px dashed color-mix(in oklab, var(--marca) 45%, transparent);
+  background: linear-gradient(180deg, var(--marca-tenue), transparent 70%);
+}
+.pensando--pronto {
+  border-style: solid;
+  border-color: var(--linha);
+  background: transparent;
+}
+.pensando__topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.respirar {
+  animation: respirar 2.2s ease-in-out infinite;
+}
+@keyframes respirar {
+  50% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+}
+.pensando__etapas {
+  display: grid;
+  gap: 8px;
+}
+.pensando__etapa {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 13.5px;
+}
+.pensando__ferramenta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--marca);
+  font-weight: 550;
+  font-size: 12.5px;
+}
+.pensando__etapa--esperando .pensando__ferramenta {
+  color: var(--apagado);
+}
+.pensando__fim {
+  font-size: 13px;
+  color: var(--apagado);
+}
+
+@media (max-width: 560px) {
+  .decisao {
+    padding: var(--espaco-3) var(--espaco-4);
+  }
+  .decisao__quando {
+    margin-left: 0;
+  }
+  .pensando__etapa {
+    grid-template-columns: 1fr auto;
+  }
+  .pensando__descricao {
+    grid-column: 1 / -1;
+  }
+  .decisao__botoes,
+  .decisao__botoes .botao {
+    flex: 1;
+  }
+}
