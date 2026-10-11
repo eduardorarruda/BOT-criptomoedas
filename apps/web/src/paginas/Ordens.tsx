@@ -1,9 +1,10 @@
 import type { DecisaoDTO, OrdemDTO, PosicaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
-import { ArrowLeftRight, Wallet } from "lucide-react";
+import { ArrowLeftRight, CircleCheck, Coins, Receipt, Wallet } from "lucide-react";
 import { useMemo } from "react";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
 import { Dinheiro } from "../componentes/Dinheiro";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
+import { CartaoKpi, GradeKpi } from "../componentes/Kpi";
 import {
   BarraFiltros,
   contarPor,
@@ -182,13 +183,13 @@ function TabelaOrdens({
 }) {
   return (
     <div
-      className="tabela-rolagem"
+      className="tabela-rolagem tabela-rolagem--alta"
       // eslint-disable-next-line jsx-a11y-x/no-noninteractive-tabindex -- região rolável: o foco é o que permite rolar pelo teclado (WCAG 2.1.1)
       tabIndex={0}
       role="region"
       aria-label="Ordens filtradas (role para os lados)"
     >
-      <table className="tabela diario-tabela">
+      <table className="tabela tabela--zebra diario-tabela">
         <caption className="so-leitor">Ordens enviadas à corretora, com execução, taxa e estado</caption>
         <thead>
           <tr>
@@ -230,31 +231,22 @@ function TabelaOrdens({
 function TotaisOrdens({ ordens }: { readonly ordens: readonly OrdemDTO[] }) {
   const r = resumirOrdens(ordens);
   return (
-    <dl className="diario-totais" aria-label="Totais das ordens filtradas">
-      <div>
-        <dt>Ordens</dt>
-        <dd className="num">{r.total}</dd>
-      </div>
-      <div>
-        <dt>Preenchidas</dt>
-        <dd className="num">
-          {r.preenchidas}
-          {r.rejeitadas > 0 ? <span className="diario-totais__nota">{r.rejeitadas} rejeitada(s)</span> : null}
-        </dd>
-      </div>
-      <div>
-        <dt>Valor executado</dt>
-        <dd>
-          <Dinheiro valor={r.valor} />
-        </dd>
-      </div>
-      <div>
-        <dt>Taxas pagas</dt>
-        <dd>
-          <Dinheiro valor={r.taxas} casas={4} className="perda" />
-        </dd>
-      </div>
-    </dl>
+    <GradeKpi rotulo="Totais das ordens filtradas" colunas={4}>
+      <CartaoKpi rotulo="Ordens" icone={ArrowLeftRight} valor={<span className="num">{r.total}</span>} />
+      <CartaoKpi
+        rotulo="Preenchidas"
+        icone={CircleCheck}
+        valor={<span className="num">{r.preenchidas}</span>}
+        nota={r.rejeitadas > 0 ? `${r.rejeitadas} rejeitada(s) pela corretora` : undefined}
+        tom={r.rejeitadas > 0 ? "atencao" : "neutro"}
+      />
+      <CartaoKpi rotulo="Valor executado" icone={Coins} valor={<Dinheiro valor={r.valor} />} />
+      <CartaoKpi
+        rotulo="Taxas pagas"
+        icone={Receipt}
+        valor={<Dinheiro valor={r.taxas} casas={4} className="perda" />}
+      />
+    </GradeKpi>
   );
 }
 
@@ -410,7 +402,7 @@ export function Ordens() {
         )}
       </Painel>
       <Painel titulo="Ordens" id="titulo-ordens">
-        {ordensQ.isPending ? <Esqueleto linhas={6} rotulo="Carregando ordens" /> : null}
+        {ordensQ.isPending ? <Esqueleto forma="lista" quantidade={5} rotulo="Carregando ordens" /> : null}
         {ordensQ.error ? (
           <ErroCarregar erro={ordensQ.error} tentarDeNovo={() => void ordensQ.refetch()} />
         ) : null}

@@ -324,7 +324,7 @@ export function Titulos({
   const { busca: b, mudar, limpar, aplicar, ativos } = useFiltrosUrl(buscaRendaFixa, NAO_CONTAM);
   const hoje = diaLocal(useAgora(60_000));
   const f = useFacetas(titulos ?? [], b, hoje);
-  if (isPending) return <Esqueleto linhas={6} rotulo="Carregando os títulos" />;
+  if (isPending) return <Esqueleto forma="cartoes" quantidade={4} rotulo="Carregando os títulos" />;
   if (error) return <ErroCarregar erro={error} tentarDeNovo={() => void refetch()} />;
   if (titulos.length === 0) {
     return (

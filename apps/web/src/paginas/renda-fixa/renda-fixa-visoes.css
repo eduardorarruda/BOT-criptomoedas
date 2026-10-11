@@ -1,37 +1,4 @@
-/* Renda fixa: totais do recorte, tabela, escada de vencimentos e alocação filtrada. Só tokens do tema. */
-.rf-totais {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1px;
-  margin: 0;
-  overflow: hidden;
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
-  background: var(--linha);
-}
-.rf-totais > div {
-  display: grid;
-  gap: 2px;
-  padding: var(--espaco-3) var(--espaco-4);
-  background: var(--superficie);
-}
-.rf-totais dt {
-  color: var(--apagado);
-  font-size: 12px;
-}
-.rf-totais dd {
-  margin: 0;
-  font-size: 17px;
-}
-.rf-totais__nota {
-  grid-column: 1 / -1;
-  margin: 0;
-  padding: var(--espaco-2) var(--espaco-4);
-  background: var(--superficie);
-  color: var(--apagado);
-  font-size: 12.5px;
-}
-
+/* Renda fixa: tabela, escada de vencimentos e cartões compactos. Só tokens do tema. */
 /* cartões compactos: só o essencial de cada título */
 .rf-lista--compacta {
   gap: var(--espaco-2);
@@ -106,7 +73,7 @@
 }
 .rf-escada__degrau {
   display: grid;
-  grid-template-columns: 110px minmax(160px, 1.1fr) minmax(0, 2fr);
+  grid-template-columns: 150px minmax(160px, 1.1fr) minmax(0, 2fr);
   gap: var(--espaco-2) var(--espaco-4);
   align-items: start;
   padding: var(--espaco-3) 0;

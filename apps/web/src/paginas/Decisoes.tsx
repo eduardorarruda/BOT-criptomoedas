@@ -1,11 +1,12 @@
 import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
-import { LayoutList, ScrollText, Table2 } from "lucide-react";
+import { CircleCheck, LayoutList, Scale, ScrollText, Sparkles, Table2 } from "lucide-react";
 import { useMemo } from "react";
 import { Cabecalho } from "../componentes/Cabecalho";
 import { AnalisesAoVivo } from "../componentes/decisao/AnalisesAoVivo";
 import { CartaoDecisao } from "../componentes/decisao/CartaoDecisao";
 import { Dinheiro } from "../componentes/Dinheiro";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
+import { CartaoKpi, GradeKpi } from "../componentes/Kpi";
 import {
   AlternarDensidade,
   AlternarVisao,
@@ -72,33 +73,31 @@ function Totais({
 }) {
   const r = resumirDecisoes(decisoes);
   return (
-    <dl className="diario-totais" aria-label={`Totais das decisões filtradas, ${periodo}`}>
-      <div>
-        <dt>Decisões</dt>
-        <dd className="num">{r.total}</dd>
-      </div>
-      <div>
-        <dt>Executadas</dt>
-        <dd className="num">{r.executadas}</dd>
-      </div>
-      <div>
-        <dt>Desfecho avaliado</dt>
-        <dd>
-          {r.comDesfecho > 0 ? (
+    <GradeKpi rotulo={`Totais das decisões filtradas, ${periodo}`} colunas={4}>
+      <CartaoKpi rotulo="Decisões" icone={ScrollText} valor={<span className="num">{r.total}</span>} />
+      <CartaoKpi
+        rotulo="Executadas"
+        icone={CircleCheck}
+        valor={<span className="num">{r.executadas}</span>}
+      />
+      <CartaoKpi
+        rotulo="Desfecho avaliado"
+        icone={Scale}
+        valor={
+          r.comDesfecho > 0 ? (
             <Dinheiro valor={r.resultado} sinal colorir />
           ) : (
             <span className="apagado">—</span>
-          )}
-          <span className="diario-totais__nota">
-            {r.comDesfecho === 1 ? "1 decisão" : `${r.comDesfecho} decisões`}
-          </span>
-        </dd>
-      </div>
-      <div>
-        <dt>Custo de IA</dt>
-        <dd className="num">{formatarCustoIa(r.custoIa)}</dd>
-      </div>
-    </dl>
+          )
+        }
+        nota={r.comDesfecho === 1 ? "de 1 decisão" : `de ${r.comDesfecho} decisões`}
+      />
+      <CartaoKpi
+        rotulo="Custo de IA"
+        icone={Sparkles}
+        valor={<span className="num">{formatarCustoIa(r.custoIa)}</span>}
+      />
+    </GradeKpi>
   );
 }
 
@@ -276,12 +275,10 @@ export function Decisoes() {
               valor={visao}
               aoMudar={(v) => mudar({ visao: v === "cartoes" ? undefined : v })}
             />
-            {visao === "cartoes" ? (
-              <AlternarDensidade
-                compacta={compacta}
-                aoMudar={(c) => mudar({ densidade: c ? "compacta" : undefined })}
-              />
-            ) : null}
+            <AlternarDensidade
+              compacta={compacta}
+              aoMudar={(c) => mudar({ densidade: c ? "compacta" : undefined })}
+            />
           </>
         }
       >
@@ -300,7 +297,7 @@ export function Decisoes() {
         />
       </BarraFiltros>
       <AnalisesAoVivo robos={robos} roboId={roboUnico} />
-      {consulta.isPending ? <Esqueleto linhas={8} rotulo="Carregando as decisões" /> : null}
+      {consulta.isPending ? <Esqueleto forma="lista" quantidade={6} rotulo="Carregando as decisões" /> : null}
       {consulta.error ? (
         <ErroCarregar erro={consulta.error} tentarDeNovo={() => void consulta.refetch()} />
       ) : null}
@@ -315,7 +312,12 @@ export function Decisoes() {
         <>
           <Totais decisoes={f.filtradas} periodo={periodo} />
           {visao === "tabela" ? (
-            <TabelaDecisoes decisoes={pagina.itens} robos={robos} rotulo="Decisões filtradas" />
+            <TabelaDecisoes
+              decisoes={pagina.itens}
+              robos={robos}
+              rotulo="Decisões filtradas"
+              compacta={compacta}
+            />
           ) : (
             <Grupos grupos={grupos} robos={robos} compacta={compacta} />
           )}

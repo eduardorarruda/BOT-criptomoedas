@@ -1,29 +1,18 @@
 /* Patrimônio: só tokens do tema (tokens.css). Todo número usa .num (Geist Mono, tabular). */
 
-/* Cor fixa por classe: a mesma no donut, na legenda e no cartão. */
+/* Cor fixa por classe (paleta categórica): a mesma no donut, na legenda e no cartão. O imobiliário
+ * fica num matiz bem diferente do verde da renda fixa. */
 .patrimonio-cor--cripto {
-  stroke: var(--atencao);
-  color: var(--atencao);
+  stroke: var(--cat-3);
+  color: var(--cat-3);
 }
 .patrimonio-cor--renda_fixa {
-  stroke: var(--marca);
-  color: var(--marca);
-}
-/* Matiz próprio do imobiliário: verde-claro ao lado do verde da marca não se distinguia. */
-:root {
-  --patrimonio-imobiliario: #7ab4f5;
-}
-@media (prefers-color-scheme: light) {
-  :root:not([data-tema="escuro"]) {
-    --patrimonio-imobiliario: #2f62b5;
-  }
-}
-:root[data-tema="claro"] {
-  --patrimonio-imobiliario: #2f62b5;
+  stroke: var(--cat-1);
+  color: var(--cat-1);
 }
 .patrimonio-cor--imobiliario {
-  stroke: var(--patrimonio-imobiliario);
-  color: var(--patrimonio-imobiliario);
+  stroke: var(--cat-2);
+  color: var(--cat-2);
 }
 
 /* total e composição */

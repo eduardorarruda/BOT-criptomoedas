@@ -135,28 +135,28 @@
   background: currentColor;
 }
 .carteira-cor-0 {
-  stroke: var(--marca);
-  color: var(--marca);
+  stroke: var(--cat-1);
+  color: var(--cat-1);
 }
 .carteira-cor-1 {
-  stroke: var(--atencao);
-  color: var(--atencao);
+  stroke: var(--cat-2);
+  color: var(--cat-2);
 }
 .carteira-cor-2 {
-  stroke: color-mix(in oklab, var(--marca) 55%, var(--texto));
-  color: color-mix(in oklab, var(--marca) 55%, var(--texto));
+  stroke: var(--cat-3);
+  color: var(--cat-3);
 }
 .carteira-cor-3 {
-  stroke: color-mix(in oklab, var(--atencao) 50%, var(--perda));
-  color: color-mix(in oklab, var(--atencao) 50%, var(--perda));
+  stroke: var(--cat-4);
+  color: var(--cat-4);
 }
 .carteira-cor-4 {
-  stroke: var(--apagado);
-  color: var(--apagado);
+  stroke: var(--cat-5);
+  color: var(--cat-5);
 }
 .carteira-cor-5 {
-  stroke: color-mix(in oklab, var(--marca-profunda) 70%, var(--superficie));
-  color: color-mix(in oklab, var(--marca-profunda) 70%, var(--superficie));
+  stroke: var(--cat-6);
+  color: var(--cat-6);
 }
 
 /* como calculamos */

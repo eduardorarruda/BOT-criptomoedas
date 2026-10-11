@@ -81,11 +81,10 @@ export function RendaFixa() {
   const menos = useMenosMovimento();
   return (
     <>
-      <Cabecalho titulo="Renda fixa">
+      <Cabecalho titulo="Renda fixa" abas={<Abas ativa={aba} aoMudar={(a) => setAba(a)} />}>
         CDB, Tesouro, LCI/LCA, debêntures, poupança e caixinhas: quanto vale hoje, quanto de imposto sai e
         quanto sobra. Fatos e contas com fonte e data — nada aqui é recomendação.
       </Cabecalho>
-      <Abas ativa={aba} aoMudar={(a) => setAba(a)} />
       <AnimatePresence mode="wait" initial={false}>
         <m.div
           key={aba}

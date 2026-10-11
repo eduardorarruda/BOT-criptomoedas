@@ -13,7 +13,7 @@ export interface Serie {
 }
 
 export const corDa = (s: Pick<Serie, "cor">): string =>
-  typeof s.cor === "number" ? `var(--imob-serie-${s.cor})` : `var(--${s.cor})`;
+  typeof s.cor === "number" ? `var(--cat-${s.cor})` : `var(--${s.cor})`;
 
 export const LARGURA = 640;
 export const MARGEM = { topo: 12, direita: 12, base: 28, esquerda: 92 } as const;

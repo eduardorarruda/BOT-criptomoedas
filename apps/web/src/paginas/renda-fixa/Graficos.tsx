@@ -9,16 +9,16 @@ import { useMenosMovimento } from "../../ganchos/movimento";
  * em texto, para quem não enxerga o desenho.
  */
 export const CORES = [
-  "var(--rf-1)",
-  "var(--rf-2)",
-  "var(--rf-3)",
-  "var(--rf-4)",
-  "var(--rf-5)",
-  "var(--rf-6)",
-  "var(--rf-7)",
-  "var(--rf-8)",
+  "var(--cat-1)",
+  "var(--cat-2)",
+  "var(--cat-3)",
+  "var(--cat-4)",
+  "var(--cat-5)",
+  "var(--cat-6)",
+  "var(--cat-7)",
+  "var(--cat-8)",
 ];
-export const corDe = (i: number): string => CORES[i % CORES.length] ?? "var(--rf-1)";
+export const corDe = (i: number): string => CORES[i % CORES.length] ?? "var(--cat-1)";
 
 export interface Fatia {
   readonly rotulo: string;

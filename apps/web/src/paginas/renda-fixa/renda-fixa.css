@@ -1,14 +1,4 @@
-/* Renda fixa. Só tokens da marca: jade para o principal, âmbar para atenção, papel de arroz para o neutro. */
-:root {
-  --rf-1: var(--marca);
-  --rf-2: var(--atencao);
-  --rf-3: color-mix(in oklab, var(--texto) 70%, transparent);
-  --rf-4: color-mix(in oklab, var(--marca) 55%, var(--fundo));
-  --rf-5: color-mix(in oklab, var(--atencao) 55%, var(--fundo));
-  --rf-6: color-mix(in oklab, var(--texto) 35%, var(--fundo));
-  --rf-7: color-mix(in oklab, var(--marca) 50%, var(--atencao));
-  --rf-8: color-mix(in oklab, var(--marca-profunda) 70%, var(--texto));
-}
+/* Renda fixa. Só tokens do tema; os gráficos usam a paleta categórica (--cat-1…8, tokens.css). */
 
 .rf-abas {
   display: flex;
@@ -17,6 +7,11 @@
   border-bottom: 1px solid var(--linha);
   margin-bottom: var(--espaco-5);
   scrollbar-width: none;
+}
+/* Na faixa de abas do cabeçalho, a linha de baixo é a dele. */
+.cabecalho__abas .rf-abas {
+  margin-bottom: 0;
+  border-bottom: 0;
 }
 .rf-abas__aba {
   position: relative;

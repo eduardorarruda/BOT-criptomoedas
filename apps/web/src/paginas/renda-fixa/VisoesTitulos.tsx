@@ -1,7 +1,8 @@
 import type { TituloRendaFixa } from "@zentrade/contratos/esquemas";
-import { CalendarClock, PencilLine, PlugZap } from "lucide-react";
+import { CalendarClock, Landmark, PencilLine, PlugZap, Receipt, TrendingUp, WalletCards } from "lucide-react";
 import { m } from "motion/react";
 import { Painel } from "../../componentes/Cabecalho";
+import { CartaoKpi, GradeKpi } from "../../componentes/Kpi";
 import { useMenosMovimento } from "../../ganchos/movimento";
 import { alocacaoPor, diasAte, encerrado, escadaDeVencimentos, type DegrauVencimento } from "./filtros";
 import { data, INDEXADOR, LIQUIDEZ, pct, reais, rentabilidadeContratada, TIPO, tomDe } from "./formato";
@@ -18,34 +19,33 @@ function mesPorExtenso(mes: string): string {
 
 export function TotaisTitulos({ titulos }: { readonly titulos: readonly TituloRendaFixa[] }) {
   const s = somarLotes(titulos);
+  const semPosicao = s.bruto === null ? "algum título sem posição: sem soma de hoje" : undefined;
   return (
-    <dl className="rf-totais" aria-label="Totais dos títulos filtrados">
-      <div>
-        <dt>Títulos</dt>
-        <dd className="num">{titulos.length}</dd>
-      </div>
-      <div>
-        <dt>Aplicado</dt>
-        <dd className="num">{reais(s.aplicado)}</dd>
-      </div>
-      <div>
-        <dt>Bruto hoje</dt>
-        <dd className="num">{reais(s.bruto)}</dd>
-      </div>
-      <div>
-        <dt>Líquido estimado</dt>
-        <dd className="num">{reais(s.liquido)}</dd>
-      </div>
-      <div>
-        <dt>Rendimento bruto</dt>
-        <dd className={`num ${tomDe(s.rendimento)}`}>{reais(s.rendimento, { sinal: true })}</dd>
-      </div>
-      {s.bruto === null ? (
-        <p className="rf-totais__nota">
-          Algum título está sem posição (falta índice ou taxa): sem soma de hoje.
-        </p>
-      ) : null}
-    </dl>
+    <GradeKpi rotulo="Totais dos títulos filtrados" colunas={4}>
+      <CartaoKpi
+        rotulo="Aplicado"
+        icone={WalletCards}
+        valor={<span className="num">{reais(s.aplicado)}</span>}
+        nota={titulos.length === 1 ? "1 título" : `${titulos.length} títulos`}
+      />
+      <CartaoKpi
+        rotulo="Bruto hoje"
+        icone={Landmark}
+        valor={<span className="num">{reais(s.bruto)}</span>}
+        nota={semPosicao}
+      />
+      <CartaoKpi
+        rotulo="Líquido estimado"
+        icone={Receipt}
+        valor={<span className="num">{reais(s.liquido)}</span>}
+        nota="depois de IR e IOF estimados"
+      />
+      <CartaoKpi
+        rotulo="Rendimento bruto"
+        icone={TrendingUp}
+        valor={<span className={`num ${tomDe(s.rendimento)}`}>{reais(s.rendimento, { sinal: true })}</span>}
+      />
+    </GradeKpi>
   );
 }
 
@@ -60,13 +60,13 @@ export function TabelaTitulos({
 }) {
   return (
     <div
-      className="tabela-rolagem"
+      className="tabela-rolagem tabela-rolagem--alta"
       // eslint-disable-next-line jsx-a11y-x/no-noninteractive-tabindex -- região rolável: o foco é o que permite rolar pelo teclado (WCAG 2.1.1)
       tabIndex={0}
       role="region"
       aria-label="Títulos filtrados (role para os lados)"
     >
-      <table className="tabela rf-tabela">
+      <table className="tabela tabela--zebra rf-tabela">
         <caption className="so-leitor">
           Títulos de renda fixa filtrados. Abra o nome para ver o detalhe.
         </caption>

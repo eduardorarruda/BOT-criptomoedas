@@ -158,11 +158,11 @@ function Projecao({
             rotulo={`Projeção do valor bruto e líquido até ${data(pr.fim)}`}
             rotulosX={pr.pontos.map((p) => curto(p.dia))}
             series={[
-              { nome: "Bruto", valores: pr.pontos.map((p) => Number(p.bruto)), cor: "var(--rf-1)" },
+              { nome: "Bruto", valores: pr.pontos.map((p) => Number(p.bruto)), cor: "var(--cat-1)" },
               {
                 nome: "Líquido",
                 valores: pr.pontos.map((p) => Number(p.liquido)),
-                cor: "var(--rf-2)",
+                cor: "var(--cat-2)",
                 tracejada: true,
               },
             ]}
@@ -170,10 +170,14 @@ function Projecao({
           />
           <Legenda
             itens={[
-              { nome: `Bruto em ${data(pr.fim)}`, cor: "var(--rf-1)", valor: reais(pr.pontos.at(-1)?.bruto) },
+              {
+                nome: `Bruto em ${data(pr.fim)}`,
+                cor: "var(--cat-1)",
+                valor: reais(pr.pontos.at(-1)?.bruto),
+              },
               {
                 nome: `Líquido em ${data(pr.fim)}`,
-                cor: "var(--rf-2)",
+                cor: "var(--cat-2)",
                 valor: reais(pr.pontos.at(-1)?.liquido),
               },
             ]}

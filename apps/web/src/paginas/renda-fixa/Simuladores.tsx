@@ -38,7 +38,7 @@ function VistaIsento({
         rotulo="Percentual do CDI equivalente por prazo"
         rotulosX={r.curva.map((c) => `${c.prazoDias}d`)}
         series={[
-          { nome: "Equivalente", valores: r.curva.map((c) => Number(c.equivalente)), cor: "var(--rf-1)" },
+          { nome: "Equivalente", valores: r.curva.map((c) => Number(c.equivalente)), cor: "var(--cat-1)" },
         ]}
         formatarY={(n) => `${n.toFixed(0)}%`}
       />
@@ -127,9 +127,9 @@ function SelicCdbPoupanca({
   const r = sim.data;
   const linhas = r
     ? ([
-        ["Tesouro Selic", r.tesouroSelic, "var(--rf-1)"],
-        ["CDB", r.cdb, "var(--rf-2)"],
-        ["Poupança", r.poupanca, "var(--rf-3)"],
+        ["Tesouro Selic", r.tesouroSelic, "var(--cat-1)"],
+        ["CDB", r.cdb, "var(--cat-2)"],
+        ["Poupança", r.poupanca, "var(--cat-3)"],
       ] as const)
     : [];
   return (
@@ -163,15 +163,15 @@ function SelicCdbPoupanca({
               {
                 nome: "Tesouro Selic",
                 valores: r.serie.map((s) => Number(s.tesouroSelic)),
-                cor: "var(--rf-1)",
+                cor: "var(--cat-1)",
               },
               {
                 nome: "CDB",
                 valores: r.serie.map((s) => Number(s.cdb)),
-                cor: "var(--rf-2)",
+                cor: "var(--cat-2)",
                 tracejada: true,
               },
-              { nome: "Poupança", valores: r.serie.map((s) => Number(s.poupanca)), cor: "var(--rf-3)" },
+              { nome: "Poupança", valores: r.serie.map((s) => Number(s.poupanca)), cor: "var(--cat-3)" },
             ]}
             formatarY={reaisCurto}
           />
@@ -202,10 +202,10 @@ function VistaPreIpca({ r, ipca }: { readonly r: ResultadoPreIpca; readonly ipca
           {
             nome: "Prefixado",
             valores: r.curva.map((c) => Number(c.prefixado)),
-            cor: "var(--rf-2)",
+            cor: "var(--cat-2)",
             tracejada: true,
           },
-          { nome: "IPCA+", valores: r.curva.map((c) => Number(c.ipcaMais)), cor: "var(--rf-1)" },
+          { nome: "IPCA+", valores: r.curva.map((c) => Number(c.ipcaMais)), cor: "var(--cat-1)" },
         ]}
         formatarY={reaisCurto}
         marcaX={{
@@ -215,8 +215,8 @@ function VistaPreIpca({ r, ipca }: { readonly r: ResultadoPreIpca; readonly ipca
       />
       <Legenda
         itens={[
-          { nome: "Prefixado", cor: "var(--rf-2)" },
-          { nome: "IPCA+", cor: "var(--rf-1)" },
+          { nome: "Prefixado", cor: "var(--cat-2)" },
+          { nome: "IPCA+", cor: "var(--cat-1)" },
         ]}
       />
       <Premissas itens={r.premissas} />

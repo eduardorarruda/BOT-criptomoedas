@@ -16,21 +16,23 @@ export function TabelaDecisoes({
   decisoes,
   robos,
   rotulo,
+  compacta = false,
 }: {
   readonly decisoes: readonly DecisaoDTO[];
   readonly robos: readonly RoboDTO[];
   readonly rotulo: string;
+  readonly compacta?: boolean;
 }) {
   const [aberta, setAberta] = useState<string | null>(null);
   return (
     <div
-      className="tabela-rolagem"
+      className="tabela-rolagem tabela-rolagem--alta"
       // eslint-disable-next-line jsx-a11y-x/no-noninteractive-tabindex -- região rolável: o foco é o que permite rolar pelo teclado (WCAG 2.1.1)
       tabIndex={0}
       role="region"
       aria-label={`${rotulo} (role para os lados)`}
     >
-      <table className="tabela diario-tabela">
+      <table className={`tabela tabela--zebra diario-tabela ${compacta ? "tabela--compacta" : ""}`}>
         <caption className="so-leitor">{rotulo}. Abra uma linha para ver o raciocínio completo.</caption>
         <thead>
           <tr>
