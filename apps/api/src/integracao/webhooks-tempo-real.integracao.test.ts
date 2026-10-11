@@ -139,6 +139,8 @@ describe("webhooks do n8n e tempo real", () => {
       { titulo: "ETF aprovado", fonte: "noticia", url: "https://exemplo.com/etf" },
     ]);
     expect((await assinado("conhecimento", noticia)).statusCode).toBe(200);
+    const perigosa = await assinado("conhecimento", { ...noticia, url: "javascript:alert(1)" });
+    expect(perigosa.statusCode).toBe(400);
   });
 
   it("vigia de saúde recebe a batida do motor e os robôs pausados", async () => {

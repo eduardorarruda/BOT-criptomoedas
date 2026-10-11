@@ -16,7 +16,11 @@ declare module "fastify" {
 const Conhecimento = z.object({
   fonte: z.enum(["diario", "noticia", "regra_corretora", "estrategia", "nota"]),
   titulo: z.string().min(1).max(200),
-  url: z.url().max(2000).optional(),
+  // Só http(s): a tela mostra o link, e "javascript:" viraria XSS.
+  url: z
+    .url({ protocol: /^https?$/, error: "a url precisa começar com http:// ou https://" })
+    .max(2000)
+    .optional(),
   publicadoEm: Instante,
   texto: z.string().min(1).max(LIMITE_TEXTO),
 });
