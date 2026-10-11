@@ -2,7 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TituloRendaFixa } from "@zentrade/contratos/esquemas";
 import { criarFonteDemo } from "../../demo/fonteDemo";
-import { renderizar } from "../../teste/renderizar";
+import { buscaAtual, renderizarNaRota } from "../../teste/rota";
 import { montarTitulo, numeroDigitado } from "./Cadastro";
 import { idExistente } from "./pluggy-widget";
 import { RendaFixa } from "./RendaFixa";
@@ -14,7 +14,7 @@ const ESPERA = { timeout: 10_000 };
 
 describe("tela de renda fixa (demonstração)", () => {
   it("mostra a visão geral com totais, alocação, vencimentos e a fonte das taxas", async () => {
-    renderizar(<RendaFixa />, fonteDemo());
+    renderizarNaRota(<RendaFixa />, { caminho: "/renda-fixa", fonte: fonteDemo() });
     expect(await screen.findByText("Líquido estimado hoje", {}, ESPERA)).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /Por tipo/ })).toBeInTheDocument();
     expect(screen.getByText("Calendário de vencimentos")).toBeInTheDocument();
@@ -24,11 +24,14 @@ describe("tela de renda fixa (demonstração)", () => {
 
   it("abas com teclado e lista de títulos com as caixinhas agrupadas", async () => {
     const usuario = userEvent.setup();
-    renderizar(<RendaFixa />, fonteDemo());
-    const visao = screen.getByRole("tab", { name: "Visão geral" });
+    const { roteador } = renderizarNaRota(<RendaFixa />, { caminho: "/renda-fixa", fonte: fonteDemo() });
+    const visao = await screen.findByRole("tab", { name: "Visão geral" }, ESPERA);
     visao.focus();
     await usuario.keyboard("{ArrowRight}");
-    expect(screen.getByRole("tab", { name: "Títulos" })).toHaveAttribute("aria-selected", "true");
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Títulos" })).toHaveAttribute("aria-selected", "true"),
+    );
+    expect(buscaAtual(roteador).aba).toBe("titulos");
     expect(await screen.findByText("2 lotes", {}, ESPERA)).toBeInTheDocument();
     await usuario.click(screen.getByRole("button", { name: /Ver detalhes de CDB Banco Exemplo/ }));
     const dialogo = await screen.findByRole("dialog", {}, ESPERA);
@@ -38,16 +41,16 @@ describe("tela de renda fixa (demonstração)", () => {
 
   it("cadastro valida antes de enviar", async () => {
     const usuario = userEvent.setup();
-    renderizar(<RendaFixa />, fonteDemo());
-    await usuario.click(screen.getByRole("tab", { name: "Cadastrar" }));
+    renderizarNaRota(<RendaFixa />, { caminho: "/renda-fixa", fonte: fonteDemo() });
+    await usuario.click(await screen.findByRole("tab", { name: "Cadastrar" }, ESPERA));
     await usuario.click(await screen.findByRole("button", { name: "Cadastrar título" }, ESPERA));
     expect(await screen.findByText(/dê um nome ao título/, {}, ESPERA)).toBeInTheDocument();
   });
 
   it("simulador pede números e responde com premissas", async () => {
     const usuario = userEvent.setup();
-    renderizar(<RendaFixa />, fonteDemo());
-    await usuario.click(screen.getByRole("tab", { name: "Simuladores" }));
+    renderizarNaRota(<RendaFixa />, { caminho: "/renda-fixa", fonte: fonteDemo() });
+    await usuario.click(await screen.findByRole("tab", { name: "Simuladores" }, ESPERA));
     await usuario.click(await screen.findByRole("button", { name: "Simular" }, ESPERA));
     await waitFor(() => expect(screen.getByText(/para empatar no líquido/)).toBeInTheDocument(), ESPERA);
     expect(screen.getByText(/CDI de 13,65% ao ano/)).toBeInTheDocument();
@@ -55,10 +58,45 @@ describe("tela de renda fixa (demonstração)", () => {
 
   it("conectar banco na demonstração explica que não há conexão e o prazo do MeuPluggy", async () => {
     const usuario = userEvent.setup();
-    renderizar(<RendaFixa />, fonteDemo());
-    await usuario.click(screen.getByRole("tab", { name: "Conectar banco" }));
+    renderizarNaRota(<RendaFixa />, { caminho: "/renda-fixa", fonte: fonteDemo() });
+    await usuario.click(await screen.findByRole("tab", { name: "Conectar banco" }, ESPERA));
     expect(await screen.findByText("Sem conexão na demonstração", {}, ESPERA)).toBeInTheDocument();
     expect(screen.getByText(/15 dias de teste/)).toBeInTheDocument();
+  });
+});
+
+describe("títulos filtrados pela URL", () => {
+  it("o link abre a aba, os filtros e a visão; os totais seguem o filtro", async () => {
+    renderizarNaRota(<RendaFixa />, {
+      caminho: "/renda-fixa?aba=titulos&origem=pluggy&visao=tabela",
+      fonte: fonteDemo(),
+    });
+    const tabela = await screen.findByRole("table", { name: /Títulos de renda fixa filtrados/ }, ESPERA);
+    expect(within(tabela).getAllByRole("row")).toHaveLength(3);
+    expect(within(tabela).getByText("CDB Banco Digital 102%")).toBeInTheDocument();
+    expect(screen.getByLabelText("Totais dos títulos filtrados")).toHaveTextContent("R$ 13.000,00");
+    expect(screen.getByRole("checkbox", { name: /Pluggy/ })).toBeChecked();
+  });
+
+  it("escada de vencimentos e filtro de janela pelo teclado", async () => {
+    const usuario = userEvent.setup();
+    const { roteador } = renderizarNaRota(<RendaFixa />, {
+      caminho: "/renda-fixa?aba=titulos&visao=escada",
+      fonte: fonteDemo(),
+    });
+    expect(await screen.findByRole("heading", { name: /Escada de vencimentos/ }, ESPERA)).toBeInTheDocument();
+    expect(screen.getByText("Sem vencimento")).toBeInTheDocument();
+    await usuario.click(screen.getByRole("radio", { name: /Em 30 dias/ }));
+    await waitFor(() => expect(buscaAtual(roteador).vence).toBe("30"));
+    expect(screen.queryByText("Sem vencimento")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /CDB Banco Digital 102%/ })).toBeInTheDocument();
+  });
+
+  it("visão geral leva à escada por mês", async () => {
+    const usuario = userEvent.setup();
+    const { roteador } = renderizarNaRota(<RendaFixa />, { caminho: "/renda-fixa", fonte: fonteDemo() });
+    await usuario.click(await screen.findByRole("button", { name: "Ver por mês" }, ESPERA));
+    await waitFor(() => expect(buscaAtual(roteador)).toEqual({ aba: "titulos", visao: "escada" }));
   });
 });
 

@@ -1,5 +1,5 @@
 import type { ResumoRendaFixa } from "@zentrade/contratos/esquemas";
-import { CalendarClock, Landmark, Plus, PlugZap } from "lucide-react";
+import { CalendarClock, CalendarRange, Landmark, Plus, PlugZap } from "lucide-react";
 import { Botao } from "../../componentes/Botao";
 import { Painel } from "../../componentes/Cabecalho";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../../componentes/Estados";
@@ -8,7 +8,7 @@ import { useResumoRF } from "./consultas";
 import { TaxasDoDia } from "./Fontes";
 import { data, fracaoPct, INDEXADOR, pct, reais, TIPO, tomDe } from "./formato";
 import { corDe, Legenda, Rosca } from "./Graficos";
-import type { Aba } from "./RendaFixa";
+import type { Aba, BuscaRendaFixa } from "./filtros";
 
 function Metricas({ r }: { readonly r: ResumoRendaFixa }) {
   const formatar = (t: string) => reais(t);
@@ -19,23 +19,23 @@ function Metricas({ r }: { readonly r: ResumoRendaFixa }) {
         <dd>
           <NumeroAnimado valor={r.liquido} formatar={formatar} />
         </dd>
-        <p className="metrica__nota">
+        <dd className="metrica__nota">
           bruto {reais(r.bruto)} − IR {reais(r.ir)} − IOF {reais(r.iof)}
-        </p>
+        </dd>
       </div>
       <div className="metrica">
         <dt>Total aplicado</dt>
         <dd>
           <NumeroAnimado valor={r.aplicado} formatar={formatar} />
         </dd>
-        <p className="metrica__nota">{r.quantidade} títulos</p>
+        <dd className="metrica__nota">{r.quantidade} títulos</dd>
       </div>
       <div className="metrica">
         <dt>Rendimento bruto</dt>
         <dd className={tomDe(r.rendimentoBruto)}>
           <NumeroAnimado valor={r.rendimentoBruto} formatar={(t) => reais(t, { sinal: true })} />
         </dd>
-        <p className="metrica__nota">{pct(r.rentabilidadeBrutaPct, { sinal: true })} sobre o aplicado</p>
+        <dd className="metrica__nota">{pct(r.rentabilidadeBrutaPct, { sinal: true })} sobre o aplicado</dd>
       </div>
       <div className="metrica">
         <dt>Rendimento no mês</dt>
@@ -46,16 +46,16 @@ function Metricas({ r }: { readonly r: ResumoRendaFixa }) {
             <NumeroAnimado valor={r.rendimentoMes} formatar={(t) => reais(t, { sinal: true })} />
           )}
         </dd>
-        <p className="metrica__nota">
+        <dd className="metrica__nota">
           {r.rendimentoMes === null
             ? "falta índice para algum título"
             : `bruto, desde 01/${r.hoje.slice(5, 7)}`}
-        </p>
+        </dd>
       </div>
       <div className="metrica">
         <dt>Próximo vencimento</dt>
         <dd className="num rf-metricas__data">{r.proximoVencimento ? data(r.proximoVencimento.dia) : "—"}</dd>
-        <p className="metrica__nota">{r.proximoVencimento?.nome ?? "nenhum título com vencimento"}</p>
+        <dd className="metrica__nota">{r.proximoVencimento?.nome ?? "nenhum título com vencimento"}</dd>
       </div>
     </dl>
   );
@@ -90,9 +90,26 @@ function Alocacao({
   );
 }
 
-function Vencimentos({ r, abrir }: { readonly r: ResumoRendaFixa; readonly abrir: (id: string) => void }) {
+function Vencimentos({
+  r,
+  abrir,
+  verEscada,
+}: {
+  readonly r: ResumoRendaFixa;
+  readonly abrir: (id: string) => void;
+  readonly verEscada: () => void;
+}) {
   return (
-    <Painel titulo="Calendário de vencimentos">
+    <Painel
+      titulo="Calendário de vencimentos"
+      acoes={
+        r.vencimentos.length > 0 ? (
+          <Botao pequeno variante="fantasma" icone={CalendarRange} onClick={verEscada}>
+            Ver por mês
+          </Botao>
+        ) : null
+      }
+    >
       {r.vencimentos.length === 0 ? (
         <p className="apagado">Nenhum título com data de vencimento. Caixinhas e poupança não vencem.</p>
       ) : (
@@ -120,7 +137,7 @@ export function Visao({
   abrir,
   demo,
 }: {
-  readonly irPara: (a: Aba) => void;
+  readonly irPara: (a: Aba, extra?: BuscaRendaFixa) => void;
   readonly abrir: (id: string) => void;
   readonly demo: boolean;
 }) {
@@ -168,7 +185,7 @@ export function Visao({
         <Alocacao titulo="Por indexador" itens={r.porIndexador} rotulos={INDEXADOR} />
       </div>
       <div className="rf-grade">
-        <Vencimentos r={r} abrir={abrir} />
+        <Vencimentos r={r} abrir={abrir} verEscada={() => irPara("titulos", { visao: "escada" })} />
         <Painel titulo="Taxas de referência">
           <TaxasDoDia indicadores={r.indicadores} demo={demo} />
         </Painel>

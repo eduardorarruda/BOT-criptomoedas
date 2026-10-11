@@ -44,8 +44,10 @@ export function FiltroChips<T extends string>({
     <Grupo rotulo={rotulo}>
       {opcoes.map((o) => {
         const marcado = selecionados.includes(o.valor);
+        // Opção que não traria nada com os outros filtros: continua lá (a lista não pula), mas apagada.
+        const vazia = o.contagem === 0 && !marcado;
         return (
-          <label key={o.valor} className="chip">
+          <label key={o.valor} className={`chip ${vazia ? "chip--vazio" : ""}`}>
             <input
               type="checkbox"
               className="chip__entrada"
@@ -82,7 +84,10 @@ export function FiltroOpcao<T extends string>({
   return (
     <Grupo rotulo={rotulo}>
       {todas.map((o) => (
-        <label key={o.valor || "todos"} className="chip">
+        <label
+          key={o.valor || "todos"}
+          className={`chip ${o.contagem === 0 && (valor ?? "") !== o.valor ? "chip--vazio" : ""}`}
+        >
           <input
             type="radio"
             name={nome}

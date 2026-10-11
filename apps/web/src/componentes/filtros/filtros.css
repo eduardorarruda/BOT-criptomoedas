@@ -192,6 +192,10 @@
 .chip:hover {
   border-color: var(--apagado);
 }
+.chip--vazio {
+  border-style: dashed;
+  color: var(--apagado);
+}
 .chip__entrada {
   position: absolute;
   inset: 0;

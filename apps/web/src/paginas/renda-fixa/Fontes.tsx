@@ -48,7 +48,7 @@ export function TaxasDoDia({
                 `${pct(s.ultimoValor, { casas: 2 })} no mês`
               )}
             </dd>
-            <p className="rf-taxas__data">
+            <dd className="rf-taxas__data">
               {s.ultimoDia
                 ? `${s.serie === "IPCA" ? "referência" : "de"} ${data(s.ultimoDia)}`
                 : "ainda não buscado"}
@@ -58,7 +58,7 @@ export function TaxasDoDia({
                   <TriangleAlert size={12} aria-hidden="true" /> última busca falhou
                 </span>
               ) : null}
-            </p>
+            </dd>
           </div>
         ))}
       </dl>

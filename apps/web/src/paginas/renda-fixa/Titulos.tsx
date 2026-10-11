@@ -1,22 +1,60 @@
-import type { TituloRendaFixa } from "@zentrade/contratos/esquemas";
+import {
+  INDEXADORES,
+  LIQUIDEZES,
+  ORIGENS_TITULO,
+  TIPOS_TITULO,
+  type TituloRendaFixa,
+} from "@zentrade/contratos/esquemas";
 import { dec } from "@zentrade/dominio";
 import {
   Building2,
+  CalendarRange,
+  ChartPie,
   ChevronRight,
+  LayoutGrid,
   Layers,
   PencilLine,
   PlugZap,
+  Table2,
   TriangleAlert,
   WalletCards,
 } from "lucide-react";
 import { m } from "motion/react";
+import { useMemo } from "react";
 import { Botao } from "../../componentes/Botao";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../../componentes/Estados";
+import {
+  AlternarDensidade,
+  AlternarVisao,
+  BarraFiltros,
+  contarPor,
+  FiltroChips,
+  filtrarCom,
+  FiltroOpcao,
+  lerLista,
+  SeletorOrdem,
+  SemResultados,
+  useFiltrosUrl,
+  VisoesSalvas,
+} from "../../componentes/filtros";
 import { Selo } from "../../componentes/Selo";
 import { useMenosMovimento } from "../../ganchos/movimento";
+import { useAgora } from "../../ganchos/useAgora";
 import { useTitulosRF } from "./consultas";
-import { data, LIQUIDEZ, pct, reais, rentabilidadeContratada, TIPO, tomDe } from "./formato";
-import type { Aba } from "./RendaFixa";
+import {
+  buscaRendaFixa,
+  diaLocal,
+  diasAte,
+  encerrado,
+  JANELAS,
+  NAO_CONTAM,
+  ordenarTitulos,
+  predicadosRendaFixa,
+  type Aba,
+  type BuscaRendaFixa,
+} from "./filtros";
+import { data, INDEXADOR, LIQUIDEZ, pct, reais, rentabilidadeContratada, TIPO, tomDe } from "./formato";
+import { AlocacaoFiltrada, EscadaVencimentos, TabelaTitulos, TotaisTitulos } from "./VisoesTitulos";
 
 interface Grupo {
   readonly chave: string;
@@ -100,6 +138,7 @@ function Cartao({ t, abrir }: { readonly t: TituloRendaFixa; readonly abrir: (id
       </div>
       <div className="rf-cartao__selos">
         <Selo tom="marca">{TIPO[t.tipo]}</Selo>
+        {t.posicao.disponivel && t.posicao.vencido ? <Selo tom="atencao">Venceu</Selo> : null}
         <Selo icone={t.origem === "pluggy" ? PlugZap : PencilLine}>
           {t.origem === "pluggy" ? "Pluggy" : "Manual"}
         </Selo>
@@ -164,6 +203,116 @@ function CartaoGrupo({ g, abrir }: { readonly g: Grupo; readonly abrir: (id: str
   );
 }
 
+const ORDENACOES = [
+  { valor: "vencimento", rotulo: "Vencimento", direcao: "asc" },
+  { valor: "valor", rotulo: "Valor hoje", direcao: "desc" },
+  { valor: "rendimento", rotulo: "Rendimento", direcao: "desc" },
+  { valor: "aplicacao", rotulo: "Data da aplicação", direcao: "desc" },
+  { valor: "nome", rotulo: "Nome", direcao: "asc" },
+] as const;
+
+const VISOES = [
+  { valor: "cartoes", rotulo: "Cartões", icone: LayoutGrid },
+  { valor: "tabela", rotulo: "Tabela", icone: Table2 },
+  { valor: "escada", rotulo: "Vencimentos", icone: CalendarRange },
+  { valor: "alocacao", rotulo: "Alocação", icone: ChartPie },
+] as const;
+
+const JANELA: Readonly<Record<(typeof JANELAS)[number], string>> = {
+  "30": "Em 30 dias",
+  "90": "Em 90 dias",
+  "365": "Em 1 ano",
+};
+
+/** As opções de cada filtro com a contagem de títulos que trariam (com os outros filtros valendo). */
+function useFacetas(titulos: readonly TituloRendaFixa[], b: BuscaRendaFixa, hoje: string) {
+  return useMemo(() => {
+    const predicados = predicadosRendaFixa(b, hoje);
+    const contar = <K,>(faceta: string, chave: (t: TituloRendaFixa) => K) =>
+      contarPor(filtrarCom(titulos, predicados, faceta), chave);
+    const presentes = <K extends string>(todos: readonly K[], chave: (t: TituloRendaFixa) => K) => {
+      const ha = new Set(titulos.map(chave));
+      return todos.filter((k) => ha.has(k));
+    };
+    const opcoes = <K extends string>(
+      faceta: string,
+      todos: readonly K[],
+      chave: (t: TituloRendaFixa) => K,
+      rotulo: (k: K) => string,
+    ) => {
+      const n = contar(faceta, chave);
+      return presentes(todos, chave).map((k) => ({ valor: k, rotulo: rotulo(k), contagem: n.get(k) ?? 0 }));
+    };
+    const janela = (dias: number) =>
+      filtrarCom(titulos, { ...predicados, vence: () => true }, "vence").filter(
+        (t) => t.vencimento !== null && !encerrado(t, hoje) && diasAte(t.vencimento, hoje) <= dias,
+      ).length;
+    const situacao = contar("situacao", (t) => (encerrado(t, hoje) ? "encerrado" : "ativo"));
+    return {
+      tipos: opcoes(
+        "tipo",
+        TIPOS_TITULO,
+        (t) => t.tipo,
+        (k) => TIPO[k],
+      ),
+      indexadores: opcoes(
+        "indexador",
+        INDEXADORES,
+        (t) => t.indexador,
+        (k) => INDEXADOR[k],
+      ),
+      origens: opcoes(
+        "origem",
+        ORIGENS_TITULO,
+        (t) => t.origem,
+        (k) => (k === "pluggy" ? "Pluggy" : "Manual"),
+      ),
+      liquidezes: opcoes(
+        "liquidez",
+        LIQUIDEZES,
+        (t) => t.liquidez,
+        (k) => LIQUIDEZ[k],
+      ),
+      janelas: JANELAS.map((j) => ({ valor: j, rotulo: JANELA[j], contagem: janela(Number(j)) })),
+      situacoes: [
+        { valor: "ativo" as const, rotulo: "Ativos", contagem: situacao.get("ativo") ?? 0 },
+        { valor: "encerrado" as const, rotulo: "Vencidos", contagem: situacao.get("encerrado") ?? 0 },
+      ],
+      filtrados: filtrarCom(titulos, predicados),
+    };
+  }, [titulos, b, hoje]);
+}
+
+function ListaCartoes({
+  titulos,
+  abrir,
+  compacta,
+}: {
+  readonly titulos: readonly TituloRendaFixa[];
+  readonly abrir: (id: string) => void;
+  readonly compacta: boolean;
+}) {
+  const menos = useMenosMovimento();
+  return (
+    <ul className={`rf-lista ${compacta ? "rf-lista--compacta" : ""}`} role="list">
+      {agrupar(titulos).map((g, i) => (
+        <m.li
+          key={g.chave}
+          initial={menos ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: menos ? 0 : 0.25, delay: menos ? 0 : Math.min(i, 8) * 0.03 }}
+        >
+          {g.titulos.length === 1 && g.titulos[0] ? (
+            <Cartao t={g.titulos[0]} abrir={abrir} />
+          ) : (
+            <CartaoGrupo g={g} abrir={abrir} />
+          )}
+        </m.li>
+      ))}
+    </ul>
+  );
+}
+
 export function Titulos({
   irPara,
   abrir,
@@ -172,7 +321,9 @@ export function Titulos({
   readonly abrir: (id: string) => void;
 }) {
   const { data: titulos, error, isPending, refetch } = useTitulosRF();
-  const menos = useMenosMovimento();
+  const { busca: b, mudar, limpar, aplicar, ativos } = useFiltrosUrl(buscaRendaFixa, NAO_CONTAM);
+  const hoje = diaLocal(useAgora(60_000));
+  const f = useFacetas(titulos ?? [], b, hoje);
   if (isPending) return <Esqueleto linhas={6} rotulo="Carregando os títulos" />;
   if (error) return <ErroCarregar erro={error} tentarDeNovo={() => void refetch()} />;
   if (titulos.length === 0) {
@@ -191,22 +342,113 @@ export function Titulos({
       </EstadoVazio>
     );
   }
+  const visao = b.visao ?? "cartoes";
+  const ordenados = ordenarTitulos(f.filtrados, b);
+  const ordem = b.ordem ?? "vencimento";
+  const padrao = ORDENACOES.find((o) => o.valor === ordem)?.direcao ?? "asc";
   return (
-    <ul className="rf-lista" role="list">
-      {agrupar(titulos).map((g, i) => (
-        <m.li
-          key={g.chave}
-          initial={menos ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: menos ? 0 : 0.25, delay: menos ? 0 : Math.min(i, 8) * 0.03 }}
-        >
-          {g.titulos.length === 1 && g.titulos[0] ? (
-            <Cartao t={g.titulos[0]} abrir={abrir} />
-          ) : (
-            <CartaoGrupo g={g} abrir={abrir} />
-          )}
-        </m.li>
-      ))}
-    </ul>
+    <div className="pilha">
+      <BarraFiltros
+        rotulo="Filtros dos títulos"
+        busca={{
+          valor: b.q,
+          aoMudar: (q) => mudar({ q }, { substituir: true }),
+          rotulo: "Buscar títulos",
+          sugestao: "Buscar por nome ou emissor…",
+        }}
+        ativos={ativos}
+        aoLimpar={limpar}
+        resumo={
+          <>
+            <span className="num">{f.filtrados.length}</span> de <span className="num">{titulos.length}</span>{" "}
+            títulos
+          </>
+        }
+        extra={<VisoesSalvas tela="renda-fixa" buscaAtual={b} aoAplicar={aplicar} />}
+        ferramentas={
+          <>
+            <SeletorOrdem
+              opcoes={ORDENACOES}
+              valor={ordem}
+              direcao={b.dir ?? padrao}
+              aoMudar={(o, dir) => {
+                const nova = ORDENACOES.find((x) => x.valor === o);
+                mudar({
+                  ordem: o === "vencimento" ? undefined : o,
+                  dir: dir === nova?.direcao ? undefined : dir,
+                });
+              }}
+            />
+            <AlternarVisao
+              opcoes={VISOES}
+              valor={visao}
+              aoMudar={(v) => mudar({ visao: v === "cartoes" ? undefined : v })}
+            />
+            {visao === "cartoes" ? (
+              <AlternarDensidade
+                compacta={b.densidade === "compacta"}
+                aoMudar={(c) => mudar({ densidade: c ? "compacta" : undefined })}
+              />
+            ) : null}
+          </>
+        }
+        maisAtivos={[b.origem, b.liquidez, b.situacao].filter(Boolean).length}
+        maisFiltros={
+          <>
+            <FiltroChips
+              rotulo="Origem"
+              opcoes={f.origens}
+              selecionados={lerLista(b.origem, ORIGENS_TITULO)}
+              aoMudar={(v) => mudar({ origem: v.join(",") || undefined })}
+            />
+            <FiltroChips
+              rotulo="Liquidez"
+              opcoes={f.liquidezes}
+              selecionados={lerLista(b.liquidez, LIQUIDEZES)}
+              aoMudar={(v) => mudar({ liquidez: v.join(",") || undefined })}
+            />
+            <FiltroOpcao
+              rotulo="Situação"
+              opcoes={f.situacoes}
+              valor={b.situacao}
+              aoMudar={(situacao) => mudar({ situacao })}
+            />
+          </>
+        }
+      >
+        <FiltroChips
+          rotulo="Tipo"
+          opcoes={f.tipos}
+          selecionados={lerLista(b.tipo, TIPOS_TITULO)}
+          aoMudar={(v) => mudar({ tipo: v.join(",") || undefined })}
+        />
+        <FiltroChips
+          rotulo="Indexador"
+          opcoes={f.indexadores}
+          selecionados={lerLista(b.indexador, INDEXADORES)}
+          aoMudar={(v) => mudar({ indexador: v.join(",") || undefined })}
+        />
+        <FiltroOpcao
+          rotulo="Vence"
+          rotuloTodos="Qualquer data"
+          opcoes={f.janelas}
+          valor={b.vence}
+          aoMudar={(vence) => mudar({ vence })}
+        />
+      </BarraFiltros>
+      {f.filtrados.length === 0 ? (
+        <SemResultados aoLimpar={limpar} />
+      ) : (
+        <>
+          <TotaisTitulos titulos={ordenados} />
+          {visao === "cartoes" ? (
+            <ListaCartoes titulos={ordenados} abrir={abrir} compacta={b.densidade === "compacta"} />
+          ) : null}
+          {visao === "tabela" ? <TabelaTitulos titulos={ordenados} hoje={hoje} abrir={abrir} /> : null}
+          {visao === "escada" ? <EscadaVencimentos titulos={ordenados} hoje={hoje} abrir={abrir} /> : null}
+          {visao === "alocacao" ? <AlocacaoFiltrada titulos={ordenados} /> : null}
+        </>
+      )}
+    </div>
   );
 }

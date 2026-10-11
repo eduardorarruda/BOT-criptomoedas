@@ -1,11 +1,13 @@
 import { AnimatePresence, m } from "motion/react";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useRef, useState, type KeyboardEvent } from "react";
 import { useFonte } from "../../api/contexto";
 import { Cabecalho } from "../../componentes/Cabecalho";
+import { useFiltrosUrl } from "../../componentes/filtros";
 import { useMenosMovimento } from "../../ganchos/movimento";
 import { Cadastro } from "./Cadastro";
 import { Conectar } from "./Conectar";
 import { Detalhe } from "./Detalhe";
+import { buscaRendaFixa, NAO_CONTAM, type Aba, type BuscaRendaFixa } from "./filtros";
 import { RegrasEmVigor } from "./Fontes";
 import { Simuladores } from "./Simuladores";
 import { Titulos } from "./Titulos";
@@ -13,8 +15,9 @@ import { Visao } from "./Visao";
 // Os cartões vêm antes: as regras de tela pequena em renda-fixa.css precisam vencer.
 import "./renda-fixa-cartoes.css";
 import "./renda-fixa.css";
+import "./renda-fixa-visoes.css";
 
-export type Aba = "visao" | "titulos" | "conectar" | "cadastrar" | "simuladores";
+export type { Aba } from "./filtros";
 
 const ABAS: readonly { readonly id: Aba; readonly rotulo: string }[] = [
   { id: "visao", rotulo: "Visão geral" },
@@ -67,7 +70,13 @@ function Abas({ ativa, aoMudar }: { readonly ativa: Aba; readonly aoMudar: (a: A
 
 export function RendaFixa() {
   const { demo } = useFonte();
-  const [aba, setAba] = useState<Aba>("visao");
+  // A aba fica na URL: "/renda-fixa?aba=titulos&visao=escada" abre direto na escada de vencimentos.
+  const { busca, mudar } = useFiltrosUrl(buscaRendaFixa, NAO_CONTAM);
+  const aba = busca.aba ?? "visao";
+  const setAba = useCallback(
+    (a: Aba, extra: BuscaRendaFixa = {}) => mudar({ ...extra, aba: a === "visao" ? undefined : a }),
+    [mudar],
+  );
   const [aberto, setAberto] = useState<string | null>(null);
   const menos = useMenosMovimento();
   return (
@@ -76,7 +85,7 @@ export function RendaFixa() {
         CDB, Tesouro, LCI/LCA, debêntures, poupança e caixinhas: quanto vale hoje, quanto de imposto sai e
         quanto sobra. Fatos e contas com fonte e data — nada aqui é recomendação.
       </Cabecalho>
-      <Abas ativa={aba} aoMudar={setAba} />
+      <Abas ativa={aba} aoMudar={(a) => setAba(a)} />
       <AnimatePresence mode="wait" initial={false}>
         <m.div
           key={aba}

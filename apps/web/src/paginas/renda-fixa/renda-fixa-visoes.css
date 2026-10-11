@@ -1,0 +1,203 @@
+/* Renda fixa: totais do recorte, tabela, escada de vencimentos e alocação filtrada. Só tokens do tema. */
+.rf-totais {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--linha);
+}
+.rf-totais > div {
+  display: grid;
+  gap: 2px;
+  padding: var(--espaco-3) var(--espaco-4);
+  background: var(--superficie);
+}
+.rf-totais dt {
+  color: var(--apagado);
+  font-size: 12px;
+}
+.rf-totais dd {
+  margin: 0;
+  font-size: 17px;
+}
+.rf-totais__nota {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--espaco-2) var(--espaco-4);
+  background: var(--superficie);
+  color: var(--apagado);
+  font-size: 12.5px;
+}
+
+/* cartões compactos: só o essencial de cada título */
+.rf-lista--compacta {
+  gap: var(--espaco-2);
+}
+.rf-lista--compacta .rf-cartao {
+  gap: var(--espaco-2);
+  padding: var(--espaco-3) var(--espaco-4);
+}
+.rf-lista--compacta .rf-cartao__rodape {
+  display: none;
+}
+
+/* tabela */
+.rf-tabela th,
+.rf-tabela td {
+  white-space: nowrap;
+}
+.rf-tabela__nome {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--texto);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--linha-forte);
+  text-underline-offset: 3px;
+}
+.rf-tabela__nome:hover {
+  text-decoration-color: var(--marca);
+}
+.rf-tabela__nome:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.rf-tabela__sub {
+  display: block;
+  color: var(--apagado);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* escada de vencimentos */
+.rf-escada {
+  display: grid;
+  gap: var(--espaco-2);
+  padding: var(--espaco-4) var(--espaco-5);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  background: var(--superficie);
+}
+.rf-escada__titulo-secao {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.rf-escada__explica {
+  margin: 0 0 var(--espaco-2);
+  font-size: 13px;
+}
+.rf-escada__lista {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rf-escada__degrau {
+  display: grid;
+  grid-template-columns: 110px minmax(160px, 1.1fr) minmax(0, 2fr);
+  gap: var(--espaco-2) var(--espaco-4);
+  align-items: start;
+  padding: var(--espaco-3) 0;
+  border-top: 1px solid var(--linha);
+}
+.rf-escada__degrau:first-child {
+  border-top: 0;
+}
+.rf-escada__degrau--passado {
+  opacity: 0.62;
+}
+.rf-escada__mes {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  font-weight: 600;
+}
+.rf-escada__marca {
+  color: var(--apagado);
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+}
+.rf-escada__barra-area {
+  display: grid;
+  gap: 4px;
+}
+.rf-escada__barra {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--marca-profunda), var(--marca));
+}
+.rf-escada__degrau--passado .rf-escada__barra {
+  background: var(--linha-forte);
+}
+.rf-escada__valor {
+  font-size: 13px;
+}
+.rf-escada__titulos {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rf-escada__titulo {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: var(--espaco-2);
+  align-items: center;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: none;
+  color: var(--texto);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.rf-escada__titulo > span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rf-escada__titulo svg {
+  color: var(--apagado);
+}
+.rf-escada__titulo .apagado {
+  font-size: 12px;
+}
+.rf-escada__titulo:hover {
+  background: var(--superficie-2);
+}
+.rf-escada__titulo:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 1px;
+}
+
+@media (max-width: 720px) {
+  .rf-escada {
+    padding: var(--espaco-3);
+  }
+  .rf-escada__degrau {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rf-escada__barra {
+    transition: none;
+  }
+}
