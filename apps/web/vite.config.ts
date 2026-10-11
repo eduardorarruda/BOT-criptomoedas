@@ -38,6 +38,8 @@ export default defineConfig({
         "src/demo/**/*.ts",
         "src/componentes/graficos/velas.ts",
         "src/paginas/patrimonio/**/*.ts",
+        "src/componentes/filtros/**/*.ts",
+        "src/paginas/assistente/**/*.ts",
       ],
       exclude: ["src/**/*.test.{ts,tsx}"],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
