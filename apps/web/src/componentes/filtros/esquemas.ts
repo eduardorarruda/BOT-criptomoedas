@@ -1,0 +1,62 @@
+import { z } from "zod";
+import { lerLista } from "./logica";
+import { PERIODOS } from "./periodo";
+
+/**
+ * Validação dos parâmetros de filtro na URL (quem cola um link ou volta no
+ * histórico). Cada campo aceita o formato que o roteador entrega e descarta o
+ * inválido em silêncio: a página abre com o que dá para entender, nunca quebra.
+ * Listas ficam na URL como "A,B", que é legível e curta.
+ */
+const LIMITE_BUSCA = 80;
+const DIA = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+/** Campo opcional: chave ausente ou valor inválido viram undefined. */
+const opcional = <T>(ler: (v: unknown) => T | undefined) => z.unknown().transform(ler).optional();
+
+const comoTexto = (v: unknown): string | undefined =>
+  typeof v === "string" ? v : typeof v === "number" && Number.isFinite(v) ? String(v) : undefined;
+
+export const campo = {
+  /** Texto livre da busca, aparado e curto. */
+  busca: () => opcional((v) => comoTexto(v)?.trim().slice(0, LIMITE_BUSCA) || undefined),
+  /** Escolha múltipla ("A,B"), na ordem da definição. */
+  lista: <T extends string>(permitidos: readonly T[]) =>
+    opcional((v) => lerLista(v, permitidos).join(",") || undefined),
+  /** Uma escolha entre poucas. */
+  opcao: <T extends string>(permitidos: readonly T[]) =>
+    opcional((v): T | undefined => {
+      const t = comoTexto(v);
+      return t !== undefined && (permitidos as readonly string[]).includes(t) ? (t as T) : undefined;
+    }),
+  /** Liga/desliga: presente na URL só quando ligado. */
+  ligado: () => opcional((v) => (v === true || v === "1" || v === 1 || v === "true" ? true : undefined)),
+  /** Data de calendário AAAA-MM-DD que existe. */
+  dia: () =>
+    opcional((v) => {
+      const t = comoTexto(v);
+      if (!t || !DIA.test(t)) return undefined;
+      const d = new Date(`${t}T00:00:00Z`);
+      return d.toISOString().slice(0, 10) === t ? t : undefined;
+    }),
+  /** Página a partir de 2 (a 1 é o padrão e não aparece). */
+  pagina: () =>
+    opcional((v) => {
+      const n = typeof v === "number" ? v : Number(comoTexto(v));
+      return Number.isInteger(n) && n > 1 && n < 10_000 ? n : undefined;
+    }),
+  periodo: () => campo.opcao(PERIODOS),
+};
+
+/** Remove as chaves sem valor, para a URL ficar limpa. */
+export function semVazios<T extends Record<string, unknown>>(busca: T): Partial<T> {
+  return Object.fromEntries(Object.entries(busca).filter(([, v]) => v !== undefined)) as Partial<T>;
+}
+
+/** Para o `validateSearch` da rota e para o gancho da página: sempre devolve um objeto válido. */
+export function validarBusca<S extends z.ZodObject>(esquema: S) {
+  return (bruto: Record<string, unknown>): Partial<z.output<S>> => {
+    const r = esquema.safeParse(bruto ?? {});
+    return r.success ? (semVazios(r.data as Record<string, unknown>) as Partial<z.output<S>>) : {};
+  };
+}
