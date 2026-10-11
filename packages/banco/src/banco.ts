@@ -1,10 +1,12 @@
 import type { PortaDecisoes, PortaOrdens, PortaRobos } from "@zentrade/contratos";
 import { conectar, type Conexao } from "./cliente.js";
+import { portaCredenciais } from "./portas/credenciais.js";
 import { portaDecisoes } from "./portas/decisoes.js";
 import { portaOrdens } from "./portas/ordens.js";
 import { portaRobos } from "./portas/robos.js";
 import { repositorioAuditoria } from "./repositorios/auditoria.js";
 import { repositorioBacktests } from "./repositorios/backtests.js";
+import { repositorioCarteira } from "./repositorios/carteira.js";
 import { repositorioConfiguracao } from "./repositorios/configuracao.js";
 import { repositorioConhecimento } from "./repositorios/conhecimento.js";
 import { repositorioContas } from "./repositorios/contas.js";
@@ -54,15 +56,21 @@ function abrir(opcoes: OpcoesConexaoBanco): { conexao: Conexao; portas: PortasMo
   return { conexao, portas };
 }
 
+export interface OpcoesBancoDoMotor extends OpcoesConexaoBanco {
+  /** Só fora do papel: decifra a chave de corretora de cada pessoa (PortaCredenciais). */
+  readonly chaveMestra?: Buffer;
+}
+
 /**
- * Só o que o motor usa (portas, candles e backtests), tudo acesso de sistema. Não pede
- * a chave mestra: o motor não lê chaves de corretora nem dados de login.
+ * Só o que o motor usa (portas, candles e backtests), tudo acesso de sistema. A chave
+ * mestra é opcional: sem ela (papel), `credenciais` é null e o motor não lê chave nenhuma.
  */
-export function criarBancoDoMotor(opcoes: OpcoesConexaoBanco) {
+export function criarBancoDoMotor(opcoes: OpcoesBancoDoMotor) {
   const { conexao, portas } = abrir(opcoes);
   return {
     conexao,
     portas,
+    credenciais: opcoes.chaveMestra ? portaCredenciais(conexao.db, opcoes.chaveMestra) : null,
     mercado: repositorioMercado(conexao.db),
     backtests: repositorioBacktests(conexao.db),
     fechar: () => conexao.fechar(),
@@ -85,6 +93,8 @@ export function criarBanco(opcoes: OpcoesBanco) {
     sessoes: repositorioSessoes(db),
     tokens: repositorioTokens(db),
     contas: repositorioContas(db, opcoes.chaveMestra),
+    credenciais: portaCredenciais(db, opcoes.chaveMestra),
+    carteira: repositorioCarteira(db),
     configuracao: repositorioConfiguracao(db),
     auditoria: repositorioAuditoria(db),
     estrategias: repositorioEstrategias(db),

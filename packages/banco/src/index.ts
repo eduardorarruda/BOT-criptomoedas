@@ -12,6 +12,15 @@ export type {
   PedidoBacktest,
 } from "./repositorios/backtests.js";
 export type { Documento, DocumentoParaGravar, Fonte, TrechoParaGravar } from "./repositorios/conhecimento.js";
+export type {
+  EstadoSincronizacaoGravado,
+  NegociacaoCarteiraGravada,
+  NegociacaoCarteiraLida,
+  NovaSincronizacao,
+  RepositorioCarteira,
+  SaldoCarteira,
+} from "./repositorios/carteira.js";
+export { portaCredenciais } from "./portas/credenciais.js";
 export type { ContaCorretora, NovaConta, RedeConta } from "./repositorios/contas.js";
 export type { DadosProposta, DecisaoComOrdem, FiltroDecisoes } from "./repositorios/decisoes.js";
 export type { DadosEstrategia, DetalheEstrategia } from "./repositorios/estrategias.js";
