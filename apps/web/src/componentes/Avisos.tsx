@@ -17,6 +17,7 @@ type Avisar = (tom: TomAviso, texto: string) => void;
 const ContextoAvisos = createContext<Avisar>(() => undefined);
 
 const ICONE = { sucesso: CircleCheck, erro: CircleX, info: Info } as const;
+/** Quanto cada aviso fica. A barrinha embaixo (feedback.css, --duracao-aviso) usa os mesmos tempos. */
 const DURACAO = { sucesso: 4500, info: 5000, erro: 9000 } as const;
 
 export function ProvedorAvisos({ children }: { readonly children: ReactNode }) {

@@ -1,6 +1,6 @@
 import { ColorType, CrosshairMode, type DeepPartial, type ChartOptions, type Time } from "lightweight-charts";
 import { formatarPreco } from "../../lib/formatar";
-import type { CoresGrafico } from "./cores";
+import { comAlfa, type CoresGrafico } from "./cores";
 
 /** Opções comuns dos gráficos: horário de São Paulo, números em Geist Mono, cores do tema. */
 const FUSO = "America/Sao_Paulo";
@@ -29,8 +29,9 @@ export function opcoesBase(cores: CoresGrafico, comHora: boolean): DeepPartial<C
       fontSize: 11,
       attributionLogo: false,
     },
-    grid: { vertLines: { color: cores.linha }, horzLines: { color: cores.linha } },
-    rightPriceScale: { borderColor: cores.linha },
+    // Só as linhas horizontais, bem leves: o preço é o que importa; a grade só orienta.
+    grid: { vertLines: { visible: false }, horzLines: { color: comAlfa(cores.linha, 0.75) } },
+    rightPriceScale: { borderColor: cores.linha, scaleMargins: { top: 0.12, bottom: 0.08 } },
     timeScale: {
       borderColor: cores.linha,
       timeVisible: comHora,
