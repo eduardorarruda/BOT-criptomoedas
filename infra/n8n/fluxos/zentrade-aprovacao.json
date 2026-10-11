@@ -1,0 +1,578 @@
+{
+  "name": "zentrade-aprovacao",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zentrade-proposta",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "20e0b619-6dc3-4e50-aa0d-fc32c693207c",
+      "name": "Proposta recebida",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "7f15ed4e-2cd0-4d1e-abd0-e5909964cb1a"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "data",
+        "destinationKey": "corpoBruto",
+        "options": {
+          "encoding": "utf8",
+          "stripBOM": false,
+          "keepSource": "json"
+        }
+      },
+      "id": "12b29750-2c96-446c-a28a-ab495584e1f2",
+      "name": "Ler corpo bruto",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Confere o cabeçalho X-ZenTrade-Assinatura e o prazo, exatamente como verificar()\n// de @zentrade/contratos. O HMAC em si sai do nó Crypto seguinte, que guarda o\n// segredo numa credencial do n8n (nunca no fluxo).\nconst TOLERANCIA_SEGUNDOS = 300;\n\nconst item = $input.first().json;\nconst corpo = typeof item.corpoBruto === 'string' ? item.corpoBruto : '';\nconst cabecalho = (item.headers || {})['x-zentrade-assinatura'];\nconst agoraSegundos = Math.floor(Date.now() / 1000);\n\nlet formatoOk = false;\nlet prazoOk = false;\nlet recebida = '';\nlet mensagem = '';\nif (cabecalho) {\n  const partes = Object.fromEntries(String(cabecalho).split(',').map((p) => p.split('=', 2)));\n  const t = Number(partes.t);\n  recebida = typeof partes.v1 === 'string' ? partes.v1 : '';\n  formatoOk = Number.isInteger(t) && /^[0-9a-f]{64}$/.test(recebida);\n  if (formatoOk) {\n    prazoOk = Math.abs(agoraSegundos - t) <= TOLERANCIA_SEGUNDOS;\n    mensagem = `${t}.${corpo}`;\n  }\n}\n\nreturn [{ json: { corpo, recebida, formatoOk, prazoOk, mensagem } }];"
+      },
+      "id": "f8113485-6da3-4c3d-ae34-023c1a13c5c7",
+      "name": "Preparar verificação",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "binaryData": false,
+        "type": "SHA256",
+        "value": "={{ $json.mensagem }}",
+        "dataPropertyName": "esperada",
+        "encoding": "hex"
+      },
+      "id": "f4b3b243-3a88-46fd-abdb-ee77f164730d",
+      "name": "Calcular HMAC",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "crypto": {
+          "id": "ztCredHmac000001",
+          "name": "ZenTrade assinatura dos webhooks"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Compara o HMAC esperado (nó Crypto) com o recebido em tempo constante e só então\n// interpreta o corpo. Corpo sem assinatura válida nunca é lido.\nconst item = $input.first().json;\n\nconst iguais = (a, b) => {\n  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;\n  let diferenca = 0;\n  for (let i = 0; i < a.length; i++) diferenca |= a.charCodeAt(i) ^ b.charCodeAt(i);\n  return diferenca === 0;\n};\n\nconst valida = item.formatoOk === true && item.prazoOk === true && iguais(item.esperada, item.recebida);\nlet dados = null;\nif (valida) {\n  try {\n    dados = JSON.parse(item.corpo);\n  } catch {\n    dados = null;\n  }\n}\n\nreturn [{ json: { valida, dados } }];"
+      },
+      "id": "cef70607-48c6-414d-a4fa-601be9777a61",
+      "name": "Conferir assinatura",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bdb3a746-81ea-4702-a4a2-b2b7badba74e",
+              "leftValue": "={{ $json.valida }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1333b290-58a8-42ba-a99f-cfc7cace259b",
+      "name": "Assinatura válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"erro\": {\n    \"codigo\": \"assinatura_invalida\",\n    \"mensagem\": \"Assinatura ausente, inválida ou vencida.\"\n  }\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "54122995-8c67-499e-a8f1-b8a4320086cf",
+      "name": "Recusar (401)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Valida o corpo como PropostaCriada (@zentrade/contratos) e monta o pedido de\n// aprovação. A espera nunca passa de 5 minutos nem do prazo da decisão.\nconst ESPERA_MAXIMA_MS = 5 * 60 * 1000;\nconst FOLGA_MINIMA_MS = 10 * 1000;\nconst LEMBRAR_PROPOSTAS_MS = 60 * 60 * 1000;\n\nconst agora = Date.now();\nconst p = $input.first().json.dados;\nconst id = (v) => typeof v === 'string' && v.length >= 1 && v.length <= 64;\n\nconst problemas = [];\nif (!p || typeof p !== 'object' || Array.isArray(p)) {\n  problemas.push('o corpo precisa ser um objeto');\n} else {\n  if (!id(p.decisaoId)) problemas.push('decisaoId');\n  if (!id(p.roboId)) problemas.push('roboId');\n  if (typeof p.simbolo !== 'string') problemas.push('simbolo');\n  if (p.acao !== 'COMPRAR' && p.acao !== 'VENDER') problemas.push('acao');\n  if (typeof p.quantidade !== 'string') problemas.push('quantidade');\n  if (typeof p.preco !== 'string') problemas.push('preco');\n  if (typeof p.resumo !== 'string' || p.resumo.length > 1000) problemas.push('resumo');\n  if (!Number.isSafeInteger(p.expiraEm) || p.expiraEm < 0) problemas.push('expiraEm');\n}\nif (problemas.length > 0) {\n  return [{ json: { ok: false, motivo: `campos inválidos: ${problemas.join(', ')}` } }];\n}\n\nconst proposta = {\n  decisaoId: p.decisaoId,\n  roboId: p.roboId,\n  simbolo: p.simbolo,\n  acao: p.acao,\n  quantidade: p.quantidade,\n  preco: p.preco,\n  resumo: p.resumo,\n  expiraEm: p.expiraEm,\n};\n\n// A mesma proposta reenviada dentro do prazo da assinatura não gera segunda mensagem.\nconst estado = $getWorkflowStaticData('global');\nconst vistas = { ...(estado.propostasVistas || {}) };\nfor (const [chave, em] of Object.entries(vistas)) {\n  if (agora - em > LEMBRAR_PROPOSTAS_MS) delete vistas[chave];\n}\nconst duplicada = vistas[proposta.decisaoId] !== undefined;\nvistas[proposta.decisaoId] = agora;\nestado.propostasVistas = vistas;\n\nconst limite = Math.min(proposta.expiraEm, agora + ESPERA_MAXIMA_MS);\nconst hora = (ms) =>\n  new Date(ms).toLocaleTimeString('pt-BR', {\n    timeZone: 'America/Sao_Paulo',\n    hour: '2-digit',\n    minute: '2-digit',\n  });\n// O nó \"enviar e esperar\" do Telegram força Markdown e escapa HTML por conta própria:\n// troca os caracteres que ele estragaria e protege os especiais do Markdown.\nconst paraTelegram = (s) =>\n  String(s)\n    .replace(/&/g, 'e')\n    .replace(/</g, '‹')\n    .replace(/>/g, '›')\n    .replace(/\"/g, '”')\n    .replace(/'/g, '’')\n    .replace(/([_*`\\[])/g, '\\\\$1');\nconst verbo = proposta.acao === 'COMPRAR' ? 'Comprar' : 'Vender';\nconst mensagem = [\n  'ZenTrade pede sua aprovação',\n  '',\n  `${verbo} ${proposta.quantidade} ${proposta.simbolo} a cerca de ${proposta.preco}`,\n  `Robô: ${proposta.roboId}`,\n  `Por quê: ${proposta.resumo || '(sem resumo)'}`,\n  '',\n  `Responda até ${hora(limite)} (horário de Brasília). Sem resposta, nada é feito.`,\n  `Decisão ${proposta.decisaoId}`,\n]\n  .map(paraTelegram)\n  .join('\\n');\n\nreturn [\n  {\n    json: {\n      ok: true,\n      duplicada,\n      aindaVale: proposta.expiraEm - agora > FOLGA_MINIMA_MS,\n      limiteEspera: new Date(limite).toISOString(),\n      proposta,\n      mensagem,\n    },\n  },\n];"
+      },
+      "id": "bd0ce505-4d63-4d31-a51f-6e99223f84e8",
+      "name": "Ler proposta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "11708f84-f135-4407-a70a-85493dda202c",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "24e734a3-b2ab-4916-aa50-3d4db7ee470e",
+      "name": "Proposta válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ erro: { codigo: 'corpo_invalido', mensagem: $json.motivo } }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "5c01ecc5-fc59-4448-ae2c-42fdec41feb7",
+      "name": "Corpo inválido (400)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"recebida\": true\n}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "843155f6-0ede-46ec-ae3d-50230bf57f96",
+      "name": "Aceitar (202)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8db22fe7-8d6c-466a-a2a6-c82942a88159",
+              "leftValue": "={{ $json.aindaVale && !$json.duplicada }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d9f06c3e-e963-411a-a6c3-dd5ddab05bd9",
+      "name": "Ainda vale e é nova?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "message": "={{ $json.mensagem }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "✅ Aprovar",
+            "disapproveLabel": "❌ Recusar"
+          }
+        },
+        "chatApproval": true,
+        "approverIds": "={{ $env.TELEGRAM_APROVADORES_IDS ?? '' }}",
+        "unauthorizedReplyText": "Você não está autorizado a responder a este pedido.",
+        "postDecisionBehavior": "removeButtons",
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "limitType": "atSpecifiedTime",
+              "maxDateAndTime": "={{ $json.limiteEspera }}"
+            }
+          },
+          "appendAttribution": false
+        }
+      },
+      "id": "38e7fc26-11a2-4e90-aff4-61ee8bf8528b",
+      "name": "Pedir aprovação no Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2200,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "ztCredTelegram01",
+          "name": "ZenTrade Telegram"
+        }
+      },
+      "webhookId": "ec4c4e3e-6cbd-4378-abe9-9969c16cc0da"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transforma o clique no Telegram em RespostaAprovacao (@zentrade/contratos) e\n// prepara a assinatura. Sem clique (tempo esgotado) não sai nada: a decisão\n// expira sozinha no motor.\nconst resposta = $input.first().json.data;\nconst proposta = $('Ler proposta').first().json.proposta;\n\nif (!resposta || typeof resposta.approved !== 'boolean') return [];\nif (Date.now() >= proposta.expiraEm) return [];\n\nconst r = resposta.responder;\nconst quem = r ? (r.username ? `@${r.username}` : r.name || r.id || 'desconhecido') : 'link';\nconst corpo = JSON.stringify({\n  decisaoId: proposta.decisaoId,\n  aprovada: resposta.approved,\n  porQuem: `telegram:${quem}`.slice(0, 80),\n});\nconst carimbo = Math.floor(Date.now() / 1000);\n\nreturn [{ json: { aprovada: resposta.approved, corpo, carimbo, mensagem: `${carimbo}.${corpo}` } }];"
+      },
+      "id": "0632a5e4-474e-4755-afc8-46b0c2a5585e",
+      "name": "Montar resposta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "binaryData": false,
+        "type": "SHA256",
+        "value": "={{ $json.mensagem }}",
+        "dataPropertyName": "assinatura",
+        "encoding": "hex"
+      },
+      "id": "d9d0df0a-866f-43c9-a49a-d3dc62170c67",
+      "name": "Assinar resposta",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ],
+      "credentials": {
+        "crypto": {
+          "id": "ztCredHmac000001",
+          "name": "ZenTrade assinatura dos webhooks"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ZENTRADE_API_URL }}/webhooks/n8n/aprovacao",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-ZenTrade-Assinatura",
+              "value": "={{ 't=' + $json.carimbo + ',v1=' + $json.assinatura }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.corpo }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "9d73ff75-8a35-4acc-ae79-3bee22f2f70d",
+      "name": "Enviar resposta à API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2860,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.error ? 'Não consegui registrar sua resposta: ' + String($json.error.message || 'erro').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '. Sem resposta registrada, a decisão expira sozinha.' : ($('Montar resposta').first().json.aprovada ? 'Resposta registrada: proposta APROVADA. O motor só executa se a decisão ainda estiver valendo.' : 'Resposta registrada: proposta RECUSADA. Nenhuma ordem sai por ela.') }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "f5e6532b-f027-4e0d-aa1f-72223e7030fe",
+      "name": "Confirmar no Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3080,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "ztCredTelegram01",
+          "name": "ZenTrade Telegram"
+        }
+      },
+      "webhookId": "82cc473d-e5c9-4592-af47-429735b3ecde"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Proposta recebida": {
+      "main": [
+        [
+          {
+            "node": "Ler corpo bruto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler corpo bruto": {
+      "main": [
+        [
+          {
+            "node": "Preparar verificação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar verificação": {
+      "main": [
+        [
+          {
+            "node": "Calcular HMAC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular HMAC": {
+      "main": [
+        [
+          {
+            "node": "Conferir assinatura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conferir assinatura": {
+      "main": [
+        [
+          {
+            "node": "Assinatura válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assinatura válida?": {
+      "main": [
+        [
+          {
+            "node": "Ler proposta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Recusar (401)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler proposta": {
+      "main": [
+        [
+          {
+            "node": "Proposta válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Proposta válida?": {
+      "main": [
+        [
+          {
+            "node": "Aceitar (202)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Corpo inválido (400)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aceitar (202)": {
+      "main": [
+        [
+          {
+            "node": "Ainda vale e é nova?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ainda vale e é nova?": {
+      "main": [
+        [
+          {
+            "node": "Pedir aprovação no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir aprovação no Telegram": {
+      "main": [
+        [
+          {
+            "node": "Montar resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar resposta": {
+      "main": [
+        [
+          {
+            "node": "Assinar resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assinar resposta": {
+      "main": [
+        [
+          {
+            "node": "Enviar resposta à API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar resposta à API": {
+      "main": [
+        [
+          {
+            "node": "Confirmar no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "a1039259-56df-4e30-ac44-d21a72bcd49f",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "ztAprovacao00001",
+  "tags": []
+}

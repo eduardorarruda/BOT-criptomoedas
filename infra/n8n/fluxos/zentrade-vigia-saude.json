@@ -1,0 +1,316 @@
+{
+  "name": "zentrade-vigia-saude",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "* * * * *"
+            }
+          ]
+        }
+      },
+      "id": "0a2cd960-b8cd-4fa9-a1d4-ff58dbb33e0d",
+      "name": "A cada minuto",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// O pedido de saúde não tem corpo: a assinatura cobre \"carimbo.\" (corpo vazio).\nconst carimbo = Math.floor(Date.now() / 1000);\nreturn [{ json: { corpo: '', carimbo, mensagem: `${carimbo}.` } }];"
+      },
+      "id": "53107a31-9ad1-4159-a7d3-b92d5b88ef94",
+      "name": "Preparar sinal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "binaryData": false,
+        "type": "SHA256",
+        "value": "={{ $json.mensagem }}",
+        "dataPropertyName": "assinatura",
+        "encoding": "hex"
+      },
+      "id": "f784019f-16a3-48f1-af79-f2abfd8d1b70",
+      "name": "Assinar",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "crypto": {
+          "id": "ztCredHmac000001",
+          "name": "ZenTrade assinatura dos webhooks"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ZENTRADE_API_URL }}/webhooks/n8n/saude",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-ZenTrade-Assinatura",
+              "value": "={{ 't=' + $json.carimbo + ',v1=' + $json.assinatura }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "85fe6e39-9b3e-4a3b-a6c6-b000301d8b07",
+      "name": "Perguntar saúde",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Decide o que fazer com a resposta de /webhooks/n8n/saude. Cada incidente liga a\n// parada total uma vez só (quem desliga é uma pessoa, com reautenticação) e o aviso\n// se repete a cada 30 minutos enquanto durar.\nconst LIMITE_SEM_SINAL_S = 180;\nconst REAVISO_MS = 30 * 60 * 1000;\n\nconst agora = Date.now();\nconst escaparHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst estado = $getWorkflowStaticData('global');\nconst r = $input.first().json || {};\nconst hora = (ms) =>\n  new Date(ms).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });\n\nlet situacao = 'ok';\nif (r.error !== undefined || !('motorVivoHaSegundos' in r)) situacao = 'api_fora';\nelse if (typeof r.motorVivoHaSegundos !== 'number' || r.motorVivoHaSegundos > LIMITE_SEM_SINAL_S) situacao = 'motor_parado';\n\nconst incidente = estado.incidente || null;\n\nif (situacao === 'ok') {\n  if (!incidente) return [];\n  estado.incidente = null;\n  const texto =\n    incidente.tipo === 'motor_parado'\n      ? 'O motor voltou a dar sinal. A parada total continua ligada: confira o que aconteceu e desligue pela tela quando for seguro.'\n      : 'A API voltou a responder ao vigia de saúde.';\n  return [{ json: { ligarParada: false, texto: escaparHtml(texto) } }];\n}\n\nif (incidente && incidente.tipo === situacao) {\n  if (agora - incidente.ultimoAvisoEm < REAVISO_MS) return [];\n  estado.incidente = { ...incidente, ultimoAvisoEm: agora };\n  const oQue = situacao === 'motor_parado' ? 'O motor continua sem dar sinal' : 'A API continua sem responder';\n  return [{ json: { ligarParada: false, texto: escaparHtml(`${oQue} desde ${hora(incidente.desde)}.`) } }];\n}\n\nestado.incidente = { tipo: situacao, desde: agora, ultimoAvisoEm: agora };\nif (situacao === 'motor_parado') {\n  const ha =\n    typeof r.motorVivoHaSegundos === 'number'\n      ? `há ${Math.round(r.motorVivoHaSegundos)} s`\n      : 'desde que a API subiu';\n  return [\n    {\n      json: {\n        ligarParada: true,\n        texto: escaparHtml(`ALERTA: o motor está sem dar sinal ${ha} (limite: ${LIMITE_SEM_SINAL_S} s). Robôs pausados: ${r.robosPausados ?? '?'}.`),\n      },\n    },\n  ];\n}\nreturn [\n  {\n    json: {\n      ligarParada: false,\n      texto:\n        'ALERTA: a API não respondeu ao vigia de saúde. Sem ela não dá para ligar a parada total por aqui: confira o servidor agora.',\n    },\n  },\n];"
+      },
+      "id": "4d9f7e6c-41cd-4f61-a113-4864d93168cd",
+      "name": "Avaliar saúde",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "41b05aea-9f91-4585-ae58-a16e59a5d9fd",
+              "leftValue": "={{ $json.ligarParada }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d2bd18d1-f06e-4f2c-a0c7-70f4b23f1966",
+      "name": "Ligar parada total?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ZENTRADE_API_URL }}/api/v1/parada-total",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"ligada\": true }",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "db60af1b-4486-4fa9-a0ec-de22267f2093",
+      "name": "Ligar parada total",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ztCredOperar0001",
+          "name": "ZenTrade token operar"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta o resultado de POST /api/v1/parada-total ao aviso.\nconst escaparHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst r = $input.first().json || {};\nconst base = $('Avaliar saúde').first().json.texto;\nconst texto =\n  r.ligada === true\n    ? `${base}\\nLiguei a parada total: nenhuma ordem sai até alguém desligá-la pela tela.`\n    : `${base}\\nNÃO consegui ligar a parada total (${escaparHtml(r.error ? r.error.message || 'erro' : 'resposta inesperada')}). Ligue pela tela agora.`;\nreturn [{ json: { texto } }];"
+      },
+      "id": "db590c26-5cbd-4dab-a997-19863fc23fd9",
+      "name": "Confirmar parada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "cc689dc3-b398-43de-a226-d0e8be17a2a9",
+      "name": "Avisar no Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "ztCredTelegram01",
+          "name": "ZenTrade Telegram"
+        }
+      },
+      "webhookId": "7b339091-13c9-4533-a876-ab752e58fbb5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "A cada minuto": {
+      "main": [
+        [
+          {
+            "node": "Preparar sinal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar sinal": {
+      "main": [
+        [
+          {
+            "node": "Assinar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assinar": {
+      "main": [
+        [
+          {
+            "node": "Perguntar saúde",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perguntar saúde": {
+      "main": [
+        [
+          {
+            "node": "Avaliar saúde",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avaliar saúde": {
+      "main": [
+        [
+          {
+            "node": "Ligar parada total?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ligar parada total?": {
+      "main": [
+        [
+          {
+            "node": "Ligar parada total",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ligar parada total": {
+      "main": [
+        [
+          {
+            "node": "Confirmar parada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmar parada": {
+      "main": [
+        [
+          {
+            "node": "Avisar no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "saveDataSuccessExecution": "none"
+  },
+  "versionId": "4bd54d14-30c2-45f2-a299-340dff1ccb5c",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "ztVigiaSaude0001",
+  "tags": []
+}

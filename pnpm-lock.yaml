@@ -288,6 +288,12 @@ importers:
         specifier: ^10.6.0
         version: 10.6.0
 
+  tools/n8n-validacao:
+    dependencies:
+      '@zentrade/contratos':
+        specifier: workspace:*
+        version: link:../../packages/contratos
+
 packages:
 
   '@anthropic-ai/sdk@0.133.0':

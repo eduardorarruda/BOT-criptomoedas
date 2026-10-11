@@ -1,0 +1,456 @@
+{
+  "name": "zentrade-alertas",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zentrade-alerta",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "622f90e4-3fde-4881-a30e-a2be811706ca",
+      "name": "Alerta recebido",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "a8fa472d-d24c-4a8c-a526-b06e7c0cfe28"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "data",
+        "destinationKey": "corpoBruto",
+        "options": {
+          "encoding": "utf8",
+          "stripBOM": false,
+          "keepSource": "json"
+        }
+      },
+      "id": "a3995f15-e0e1-4beb-a9d4-bcf2203717ce",
+      "name": "Ler corpo bruto",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Confere o cabeçalho X-ZenTrade-Assinatura e o prazo, exatamente como verificar()\n// de @zentrade/contratos. O HMAC em si sai do nó Crypto seguinte, que guarda o\n// segredo numa credencial do n8n (nunca no fluxo).\nconst TOLERANCIA_SEGUNDOS = 300;\n\nconst item = $input.first().json;\nconst corpo = typeof item.corpoBruto === 'string' ? item.corpoBruto : '';\nconst cabecalho = (item.headers || {})['x-zentrade-assinatura'];\nconst agoraSegundos = Math.floor(Date.now() / 1000);\n\nlet formatoOk = false;\nlet prazoOk = false;\nlet recebida = '';\nlet mensagem = '';\nif (cabecalho) {\n  const partes = Object.fromEntries(String(cabecalho).split(',').map((p) => p.split('=', 2)));\n  const t = Number(partes.t);\n  recebida = typeof partes.v1 === 'string' ? partes.v1 : '';\n  formatoOk = Number.isInteger(t) && /^[0-9a-f]{64}$/.test(recebida);\n  if (formatoOk) {\n    prazoOk = Math.abs(agoraSegundos - t) <= TOLERANCIA_SEGUNDOS;\n    mensagem = `${t}.${corpo}`;\n  }\n}\n\nreturn [{ json: { corpo, recebida, formatoOk, prazoOk, mensagem } }];"
+      },
+      "id": "1e5d547f-098a-4837-a0d5-53da7eb24e3b",
+      "name": "Preparar verificação",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "binaryData": false,
+        "type": "SHA256",
+        "value": "={{ $json.mensagem }}",
+        "dataPropertyName": "esperada",
+        "encoding": "hex"
+      },
+      "id": "c4ae2af5-0699-498d-ad1a-a7c3daa73317",
+      "name": "Calcular HMAC",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "crypto": {
+          "id": "ztCredHmac000001",
+          "name": "ZenTrade assinatura dos webhooks"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Compara o HMAC esperado (nó Crypto) com o recebido em tempo constante e só então\n// interpreta o corpo. Corpo sem assinatura válida nunca é lido.\nconst item = $input.first().json;\n\nconst iguais = (a, b) => {\n  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;\n  let diferenca = 0;\n  for (let i = 0; i < a.length; i++) diferenca |= a.charCodeAt(i) ^ b.charCodeAt(i);\n  return diferenca === 0;\n};\n\nconst valida = item.formatoOk === true && item.prazoOk === true && iguais(item.esperada, item.recebida);\nlet dados = null;\nif (valida) {\n  try {\n    dados = JSON.parse(item.corpo);\n  } catch {\n    dados = null;\n  }\n}\n\nreturn [{ json: { valida, dados } }];"
+      },
+      "id": "9c0138b7-9a73-4e45-a6c8-c87d6cf0e407",
+      "name": "Conferir assinatura",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8c684c35-069f-4b5c-a499-cfd70d252ef9",
+              "leftValue": "={{ $json.valida }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d2341797-3834-4161-a6a0-e3c5a24affb0",
+      "name": "Assinatura válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"erro\": {\n    \"codigo\": \"assinatura_invalida\",\n    \"mensagem\": \"Assinatura ausente, inválida ou vencida.\"\n  }\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "ab27e417-4398-4b1e-ab59-a8b52961ed8e",
+      "name": "Recusar (401)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Valida o alerta ({ tipo, titulo, mensagem, em }) e monta o texto para o Telegram.\nconst LIMITE_TELEGRAM = 4000;\nconst escaparHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nconst a = $input.first().json.dados;\nconst texto = (v, min, max) => typeof v === 'string' && v.length >= min && v.length <= max;\n\nconst problemas = [];\nif (!a || typeof a !== 'object' || Array.isArray(a)) {\n  problemas.push('o corpo precisa ser um objeto');\n} else {\n  if (!texto(a.tipo, 1, 40)) problemas.push('tipo');\n  if (!texto(a.titulo, 1, 200)) problemas.push('titulo');\n  if (!texto(a.mensagem, 0, 4000)) problemas.push('mensagem');\n  if (!Number.isSafeInteger(a.em) || a.em < 0) problemas.push('em');\n}\nif (problemas.length > 0) {\n  return [{ json: { ok: false, motivo: `campos inválidos: ${problemas.join(', ')}` } }];\n}\n\nconst quando = new Date(a.em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\nconst completo = `ZenTrade: ${a.titulo}\\n\\n${a.mensagem}\\n\\n${a.tipo} · ${quando}`;\nconst textoFinal =\n  completo.length <= LIMITE_TELEGRAM ? completo : `${completo.slice(0, LIMITE_TELEGRAM - 1)}…`;\n\nreturn [\n  {\n    json: {\n      ok: true,\n      assunto: `[ZenTrade] ${a.titulo}`,\n      texto: textoFinal,\n      textoTelegram: escaparHtml(textoFinal),\n    },\n  },\n];"
+      },
+      "id": "e0dc61d5-ed79-43e0-ad13-baf0d861ad6f",
+      "name": "Ler alerta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3ac63dfd-cd14-4124-a6ef-195fbdc18bcf",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e81c2da7-87ff-462d-abf9-c9f4b573f545",
+      "name": "Alerta válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ erro: { codigo: 'corpo_invalido', mensagem: $json.motivo } }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "868b6e5d-9165-499f-a63c-ab60b20df11c",
+      "name": "Corpo inválido (400)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"recebido\": true\n}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "7dcc9dbb-231b-4dbb-a793-1b26ec3d08b8",
+      "name": "Aceitar (202)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.textoTelegram }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "f266dc0c-84cf-454d-a1ba-96f949eb9f6e",
+      "name": "Avisar no Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "ztCredTelegram01",
+          "name": "ZenTrade Telegram"
+        }
+      },
+      "webhookId": "702ec4f7-0e88-4c29-ae7a-a503e8d56668"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c5ad57d6-3ddd-4938-a002-c3baaf1524ce",
+              "leftValue": "={{ $env.ZENTRADE_ALERTA_EMAIL ?? '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5197765e-d22c-46d8-ad80-87c24b43cdb2",
+      "name": "E-mail configurado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.ZENTRADE_ALERTA_EMAIL_DE }}",
+        "toEmail": "={{ $env.ZENTRADE_ALERTA_EMAIL }}",
+        "subject": "={{ $json.assunto }}",
+        "emailFormat": "text",
+        "text": "={{ $json.texto }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "ae346dce-9ead-454e-a82c-8beb7e55222d",
+      "name": "Avisar por e-mail",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2200,
+        200
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "ztCredSmtp000001",
+          "name": "ZenTrade SMTP"
+        }
+      },
+      "webhookId": "aa9a91ae-d46c-4b0d-a03e-5ea37cfd7268"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Alerta recebido": {
+      "main": [
+        [
+          {
+            "node": "Ler corpo bruto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler corpo bruto": {
+      "main": [
+        [
+          {
+            "node": "Preparar verificação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar verificação": {
+      "main": [
+        [
+          {
+            "node": "Calcular HMAC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular HMAC": {
+      "main": [
+        [
+          {
+            "node": "Conferir assinatura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conferir assinatura": {
+      "main": [
+        [
+          {
+            "node": "Assinatura válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assinatura válida?": {
+      "main": [
+        [
+          {
+            "node": "Ler alerta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Recusar (401)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler alerta": {
+      "main": [
+        [
+          {
+            "node": "Alerta válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alerta válido?": {
+      "main": [
+        [
+          {
+            "node": "Aceitar (202)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Corpo inválido (400)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aceitar (202)": {
+      "main": [
+        [
+          {
+            "node": "Avisar no Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "E-mail configurado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-mail configurado?": {
+      "main": [
+        [
+          {
+            "node": "Avisar por e-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "a4529ebb-78cb-4a54-a8f6-a35dc7aa5439",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "ztAlertas0000001",
+  "tags": []
+}

@@ -1,0 +1,229 @@
+{
+  "name": "zentrade-relatorio-diario",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 21 * * *"
+            }
+          ]
+        }
+      },
+      "id": "7ec68350-fb05-43b9-a107-9f5ed70c15bc",
+      "name": "Todo dia às 21h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.ZENTRADE_API_URL }}/api/v1/resumo",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "2301bbc2-3ba7-4eeb-aa33-16c89ca7df6a",
+      "name": "Buscar resumo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ztCredLeitura001",
+          "name": "ZenTrade token leitura"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.ZENTRADE_API_URL }}/api/v1/decisoes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limite",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "19b704f6-9324-4256-a2d1-32d4d6de4fd9",
+      "name": "Buscar decisões",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ztCredLeitura001",
+          "name": "ZenTrade token leitura"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.ZENTRADE_API_URL }}/api/v1/ordens",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limite",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "b56bd136-f576-4c04-a139-7c25d6704dfe",
+      "name": "Buscar ordens",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ztCredLeitura001",
+          "name": "ZenTrade token leitura"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Relatório do dia (horário de Brasília). Somas de dinheiro são exatas: os decimais\n// chegam em texto e são somados com BigInt, nunca com ponto flutuante.\nconst LIMITE_DECISOES = 200;\nconst DESLOCAMENTO_BRASILIA = '-03:00'; // sem horário de verão desde 2019\n\nconst agora = Date.now();\nconst escaparHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst DECIMAL = /^(-?)(\\d+)(?:\\.(\\d+))?$/;\n\nconst somarDecimais = (textos) => {\n  const validos = textos.filter((t) => typeof t === 'string' && DECIMAL.test(t));\n  const casas = Math.max(0, ...validos.map((t) => (DECIMAL.exec(t)[3] || '').length));\n  let total = 0n;\n  for (const t of validos) {\n    const [, sinal, inteiro, fracao = ''] = DECIMAL.exec(t);\n    total += BigInt(`${sinal}${inteiro}${fracao.padEnd(casas, '0')}`);\n  }\n  const negativo = total < 0n;\n  const digitos = (negativo ? -total : total).toString().padStart(casas + 1, '0');\n  const inteiro = digitos.slice(0, digitos.length - casas);\n  const fracao = casas > 0 ? `.${digitos.slice(digitos.length - casas)}` : '';\n  return `${negativo ? '-' : ''}${inteiro}${fracao}`;\n};\n\n// Exibição apenas (como formatarDolar de @zentrade/dominio): a conta já foi feita em decimal.\nconst moeda = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });\nconst moedaFina = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });\nconst usd = (t, formato = moeda) =>\n  typeof t === 'string' && DECIMAL.test(t) ? `US$ ${formato.format(Number(t))}` : 'indisponível';\n\nconst dia = new Intl.DateTimeFormat('en-CA', {\n  timeZone: 'America/Sao_Paulo',\n  year: 'numeric',\n  month: '2-digit',\n  day: '2-digit',\n}).format(new Date(agora));\nconst inicioDoDia = Date.parse(`${dia}T00:00:00${DESLOCAMENTO_BRASILIA}`);\n\nconst erroDe = (itens) => {\n  const comErro = itens.find((i) => i.json && i.json.error);\n  return comErro ? String(comErro.json.error.message || comErro.json.error) : null;\n};\n\nconst resumoItens = $('Buscar resumo').all();\nconst resumo = resumoItens[0] ? resumoItens[0].json : {};\nconst decisoesItens = $('Buscar decisões').all();\nconst decisoes = decisoesItens.map((i) => i.json).filter((d) => d && typeof d.id === 'string');\nconst ordensItens = $input.all();\nconst ordens = ordensItens.map((i) => i.json).filter((o) => o && typeof o.id === 'string');\n\nconst deHoje = decisoes.filter((d) => Number(d.em) >= inicioDoDia);\nconst porEstado = {};\nconst barreiras = {};\nfor (const d of deHoje) {\n  porEstado[d.estado] = (porEstado[d.estado] || 0) + 1;\n  for (const b of (d.risco && d.risco.barreiras) || []) barreiras[b.codigo] = (barreiras[b.codigo] || 0) + 1;\n}\n\nconst taxasHoje = somarDecimais(\n  ordens.flatMap((o) => (o.execucoes || []).filter((e) => Number(e.em) >= inicioDoDia).map((e) => e.taxaCotacao)),\n);\n\nconst NOMES = {\n  registrada: 'só registradas (observar)',\n  barrada: 'barradas pelo risco',\n  aguardando_aprovacao: 'aguardando aprovação',\n  aprovada: 'aprovadas',\n  recusada: 'recusadas',\n  expirada: 'expiradas',\n  executada: 'executadas',\n  falhou: 'com falha',\n};\n\nconst linhas = [`ZenTrade — relatório de ${dia.split('-').reverse().join('/')}`, ''];\nconst erroResumo = erroDe(resumoItens);\nif (erroResumo) {\n  linhas.push(`Não consegui buscar o resumo: ${erroResumo}`);\n} else {\n  linhas.push(`Resultado do dia: ${usd(resumo.resultadoHoje)}`);\n  linhas.push(`Exposição agora: ${usd(resumo.exposicao)}`);\n  linhas.push(`Maior queda em 30 dias: ${usd(resumo.maiorQueda30d)}`);\n  linhas.push(`Custo de IA hoje: ${usd(resumo.custoIaHoje, moedaFina)}`);\n  linhas.push(`Robôs ativos: ${resumo.robosAtivos ?? 'indisponível'}`);\n  if (resumo.paradaTotal) linhas.push('Atenção: a parada total está LIGADA.');\n}\nlinhas.push(`Taxas pagas hoje: ${erroDe(ordensItens) ? 'indisponível' : usd(taxasHoje)}`);\nlinhas.push('');\n\nconst erroDecisoes = erroDe(decisoesItens);\nif (erroDecisoes) {\n  linhas.push(`Não consegui buscar as decisões: ${erroDecisoes}`);\n} else if (deHoje.length === 0) {\n  linhas.push('Nenhuma decisão hoje.');\n} else {\n  const parcial = decisoes.length >= LIMITE_DECISOES ? ` (das ${LIMITE_DECISOES} mais recentes)` : '';\n  linhas.push(`Decisões hoje: ${deHoje.length}${parcial}`);\n  for (const [estado, total] of Object.entries(porEstado).sort((a, b) => b[1] - a[1])) {\n    linhas.push(`• ${NOMES[estado] || estado}: ${total}`);\n  }\n  const top = Object.entries(barreiras).sort((a, b) => b[1] - a[1]).slice(0, 3);\n  if (top.length > 0) linhas.push(`Barreiras mais comuns: ${top.map(([c, n]) => `${c} (${n})`).join(', ')}`);\n}\n\nreturn [{ json: { texto: escaparHtml(linhas.join('\\n')), taxasHoje, decisoesHoje: deHoje.length } }];"
+      },
+      "id": "3edee435-6009-4649-a833-e9db14b80e46",
+      "name": "Montar relatório",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "d29ba2a6-5dcd-4e00-a6ab-59cd735b4550",
+      "name": "Enviar relatório",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "ztCredTelegram01",
+          "name": "ZenTrade Telegram"
+        }
+      },
+      "webhookId": "f08562ce-9655-4de8-a913-07b7df35f06a"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Todo dia às 21h": {
+      "main": [
+        [
+          {
+            "node": "Buscar resumo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar resumo": {
+      "main": [
+        [
+          {
+            "node": "Buscar decisões",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar decisões": {
+      "main": [
+        [
+          {
+            "node": "Buscar ordens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar ordens": {
+      "main": [
+        [
+          {
+            "node": "Montar relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar relatório": {
+      "main": [
+        [
+          {
+            "node": "Enviar relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "3f3eb186-3bbf-4450-a9be-9b221552641f",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "ztRelatorio00001",
+  "tags": []
+}
