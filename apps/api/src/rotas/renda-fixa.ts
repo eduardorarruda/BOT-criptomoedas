@@ -15,7 +15,6 @@ import {
   TituloRendaFixaEsquema,
 } from "@zentrade/contratos";
 import { dec } from "@zentrade/dominio";
-import { compararSelicCdbPoupanca, equivalenciaIsento, preVersusIpca } from "@zentrade/financas";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { usuarioIdDe } from "../autenticacao/plugin.js";
@@ -23,7 +22,7 @@ import type { Dependencias } from "../dependencias.js";
 import { ErroApi, naoEncontrado } from "../erros.js";
 import { resumirIndicadores } from "../integracoes/bcb-indices.js";
 import { exigirUuid, ouNaoEncontrado, ParamId } from "./comum.js";
-import { isentoDto, preIpcaDto, regrasDto, selicCdbPoupancaDto } from "./renda-fixa-conversao.js";
+import { regrasDto, simularIsento, simularPreIpca, simularSelicCdbPoupanca } from "./renda-fixa-conversao.js";
 import {
   detalharTitulo,
   hojeEm,
@@ -34,8 +33,10 @@ import {
 
 const LIMITE_ATUALIZAR = { max: 6, timeWindow: "1 minute" } as const;
 
-/** Renda fixa: carteira, títulos manuais, índices do BCB, regras e simuladores. */
-export const rotasRendaFixa: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (app, { deps }) => {
+type App = Parameters<FastifyPluginAsyncZod<{ deps: Dependencias }>>[0];
+
+/** Carteira e detalhe com projeção. */
+function registrarTitulos(app: App, deps: Dependencias): void {
   const { rendaFixa } = deps.banco;
   const titulo = (id: string) => exigirUuid(id, "título");
 
@@ -72,6 +73,12 @@ export const rotasRendaFixa: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
       });
     },
   );
+}
+
+/** Cadastro manual: criar, alterar e remover (títulos da Pluggy não se mexem por aqui). */
+function registrarCadastro(app: App, deps: Dependencias): void {
+  const { rendaFixa } = deps.banco;
+  const titulo = (id: string) => exigirUuid(id, "título");
 
   app.post(
     "/renda-fixa/titulos",
@@ -114,7 +121,10 @@ export const rotasRendaFixa: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
       return reply.code(204).send();
     },
   );
+}
 
+/** Índices do Banco Central e as regras de imposto, com fonte e data. */
+function registrarIndices(app: App, deps: Dependencias): void {
   app.get(
     "/renda-fixa/indicadores",
     { config: { acesso: "leitura" }, schema: { response: { 200: IndicadoresEsquema } } },
@@ -145,7 +155,10 @@ export const rotasRendaFixa: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
     { config: { acesso: "leitura" }, schema: { response: { 200: RegrasTributariasEsquema } } },
     async () => regrasDto(),
   );
+}
 
+/** Simuladores: contas com as premissas que a pessoa escolhe. */
+function registrarSimuladores(app: App, deps: Dependencias): void {
   const hoje = () => hojeEm(deps.agora());
 
   app.post(
@@ -154,18 +167,7 @@ export const rotasRendaFixa: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
       config: { acesso: "leitura" },
       schema: { body: SimularIsentoEsquema, response: { 200: ResultadoIsentoEsquema } },
     },
-    async (req) => {
-      const b = req.body;
-      return isentoDto(
-        equivalenciaIsento({
-          direcao: b.direcao,
-          percentualCdi: dec(b.percentualCdi),
-          prazoDias: b.prazoDias,
-          cdiAnual: dec(b.cdiAnual),
-          inicio: hoje(),
-        }),
-      );
-    },
+    async (req) => simularIsento(req.body, hoje()),
   );
 
   app.post(
@@ -174,21 +176,7 @@ export const rotasRendaFixa: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
       config: { acesso: "leitura" },
       schema: { body: SimularSelicCdbPoupancaEsquema, response: { 200: ResultadoSelicCdbPoupancaEsquema } },
     },
-    async (req) => {
-      const b = req.body;
-      return selicCdbPoupancaDto(
-        compararSelicCdbPoupanca({
-          valor: dec(b.valor),
-          inicio: hoje(),
-          prazoDias: b.prazoDias,
-          selicAnual: dec(b.selicAnual),
-          cdiAnual: dec(b.cdiAnual),
-          percentualCdb: dec(b.percentualCdb),
-          metaSelicAnual: dec(b.metaSelicAnual),
-          trMensal: dec(b.trMensal),
-        }),
-      );
-    },
+    async (req) => simularSelicCdbPoupanca(req.body, hoje()),
   );
 
   app.post(
@@ -197,18 +185,14 @@ export const rotasRendaFixa: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
       config: { acesso: "leitura" },
       schema: { body: SimularPreIpcaEsquema, response: { 200: ResultadoPreIpcaEsquema } },
     },
-    async (req) => {
-      const b = req.body;
-      return preIpcaDto(
-        preVersusIpca({
-          valor: dec(b.valor),
-          inicio: hoje(),
-          prazoDias: b.prazoDias,
-          taxaPre: dec(b.taxaPre),
-          taxaReal: dec(b.taxaReal),
-          ipcaEsperado: dec(b.ipcaEsperado),
-        }),
-      );
-    },
+    async (req) => simularPreIpca(req.body, hoje()),
   );
+}
+
+/** Renda fixa: carteira, títulos manuais, índices do BCB, regras e simuladores. */
+export const rotasRendaFixa: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (app, { deps }) => {
+  registrarTitulos(app, deps);
+  registrarCadastro(app, deps);
+  registrarIndices(app, deps);
+  registrarSimuladores(app, deps);
 };

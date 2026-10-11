@@ -1,5 +1,8 @@
 import type { LinhaTitulo } from "@zentrade/banco";
 import type {
+  SimularIsento,
+  SimularPreIpca,
+  SimularSelicCdbPoupanca,
   PosicaoTitulo,
   ProjecaoTitulo,
   RegrasTributariasDTO,
@@ -10,6 +13,9 @@ import type {
 } from "@zentrade/contratos";
 import { dec, paraTexto, type Valor } from "@zentrade/dominio";
 import {
+  compararSelicCdbPoupanca,
+  equivalenciaIsento,
+  preVersusIpca,
   FERIADOS_NACIONAIS,
   REGRAS_TRIBUTARIAS_VIGENTES,
   TIPOS_TITULO,
@@ -188,3 +194,44 @@ export const preIpcaDto = (c: ComparacaoPreIpca): ResultadoPreIpca => ({
   })),
   premissas: [...c.premissas],
 });
+
+/** Corpo validado do contrato → contas → resposta. `inicio` é o "hoje" em São Paulo. */
+export const simularIsento = (b: SimularIsento, inicio: string): ResultadoIsento =>
+  isentoDto(
+    equivalenciaIsento({
+      direcao: b.direcao,
+      percentualCdi: dec(b.percentualCdi),
+      prazoDias: b.prazoDias,
+      cdiAnual: dec(b.cdiAnual),
+      inicio,
+    }),
+  );
+
+export const simularSelicCdbPoupanca = (
+  b: SimularSelicCdbPoupanca,
+  inicio: string,
+): ResultadoSelicCdbPoupanca =>
+  selicCdbPoupancaDto(
+    compararSelicCdbPoupanca({
+      valor: dec(b.valor),
+      inicio,
+      prazoDias: b.prazoDias,
+      selicAnual: dec(b.selicAnual),
+      cdiAnual: dec(b.cdiAnual),
+      percentualCdb: dec(b.percentualCdb),
+      metaSelicAnual: dec(b.metaSelicAnual),
+      trMensal: dec(b.trMensal),
+    }),
+  );
+
+export const simularPreIpca = (b: SimularPreIpca, inicio: string): ResultadoPreIpca =>
+  preIpcaDto(
+    preVersusIpca({
+      valor: dec(b.valor),
+      inicio,
+      prazoDias: b.prazoDias,
+      taxaPre: dec(b.taxaPre),
+      taxaReal: dec(b.taxaReal),
+      ipcaEsperado: dec(b.ipcaEsperado),
+    }),
+  );

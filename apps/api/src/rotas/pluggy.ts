@@ -16,19 +16,20 @@ import { exigirUuid, ParamId } from "./comum.js";
 const LIMITE_PLUGGY = { max: 10, timeWindow: "1 minute" } as const;
 const Sincronizar = z.object({ pedirAoBanco: z.boolean().optional() }).optional();
 
-/**
- * Conexão com bancos pela Pluggy. O navegador só recebe o connect token (30 min);
- * o client secret fica na API. Remover aqui nunca apaga o item na Pluggy.
- */
-export const rotasPluggy: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (app, { deps }) => {
-  const pluggy = (): SincronizadorPluggy => {
-    if (!deps.rendaFixa) {
-      throw new ErroApi(503, "pluggy_nao_configurada", "a integração com a Pluggy não está ligada nesta API");
-    }
-    return deps.rendaFixa.pluggy;
-  };
-  const item = (id: string) => exigirUuid(id, "conexão");
+type App = Parameters<FastifyPluginAsyncZod<{ deps: Dependencias }>>[0];
 
+function sincronizador(deps: Dependencias): SincronizadorPluggy {
+  if (!deps.rendaFixa) {
+    throw new ErroApi(503, "pluggy_nao_configurada", "a integração com a Pluggy não está ligada nesta API");
+  }
+  return deps.rendaFixa.pluggy;
+}
+
+const item = (id: string) => exigirUuid(id, "conexão");
+
+/** Estado, connect token e conectar um item novo. */
+function registrarConexao(app: App, deps: Dependencias): void {
+  const pluggy = () => sincronizador(deps);
   app.get(
     "/pluggy",
     { config: { acesso: "leitura" }, schema: { response: { 200: EstadoPluggyEsquema } } },
@@ -60,6 +61,11 @@ export const rotasPluggy: FastifyPluginAsyncZod<{ deps: Dependencias }> = async 
     },
     async (req, reply) => reply.code(201).send(await pluggy().registrar(usuarioIdDe(req), req.body.itemId)),
   );
+}
+
+/** Sincronizar e remover um item já conectado. */
+function registrarItens(app: App, deps: Dependencias): void {
+  const pluggy = () => sincronizador(deps);
 
   app.post(
     "/pluggy/itens/:id/sincronizar",
@@ -84,4 +90,13 @@ export const rotasPluggy: FastifyPluginAsyncZod<{ deps: Dependencias }> = async 
       return reply.code(204).send();
     },
   );
+}
+
+/**
+ * Conexão com bancos pela Pluggy. O navegador só recebe o connect token (30 min);
+ * o client secret fica na API. Remover aqui nunca apaga o item na Pluggy.
+ */
+export const rotasPluggy: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (app, { deps }) => {
+  registrarConexao(app, deps);
+  registrarItens(app, deps);
 };
