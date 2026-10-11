@@ -25,6 +25,8 @@ export class ErroClaudeCli extends Error {
   constructor(
     readonly codigo: string,
     mensagem: string,
+    /** Detalhe técnico (fim do stderr), só para o log. */
+    readonly detalhe?: string,
   ) {
     super(mensagem);
   }
@@ -106,7 +108,7 @@ export class AnalistaCli {
       ...(opcoes.signal ? { sinal: opcoes.signal } : {}),
     });
     if (exec.falha && (FALHAS_DO_PROCESSO.has(exec.falha.codigo) || !exec.resultado)) {
-      throw new ErroClaudeCli(exec.falha.codigo, exec.falha.mensagem);
+      throw new ErroClaudeCli(exec.falha.codigo, exec.falha.mensagem, exec.falha.detalhe);
     }
     const custo = exec.resultado?.total_cost_usd ?? 0;
     return { proposta: propostaDoResultado(exec.resultado, registro), custoUsd: dec(String(custo)) };

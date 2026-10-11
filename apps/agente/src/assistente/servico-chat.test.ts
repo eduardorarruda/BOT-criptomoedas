@@ -242,6 +242,20 @@ describe("ServicoChat: escolha do provedor", () => {
       codigo: "cli_autenticacao",
       mensagem: "Faça o login de novo.",
     });
+    const aoFalhar = vi.fn();
+    const comDetalhe = new ServicoChat({
+      ...base,
+      cli: {
+        responder: async () => {
+          throw new ErroClaudeCli("falhou", "O Claude Code terminou com erro.", "/home/x/.claude: boom");
+        },
+      } as unknown as ChatCli,
+      config: async () => ({ provedor: "cli", modelo: null, contaCli: null }),
+      aoFalhar,
+    });
+    const [erroGenerico] = await responder(comDetalhe);
+    expect(JSON.stringify(erroGenerico)).not.toMatch(/boom/);
+    expect(aoFalhar).toHaveBeenCalledOnce();
     const controle = new AbortController();
     controle.abort();
     const cancelado = new ServicoChat({

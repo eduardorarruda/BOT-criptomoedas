@@ -90,7 +90,9 @@ export class ServicoChat {
       emitir({ tipo: "fontes", fontes: citacoes.lista });
       emitir({ tipo: "concluido", provedor: config.provedor, modelo: config.modelo });
     } catch (erro) {
-      if (!sinal.aborted && !(erro instanceof ErroClaudeCli)) this.#o.aoFalhar?.(erro);
+      // Falha esperada do CLI (sem login, limite) não é erro do serviço; a que traz detalhe técnico vai ao log.
+      const esperada = erro instanceof ErroClaudeCli && erro.detalhe === undefined;
+      if (!sinal.aborted && !esperada) this.#o.aoFalhar?.(erro);
       emitir({ tipo: "erro", ...traduzir(erro, sinal) });
     }
   }

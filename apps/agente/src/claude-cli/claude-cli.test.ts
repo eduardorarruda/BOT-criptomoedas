@@ -161,7 +161,9 @@ describe("leitura do resultado", () => {
       "autenticacao",
     );
     expect(explicarFalha(fim({ stderr: "Claude AI usage limit reached" }), 1, null)?.codigo).toBe("limite");
-    expect(explicarFalha(fim({ stderr: "\u001b[31mboom\u001b[0m\n" }), 1, null)?.mensagem).toMatch(/: boom$/);
+    const generica = explicarFalha(fim({ stderr: "\u001b[31m/home/x/.claude: boom\u001b[0m\n" }), 1, null);
+    expect(generica?.mensagem).not.toMatch(/boom|home/);
+    expect(generica?.detalhe).toBe("/home/x/.claude: boom");
     expect(explicarFalha(fim({ motivo: "cancelado" }), 1, null)).toBeNull();
     expect(explicarFalha(fim({ codigo: 0 }), 1, { type: "result", subtype: "success" })).toBeNull();
   });

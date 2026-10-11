@@ -81,7 +81,7 @@ function tratarFalha(e: unknown, resposta: FastifyReply, log: FastifyBaseLogger)
     return erro(resposta, 503, "provedor_indisponivel", e.message);
   }
   if (e instanceof ErroClaudeCli) {
-    log.warn({ err: e, codigo: e.codigo }, "falha do Claude Code");
+    log.warn({ err: e, codigo: e.codigo, detalhe: e.detalhe }, "falha do Claude Code");
     return erro(resposta, 502, "falha_claude_cli", e.message);
   }
   if (e instanceof ErroPropostaInvalida) {

@@ -77,7 +77,7 @@ export class ChatCli {
       modo: { tipo: "chat" },
       aoLinha: (l) => leitor.linha(l),
     });
-    if (exec.falha) throw new ErroClaudeCli(exec.falha.codigo, exec.falha.mensagem);
+    if (exec.falha) throw new ErroClaudeCli(exec.falha.codigo, exec.falha.mensagem, exec.falha.detalhe);
     const r = exec.resultado;
     if (r && (r.is_error || r.subtype !== "success")) {
       throw new ErroClaudeCli("falhou", MOTIVOS[r.subtype] ?? `O Claude Code parou com erro (${r.subtype}).`);

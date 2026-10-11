@@ -49,7 +49,10 @@ export type CodigoFalhaCli = "autenticacao" | "limite" | "nao_encontrado" | "tem
 
 export interface FalhaCli {
   readonly codigo: CodigoFalhaCli;
+  /** O que a pessoa vê: nunca leva o stderr do CLI (pode citar caminho, conta, configuração). */
   readonly mensagem: string;
+  /** Fim do stderr/resultado, só para o log do serviço. */
+  readonly detalhe?: string;
 }
 
 const semCores = (t: string): string =>
@@ -100,6 +103,7 @@ export function explicarFalha(
   const detalhe = ultimaLinha(fim.stderr) || ultimaLinha(resultado?.result ?? "");
   return {
     codigo: "falhou",
-    mensagem: `O Claude Code terminou com erro (código ${fim.codigo ?? "?"})${detalhe ? `: ${detalhe}` : "."}`,
+    mensagem: `O Claude Code terminou com erro (código ${fim.codigo ?? "?"}). O detalhe ficou no log do serviço agente.`,
+    ...(detalhe ? { detalhe } : {}),
   };
 }
