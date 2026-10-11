@@ -1,0 +1,120 @@
+import { createHash, timingSafeEqual } from "node:crypto";
+import type { PedidoAnalise, RespostaAnalise } from "@zentrade/contratos";
+import { paraTexto } from "@zentrade/dominio";
+import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyReply } from "fastify";
+import { ErroPropostaInvalida, type OpcoesAnalise } from "./analista.js";
+import { lerCorpoAnalise } from "./serializacao.js";
+
+export interface AnalistaServico {
+  analisar(pedido: PedidoAnalise, opcoes: OpcoesAnalise): Promise<RespostaAnalise>;
+}
+
+export interface OpcoesServidor {
+  readonly analista: AnalistaServico;
+  readonly segredo: string;
+  /** Abaixo dos 60 s do motor, para o agente responder (504) antes de o motor desistir. */
+  readonly timeoutMs?: number;
+  /** Instalação de um usuário só: dono da base de conhecimento quando o pedido não diz. */
+  readonly usuarioIdPadrao?: string;
+  readonly logger?: FastifyBaseLogger | false;
+}
+
+class ErroTempoEsgotado extends Error {
+  override name = "ErroTempoEsgotado";
+}
+
+const resumo = (s: string): Buffer => createHash("sha256").update(s).digest();
+
+/** Compara em tempo constante: o tempo de resposta não revela quantos caracteres batem. */
+function autorizado(cabecalho: string | undefined, segredo: string): boolean {
+  return timingSafeEqual(resumo(cabecalho ?? ""), resumo(`Bearer ${segredo}`));
+}
+
+const erro = (resposta: FastifyReply, status: number, codigo: string, mensagem: string) =>
+  resposta.code(status).send({ erro: { codigo, mensagem } });
+
+async function comPrazo<T>(ms: number, tarefa: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controle = new AbortController();
+  let relogio: NodeJS.Timeout | undefined;
+  const prazo = new Promise<never>((_ok, falhar) => {
+    relogio = setTimeout(() => {
+      // Rejeita antes de abortar: quem vence a corrida é o prazo, não o erro do aborto.
+      falhar(new ErroTempoEsgotado(`a análise passou de ${ms} ms`));
+      controle.abort();
+    }, ms);
+  });
+  try {
+    return await Promise.race([tarefa(controle.signal), prazo]);
+  } finally {
+    clearTimeout(relogio);
+  }
+}
+
+function tratarFalha(e: unknown, resposta: FastifyReply, log: FastifyBaseLogger) {
+  if (e instanceof ErroTempoEsgotado) {
+    log.warn({ err: e }, "análise estourou o tempo");
+    return erro(
+      resposta,
+      504,
+      "tempo_esgotado",
+      "A análise demorou demais. Sem proposta, o motor não opera.",
+    );
+  }
+  if (e instanceof ErroPropostaInvalida) {
+    log.warn({ err: e }, "proposta fora do esquema");
+    return erro(resposta, 502, "proposta_invalida", e.message);
+  }
+  log.error({ err: e }, "falha na análise");
+  return erro(
+    resposta,
+    502,
+    "falha_agente",
+    "O agente de IA falhou ao analisar. Veja o log do serviço agente.",
+  );
+}
+
+/** Serviço HTTP do agente (porta 8081, só rede interna). */
+export function criarServidor(o: OpcoesServidor): FastifyInstance {
+  const app = o.logger ? Fastify({ loggerInstance: o.logger }) : Fastify({ logger: false });
+  const timeoutMs = o.timeoutMs ?? 55_000;
+
+  app.setErrorHandler((e: { statusCode?: number; message: string }, _pedido, resposta) => {
+    const status = e.statusCode ?? 500;
+    if (status < 500) return erro(resposta, status, "pedido_invalido", `Pedido malformado: ${e.message}`);
+    app.log.error({ err: e }, "erro inesperado");
+    return erro(resposta, 500, "erro_interno", "Erro inesperado no agente. Veja o log do serviço.");
+  });
+
+  app.get("/saude", async () => ({ ok: true }));
+
+  app.post("/analisar", async (pedido, resposta) => {
+    if (!autorizado(pedido.headers.authorization, o.segredo)) {
+      return erro(resposta, 401, "nao_autorizado", "Envie Authorization: Bearer com o AGENTE_SEGREDO.");
+    }
+    const lido = lerCorpoAnalise(pedido.body);
+    if (!lido.ok) return erro(resposta, 400, "pedido_invalido", `PedidoAnalise inválido: ${lido.erro}`);
+    const usuarioId = lido.valor.usuarioId ?? o.usuarioIdPadrao;
+    if (!usuarioId) {
+      return erro(
+        resposta,
+        400,
+        "pedido_invalido",
+        "Informe usuarioId no pedido ou configure ZENTRADE_USUARIO_ID.",
+      );
+    }
+    try {
+      const r = await comPrazo(timeoutMs, (signal) =>
+        o.analista.analisar(lido.valor.pedido, {
+          usuarioId,
+          signal,
+          ...(lido.valor.orcamento ? { orcamento: lido.valor.orcamento } : {}),
+        }),
+      );
+      return { proposta: r.proposta, custoUsd: paraTexto(r.custoUsd) };
+    } catch (e) {
+      return tratarFalha(e, resposta, pedido.log);
+    }
+  });
+
+  return app;
+}

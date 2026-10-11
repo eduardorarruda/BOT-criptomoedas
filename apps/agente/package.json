@@ -1,0 +1,43 @@
+{
+  "name": "@zentrade/agente",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Analista de IA do ZenTrade: propõe (nunca envia ordem), com ferramentas de leitura, serviço HTTP, CLI e servidor MCP.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./cliente": {
+      "types": "./dist/cliente-agente.d.ts",
+      "default": "./dist/cliente-agente.js"
+    }
+  },
+  "bin": {
+    "zentrade": "./dist/cli/bin.js",
+    "zentrade-mcp": "./dist/mcp/bin.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts",
+    "start": "node dist/principal.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@zentrade/conhecimento": "workspace:*",
+    "@zentrade/contratos": "workspace:*",
+    "@zentrade/dominio": "workspace:*",
+    "fastify": "^5.12.5",
+    "pino": "^10.4.0",
+    "postgres": "^3.4.9",
+    "zod": "^4.6.5"
+  }
+}
