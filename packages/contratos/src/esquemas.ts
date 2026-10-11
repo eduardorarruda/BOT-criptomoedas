@@ -11,3 +11,4 @@ export * from "./eventos.js";
 export * from "./proposta.js";
 export * from "./regra.js";
 export * from "./webhook-esquemas.js";
+export * from "./imobiliario.js";
