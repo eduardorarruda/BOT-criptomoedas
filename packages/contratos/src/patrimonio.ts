@@ -2,7 +2,8 @@ import { z } from "zod";
 import { Instante, TextoDecimal } from "./comum.js";
 
 /**
- * Patrimônio consolidado (`GET /api/v1/patrimonio`): a soma, em reais, da carteira
+ * Patrimônio consolidado (`GET /api/v1/patrimonio/consolidado`; `GET /patrimonio` já é a
+ * curva do resultado realizado dos robôs): a soma, em reais, da carteira
  * cripto, da renda fixa e do imobiliário, com o peso de cada classe. Só informa:
  * cada número vem das telas de cada classe, e o que não tem valor em reais fica
  * fora do total, dito em `situacao` e `avisos`.
