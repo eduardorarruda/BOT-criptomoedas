@@ -42,7 +42,10 @@ export const EsquemaConfig = z
     APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(60).default(5),
     MOTOR_RECARGA_SEGUNDOS: z.coerce.number().int().min(5).max(3600).default(30),
     MOTOR_BACKTEST_SALDO: TextoDecimal.default("1000"),
-    /** Fração do saldo arriscada por operação no backtest (0,01 = 1%). */
+    /**
+     * Fração do saldo arriscada por operação no backtest "sem limites" (0,01 = 1%). Por
+     * padrão o backtest usa os limites de um robô novo (ou os do robô escolhido).
+     */
     MOTOR_BACKTEST_RISCO: z.coerce.number().gt(0).max(0.1).default(0.01),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   })
