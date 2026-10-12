@@ -11,3 +11,4 @@ export * from "./amortizacao.js";
 export * from "./fluxo-caixa.js";
 export * from "./imobiliario.js";
 export * from "./patrimonio.js";
+export * from "./backtest-estatistica.js";
