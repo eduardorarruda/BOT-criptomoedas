@@ -50,8 +50,9 @@ export function niveisEfetivos(posicao: Posicao, p: PosicaoAcompanhada): NiveisS
 
 /**
  * Fechou um candle com a posição aberta: sobe o stop se o stop móvel ou o empate pedirem
- * e diz se a saída por tempo venceu (só ela age no fechamento; um stop que subiu acima do
- * fechamento é pego na abertura do candle seguinte, como a vigia ao vivo faria).
+ * e pergunta ao `decidir` com o acompanhamento. Vende no fechamento por tempo ou se o
+ * stop novo já ficou acima do fechamento (o candle subiu e voltou) — o domínio manda
+ * vender por stop nesse caso. Alvo e regra de saída o núcleo já viu no mesmo fechamento.
  */
 export function aoFecharComPosicao(
   p: PosicaoAcompanhada,
@@ -60,14 +61,14 @@ export function aoFecharComPosicao(
   posicao: Posicao,
 ): {
   readonly posicao: PosicaoAcompanhada;
-  readonly saidaPorTempo: Extract<Sinal, { acao: "VENDER" }> | null;
+  readonly saida: Extract<Sinal, { acao: "VENDER" }> | null;
 } {
   const acompanhamento = atualizarStop(p.efetiva, p.acompanhamento, ctx).acompanhamento;
   const proxima = { ...p, acompanhamento };
   const sinal = decidir(p.efetiva, { ...ctx, preco, acompanhamento }, posicao);
   return {
     posicao: proxima,
-    saidaPorTempo: sinal.acao === "VENDER" && sinal.motivo === "tempo" ? sinal : null,
+    saida: sinal.acao === "VENDER" && (sinal.motivo === "tempo" || sinal.motivo === "stop") ? sinal : null,
   };
 }
 

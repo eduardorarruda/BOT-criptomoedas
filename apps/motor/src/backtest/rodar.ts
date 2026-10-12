@@ -225,14 +225,8 @@ async function aposFechamento(m: Montagem, e: EntradaBacktest, c: Candle, st: Es
   const r = aoFecharComPosicao(st.aberta, ctx, c.fecha, posicao);
   st.aberta = r.posicao;
   if (
-    r.saidaPorTempo &&
-    (await vender(
-      m,
-      e,
-      { preco: c.fecha, em: c.fechamento, sinal: r.saidaPorTempo },
-      posicao,
-      ctx.fechamentos,
-    ))
+    r.saida &&
+    (await vender(m, e, { preco: c.fecha, em: c.fechamento, sinal: r.saida }, posicao, ctx.fechamentos))
   )
     st.aberta = null;
 }

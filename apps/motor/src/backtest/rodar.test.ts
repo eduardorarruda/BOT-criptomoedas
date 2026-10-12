@@ -197,6 +197,24 @@ describe("saídas da estratégia nova: stop por ATR, stop móvel e tempo", () =>
     expect(r.acertos).toBe(1);
   });
 
+  it("stop móvel que sobe acima do fechamento vende no fechamento (o candle subiu e voltou)", async () => {
+    const movel: Estrategia = {
+      ...ESTRATEGIA,
+      stop: 0.05,
+      alvoLiquido: 0.5,
+      stopMovel: { tipo: "percentual", distancia: 0.02 },
+    };
+    const candles = [
+      ...serie(T0, [...plano, 94], QUINZE),
+      vela(21, 95, 100, 97.5, 97.8),
+      vela(22, 99, 99, 99, 99),
+    ];
+    const r = await rodarBacktest(entrada([], { candles, estrategia: movel }));
+    expect(r.operacoes).toBe(1);
+    expect(r.operacoesFechadas[0]!.fechadaEm).toBe(T0 + 22 * QUINZE - 1);
+    expect(r.saidasIntrabar.stop).toBe(0);
+  });
+
   it("saída por tempo: vende no fechamento do N-ésimo candle sem resolver", async () => {
     const tempo: Estrategia = { ...ESTRATEGIA, tempoMaximo: 2 };
     const r = await rodarBacktest(entrada([...plano, 94, 94.2, 94.4, 96, 96], { estrategia: tempo }));
