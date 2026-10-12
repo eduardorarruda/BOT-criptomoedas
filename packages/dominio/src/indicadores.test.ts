@@ -30,6 +30,23 @@ describe("indicadores", () => {
     expect(rsi([10, 11, 10, 11, 10], 2)).toBeCloseTo(37.5, 10);
   });
 
+  it("RSI(14) bate com o exemplo publicado da StockCharts (ChartSchool, planilha cs-rsi)", () => {
+    // 33 fechamentos do exemplo e os 19 RSI publicados com 2 casas, a partir do 15º.
+    const fechamentos = [
+      44.3389, 44.0902, 44.1497, 43.6124, 44.3278, 44.8264, 45.0955, 45.4245, 45.8433, 46.0826, 45.8931,
+      46.0328, 45.614, 46.282, 46.282, 46.0028, 46.0328, 46.4116, 46.2222, 45.6439, 46.2122, 46.2521, 45.7137,
+      46.4515, 45.7835, 45.3548, 44.0288, 44.1783, 44.2181, 44.5672, 43.4205, 42.6628, 43.1314,
+    ];
+    const publicados = [
+      70.53, 66.32, 66.55, 69.41, 66.36, 57.97, 62.93, 63.26, 56.06, 62.38, 54.71, 50.42, 39.99, 41.46, 41.87,
+      45.46, 37.3, 33.08, 37.77,
+    ];
+    publicados.forEach((esperado, i) => {
+      const deslocamento = publicados.length - 1 - i;
+      expect(Math.abs(rsi(fechamentos, 14, deslocamento)! - esperado)).toBeLessThan(0.005);
+    });
+  });
+
   it("recusa período inválido", () => {
     expect(() => sma(v, 0)).toThrow(/período/);
     expect(() => ema(v, 1.5)).toThrow(/período/);

@@ -1,21 +1,10 @@
+import { ate, media } from "./serie.js";
+
 /**
- * Indicadores técnicos sobre fechamentos. São análise, não dinheiro: trabalham em
- * `number`. Quantidade, preço de ordem e resultado continuam em decimal exato.
- *
- * `deslocamento` volta N candles (0 = último), o que permite comparar "agora" com
- * "antes" sem copiar a série.
+ * Médias e RSI sobre fechamentos. São análise, não dinheiro: trabalham em
+ * `number` (veja serie.ts). Os indicadores que usam máxima, mínima e volume
+ * ficam em volatilidade.ts, momento.ts e volume.ts.
  */
-function exigirInteiro(nome: string, valor: number, minimo: number): void {
-  if (!Number.isInteger(valor) || valor < minimo) throw new RangeError(`${nome} inválido: ${valor}`);
-}
-
-function ate(valores: readonly number[], periodo: number, deslocamento: number): readonly number[] {
-  exigirInteiro("período", periodo, 1);
-  exigirInteiro("deslocamento", deslocamento, 0);
-  return deslocamento === 0 ? valores : valores.slice(0, Math.max(0, valores.length - deslocamento));
-}
-
-const media = (v: readonly number[]): number => v.reduce((s, x) => s + x, 0) / v.length;
 
 /** Média móvel simples dos últimos `periodo` fechamentos. */
 export function sma(valores: readonly number[], periodo: number, deslocamento = 0): number | null {

@@ -60,6 +60,7 @@ export const ESTRATEGIAS: readonly EstrategiaDTO[] = [
     stop: 0.025,
     alvoLiquido: 0.03,
     taxa: 0.001,
+    tempoMaximo: 24,
   },
   {
     id: "e-medias",
@@ -75,6 +76,12 @@ export const ESTRATEGIAS: readonly EstrategiaDTO[] = [
           direita: { tipo: "indicador", nome: "ema", periodo: 21 },
         },
         {
+          tipo: "comparar",
+          esquerda: { tipo: "indicador", nome: "adx", periodo: 14, saida: "adx" },
+          comparador: ">",
+          direita: { tipo: "numero", valor: 20 },
+        },
+        {
           tipo: "nao",
           regra: {
             tipo: "comparar",
@@ -88,46 +95,41 @@ export const ESTRATEGIAS: readonly EstrategiaDTO[] = [
     stop: 0.03,
     alvoLiquido: 0.045,
     taxa: 0.001,
+    stopMovel: { tipo: "percentual", distancia: 0.025 },
   },
   {
     id: "e-rompimento",
-    nome: "Rompimento com folga",
+    nome: "Rompimento de Donchian",
     versao: 2,
     entrada: {
-      tipo: "ou",
+      tipo: "e",
       regras: [
         {
           tipo: "comparar",
           esquerda: { tipo: "preco" },
           comparador: ">",
-          direita: {
-            tipo: "multiplicar",
-            operando: { tipo: "indicador", nome: "sma", periodo: 50 },
-            fator: 1.02,
-          },
+          direita: { tipo: "indicador", nome: "donchian", periodo: 20, saida: "superior" },
         },
         {
-          tipo: "e",
-          regras: [
-            {
-              tipo: "comparar",
-              esquerda: { tipo: "preco" },
-              comparador: "cruzouAcima",
-              direita: { tipo: "indicador", nome: "sma", periodo: 20 },
-            },
-            {
-              tipo: "comparar",
-              esquerda: { tipo: "indicador", nome: "rsi", periodo: 14 },
-              comparador: ">=",
-              direita: { tipo: "numero", valor: 55 },
-            },
-          ],
+          tipo: "comparar",
+          esquerda: { tipo: "indicador", nome: "volumeRelativo", periodo: 20 },
+          comparador: ">",
+          direita: { tipo: "numero", valor: 1.3 },
         },
       ],
     },
-    stop: 0.02,
-    alvoLiquido: 0.025,
+    saida: {
+      tipo: "comparar",
+      esquerda: { tipo: "preco" },
+      comparador: "<",
+      direita: { tipo: "indicador", nome: "donchian", periodo: 10, saida: "inferior" },
+    },
+    stop: 0.06,
+    alvoLiquido: 0.2,
     taxa: 0.001,
+    stopAtr: { periodo: 14, multiplo: 2 },
+    stopMovel: { tipo: "atr", periodo: 14, multiplo: 3 },
+    tamanhoPorVolatilidade: { periodo: 14, multiplo: 2 },
   },
 ];
 

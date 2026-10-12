@@ -127,6 +127,7 @@ O que **falta**: o motor gravar decisões, ordens e eventos no banco e no Redis 
 - [Contrato entre os serviços](docs/contrato-api.md) — rotas, webhooks, assinatura, filas e o esquema do RAG.
 - [Operação](docs/operacao.md) — subir o ambiente, criar a primeira pessoa, levar um robô de observar a auto, parada total, backups.
 - [Estratégias](docs/estrategias.md) — como montar e ler um backtest.
+- [Fundamentação](docs/fundamentacao.md) — o que reguladores, estudos e plataformas dizem sobre robôs de investimento, com 48 fontes, e onde o ZenTrade se encaixa.
 - [Segurança](docs/seguranca.md) e [ADRs](docs/adr/) — as decisões de fundo.
 
 ## Aviso

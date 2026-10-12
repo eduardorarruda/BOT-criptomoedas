@@ -4,7 +4,9 @@ import {
   decimalOpcional,
   decimalTexto,
   estrategiaDeLinha,
+  estrategiaDominio,
   ordemDeLinha,
+  regraGravada,
 } from "./conversao.js";
 
 const em = new Date(Date.UTC(2026, 0, 1));
@@ -91,5 +93,41 @@ describe("conversão de linhas do banco para o contrato", () => {
       [],
     );
     expect(o).toMatchObject({ motivo: "saldo insuficiente", execucoes: [] });
+  });
+
+  it("estratégia com as saídas novas: JSONB guarda a configuração e a leitura devolve igual", () => {
+    const entrada = {
+      tipo: "comparar",
+      esquerda: { tipo: "preco" },
+      comparador: ">",
+      direita: { tipo: "indicador", nome: "donchian", periodo: 20, saida: "superior" },
+    } as const;
+    const campos = {
+      entrada,
+      stop: 0.1,
+      alvoLiquido: 0.5,
+      taxa: 0.001,
+      stopAtr: { periodo: 20, multiplo: 2 },
+      stopMovel: { tipo: "percentual", distancia: 0.05 },
+      empate: { gatilho: 0.03 },
+      tempoMaximo: 30,
+      tamanhoPorVolatilidade: { periodo: 20, multiplo: 2 },
+    } as const;
+    const regra = regraGravada({ ...campos, saida: undefined });
+    expect(regra).not.toHaveProperty("stop");
+    expect(regra).not.toHaveProperty("saida");
+    const linha = {
+      estrategiaId: "e1",
+      versao: 1,
+      usuarioId: "u1",
+      nome: "Donchian",
+      regra,
+      stop: "0.100000000000000000",
+      alvoLiquido: "0.5",
+      taxa: "0.001",
+      criadaEm: em,
+    };
+    expect(estrategiaDeLinha(linha)).toEqual({ id: "e1", nome: "Donchian", versao: 1, ...campos });
+    expect(estrategiaDominio(linha)).toEqual(campos);
   });
 });

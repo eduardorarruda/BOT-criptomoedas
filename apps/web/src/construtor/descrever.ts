@@ -1,5 +1,6 @@
-import { rotulo, type Comparador } from "@zentrade/dominio";
+import { formatarNumero, rotulo, type Comparador } from "@zentrade/dominio";
 import type { NoEditor } from "./arvore";
+import type { CamposSaida } from "./saidas";
 
 /**
  * Prévia em linguagem natural da árvore, a partir do `rotulo` do domínio — os
@@ -51,4 +52,29 @@ export function linhas(no: NoEditor | null, nivel = 0): Linha[] {
       return [{ nivel, texto: cabeca }, ...no.filhos.flatMap((f) => linhas(f, nivel + 1))];
     }
   }
+}
+
+const pct = (fracao: number): string => `${formatarNumero(fracao * 100)}%`;
+const atr = (u: { readonly periodo: number; readonly multiplo: number }): string =>
+  `${formatarNumero(u.multiplo)} × ATR(${u.periodo})`;
+
+/** As saídas em frases curtas, na ordem em que o robô olha para elas. */
+export function frasesSaidas(e: { readonly stop: number | null } & CamposSaida): string[] {
+  const frases: string[] = [];
+  if (e.stopAtr)
+    frases.push(
+      `stop a ${atr(e.stopAtr)} abaixo da entrada${e.stop !== null ? `, no máximo ${pct(e.stop)}` : ""}`,
+    );
+  else if (e.stop !== null) frases.push(`stop ${pct(e.stop)} abaixo da entrada`);
+  if (e.stopMovel?.tipo === "percentual")
+    frases.push(`stop móvel ${pct(e.stopMovel.distancia)} abaixo da maior máxima desde a entrada (só sobe)`);
+  if (e.stopMovel?.tipo === "atr")
+    frases.push(`stop móvel a ${atr(e.stopMovel)} da maior máxima desde a entrada (só sobe)`);
+  if (e.empate)
+    frases.push(`depois de +${pct(e.empate.gatilho)}, o stop vai para o empate (as duas taxas pagas)`);
+  if (e.tempoMaximo !== undefined)
+    frases.push(`sai depois de ${e.tempoMaximo} candles, se nada disso vier antes`);
+  if (e.tamanhoPorVolatilidade)
+    frases.push(`tamanho: risco por operação ÷ (${atr(e.tamanhoPorVolatilidade)})`);
+  return frases;
 }

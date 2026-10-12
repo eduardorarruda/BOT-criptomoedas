@@ -31,6 +31,72 @@
   font-size: 13px;
   font-weight: 600;
 }
+.construtor__linha {
+  grid-column: 1 / -1;
+}
+.construtor__saidas .interruptor {
+  font-size: 13px;
+}
+
+/* ---------- começar de um modelo ---------- */
+.modelos {
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  background: var(--superficie);
+}
+.modelos__resumo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--espaco-3) var(--espaco-4);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+.modelos__resumo svg {
+  color: var(--cat-4);
+}
+.modelos__resumo .apagado {
+  font-weight: 400;
+  font-size: 13px;
+}
+.modelos__aviso {
+  margin: 0 var(--espaco-4) var(--espaco-3);
+  font-size: 13px;
+}
+.modelos__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--espaco-3);
+  padding: 0 var(--espaco-4) var(--espaco-4);
+}
+.modelos__item {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: var(--espaco-3);
+  border: 1px solid var(--linha);
+  border-left: 3px solid var(--cat-4);
+  border-radius: var(--raio);
+  background: var(--fundo);
+}
+.modelos__item .botao {
+  justify-self: start;
+}
+.modelos__nome {
+  margin: 0;
+  font-size: 14px;
+}
+.modelos__regra,
+.modelos__descricao {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.modelos__descricao {
+  color: var(--apagado);
+}
+
 .construtor__salvar {
   display: flex;
   align-items: center;
@@ -96,6 +162,9 @@
 }
 .paleta__ajuda {
   flex-basis: 100%;
+}
+.paleta__blocos--prontas .paleta__bloco svg {
+  color: var(--cat-2);
 }
 
 .arvore {
@@ -193,7 +262,9 @@
   margin-left: auto;
 }
 .no__mover,
+.no__pronta,
 .no__comparador,
+.operando__saida,
 .operando__tipo {
   height: 30px;
   padding: 0 6px;
@@ -206,6 +277,15 @@
 .no__mover {
   max-width: 120px;
   color: var(--apagado);
+}
+.no__pronta {
+  max-width: 180px;
+  color: var(--apagado);
+}
+.operando__parametro {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .no__comparador {
   font-weight: 600;

@@ -1,5 +1,6 @@
+import { problemasIndicador, rotuloIndicador, valorIndicador, type OperandoIndicador } from "./catalogo.js";
+import { serieDe, type ContextoMercado, type SerieCandle } from "./contexto.js";
 import { formatarNumero } from "./formatar.js";
-import { ema, rsi, sma } from "./indicadores.js";
 
 /**
  * A estratégia é uma árvore: grupos E / OU / NÃO com comparações nas folhas. O
@@ -7,12 +8,15 @@ import { ema, rsi, sma } from "./indicadores.js";
  * recursivamente, porque a estrutura é recursiva. A explicação sai do mesmo
  * percurso que a decisão, então nunca diverge dela.
  */
-export type Indicador = "sma" | "ema" | "rsi";
+
+/** Campos do último candle fechado, além do fechamento (que é o `preco`). */
+export type CampoCandle = "abertura" | "maxima" | "minima" | "volume";
 
 export type Operando =
   | { readonly tipo: "preco" }
+  | { readonly tipo: CampoCandle }
   | { readonly tipo: "numero"; readonly valor: number }
-  | { readonly tipo: "indicador"; readonly nome: Indicador; readonly periodo: number }
+  | OperandoIndicador
   | { readonly tipo: "multiplicar"; readonly operando: Operando; readonly fator: number };
 
 export type Comparador = "<" | "<=" | ">" | ">=" | "cruzouAcima" | "cruzouAbaixo";
@@ -28,24 +32,10 @@ export type Regra =
       readonly direita: Operando;
     };
 
-/** Fechamentos de candles já fechados, do mais antigo ao mais recente. */
-export interface ContextoMercado {
-  readonly fechamentos: readonly number[];
-}
-
 export interface Resultado {
   readonly valor: boolean;
   readonly explicacao: string;
 }
-
-const CALCULO: Record<
-  Indicador,
-  (v: readonly number[], periodo: number, deslocamento: number) => number | null
-> = {
-  sma,
-  ema,
-  rsi,
-};
 
 const SIMBOLO: Record<Comparador, string> = {
   "<": "<",
@@ -56,27 +46,47 @@ const SIMBOLO: Record<Comparador, string> = {
   cruzouAbaixo: "cruzou abaixo de",
 };
 
+const CAMPO: Readonly<Record<CampoCandle, { rotulo: string; serie: SerieCandle }>> = {
+  abertura: { rotulo: "abertura", serie: "aberturas" },
+  maxima: { rotulo: "máxima", serie: "maximas" },
+  minima: { rotulo: "mínima", serie: "minimas" },
+  volume: { rotulo: "volume", serie: "volumes" },
+};
+
 export function rotulo(op: Operando): string {
   switch (op.tipo) {
     case "preco":
       return "preço";
+    case "abertura":
+    case "maxima":
+    case "minima":
+    case "volume":
+      return CAMPO[op.tipo].rotulo;
     case "numero":
       return formatarNumero(op.valor);
     case "indicador":
-      return `${op.nome.toUpperCase()}(${op.periodo})`;
+      return rotuloIndicador(op);
     case "multiplicar":
       return `${formatarNumero(op.fator)} × ${rotulo(op.operando)}`;
   }
 }
 
+const ponto = (serie: readonly number[] | null, deslocamento: number): number | null =>
+  serie?.[serie.length - 1 - deslocamento] ?? null;
+
 function valorDe(op: Operando, ctx: ContextoMercado, deslocamento: number): number | null {
   switch (op.tipo) {
     case "preco":
-      return ctx.fechamentos[ctx.fechamentos.length - 1 - deslocamento] ?? null;
+      return ponto(ctx.fechamentos, deslocamento);
+    case "abertura":
+    case "maxima":
+    case "minima":
+    case "volume":
+      return ponto(serieDe(ctx, CAMPO[op.tipo].serie), deslocamento);
     case "numero":
       return op.valor;
     case "indicador":
-      return CALCULO[op.nome](ctx.fechamentos, op.periodo, deslocamento);
+      return valorIndicador(op, ctx, deslocamento);
     case "multiplicar": {
       const v = valorDe(op.operando, ctx, deslocamento);
       return v === null ? null : v * op.fator;
@@ -135,7 +145,6 @@ export function avaliar(regra: Regra, ctx: ContextoMercado): Resultado {
 
 export const PROFUNDIDADE_MAXIMA = 12;
 export const NOS_MAXIMOS = 200;
-const PERIODO_MAXIMO = 500;
 
 /**
  * Valida a árvore vinda da tela antes de gravar. A profundidade e o número de nós
@@ -153,15 +162,16 @@ export function validarRegra(regra: Regra): string[] {
     }
     switch (op.tipo) {
       case "preco":
+      case "abertura":
+      case "maxima":
+      case "minima":
+      case "volume":
         return;
       case "numero":
         if (!Number.isFinite(op.valor)) problemas.add("o valor precisa ser um número finito");
         return;
       case "indicador":
-        if (!Number.isInteger(op.periodo) || op.periodo < 1 || op.periodo > PERIODO_MAXIMO)
-          problemas.add(
-            `o período de ${op.nome.toUpperCase()} precisa ser inteiro entre 1 e ${PERIODO_MAXIMO}`,
-          );
+        problemasIndicador(op).forEach((p) => problemas.add(p));
         return;
       case "multiplicar":
         if (!Number.isFinite(op.fator) || op.fator <= 0)

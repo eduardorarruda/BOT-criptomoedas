@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { dec } from "./dinheiro.js";
-import { decidir, precoAlvo, validarEstrategia, type Estrategia } from "./estrategia.js";
+import { decidir, validarEstrategia, type Estrategia } from "./estrategia.js";
+import { precoAlvo } from "./precos.js";
+import type { Acompanhamento } from "./saidas.js";
 import { posicaoDe } from "./posicao.js";
 import { POSICAO_ZERADA } from "./posicao.js";
 
@@ -82,5 +84,121 @@ describe("estratégia", () => {
     expect(validarEstrategia({ ...estrategia, stop: 0 })).toEqual([expect.stringMatching(/stop/)]);
     expect(validarEstrategia({ ...estrategia, alvoLiquido: 0 })).toEqual([expect.stringMatching(/alvo/)]);
     expect(validarEstrategia({ ...estrategia, taxa: 0.5 })).toEqual([expect.stringMatching(/taxa/)]);
+  });
+
+  describe("saídas novas", () => {
+    // 20 candles parados em 100 com máxima 101 e mínima 99: ATR(14) = 2.
+    const velas = {
+      fechamentos: Array<number>(20).fill(100),
+      maximas: Array<number>(20).fill(101),
+      minimas: Array<number>(20).fill(99),
+    };
+    const sempre: Estrategia = {
+      ...estrategia,
+      entrada: {
+        tipo: "comparar",
+        esquerda: { tipo: "preco" },
+        comparador: ">",
+        direita: { tipo: "numero", valor: 0 },
+      },
+      stop: 0.1,
+      alvoLiquido: 0.5,
+    };
+
+    it("compra com stop por ATR, explicado, e a distância de risco para o tamanho", () => {
+      const e: Estrategia = {
+        ...sempre,
+        stopAtr: { periodo: 14, multiplo: 2 },
+        tamanhoPorVolatilidade: { periodo: 14, multiplo: 1 },
+      };
+      const s = decidir(e, { ...velas, preco: dec(100) }, POSICAO_ZERADA);
+      expect(s).toMatchObject({ acao: "COMPRAR" });
+      if (s.acao !== "COMPRAR") return;
+      expect(s.stop.toString()).toBe("96");
+      expect(s.distanciaRisco?.toString()).toBe("2");
+      expect(s.explicacao).toBe("preço (100) > 0: sim; stop em 96 (preço − 2 × ATR(14) de 2)");
+      const semTamanho = decidir(sempre, { ...velas, preco: dec(100) }, POSICAO_ZERADA);
+      expect(semTamanho).not.toHaveProperty("distanciaRisco");
+    });
+
+    const acompanhamento = (stop: number, candles = 0): Acompanhamento => ({
+      entrada: dec(100),
+      stop: dec(stop),
+      maxima: dec(110),
+      candles,
+    });
+
+    it("com acompanhamento, vale o stop efetivo (o que subiu)", () => {
+      const ctx = { ...velas, preco: dec(104), acompanhamento: acompanhamento(104.5) };
+      expect(decidir(sempre, ctx, comprado)).toEqual({
+        acao: "VENDER",
+        motivo: "stop",
+        explicacao: "preço 104 chegou ao stop efetivo 104,5",
+      });
+      const aguarda = decidir(sempre, { ...ctx, preco: dec(105) }, comprado);
+      expect(aguarda.explicacao).toMatch(/^posição aberta: stop efetivo em 104,5, alvo em/);
+      // acompanhamento abaixo do stop fixo não afrouxa nada
+      expect(
+        decidir(sempre, { ...ctx, preco: dec(91), acompanhamento: acompanhamento(80) }, comprado).acao,
+      ).toBe("AGUARDAR");
+    });
+
+    it("saída por tempo depois da regra de saída, antes de aguardar", () => {
+      const e: Estrategia = { ...sempre, tempoMaximo: 5 };
+      const ctx = { ...velas, preco: dec(101), acompanhamento: acompanhamento(90, 4) };
+      expect(decidir(e, ctx, comprado).explicacao).toMatch(/, 4 de 5 candles$/);
+      expect(decidir(e, { ...ctx, acompanhamento: acompanhamento(90, 5) }, comprado)).toEqual({
+        acao: "VENDER",
+        motivo: "tempo",
+        explicacao: "a posição completou 5 candles sem chegar ao alvo (limite de 5)",
+      });
+      // sem acompanhamento não há relógio: segue aguardando
+      expect(decidir(e, { ...velas, preco: dec(101) }, comprado).acao).toBe("AGUARDAR");
+      const comSaida: Estrategia = {
+        ...e,
+        saida: {
+          tipo: "comparar",
+          esquerda: { tipo: "preco" },
+          comparador: ">",
+          direita: { tipo: "numero", valor: 0 },
+        },
+      };
+      expect(decidir(comSaida, { ...ctx, acompanhamento: acompanhamento(90, 5) }, comprado)).toMatchObject({
+        motivo: "regra de saída",
+      });
+    });
+
+    it("valida os campos de saída", () => {
+      const v = (parcial: Partial<Estrategia>) => validarEstrategia({ ...estrategia, ...parcial });
+      expect(
+        v({
+          stopAtr: { periodo: 14, multiplo: 2 },
+          stopMovel: { tipo: "atr", periodo: 22, multiplo: 3 },
+          empate: { gatilho: 0.02 },
+          tempoMaximo: 48,
+          tamanhoPorVolatilidade: { periodo: 20, multiplo: 2 },
+        }),
+      ).toEqual([]);
+      expect(v({ stopAtr: { periodo: 0, multiplo: 2 } })).toEqual([
+        expect.stringMatching(/período do ATR do stop/),
+      ]);
+      expect(v({ stopAtr: { periodo: 14, multiplo: 0 } })).toEqual([
+        expect.stringMatching(/múltiplo do ATR do stop/),
+      ]);
+      expect(v({ stopMovel: { tipo: "percentual", distancia: 0.5 } })).toEqual([
+        expect.stringMatching(/distância do stop móvel/),
+      ]);
+      expect(v({ stopMovel: { tipo: "atr", periodo: 14, multiplo: 21 } })).toEqual([
+        expect.stringMatching(/stop móvel/),
+      ]);
+      expect(v({ empate: { gatilho: 0.001 } })).toEqual([
+        expect.stringMatching(/custo das duas taxas \(0,2002%\)/),
+      ]);
+      expect(v({ tempoMaximo: 0 })).toEqual([expect.stringMatching(/tempo máximo/)]);
+      expect(v({ tempoMaximo: 2.5 })).toHaveLength(1);
+      expect(v({ tamanhoPorVolatilidade: { periodo: 14, multiplo: -1 } })).toEqual([
+        expect.stringMatching(/ATR do tamanho/),
+      ]);
+    });
   });
 });

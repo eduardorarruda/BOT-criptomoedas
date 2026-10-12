@@ -60,6 +60,7 @@ async function planejarCompra(
       disponivel,
       filtros: ctx.filtros,
       taxa,
+      ...(sinal.distanciaRisco ? { distanciaRisco: sinal.distanciaRisco } : {}),
     },
     ctx.proposta?.tamanhoRelativo ?? 1,
   );

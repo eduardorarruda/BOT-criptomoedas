@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { podeReceber } from "./arvore";
-import { NOME_BLOCO, TIPO_ARRASTE, useConstrutor } from "./contexto";
+import { nomeDoBloco, TIPO_ARRASTE, useConstrutor } from "./contexto";
 
 /** Faixa onde se solta um bloco. Só aparece durante o arraste e só onde o bloco cabe. */
 export function ZonaSoltar({
@@ -34,7 +34,7 @@ export function ZonaSoltar({
         setSobre(false);
         if (arrastando.tipo === "novo") {
           despachar({ tipo: "adicionar", destinoId, indice, bloco: arrastando.bloco });
-          anunciar(`${NOME_BLOCO[arrastando.bloco]} adicionado em ${rotulo}.`);
+          anunciar(`${nomeDoBloco(arrastando.bloco)} adicionado em ${rotulo}.`);
         } else {
           despachar({ tipo: "mover", id: arrastando.id, destinoId, indice });
           anunciar(`Movido para ${rotulo}.`);
