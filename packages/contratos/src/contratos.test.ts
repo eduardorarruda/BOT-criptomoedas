@@ -212,3 +212,36 @@ describe("eventos ao vivo novos", () => {
     ).toBe(false);
   });
 });
+
+describe("proteção na corretora no evento de posição", () => {
+  const posicao = {
+    tipo: "posicao",
+    roboId: "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b",
+    simbolo: "BTCUSDT",
+    quantidade: "0.01",
+    precoMedio: "60000",
+    resultadoRealizado: "0",
+    taxasPagas: "0.6",
+    em: 1_760_000_000_000,
+  };
+  const protecao = {
+    estado: "ATIVA",
+    stop: "58800",
+    limite: "58212",
+    alvo: "61200.5",
+    quantidade: "0.01",
+    atualizadaEm: 1_760_000_000_000,
+  };
+
+  it("leva a proteção quando há uma; sem ela, continua valendo", () => {
+    expect(EventoEsquema.safeParse({ ...posicao, protecaoCorretora: protecao }).success).toBe(true);
+    expect(EventoEsquema.safeParse(posicao).success).toBe(true);
+  });
+
+  it("recusa estado desconhecido e preço que não é decimal em texto", () => {
+    const estado = { ...posicao, protecaoCorretora: { ...protecao, estado: "VIVA" } };
+    const preco = { ...posicao, protecaoCorretora: { ...protecao, stop: 58800 } };
+    expect(EventoEsquema.safeParse(estado).success).toBe(false);
+    expect(EventoEsquema.safeParse(preco).success).toBe(false);
+  });
+});

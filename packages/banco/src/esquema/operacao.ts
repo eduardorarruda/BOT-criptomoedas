@@ -11,6 +11,7 @@ import {
   primaryKey,
   text,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { usuarios } from "./acesso.js";
@@ -245,5 +246,60 @@ export const backtests = pgTable(
     index("backtests_usuario").on(t.usuarioId, t.criadoEm.desc()),
     check("backtests_estado", sql`${t.estado} in ('na_fila', 'rodando', 'concluido', 'falhou')`),
     check("backtests_periodo", sql`${t.fim} > ${t.inicio}`),
+  ],
+);
+
+export const ESTADOS_PROTECAO = ["PENDENTE", "ATIVA", "EXECUTADA", "CANCELADA", "REJEITADA"] as const;
+const estadosProtecao = sql.raw(ESTADOS_PROTECAO.map((e) => `'${e}'`).join(", "));
+
+/**
+ * A proteção (stop-limit ou OCO) que o motor deixou na corretora para a posição
+ * aberta. Reservada (PENDENTE) antes do envio, como as ordens: depois de um reinício o
+ * motor confere o livro da corretora contra estas linhas. No máximo uma viva
+ * (PENDENTE ou ATIVA) por robô — o índice parcial barra a segunda.
+ */
+export const protecoesCorretora = pgTable(
+  "protecoes_corretora",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    usuarioId: usuarioId(),
+    roboId: uuid("robo_id").notNull(),
+    /** A compra que abriu a posição protegida. */
+    decisaoId: uuid("decisao_id").notNull(),
+    simbolo: text("simbolo").notNull(),
+    /** listClientOrderId do OCO; no stop sozinho, o newClientOrderId do stop. */
+    idLista: text("id_lista").notNull(),
+    idStop: text("id_stop").notNull(),
+    idAlvo: text("id_alvo"),
+    idCorretora: text("id_corretora"),
+    quantidade: decimal("quantidade").notNull(),
+    stop: decimal("stop").notNull(),
+    limite: decimal("limite").notNull(),
+    alvo: decimal("alvo"),
+    estado: text("estado", { enum: ESTADOS_PROTECAO }).notNull().default("PENDENTE"),
+    motivo: text("motivo"),
+    criadaEm: instante("criada_em").notNull().defaultNow(),
+    atualizadaEm: instante("atualizada_em").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      name: "protecoes_corretora_robo_fk",
+      columns: [t.roboId, t.usuarioId],
+      foreignColumns: [robos.id, robos.usuarioId],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "protecoes_corretora_decisao_fk",
+      columns: [t.decisaoId, t.usuarioId],
+      foreignColumns: [decisoes.id, decisoes.usuarioId],
+    }).onDelete("cascade"),
+    unique("protecoes_corretora_id_lista").on(t.idLista),
+    uniqueIndex("protecoes_corretora_viva")
+      .on(t.roboId)
+      .where(sql`${t.estado} in ('PENDENTE', 'ATIVA')`),
+    index("protecoes_corretora_robo_criada").on(t.roboId, t.criadaEm.desc()),
+    check("protecoes_corretora_estado", sql`${t.estado} in (${estadosProtecao})`),
+    check("protecoes_corretora_quantidade", sql`${t.quantidade} > 0`),
+    check("protecoes_corretora_limite", sql`${t.limite} <= ${t.stop}`),
+    check("protecoes_corretora_alvo", sql`(${t.alvo} is null) = (${t.idAlvo} is null)`),
   ],
 );

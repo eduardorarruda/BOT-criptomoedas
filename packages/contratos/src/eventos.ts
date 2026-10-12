@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { BarreiraEsquema, DecisaoEsquema, OrdemEsquema, RoboEsquema } from "./dados.js";
+import {
+  BarreiraEsquema,
+  DecisaoEsquema,
+  OrdemEsquema,
+  ProtecaoCorretoraEsquema,
+  RoboEsquema,
+} from "./dados.js";
 import { Id, Instante, TextoDecimal } from "./comum.js";
 
 /** Candle fechado de um robô, para o gráfico ao vivo (decimais em texto). */
@@ -54,6 +60,8 @@ export const EventoEsquema = z.discriminatedUnion("tipo", [
     precoMedio: TextoDecimal,
     resultadoRealizado: TextoDecimal,
     taxasPagas: TextoDecimal,
+    /** Também sai quando só a proteção na corretora muda (colocada, trocada, executada). */
+    protecaoCorretora: ProtecaoCorretoraEsquema.optional(),
     em: Instante,
   }),
   z.object({ tipo: z.literal("preco"), simbolo: z.string(), preco: TextoDecimal, em: Instante }),

@@ -4,11 +4,19 @@ import type {
   EstrategiaDTO,
   OrdemDTO,
   PropostaAgente,
+  ProtecaoCorretoraDTO,
   RoboConfig,
   RoboDTO,
 } from "@zentrade/contratos";
 import { dec, paraTexto, type Estrategia, type Execucao, type Regra } from "@zentrade/dominio";
-import type { decisoes, estrategiaVersoes, execucoes, ordens, robos } from "./esquema/index.js";
+import type {
+  decisoes,
+  estrategiaVersoes,
+  execucoes,
+  ordens,
+  protecoesCorretora,
+  robos,
+} from "./esquema/index.js";
 
 /**
  * Linha do banco ↔ formatos do contrato. O NUMERIC volta do driver com 18 casas
@@ -159,3 +167,16 @@ export function execucaoDeLinha(lado: "COMPRA" | "VENDA", e: LinhaExecucao): Exe
 
 /** Instante para SQL cru: o driver do Drizzle não serializa Date em parâmetro de `sql\`\``. */
 export const iso = (msUtc: number): string => new Date(msUtc).toISOString();
+
+/** A última proteção na corretora, como a tela mostra ("Stop na corretora: ativo a X"). */
+export function protecaoCorretoraDTO(l: typeof protecoesCorretora.$inferSelect): ProtecaoCorretoraDTO {
+  return {
+    estado: l.estado,
+    stop: decimalTexto(l.stop),
+    limite: decimalTexto(l.limite),
+    ...(l.alvo !== null ? { alvo: decimalTexto(l.alvo) } : {}),
+    quantidade: decimalTexto(l.quantidade),
+    ...(l.motivo !== null ? { motivo: l.motivo } : {}),
+    atualizadaEm: ms(l.atualizadaEm),
+  };
+}

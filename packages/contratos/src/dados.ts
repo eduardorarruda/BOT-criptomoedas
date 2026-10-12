@@ -95,6 +95,21 @@ export const OrdemEsquema = z.object({
 });
 export type OrdemDTO = z.infer<typeof OrdemEsquema>;
 
+/**
+ * A última proteção que o motor deixou na corretora para o robô ("Stop na corretora:
+ * ativo a X"). ATIVA é a que vale; PENDENTE, confirmando; REJEITADA traz o motivo.
+ */
+export const ProtecaoCorretoraEsquema = z.object({
+  estado: z.enum(["PENDENTE", "ATIVA", "EXECUTADA", "CANCELADA", "REJEITADA"]),
+  stop: TextoDecimal,
+  limite: TextoDecimal,
+  alvo: TextoDecimal.optional(),
+  quantidade: TextoDecimal,
+  motivo: z.string().optional(),
+  atualizadaEm: Instante,
+});
+export type ProtecaoCorretoraDTO = z.infer<typeof ProtecaoCorretoraEsquema>;
+
 export const PosicaoEsquema = z.object({
   roboId: Id,
   simbolo: z.string(),
@@ -102,5 +117,6 @@ export const PosicaoEsquema = z.object({
   precoMedio: TextoDecimal,
   resultadoRealizado: TextoDecimal,
   taxasPagas: TextoDecimal,
+  protecaoCorretora: ProtecaoCorretoraEsquema.optional(),
 });
 export type PosicaoDTO = z.infer<typeof PosicaoEsquema>;
