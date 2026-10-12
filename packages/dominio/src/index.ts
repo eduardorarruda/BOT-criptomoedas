@@ -1,4 +1,6 @@
 export * from "./busca.js";
+export * from "./catalogo.js";
+export * from "./contexto.js";
 export * from "./dimensionamento.js";
 export * from "./dinheiro.js";
 export * from "./estrategia.js";
