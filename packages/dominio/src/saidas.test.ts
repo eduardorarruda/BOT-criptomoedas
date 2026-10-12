@@ -164,6 +164,8 @@ describe("propriedades do stop móvel (séries aleatórias com semente)", () => 
     };
   }
 
+  // 5 × 40 séries × 120 candles: rápido sozinho (< 0,5 s), mas o turbo roda todos os pacotes juntos.
+  const PRAZO_MS = 60_000;
   const configuracoes: readonly Partial<Estrategia>[] = [
     { stopMovel: { tipo: "percentual", distancia: 0.03 } },
     { stopMovel: { tipo: "atr", periodo: 14, multiplo: 2.5 } },
@@ -205,5 +207,6 @@ describe("propriedades do stop móvel (séries aleatórias com semente)", () => 
         }
       }
     },
+    PRAZO_MS,
   );
 });
