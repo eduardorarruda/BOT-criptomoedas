@@ -82,10 +82,10 @@
 .bt-veredito__nota {
   margin-top: var(--espaco-3);
 }
+/* Um gráfico por linha: lado a lado, eixos e rótulos ficam pequenos demais para ler. */
 .bt-graficos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--espaco-4);
+  gap: var(--espaco-5);
 }
 .bt-tabela th[scope="row"] .apagado {
   margin-left: 6px;
@@ -115,4 +115,13 @@
 }
 .backtests__antigo {
   font-size: 12px;
+}
+/* O resultado em destaque ocupa duas colunas: o número grande não estoura o cartão. */
+.bt-kpis > .kpi--destaque {
+  grid-column: span 2;
+}
+@media (max-width: 560px) {
+  .bt-kpis > .kpi--destaque {
+    grid-column: auto;
+  }
 }
