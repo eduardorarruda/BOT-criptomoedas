@@ -1,7 +1,7 @@
 import { CANAL_EVENTOS, EventoAnaliseEsquema, type EventoAnalise } from "@zentrade/contratos";
 import { describe, expect, it, vi } from "vitest";
 import { descreverEtapa } from "./descrever.js";
-import { observadorDaAnalise, publicadorNulo, publicadorRedis } from "./publicador.js";
+import { alertasRedis, observadorDaAnalise, publicadorNulo, publicadorRedis } from "./publicador.js";
 
 describe("descreverEtapa", () => {
   it("frases curtas em português para cada ferramenta", () => {
@@ -77,5 +77,31 @@ describe("observadorDaAnalise", () => {
     expect(
       observadorDaAnalise({ analiseId: undefined, roboId: "r", publicador: publicadorNulo }),
     ).toBeUndefined();
+  });
+});
+
+describe("alertasRedis", () => {
+  const alerta = {
+    tipo: "orcamento_ia_80",
+    gravidade: "atencao",
+    titulo: "Orçamento de IA do mês: 80%",
+    mensagem: "já é US$ 8,00",
+    chave: "orcamento_ia_80:u:2026-10",
+    usuarioId: "u",
+    em: 1,
+  } as const;
+
+  it('publica o evento "alerta" no canal de eventos; falha vira aviso no log', async () => {
+    const publish = vi.fn(async () => 1);
+    await alertasRedis({ publish }, { warn: vi.fn() })(alerta);
+    const [canal, corpo] = publish.mock.calls[0] as unknown as [string, string];
+    expect(canal).toBe(CANAL_EVENTOS);
+    expect(JSON.parse(corpo)).toEqual({ tipo: "alerta", alerta });
+    const warn = vi.fn();
+    const quebrado = vi.fn(async () => {
+      throw new Error("redis caiu");
+    });
+    await expect(alertasRedis({ publish: quebrado }, { warn })(alerta)).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalledOnce();
   });
 });

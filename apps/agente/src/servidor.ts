@@ -143,7 +143,11 @@ function registrarAnalisar(app: FastifyInstance, o: OpcoesServidor): void {
           ...comObservador(lido.valor.pedido, o.publicador),
         }),
       );
-      return { proposta: r.proposta, custoUsd: paraTexto(r.custoUsd) };
+      return {
+        proposta: r.proposta,
+        custoUsd: paraTexto(r.custoUsd),
+        ...(r.semOrcamento ? { semOrcamento: true } : {}),
+      };
     } catch (e) {
       return tratarFalha(e, resposta, pedido.log);
     } finally {

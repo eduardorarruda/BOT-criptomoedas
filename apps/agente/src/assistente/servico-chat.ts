@@ -7,6 +7,7 @@ import { observar } from "../ferramentas/index.js";
 import type { ChatApi } from "./chat-api.js";
 import type { ChatCli } from "./chat-cli.js";
 import { RegistroCitacoes } from "./citacoes.js";
+import type { PortaoOrcamento } from "../orcamento.js";
 import { ferramentasDoChat, type DependenciasChat } from "./ferramentas-chat.js";
 
 export type Emitir = (evento: EventoRespostaAgente) => void;
@@ -18,6 +19,8 @@ export interface OpcoesServicoChat extends DependenciasChat {
   readonly agora?: () => number;
   /** Para o log: falha da resposta inteira ou, com `ferramenta`, de uma ferramenta (provedor "api"). */
   readonly aoFalhar?: (erro: unknown, ferramenta?: string) => void;
+  /** Orçamento de IA da pessoa: conferido antes de chamar o modelo, gasto gravado depois. */
+  readonly orcamento?: PortaoOrcamento;
 }
 
 const PROVEDOR_FORA = {
@@ -67,6 +70,15 @@ export class ServicoChat {
   }
 
   async responder(pedido: PedidoRespostaAgente, emitir: Emitir, sinal: AbortSignal): Promise<void> {
+    const liberacao = await this.#o.orcamento?.conferir(pedido.usuarioId);
+    if (liberacao && !liberacao.liberado) {
+      emitir({
+        tipo: "erro",
+        codigo: "orcamento_ia",
+        mensagem: `O assistente está parado: ${liberacao.motivo}. Ele volta quando o período virar (UTC) ou quando você subir o limite em Risco → Orçamento de IA.`,
+      });
+      return;
+    }
     try {
       const config = await this.#o.config(pedido.usuarioId);
       const citacoes = new RegistroCitacoes();
@@ -82,13 +94,15 @@ export class ServicoChat {
         aoTexto: (delta: string) => emitir({ tipo: "texto", delta }),
         aoFalharFerramenta: (erro: unknown, nome: string) => this.#o.aoFalhar?.(erro, nome),
       };
+      let custo;
       if (config.provedor === "cli") {
         if (!this.#o.cli) throw new ErroClaudeCli("indisponivel", PROVEDOR_FORA.cli);
-        await this.#o.cli.responder({ ...base, contaId: config.contaCli });
+        custo = await this.#o.cli.responder({ ...base, contaId: config.contaCli });
       } else {
         if (!this.#o.api) throw new ErroClaudeCli("indisponivel", PROVEDOR_FORA.api);
-        await this.#o.api.responder(base);
+        custo = await this.#o.api.responder(base);
       }
+      await this.#o.orcamento?.registrar(pedido.usuarioId, "assistente", custo);
       emitir({ tipo: "fontes", fontes: citacoes.lista });
       emitir({ tipo: "concluido", provedor: config.provedor, modelo: config.modelo });
     } catch (erro) {

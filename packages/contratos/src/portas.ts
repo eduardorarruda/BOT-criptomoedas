@@ -139,6 +139,11 @@ export interface PedidoAnalise {
 export interface RespostaAnalise {
   readonly proposta: PropostaAgente;
   readonly custoUsd: Valor;
+  /**
+   * O orçamento de IA da pessoa acabou: a proposta é "aguardar" com o motivo e o
+   * modelo nem foi chamado. O motor trata como agente indisponível (agenteObrigatorio).
+   */
+  readonly semOrcamento?: boolean;
 }
 
 /** O agente de IA, visto pelo motor. Pode falhar: o motor segue sem ele (não opera). */

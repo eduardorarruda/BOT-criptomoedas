@@ -16,7 +16,8 @@ import { descreverContas } from "./claude-cli/contas.js";
 import { ExecutorClaude } from "./claude-cli/executor.js";
 import { resolverClaude } from "./claude-cli/resolver.js";
 import { configDoAgente, semVazias, type ConfigAgente } from "./config.js";
-import { publicadorNulo, publicadorRedis } from "./eventos/publicador.js";
+import { alertasRedis, publicadorNulo, publicadorRedis } from "./eventos/publicador.js";
+import { AnalistaComOrcamento, PortaoOrcamento } from "./orcamento.js";
 import { registrarRotasPonte } from "./ponte/rotas.js";
 import { SessoesPonte } from "./ponte/sessoes.js";
 import { criarHistoricoPostgres } from "./postgres/historico.js";
@@ -50,12 +51,12 @@ function prepararCli(config: ConfigAgente, sessoes: SessoesPonte, log: Logger): 
 
 function prepararRedis(config: ConfigAgente, log: Logger) {
   if (!config.urlRedis) {
-    log.warn("REDIS_URL não definida: os passos ao vivo das análises não serão publicados");
-    return { redis: null, publicador: publicadorNulo };
+    log.warn("REDIS_URL não definida: os passos ao vivo das análises e os alertas não serão publicados");
+    return { redis: null, publicador: publicadorNulo, alertar: undefined };
   }
   const redis = new Redis(config.urlRedis, { connectionName: "zentrade-agente", maxRetriesPerRequest: 2 });
   redis.on("error", (erro: Error) => log.warn({ err: erro }, "erro na conexão com o Redis"));
-  return { redis, publicador: publicadorRedis(redis, log) };
+  return { redis, publicador: publicadorRedis(redis, log), alertar: alertasRedis(redis, log) };
 }
 
 /** Banco, RAG, Redis, Claude Code e API da Anthropic, montados a partir do ambiente validado. */
@@ -67,13 +68,19 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
     embeddings: embeddingsDoAmbiente(semVazias(process.env)),
   });
   const dependencias = { busca, historico: criarHistoricoPostgres(sql) };
-  const { redis, publicador } = prepararRedis(config, logger);
+  const { redis, publicador, alertar } = prepararRedis(config, logger);
+  // Orçamento de IA da pessoa: vale para as análises e o assistente, nos dois provedores.
+  const orcamento = new PortaoOrcamento({
+    fonte: { uso: banco.usoOrcamentoIa, registrar: banco.registrarGastoIa },
+    log: logger,
+    ...(alertar ? { alertar } : {}),
+  });
   const sessoes = new SessoesPonte();
   const executor = prepararCli(config, sessoes, logger);
   const cliente = config.chaveAnthropic ? new Anthropic({ apiKey: config.chaveAnthropic }) : null;
   const provedorPadrao = cliente || !executor ? "api" : "cli";
   const configDaPessoa = configComPadrao(banco.configGravada, provedorPadrao);
-  const analista = new AnalistaPorPessoa({
+  const porPessoa = new AnalistaPorPessoa({
     api: cliente
       ? new Analista({
           cliente,
@@ -86,12 +93,14 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
     cli: executor ? new AnalistaCli({ executor, dependencias, tempoMs: config.timeoutMs }) : null,
     config: configDaPessoa,
   });
+  const analista = new AnalistaComOrcamento(porPessoa, orcamento);
   const chat = new ServicoChat({
     dados: banco,
     busca,
     config: configDaPessoa,
     api: cliente ? new ChatApi({ cliente, modeloPadrao: config.modelo }) : null,
     cli: executor ? new ChatCli({ executor, tempoMs: config.chat.timeoutMs }) : null,
+    orcamento,
     aoFalhar: (erro, ferramenta) =>
       ferramenta
         ? logger.error({ err: erro, ferramenta }, "ferramenta do assistente falhou")

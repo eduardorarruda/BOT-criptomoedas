@@ -1,4 +1,10 @@
-import { CANAL_EVENTOS, EventoAnaliseEsquema, type EventoAnalise } from "@zentrade/contratos";
+import {
+  AlertaEmitidoEsquema,
+  CANAL_EVENTOS,
+  EventoAnaliseEsquema,
+  type AlertaEmitido,
+  type EventoAnalise,
+} from "@zentrade/contratos";
 import type { AoUsarFerramenta } from "../ferramentas/index.js";
 import { descreverEtapa } from "./descrever.js";
 
@@ -29,6 +35,23 @@ export function publicadorRedis(redis: RedisPublicador, log: LogEventos): Public
         log.warn({ err: erro, analiseId: evento.analiseId }, "não deu para publicar o passo da análise");
       }
     },
+  };
+}
+
+/**
+ * Alertas do agente (orçamento de IA em 80% e 100%) no mesmo canal: a API deduplica,
+ * grava o aviso da pessoa e repassa ao n8n. Falha ao publicar só vai para o log.
+ */
+export function alertasRedis(redis: RedisPublicador, log: LogEventos): (a: AlertaEmitido) => Promise<void> {
+  return async (alerta) => {
+    try {
+      await redis.publish(
+        CANAL_EVENTOS,
+        JSON.stringify({ tipo: "alerta", alerta: AlertaEmitidoEsquema.parse(alerta) }),
+      );
+    } catch (erro) {
+      log.warn({ err: erro, tipo: alerta.tipo }, "não deu para publicar o alerta do agente");
+    }
   };
 }
 

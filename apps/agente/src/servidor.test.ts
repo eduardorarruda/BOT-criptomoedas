@@ -51,6 +51,12 @@ describe("POST /analisar", () => {
     expect(opcoes.signal).toBeInstanceOf(AbortSignal);
   });
 
+  it("sem orçamento de IA, avisa o motor com semOrcamento", async () => {
+    app = servidor(async () => ({ proposta, custoUsd: dec(0), semOrcamento: true }));
+    const r = await app.inject({ method: "POST", url: "/analisar", headers: cabecalhos, payload: corpo });
+    expect(r.json()).toEqual({ proposta, custoUsd: "0", semOrcamento: true });
+  });
+
   it("exige Authorization: Bearer com o segredo certo", async () => {
     const analisar = vi.fn();
     app = servidor(analisar);

@@ -1,7 +1,9 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { BetaMessage } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import type { PedidoRespostaAgente } from "@zentrade/contratos";
+import type { Valor } from "@zentrade/dominio";
 import { MODELO_PADRAO } from "../analista.js";
+import { custoUsd } from "../custo.js";
 import { paraAnthropic, type AoFalharFerramenta, type FerramentaLeitura } from "../ferramentas/index.js";
 import { SYSTEM_CHAT, turnosAlternados } from "./prompt-chat.js";
 
@@ -55,7 +57,8 @@ export class ChatApi {
     this.#agora = o.agora ?? (() => new Date());
   }
 
-  async responder(p: PedidoChat): Promise<void> {
+  /** Transmite a resposta e devolve quanto ela custou (US$, todas as voltas do laço). */
+  async responder(p: PedidoChat): Promise<Valor> {
     const runner = this.#cliente.beta.messages.toolRunner(
       {
         model: p.modelo ?? this.#modeloPadrao,
@@ -76,6 +79,7 @@ export class ChatApi {
     );
     let jaEscreveu = false;
     let final: BetaMessage | undefined;
+    const mensagens: BetaMessage[] = [];
     for await (const stream of runner) {
       let novoBloco = jaEscreveu;
       stream.on("text", (delta) => {
@@ -84,8 +88,10 @@ export class ChatApi {
         jaEscreveu = true;
       });
       final = await stream.finalMessage();
+      mensagens.push(final);
     }
     const aviso = avisoDaParada(final);
     if (aviso) p.aoTexto(`${jaEscreveu ? "\n\n" : ""}_${aviso}_`);
+    return custoUsd(mensagens);
   }
 }

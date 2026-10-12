@@ -1,3 +1,4 @@
+import { dec, type Valor } from "@zentrade/dominio";
 import { ErroClaudeCli } from "../claude-cli/analista-cli.js";
 import type { ExecutorClaude } from "../claude-cli/executor.js";
 import { lerJson } from "../claude-cli/resultado.js";
@@ -64,7 +65,8 @@ export class ChatCli {
     this.#agora = o.agora ?? (() => new Date());
   }
 
-  async responder(p: PedidoChat & { readonly contaId: string | null }): Promise<void> {
+  /** Transmite a resposta e devolve o custo que o CLI informou (no plano, é estimativa). */
+  async responder(p: PedidoChat & { readonly contaId: string | null }): Promise<Valor> {
     const leitor = criarLeitorTexto(p.aoTexto);
     const exec = await this.#executor.executar({
       ferramentas: p.ferramentas,
@@ -83,5 +85,6 @@ export class ChatCli {
       throw new ErroClaudeCli("falhou", MOTIVOS[r.subtype] ?? `O Claude Code parou com erro (${r.subtype}).`);
     }
     leitor.fim(r?.result);
+    return dec(String(r?.total_cost_usd ?? 0));
   }
 }
