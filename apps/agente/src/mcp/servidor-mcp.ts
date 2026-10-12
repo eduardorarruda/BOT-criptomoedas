@@ -71,7 +71,7 @@ export function criarServidorMcp(api: ClienteApi): McpServer {
     {
       title: "Ligar a parada total",
       description:
-        "LIGA a parada total: nenhum robô envia ordem até uma pessoa desligá-la pela tela (com reautenticação). " +
+        "LIGA a parada total: nenhum robô compra nem vende pela regra até uma pessoa desligá-la pela tela (com reautenticação); o stop e o alvo das posições abertas seguem valendo. " +
         "Esta ferramenta não desliga a parada.",
       inputSchema: { motivo: z.string().max(300).optional().describe("Por que parar (fica só na conversa)") },
       annotations: { destructiveHint: false, idempotentHint: true },
@@ -79,7 +79,7 @@ export function criarServidorMcp(api: ClienteApi): McpServer {
     () =>
       responder(async () => {
         await api.paradaTotal(true);
-        return "Parada total LIGADA. Nenhuma ordem sai. Para retomar, uma pessoa precisa desligá-la pela tela.";
+        return "Parada total LIGADA. Nenhuma entrada nova; stop e alvo das posições seguem valendo. Para retomar, uma pessoa precisa desligá-la pela tela.";
       }),
   );
 

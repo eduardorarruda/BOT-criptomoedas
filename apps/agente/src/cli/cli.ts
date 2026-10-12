@@ -24,7 +24,7 @@ export const AJUDA = `Uso: zentrade <comando> [opções]
   zentrade decisoes [--robo ID] [--limite N]
                                        últimas decisões (mais recentes primeiro)
   zentrade explicar <decisaoId>        por que o robô decidiu o que decidiu
-  zentrade pausar-tudo                 liga a parada total (nenhuma ordem sai)
+  zentrade pausar-tudo                 liga a parada total (nenhuma entrada nova)
   zentrade retomar-tudo                desliga a parada total (pede confirmação)
   zentrade backtest --estrategia ID --versao N --simbolo BTCUSDT --intervalo 1h
                     --inicio AAAA-MM-DD --fim AAAA-MM-DD
@@ -118,7 +118,7 @@ async function comando(nome: string, args: string[], v: Valores, amb: AmbienteCl
       return OK;
     case "pausar-tudo":
       await api.paradaTotal(true);
-      escrever("Parada total LIGADA. Nenhuma ordem sai até alguém retomar.");
+      escrever("Parada total LIGADA. Nenhuma entrada nova até alguém retomar; stop e alvo seguem valendo.");
       return OK;
     case "retomar-tudo": {
       const feito = await retomar(api, amb);

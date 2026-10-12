@@ -40,7 +40,8 @@ function Metricas() {
         <div className="faixa faixa--atencao" role="status">
           <OctagonX size={18} aria-hidden="true" />
           <p>
-            <strong>Parada total ligada.</strong> Nenhum robô envia ordens até você desligar.
+            <strong>Parada total ligada.</strong> Nenhuma entrada nova até você desligar; o stop e o alvo das
+            posições abertas seguem valendo.
           </p>
           <Link to="/risco" className="botao botao--secundario botao--pequeno">
             Ir para Risco

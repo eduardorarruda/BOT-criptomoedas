@@ -6,6 +6,7 @@ import type {
   PortaCredenciais,
   PortaDecisoes,
   PortaOrdens,
+  PortaProtecoes,
   PortaRobos,
   RoboConfig,
 } from "@zentrade/contratos";
@@ -19,7 +20,13 @@ import { CorretoraPapelAoVivo } from "./papel-ao-vivo.js";
 import { AgenteFixo } from "./portas/agente-fixo.js";
 import { AgenteHttp } from "./portas/agente-http.js";
 import { EventosNoRegistro } from "./portas/eventos-registro.js";
-import { AprovacaoMemoria, DecisoesMemoria, OrdensMemoria, RobosMemoria } from "./portas/memoria.js";
+import {
+  AprovacaoMemoria,
+  DecisoesMemoria,
+  OrdensMemoria,
+  ProtecoesMemoria,
+  RobosMemoria,
+} from "./portas/memoria.js";
 import { BatidaRedis, EventosRedis, type ClienteRedis } from "./portas/redis.js";
 import { RobosDaRede } from "./portas/robos-da-rede.js";
 import type { RobosCarregados } from "./robos-arquivo.js";
@@ -69,7 +76,12 @@ export function criarAgente(config: Config): PortaAgente {
 /** O que o motor recebe de fora: o banco (portas e candles), o Redis e, sem banco, o arquivo de robôs. */
 export interface FontesMotor {
   readonly banco?: {
-    readonly portas: { robos: PortaRobos; decisoes: PortaDecisoes; ordens: PortaOrdens };
+    readonly portas: {
+      robos: PortaRobos;
+      decisoes: PortaDecisoes;
+      ordens: PortaOrdens;
+      protecoes: PortaProtecoes;
+    };
     readonly mercado: PortaCandles;
     /** As chaves de corretora de cada pessoa (null sem ZENTRADE_CHAVE_MESTRA). */
     readonly credenciais?: PortaCredenciais | null;
@@ -92,6 +104,7 @@ interface Portas {
   readonly robos: PortaRobos;
   readonly decisoes: PortaDecisoes;
   readonly ordens: PortaOrdens;
+  readonly protecoes: PortaProtecoes;
   readonly aprovacao: PortaAprovacao;
 }
 
@@ -104,7 +117,10 @@ function portasDaMemoria(f: FontesMotor, registro: Registro, relogio: RelogioSis
       "aprovação pedida, mas sem banco a API não tem como responder: vai expirar",
     ),
   );
-  return { robos, decisoes: new DecisoesMemoria(), ordens: new OrdensMemoria(relogio), aprovacao };
+  const decisoes = new DecisoesMemoria();
+  const ordens = new OrdensMemoria(relogio);
+  const protecoes = new ProtecoesMemoria(decisoes, ordens, relogio);
+  return { robos, decisoes, ordens, protecoes, aprovacao };
 }
 
 /** Papel com banco: refaz o saldo simulado com as execuções gravadas, uma vez por robô. */
@@ -185,6 +201,7 @@ export function montarMotor(config: Config, f: FontesMotor, registro: Registro) 
     robos: new RobosDaRede(portas.robos, config.MOTOR_REDE),
     decisoes: portas.decisoes,
     ordens: portas.ordens,
+    ...(config.MOTOR_STOP_NA_CORRETORA ? { protecoes: portas.protecoes } : {}),
     agente: criarAgente(config),
     eventos: f.redis ? new EventosRedis(f.redis) : new EventosNoRegistro(registro),
     aprovacao: portas.aprovacao,
@@ -197,6 +214,7 @@ export function montarMotor(config: Config, f: FontesMotor, registro: Registro) 
       agenteObrigatorio: config.MOTOR_AGENTE_OBRIGATORIO,
       tamanhoHistorico: config.MOTOR_HISTORICO,
       expiracaoAprovacaoMs: config.APROVACAO_VALIDADE_MIN * 60_000,
+      stopLimiteBps: config.MOTOR_STOP_LIMITE_BPS,
     },
   };
   return { deps, opcoesMotor: opcoesDoMotor(config, f, corretora, portas.ordens, registro) };

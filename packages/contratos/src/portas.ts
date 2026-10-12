@@ -12,7 +12,7 @@ import type { Intervalo, ModoRobo, Rede } from "./comum.js";
 import type { EstadoDecisao } from "./dados.js";
 import type { Evento } from "./eventos.js";
 import type { PropostaAgente } from "./proposta.js";
-import type { ResultadoOrdem } from "./corretora.js";
+import type { EstadoProtecao, IdsProtecao, ResultadoOrdem } from "./corretora.js";
 
 /** Robô pronto para rodar, já com os tipos do domínio (decimais exatos). */
 export interface RoboConfig {
@@ -34,6 +34,7 @@ export interface Relogio {
 }
 
 export interface PortaRobos {
+  /** Os robôs a rodar: os não pausados e os pausados com posição aberta (o stop segue vigiado). */
   ativos(): Promise<RoboConfig[]>;
   /** Parada total, global ou do robô. Lido a cada decisão, nunca em cache. */
   pausado(roboId: string): Promise<boolean>;
@@ -80,6 +81,11 @@ export interface PortaDecisoes {
   /** Resultado realizado (líquido das duas taxas) da ida e volta, gravado na compra que a abriu. */
   registrarDesfecho(decisaoId: string, resultado: Valor, em: number): Promise<void>;
   ultimaCompraExecutada(roboId: string): Promise<CompraExecutada | null>;
+  /**
+   * Sobe o stop efetivo gravado na compra (stop móvel, empate); nunca desce. A posição
+   * aberta segue com ele depois de um reinício.
+   */
+  subirStop(decisaoId: string, stop: Valor): Promise<void>;
 }
 
 export interface NovaOrdem {
@@ -111,6 +117,62 @@ export interface PortaOrdens {
   contarDesde(roboId: string, desdeMs: number): Promise<number>;
   resultadoDesde(roboId: string, desdeMs: number): Promise<Valor>;
   ultimaPerdaEm(roboId: string): Promise<number | null>;
+}
+
+/** PENDENTE: reservada antes do envio; se o motor caiu no meio, pode ter entrado ou não. */
+export type EstadoProtecaoGravada = "PENDENTE" | EstadoProtecao;
+
+/** A proteção (stop-limit ou OCO) que o motor vai deixar na corretora para a posição aberta. */
+export interface NovaProtecao {
+  readonly roboId: string;
+  /** A compra que abriu a posição protegida. */
+  readonly decisaoId: string;
+  readonly simbolo: string;
+  readonly ids: IdsProtecao;
+  readonly quantidade: Valor;
+  readonly stop: Valor;
+  readonly limite: Valor;
+  readonly alvo?: Valor;
+}
+
+export interface ProtecaoGravada extends NovaProtecao {
+  readonly estado: EstadoProtecaoGravada;
+  readonly idCorretora: string | null;
+  readonly motivo?: string;
+  readonly criadaEm: number;
+  readonly atualizadaEm: number;
+}
+
+/** Uma perna da proteção executou (no todo ou em parte): é a venda que fecha a posição. */
+export interface SaidaProtecao {
+  /** A decisão de venda para o diário (estado "executada"); só é gravada na primeira vez. */
+  readonly decisao: NovaDecisao;
+  /** A perna como a corretora a devolveu: o idCliente dela, o estado e as execuções. */
+  readonly ordem: ResultadoOrdem;
+  readonly quantidade: Valor;
+}
+
+/**
+ * Proteções na corretora, duráveis: sobrevivem ao reinício para o motor conferir o
+ * livro contra o banco. No máximo uma viva (PENDENTE ou ATIVA) por robô.
+ */
+export interface PortaProtecoes {
+  /** Grava a intenção ANTES de enviar. "ja_existe": já há uma viva para o robô, ou os ids já foram usados. */
+  reservar(p: NovaProtecao): Promise<"nova" | "ja_existe">;
+  /** A proteção viva (PENDENTE ou ATIVA) do robô. */
+  viva(roboId: string): Promise<ProtecaoGravada | null>;
+  /** A mais recente, viva ou não (a tela mostra o estado da última). */
+  ultima(roboId: string): Promise<ProtecaoGravada | null>;
+  atualizar(
+    idLista: string,
+    estado: EstadoProtecaoGravada,
+    extra?: { readonly idCorretora?: string | null; readonly motivo?: string },
+  ): Promise<void>;
+  /**
+   * Grava o que uma perna executou como a venda de saída: a decisão no diário (só na
+   * primeira vez para a perna), a ordem e as execuções (reconcluir não duplica).
+   */
+  registrarSaida(idLista: string, saida: SaidaProtecao): Promise<{ decisaoId: string; nova: boolean }>;
 }
 
 /** Orçamento de risco do robô na hora do pedido (moeda de cotação). */

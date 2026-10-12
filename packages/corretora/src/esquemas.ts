@@ -56,12 +56,32 @@ export const RespostaOrdemFull = z.object({
 
 export const RespostaConsultaOrdem = z.object({
   orderId: z.number(),
+  /** -1 quando a ordem não faz parte de uma lista (OCO). */
+  orderListId: z.number().optional(),
   clientOrderId: z.string(),
   status: z.string(),
   executedQty: z.string(),
   updateTime: z.number(),
   side: z.enum(["BUY", "SELL"]),
 });
+
+/** POST /api/v3/order com newOrderRespType RESULT (o stop-limit não executa na hora). */
+export const RespostaOrdemResultado = z.object({
+  orderId: z.number(),
+  clientOrderId: z.string(),
+  status: z.string(),
+  executedQty: z.string(),
+});
+
+/** POST /api/v3/orderList/oco com newOrderRespType RESULT: a lista e um relatório por perna. */
+export const RespostaOco = z.object({
+  orderListId: z.number(),
+  listClientOrderId: z.string(),
+  orderReports: z.array(RespostaOrdemResultado),
+});
+
+/** DELETE /api/v3/order e /api/v3/orderList: só confirma; o estado final vem da consulta. */
+export const RespostaCancelamento = z.object({}).loose();
 
 export const RespostaNegocios = z.array(Fill.extend({ orderId: z.number(), time: z.number() }));
 

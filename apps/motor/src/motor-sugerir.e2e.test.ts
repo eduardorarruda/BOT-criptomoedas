@@ -1,9 +1,9 @@
 import type { PortaAgente } from "@zentrade/contratos";
-import { dec, posicaoDe, precoAlvo } from "@zentrade/dominio";
+import { dec, precoAlvo } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
 import { AgenteFixo } from "./portas/agente-fixo.js";
 import type { DecisoesMemoria } from "./portas/memoria.js";
-import { montarCenario } from "./teste/cenario.js";
+import { ESTRATEGIA_COM_SAIDA, montarCenario, NA_SAIDA } from "./teste/cenario.js";
 
 const ALVO = precoAlvo(dec(94), 0.01, 0.001);
 const acimaDoAlvo = (mais = 0.1) => ALVO.plus(mais).toFixed(2);
@@ -58,14 +58,19 @@ describe("modo sugerir: a espera pela pessoa não segura o robô", () => {
 
   it("com uma venda esperando aprovação, o stop da posição aberta continua vigiado", async () => {
     const r = dormirControlado();
-    const c = montarCenario({ modo: "sugerir", dormir: r.dormir, aoSolicitar: aprovaPrimeira() });
+    const c = montarCenario({
+      modo: "sugerir",
+      dormir: r.dormir,
+      aoSolicitar: aprovaPrimeira(),
+      estrategia: ESTRATEGIA_COM_SAIDA,
+    });
     await c.aoVivo.iniciar();
     await c.fecharIntervalo(94, true, false);
     r.soltarTodos();
     await c.aoVivo.ocioso();
     expect(c.ordensEnviadas().map((o) => o.ordem.lado)).toEqual(["COMPRA"]);
 
-    await c.fecharMinuto(acimaDoAlvo(), false); // venda pelo alvo: pede aprovação e espera
+    await c.fecharIntervalo(NA_SAIDA, true, false); // venda pela regra de saída: pede aprovação e espera
     expect(c.decisoes.todas()[1]?.estado).toBe("aguardando_aprovacao");
     await c.fecharMinuto(92, false); // o stop não espera ninguém
     expect(c.ordensEnviadas().map((o) => o.ordem.lado)).toEqual(["COMPRA", "VENDA"]);
@@ -81,12 +86,17 @@ describe("modo sugerir: a espera pela pessoa não segura o robô", () => {
 
   it("venda aprovada depois que a posição já fechou: barrada, nada é enviado", async () => {
     const r = dormirControlado();
-    const c = montarCenario({ modo: "sugerir", dormir: r.dormir, aoSolicitar: aprovaPrimeira() });
+    const c = montarCenario({
+      modo: "sugerir",
+      dormir: r.dormir,
+      aoSolicitar: aprovaPrimeira(),
+      estrategia: ESTRATEGIA_COM_SAIDA,
+    });
     await c.aoVivo.iniciar();
     await c.fecharIntervalo(94, true, false);
     r.soltarTodos();
     await c.aoVivo.ocioso();
-    await c.fecharMinuto(acimaDoAlvo(), false);
+    await c.fecharIntervalo(NA_SAIDA, true, false);
     const vendaId = c.decisoes.todas()[1]!.id;
     // A posição some por fora (ex.: venda manual na corretora registrada pelo banco).
     const execucoes = c.ordens.execucoes.bind(c.ordens);
@@ -151,52 +161,41 @@ describe("modo sugerir: a espera pela pessoa não segura o robô", () => {
     expect(c.aprovacao.solicitacoes()).toHaveLength(1);
     expect(c.decisoes.todas()[1]?.estado).toBe("executada");
   });
+
+  it("alvo no modo sugerir também vende sem pedir aprovação nem consultar o agente", async () => {
+    const conta = new Contador(new AgenteFixo("sempre_concorda"));
+    const c = montarCenario({
+      modo: "sugerir",
+      agente: conta,
+      aoSolicitar: (id, d) => void d.mudarEstado(id, "aprovada"),
+    });
+    await c.aoVivo.iniciar();
+    await c.fecharIntervalo(94);
+    const antes = conta.chamadas;
+    await c.fecharMinuto(acimaDoAlvo());
+    expect(c.ordensEnviadas().map((o) => o.ordem.lado)).toEqual(["COMPRA", "VENDA"]);
+    expect(c.aprovacao.solicitacoes()).toHaveLength(1);
+    expect(conta.chamadas).toBe(antes);
+  });
 });
 
 describe("decisão bloqueada não se repete a cada minuto", () => {
-  it("parada total ligada com o preço no stop: registra uma vez e espera a mudança", async () => {
+  it("posição de poeira com o preço no stop: registra uma vez e espera a posição mudar", async () => {
     const c = montarCenario();
     await c.aoVivo.iniciar();
     await c.fecharIntervalo(94);
-    c.robos.pausar();
+    const execucoes = c.ordens.execucoes.bind(c.ordens);
+    let quantidade = dec("0.00003");
+    c.ordens.execucoes = async (id) => (await execucoes(id)).map((e) => ({ ...e, quantidade }));
     await c.fecharMinuto(92);
     await c.fecharMinuto("91.9");
     await c.fecharMinuto("91.8");
-    expect(c.decisoes.todas().filter((d) => d.estado === "barrada")).toHaveLength(1);
-    c.robos.retomar();
+    const barradas = () => c.decisoes.todas().filter((d) => d.estado === "barrada");
+    expect(barradas()).toHaveLength(1);
+    expect(barradas()[0]?.risco.barreiras.map((b) => b.codigo)).toEqual(["poeira"]);
+    quantidade = dec("0.00004");
     await c.fecharMinuto("91.7");
-    expect(c.ordensEnviadas().map((o) => o.ordem.lado)).toEqual(["COMPRA", "VENDA"]);
-    expect(posicaoDe(await c.ordens.execucoes("r1")).quantidade.isZero()).toBe(true);
-  });
-
-  it("agente dizendo aguardar numa venda pelo alvo: pergunta uma vez por candle do intervalo", async () => {
-    const conta = new Contador(new AgenteFixo("sempre_concorda"));
-    const c = montarCenario({ agente: conta });
-    await c.aoVivo.iniciar();
-    await c.fecharIntervalo(94);
-    conta.atual = new AgenteFixo("nunca_concorda");
-    const antes = conta.chamadas;
-    await c.fecharMinuto(acimaDoAlvo());
-    await c.fecharMinuto(acimaDoAlvo(0.2));
-    await c.fecharMinuto(acimaDoAlvo(0.3));
-    expect(conta.chamadas - antes).toBe(1);
-    expect(c.decisoes.todas().filter((d) => d.estado === "registrada")).toHaveLength(1);
-    await c.fecharIntervalo(acimaDoAlvo(0.4)); // candle novo do intervalo: pode perguntar de novo
-    expect(conta.chamadas - antes).toBe(2);
-    await c.fecharMinuto(acimaDoAlvo(0.5));
-    expect(conta.chamadas - antes).toBe(2);
-  });
-
-  it("mudou a posição: o bloqueio anterior não vale mais", async () => {
-    const c = montarCenario();
-    await c.aoVivo.iniciar();
-    await c.fecharIntervalo(94);
-    c.robos.pausar();
-    await c.fecharMinuto(92);
-    const execucoes = c.ordens.execucoes.bind(c.ordens);
-    c.ordens.execucoes = async (id) =>
-      (await execucoes(id)).map((e) => ({ ...e, quantidade: e.quantidade.times(2) }));
-    await c.fecharMinuto("91.9");
-    expect(c.decisoes.todas().filter((d) => d.estado === "barrada")).toHaveLength(2);
+    expect(barradas()).toHaveLength(2);
+    expect(c.ordensEnviadas()).toHaveLength(1);
   });
 });

@@ -71,6 +71,13 @@
       "when": 1791800000009,
       "tag": "0009_backtest_validacao",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791804969038,
+      "tag": "0011_protecoes_corretora",
+      "breakpoints": true
     }
   ]
 }

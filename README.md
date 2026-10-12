@@ -30,7 +30,7 @@ Se a IA errar, alucinar ou sair do ar, o pior que acontece é **não operar**. A
 
 - **Dinheiro é decimal exato.** Nunca ponto flutuante.
 - **A posição é derivada** das execuções confirmadas pela corretora, nunca gravada em dobro.
-- **Toda compra tem stop**, e o alvo cobre as duas taxas.
+- **Toda compra tem stop**, e o alvo cobre as duas taxas. O stop e o alvo ficam no livro da corretora e saem sempre: a parada total barra entradas novas, nunca a proteção.
 - **Toda decisão explica o porquê**, com as fontes, e guarda o desfecho.
 - **Dinheiro real por último**: robô novo nasce observando, na testnet ou em papel.
 
@@ -105,7 +105,7 @@ O que existe e tem teste automatizado:
 - **Domínio, contratos e risco**: regras puras com cobertura alta; dimensionamento por busca binária; posição derivada das execuções.
 - **Banco**: esquema, migrações e RLS testados contra PostgreSQL de verdade (Timescale + pgvector).
 - **API**: autenticação (sessão, CSRF, 2FA, reautenticação, tokens com escopo), robôs, decisões, backtests, conhecimento, automações, patrimônio e webhooks com anti-replay, testados contra PostgreSQL e Redis de verdade.
-- **Motor**: ciclo de decisão completo em papel, com corretora simulada e testes de ponta a ponta.
+- **Motor**: ciclo de decisão completo em papel, com corretora simulada e testes de ponta a ponta. Depois da compra, o stop e o alvo vão para o livro da corretora (OCO ou stop-limit), trocados quando o stop efetivo sobe e conferidos a cada candle e na partida; o papel simula o livro pela mínima e pela máxima do candle.
 - **Agente**: análise com saída estruturada, ferramentas só de leitura, CLI e MCP, testados com um cliente da Anthropic falso. O "cérebro" é escolhido por pessoa: a API da Anthropic ou o Claude Code do plano dela (`claude -p` travado, só com as ferramentas de leitura pela ponte MCP), com o passo a passo de cada análise ao vivo na tela.
 - **Assistente**: chat com os seus dados (resumo, robôs, decisões, ordens, conhecimento), só leitura, com as fontes consultadas e resposta em streaming.
 - **Conhecimento**: arquivos (PDF, DOCX, MD, TXT, HTML), links (baixados com defesa contra SSRF) e notas, por pessoa, buscáveis na tela.
@@ -114,12 +114,12 @@ O que existe e tem teste automatizado:
 
 O que **ainda não foi testado contra o serviço real** (só com dublês):
 
-- ordens na **testnet da Binance** com chave de verdade;
+- ordens na **testnet da Binance** com chave de verdade, inclusive o stop no livro (`STOP_LOSS_LIMIT` e o OCO novo, `POST /api/v3/orderList/oco`);
 - análises com a **API da Anthropic** de verdade (custo, latência, qualidade das propostas); o **Claude Code** de verdade só teve um teste manual mínimo (flags, saída estruturada e a ponte MCP);
 - embeddings pela **Voyage** de verdade (o Ollama local com `bge-m3` também não foi exercitado aqui);
 - os fluxos do **n8n** importados num n8n real falando com o Telegram.
 
-O que **falta**: o motor gravar decisões, ordens e eventos no banco e no Redis (hoje roda com portas em memória e robôs de um arquivo), bater em `zentrade:motor:batida` e consumir a fila de backtests; usar a conta da corretora cadastrada na tela em vez das chaves do ambiente.
+O que **falta**: o motor gravar decisões, ordens e eventos no banco e no Redis (hoje roda com portas em memória e robôs de um arquivo), bater em `zentrade:motor:batida` e consumir a fila de backtests; usar a conta da corretora cadastrada na tela em vez das chaves do ambiente. Nos stops: o comando "zerar posição" na tela (o risco já o trata como proteção); ouvir o user data stream da Binance para saber da execução do stop na hora (hoje o motor confere a cada candle); e o papel simular execução parcial do stop-limit.
 
 No **backtest**, falta: um otimizador de parâmetros (hoje o walk-forward avalia a estratégia fixa em cada janela, sem otimizar dentro e testar fora), deslizamento que dependa do tamanho da ordem e do livro, Monte Carlo que preserve sequências de perdas (blocos) e as ordens de stop em repouso da corretora de papel no lugar da vigia intrabar do próprio backtest. Veja [como ler o backtest](docs/estrategias.md#como-ler-o-backtest).
 

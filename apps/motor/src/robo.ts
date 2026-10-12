@@ -39,6 +39,7 @@ export class RoboAoVivo {
     );
     await this.nucleo.completarHistorico(historia);
     this.gravar(this.robo.intervalo, historia);
+    await this.nucleo.reconciliarProtecao(historia.at(-1)?.fecha ?? null);
     this.assinar("intervalo", (c) => {
       this.gravar(this.robo.intervalo, [c]);
       void this.nucleo.aoFecharIntervalo(c);

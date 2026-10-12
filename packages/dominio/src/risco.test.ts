@@ -41,7 +41,7 @@ describe("motor de risco", () => {
     expect(avaliarRisco(compra, estado, limites, filtros, taxa)).toEqual({ aprovada: true });
   });
 
-  it("parada total barra tudo, inclusive a venda", () => {
+  it("parada total barra a compra e a venda sem finalidade de proteção", () => {
     expect(codigos(avaliarRisco(compra, { ...estado, pausado: true }, limites, filtros, taxa))).toContain(
       "pausado",
     );
@@ -72,7 +72,7 @@ describe("motor de risco", () => {
     ).toContain("exposicao");
   });
 
-  it("frequência vale para compra e venda", () => {
+  it("frequência vale para compra e para a venda que não é proteção", () => {
     const cheio = { ...estado, ordensUltimaHora: 6 };
     expect(codigos(avaliarRisco(compra, cheio, limites, filtros, taxa))).toContain("frequencia");
     expect(codigos(avaliarRisco({ ...compra, lado: "VENDA" }, cheio, limites, filtros, taxa))).toContain(
@@ -117,6 +117,73 @@ describe("motor de risco", () => {
     expect(
       codigos(avaliarRisco({ ...compra, quantidade: dec(0) }, estado, limites, filtros, taxa)),
     ).toContain("quantidade_invalida");
+  });
+
+  describe("finalidade da ordem: proteção sai sempre", () => {
+    const venda = (finalidade?: PropostaOrdem["finalidade"]): PropostaOrdem => ({
+      lado: "VENDA",
+      quantidade: dec("0.005"),
+      precoReferencia: dec(60000),
+      confianca: 0,
+      ...(finalidade ? { finalidade } : {}),
+    });
+
+    it("parada total ligada: a venda do stop (proteção) sai", () => {
+      expect(avaliarRisco(venda("protecao"), { ...estado, pausado: true }, limites, filtros, taxa)).toEqual({
+        aprovada: true,
+      });
+    });
+
+    it("frequência estourada: a venda do stop sai", () => {
+      const cheio = { ...estado, ordensUltimaHora: 99 };
+      expect(avaliarRisco(venda("protecao"), cheio, limites, filtros, taxa)).toEqual({ aprovada: true });
+    });
+
+    it("a venda pela regra de saída (decisão nova) segue barrada pela pausa e pela frequência", () => {
+      expect(
+        codigos(avaliarRisco(venda("saida"), { ...estado, pausado: true }, limites, filtros, taxa)),
+      ).toEqual(["pausado"]);
+      expect(
+        codigos(avaliarRisco(venda("saida"), { ...estado, ordensUltimaHora: 6 }, limites, filtros, taxa)),
+      ).toEqual(["frequencia"]);
+    });
+
+    it("venda sem finalidade declarada conta como saída (o mais restritivo)", () => {
+      expect(codigos(avaliarRisco(venda(), { ...estado, pausado: true }, limites, filtros, taxa))).toContain(
+        "pausado",
+      );
+    });
+
+    it("compra é sempre entrada, mesmo se alguém disser que é proteção", () => {
+      const disfarcada = { ...compra, finalidade: "protecao" as const };
+      expect(
+        codigos(avaliarRisco(disfarcada, { ...estado, pausado: true }, limites, filtros, taxa)),
+      ).toContain("pausado");
+    });
+
+    it("a proteção ainda respeita os filtros da corretora", () => {
+      expect(
+        codigos(
+          avaliarRisco(
+            { ...venda("protecao"), quantidade: dec("0.001015") },
+            { ...estado, pausado: true },
+            limites,
+            filtros,
+            taxa,
+          ),
+        ),
+      ).toContain("passo_quantidade");
+    });
+
+    it("poeira: posição abaixo do mínimo da corretora vira uma barreira que explica o que fazer", () => {
+      for (const quantidade of [dec("0.00005"), dec(0)]) {
+        const r = avaliarRisco({ ...venda("protecao"), quantidade }, estado, limites, filtros, taxa);
+        expect(codigos(r)).toEqual(["poeira"]);
+        if (r.aprovada) return;
+        expect(r.barreiras[0]?.mensagem).toMatch(/poeira/);
+        expect(r.barreiras[0]?.mensagem).toMatch(/BNB/);
+      }
+    });
   });
 
   it("junta todas as barreiras com mensagens legíveis", () => {

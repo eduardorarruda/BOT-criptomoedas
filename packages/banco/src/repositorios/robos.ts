@@ -1,10 +1,11 @@
 import type { LimitesRiscoDTO, ModoRobo, PosicaoDTO, RoboDTO } from "@zentrade/contratos";
 import { paraTexto, posicaoDe } from "@zentrade/dominio";
-import { asc, count, eq } from "drizzle-orm";
+import { asc, count, desc, eq } from "drizzle-orm";
 import { comoUsuario, type Db, type Tx } from "../cliente.js";
 import { roboDeLinha } from "../conversao.js";
 import { codigoPostgres, ErroDados, umaLinha, VIOLACAO_CHAVE_ESTRANGEIRA } from "../erros.js";
-import { robos } from "../esquema/index.js";
+import { protecoesCorretora, robos } from "../esquema/index.js";
+import { protecaoCorretoraDTO } from "../conversao.js";
 import { auditar } from "./auditoria.js";
 import { execucoesDoRobo } from "./execucoes.js";
 
@@ -100,6 +101,12 @@ export function repositorioRobos(db: Db) {
         const robo = await obterNa(tx, roboId);
         if (!robo) return null;
         const p = posicaoDe(await execucoesDoRobo(tx, roboId));
+        const [protecao] = await tx
+          .select()
+          .from(protecoesCorretora)
+          .where(eq(protecoesCorretora.roboId, roboId))
+          .orderBy(desc(protecoesCorretora.criadaEm))
+          .limit(1);
         return {
           roboId,
           simbolo: robo.simbolo,
@@ -107,6 +114,7 @@ export function repositorioRobos(db: Db) {
           precoMedio: paraTexto(p.precoMedio),
           resultadoRealizado: paraTexto(p.resultadoRealizado),
           taxasPagas: paraTexto(p.taxasPagas),
+          ...(protecao ? { protecaoCorretora: protecaoCorretoraDTO(protecao) } : {}),
         };
       }),
 

@@ -1,8 +1,11 @@
 import type { EstadoDecisao, OrdemDTO, ResultadoOrdem, RoboConfig } from "@zentrade/contratos";
-import { paraTexto, type Lado, type Valor } from "@zentrade/dominio";
+import { ativosDoSimbolo } from "@zentrade/corretora";
+import { arredondarParaBaixo, paraTexto, posicaoDe, type Lado, type Valor } from "@zentrade/dominio";
 import { idClienteDe } from "../id-cliente.js";
 import { mudarEstado, publicar, type DecisaoRegistrada } from "./diario.js";
 import type { Plano } from "./plano.js";
+import { quantidadeVenda } from "./protecao.js";
+import { liberarProtecao } from "./stop-corretora.js";
 import type { Dependencias, ResultadoCiclo } from "./tipos.js";
 
 export function ordemDTO(
@@ -101,13 +104,52 @@ export async function executarOrdem(
   return resultado;
 }
 
+const PROTECAO_PRESA = {
+  codigo: "protecao_presa",
+  mensagem:
+    "Não deu para tirar a proteção do livro da corretora: a venda do robô não saiu, para não vender duas vezes. A proteção segue valendo; o robô tenta de novo no próximo candle.",
+};
+
+const POSICAO_VENDIDA = {
+  codigo: "posicao_zerada",
+  mensagem: "A proteção na corretora já vendeu a posição: não há o que vender.",
+};
+
+/**
+ * Venda do robô com proteção no livro: tira a proteção primeiro (ela trava a base) e
+ * vende o que sobrou — a posição de agora, sem passar do saldo livre da conta.
+ */
+async function prepararVenda(
+  deps: Dependencias,
+  robo: RoboConfig,
+  plano: Plano,
+): Promise<Plano | { estado: "falhou" | "barrada"; barreira: typeof PROTECAO_PRESA }> {
+  if (!deps.protecoes) return plano;
+  if ((await liberarProtecao(deps, robo)) === "presa") return { estado: "falhou", barreira: PROTECAO_PRESA };
+  const filtros = await deps.corretora.filtros(robo.simbolo);
+  const posicao = posicaoDe(await deps.ordens.execucoes(robo.id));
+  const livre = await deps.corretora.saldoLivre(ativosDoSimbolo(robo.simbolo).base);
+  const naPosicao = quantidadeVenda(posicao.quantidade, filtros);
+  const noSaldo = arredondarParaBaixo(livre, filtros.passoQuantidade);
+  const quantidade = naPosicao.lt(noSaldo) ? naPosicao : noSaldo;
+  if (quantidade.isZero()) return { estado: "barrada", barreira: POSICAO_VENDIDA };
+  return { ...plano, quantidade };
+}
+
 /** Envia a ordem da decisão e grava o estado: executada se houve execução; senão, falhou. */
 export async function executarDecisao(
   deps: Dependencias,
   robo: RoboConfig,
   registrada: DecisaoRegistrada,
-  plano: Plano,
+  planoDecidido: Plano,
 ): Promise<ResultadoCiclo> {
+  const plano =
+    planoDecidido.lado === "VENDA" ? await prepararVenda(deps, robo, planoDecidido) : planoDecidido;
+  if (!("lado" in plano)) {
+    const risco = { aprovada: false, barreiras: [{ ...plano.barreira }] };
+    await mudarEstado(deps, registrada, plano.estado, { risco });
+    return { estado: plano.estado, plano: planoDecidido };
+  }
   const ordem = await executarOrdem(deps, robo, registrada.id, plano.lado, plano.quantidade);
   if (!ordem) return { estado: registrada.decisao.estado, plano };
   const estado: EstadoDecisao = ordem.execucoes.length > 0 ? "executada" : "falhou";

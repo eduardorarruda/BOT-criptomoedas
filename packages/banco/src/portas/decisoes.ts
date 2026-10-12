@@ -1,7 +1,7 @@
 import type { CompraExecutada, EstadoDecisao, NovaDecisao, PortaDecisoes } from "@zentrade/contratos";
 import { dec, paraTexto, type Sinal, type Valor } from "@zentrade/dominio";
 import { and, desc, eq, sql } from "drizzle-orm";
-import type { Db } from "../cliente.js";
+import type { Db, Executor } from "../cliente.js";
 import { iso } from "../conversao.js";
 import { ErroDados } from "../erros.js";
 import { decisoes, robos } from "../esquema/index.js";
@@ -57,12 +57,9 @@ async function ultimaCompraExecutada(db: Db, roboId: string): Promise<CompraExec
   return { decisaoId: d.id, preco: dec(d.preco), ...(protecao ? { protecao } : {}) };
 }
 
-export function portaDecisoes(db: Db, opcoes: OpcoesPortaDecisoes = {}): PortaDecisoes {
-  const validade = opcoes.validadeAprovacaoMs ?? VALIDADE_APROVACAO_PADRAO_MS;
-  return {
-    async registrar(d: NovaDecisao): Promise<string> {
-      // A dona vem do robô: o motor não precisa (nem pode) dizer de quem é a decisão.
-      const linhas = await db.execute<{ id: string }>(sql`
+/** Insere a decisão (no banco ou numa transação). A dona vem do robô: o motor não diz de quem é. */
+export async function inserirDecisao(executor: Executor, d: NovaDecisao, validade: number): Promise<string> {
+  const linhas = await executor.execute<{ id: string }>(sql`
         insert into decisoes (usuario_id, robo_id, em, sinal, proposta, quantidade, preco, risco, estado, custo_ia_usd, expira_em, stop_efetivo, alvo_efetivo)
         select r.usuario_id, r.id, ${iso(d.em)}::timestamptz, ${JSON.stringify(sinalGravavel(d.sinal))}::jsonb, ${d.proposta ? JSON.stringify(d.proposta) : null}::jsonb,
                ${textoOuNulo(d.quantidade)}::numeric, ${paraTexto(d.preco)}::numeric, ${JSON.stringify(d.risco)}::jsonb, ${d.estado},
@@ -71,11 +68,16 @@ export function portaDecisoes(db: Db, opcoes: OpcoesPortaDecisoes = {}): PortaDe
                ${textoOuNulo(d.protecao?.stop)}::numeric, ${textoOuNulo(d.protecao?.alvo)}::numeric
         from ${robos} r where r.id = ${d.roboId}
         returning id`);
-      const [linha] = linhas;
-      if (!linha)
-        throw new ErroDados("nao_encontrado", `o robô ${d.roboId} não existe; a decisão não foi registrada`);
-      return linha.id;
-    },
+  const [linha] = linhas;
+  if (!linha)
+    throw new ErroDados("nao_encontrado", `o robô ${d.roboId} não existe; a decisão não foi registrada`);
+  return linha.id;
+}
+
+export function portaDecisoes(db: Db, opcoes: OpcoesPortaDecisoes = {}): PortaDecisoes {
+  const validade = opcoes.validadeAprovacaoMs ?? VALIDADE_APROVACAO_PADRAO_MS;
+  return {
+    registrar: (d: NovaDecisao): Promise<string> => inserirDecisao(db, d, validade),
 
     async mudarEstado(id: string, estado: EstadoDecisao): Promise<void> {
       const mudadas = await db
@@ -113,5 +115,19 @@ export function portaDecisoes(db: Db, opcoes: OpcoesPortaDecisoes = {}): PortaDe
     },
 
     ultimaCompraExecutada: (roboId: string) => ultimaCompraExecutada(db, roboId),
+
+    /** greatest: duas atualizações fora de ordem nunca descem o stop. */
+    async subirStop(id: string, stop: Valor): Promise<void> {
+      const mudadas = await db
+        .update(decisoes)
+        .set({
+          stopEfetivo: sql`greatest(${decisoes.stopEfetivo}, ${paraTexto(stop)}::numeric)`,
+          atualizadaEm: new Date(),
+        })
+        .where(eq(decisoes.id, id))
+        .returning({ id: decisoes.id });
+      if (mudadas.length === 0)
+        throw new ErroDados("nao_encontrado", `a decisão ${id} não existe; o stop não foi gravado`);
+    },
   };
 }

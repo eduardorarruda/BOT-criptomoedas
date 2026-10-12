@@ -1,9 +1,12 @@
 import type {
   Corretora,
   EstadoConexao,
+  IdsProtecao,
   Intervalo,
   PedidoOrdemMercado,
+  PedidoProtecao,
   ResultadoOrdem,
+  ResultadoProtecao,
 } from "@zentrade/contratos";
 import {
   dec,
@@ -18,6 +21,15 @@ import {
 } from "@zentrade/dominio";
 import { ativosDoSimbolo } from "./ativos.js";
 import { ErroConfiguracao } from "./erros.js";
+import {
+  gatilhoNoCandle,
+  problemaDosPrecos,
+  protecaoAtiva,
+  protecaoCancelada,
+  protecaoExecutada,
+  protecaoRejeitada,
+  type ProtecaoPapel,
+} from "./papel-protecao.js";
 
 export interface OpcoesPapel {
   readonly saldos: Readonly<Record<string, Valor>>;
@@ -49,6 +61,11 @@ const chaveDe = (simbolo: string, intervalo: Intervalo) => `${simbolo}:${interva
  * Corretora simulada para o modo papel e o backtest. Não sabe de onde vem o preço:
  * quem a usa alimenta candles (a mesma fonte que o robô usa para decidir — uma fonte
  * só de preço). Saldos em memória, deslizamento contra quem opera e taxa cobrada.
+ *
+ * Proteções (stop-limit e OCO) ficam no livro como na Binance: travam a base e
+ * disparam em `alimentar`, pela mínima e pela máxima do candle, ANTES de o candle
+ * chegar a quem assina — a corretora é mais rápida que o robô. Regras do disparo em
+ * `gatilhoNoCandle` (papel-protecao.ts).
  */
 export class PapelCorretora implements Corretora {
   readonly rede = "papel" as const;
@@ -56,6 +73,8 @@ export class PapelCorretora implements Corretora {
   private readonly historico = new Map<string, Candle[]>();
   private readonly precos = new Map<string, Valor>();
   private readonly ordens = new Map<string, ResultadoOrdem>();
+  private protecoes: ReadonlyMap<string, ProtecaoPapel> = new Map();
+  private bloqueados: ReadonlyMap<string, Valor> = new Map();
   private assinantes: readonly Assinante[] = [];
   private conectada = true;
   private sequencia = 0;
@@ -80,6 +99,8 @@ export class PapelCorretora implements Corretora {
     const ultimo = lista.at(-1);
     if (!ultimo || candle.abertura > ultimo.abertura) this.historico.set(chave, [...lista, candle]);
     this.precos.set(simbolo, candle.fecha);
+    // A corretora segue executando o livro mesmo com a conexão do robô caída.
+    this.dispararProtecoes(simbolo, candle);
     if (!this.conectada) return;
     this.assinantes.filter((a) => a.chave === chave).forEach((a) => a.aoFechar(candle));
   }
@@ -130,6 +151,44 @@ export class PapelCorretora implements Corretora {
 
   saldoLivre(ativo: string): Promise<Valor> {
     return Promise.resolve(this.saldos.get(ativo) ?? dec(0));
+  }
+
+  /** Quanto do ativo está travado por proteções no livro (não entra no saldo livre). */
+  saldoBloqueado(ativo: string): Valor {
+    return this.bloqueados.get(ativo) ?? dec(0);
+  }
+
+  colocarProtecao(pedido: PedidoProtecao): Promise<ResultadoProtecao> {
+    const existente = this.protecoes.get(pedido.ids.lista);
+    if (existente) return Promise.resolve(existente.resultado);
+    const problema = this.problemaDaProtecao(pedido);
+    if (problema) return Promise.resolve(protecaoRejeitada(pedido.ids, problema));
+    const { base } = ativosDoSimbolo(pedido.simbolo);
+    this.moverBase(base, pedido.quantidade.neg());
+    const idCorretora = `papel-${++this.sequencia}`;
+    const protecao: ProtecaoPapel = {
+      pedido,
+      idCorretora,
+      criadaEm: this.agora(),
+      disparada: false,
+      resultado: protecaoAtiva(pedido, idCorretora),
+    };
+    this.guardarProtecao(protecao);
+    return Promise.resolve(protecao.resultado);
+  }
+
+  consultarProtecao(_simbolo: string, ids: IdsProtecao): Promise<ResultadoProtecao | null> {
+    return Promise.resolve(this.protecoes.get(ids.lista)?.resultado ?? null);
+  }
+
+  cancelarProtecao(_simbolo: string, ids: IdsProtecao): Promise<ResultadoProtecao | null> {
+    const p = this.protecoes.get(ids.lista);
+    if (!p) return Promise.resolve(null);
+    if (p.resultado.estado === "ATIVA") {
+      this.moverBase(ativosDoSimbolo(p.pedido.simbolo).base, p.pedido.quantidade);
+      this.guardarProtecao({ ...p, resultado: protecaoCancelada(p.resultado) });
+    }
+    return Promise.resolve(this.protecoes.get(ids.lista)?.resultado ?? null);
   }
 
   enviarOrdemMercado(pedido: PedidoOrdemMercado): Promise<ResultadoOrdem> {
@@ -205,6 +264,69 @@ export class PapelCorretora implements Corretora {
       novos.set(base, compra ? saldo(base).plus(e.quantidade) : saldo(base).minus(e.quantidade));
     }
     this.saldos = novos;
+  }
+
+  private problemaDaProtecao(pedido: PedidoProtecao): string | null {
+    const preco = this.precos.get(pedido.simbolo);
+    if (!preco) return `Sem preço conhecido para ${pedido.simbolo}: a proteção não foi colocada.`;
+    const precos = problemaDosPrecos(pedido, preco);
+    if (precos) return precos;
+    const quantidade = this.problemaDeQuantidade(
+      pedido.quantidade,
+      pedido.limite,
+      this.filtrosDe(pedido.simbolo),
+    );
+    if (quantidade) return quantidade;
+    const { base } = ativosDoSimbolo(pedido.simbolo);
+    const livre = this.saldos.get(base) ?? dec(0);
+    if (livre.lt(pedido.quantidade))
+      return `Saldo insuficiente de ${base}: precisa de ${pedido.quantidade.toFixed()}, há ${livre.toFixed()} livre.`;
+    return null;
+  }
+
+  /** Base entre o saldo livre e o travado: negativo trava, positivo devolve. */
+  private moverBase(base: string, quantidade: Valor): void {
+    const livre = this.saldos.get(base) ?? dec(0);
+    this.saldos = new Map([...this.saldos, [base, livre.plus(quantidade)]]);
+    this.bloqueados = new Map([...this.bloqueados, [base, this.saldoBloqueado(base).minus(quantidade)]]);
+  }
+
+  private guardarProtecao(p: ProtecaoPapel): void {
+    this.protecoes = new Map([...this.protecoes, [p.pedido.ids.lista, p]]);
+    for (const perna of p.resultado.pernas) this.ordens.set(perna.ordem.idCliente, perna.ordem);
+  }
+
+  private dispararProtecoes(simbolo: string, candle: Candle): void {
+    const deslizamento = dec(this.opcoes.deslizamentoBps).div(10_000);
+    for (const p of this.protecoes.values()) {
+      if (p.pedido.simbolo !== simbolo || p.resultado.estado !== "ATIVA") continue;
+      const gatilho = gatilhoNoCandle(p, candle, deslizamento);
+      if (!gatilho) continue;
+      if ("disparou" in gatilho) this.guardarProtecao({ ...p, disparada: true });
+      else this.executarProtecao(p, gatilho.perna, gatilho.preco);
+    }
+  }
+
+  /** A perna executou: a base travada sai, a cotação entra (menos a taxa) e a outra perna cai. */
+  private executarProtecao(p: ProtecaoPapel, perna: "stop" | "alvo", preco: Valor): void {
+    const { base, cotacao } = ativosDoSimbolo(p.pedido.simbolo);
+    const valor = p.pedido.quantidade.times(preco);
+    const taxa = valor.times(this.opcoes.taxa);
+    this.bloqueados = new Map([
+      ...this.bloqueados,
+      [base, this.saldoBloqueado(base).minus(p.pedido.quantidade)],
+    ]);
+    const livre = this.saldos.get(cotacao) ?? dec(0);
+    this.saldos = new Map([...this.saldos, [cotacao, livre.plus(valor).minus(taxa)]]);
+    const execucao: Execucao = {
+      lado: "VENDA",
+      preco,
+      quantidade: p.pedido.quantidade,
+      taxaCotacao: taxa,
+      em: this.agora(),
+    };
+    const resultado = protecaoExecutada(p.resultado, perna, execucao, `papel-${++this.sequencia}`);
+    this.guardarProtecao({ ...p, resultado });
   }
 
   /** Atualiza os saldos (novo mapa, sem mutar o anterior) ou diz o que faltou. */

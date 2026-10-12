@@ -1,8 +1,9 @@
-import type { PortaDecisoes, PortaOrdens, PortaRobos } from "@zentrade/contratos";
+import type { PortaDecisoes, PortaOrdens, PortaProtecoes, PortaRobos } from "@zentrade/contratos";
 import { conectar, type Conexao } from "./cliente.js";
 import { portaCredenciais } from "./portas/credenciais.js";
 import { portaDecisoes } from "./portas/decisoes.js";
 import { portaOrdens } from "./portas/ordens.js";
+import { portaProtecoes } from "./portas/protecoes.js";
 import { portaRobos } from "./portas/robos.js";
 import { repositorioAssistente } from "./repositorios/assistente.js";
 import { repositorioConhecimentoDetalhe } from "./repositorios/assistente-conhecimento.js";
@@ -42,6 +43,7 @@ export interface PortasMotor {
   readonly robos: PortaRobos;
   readonly decisoes: PortaDecisoes;
   readonly ordens: PortaOrdens;
+  readonly protecoes: PortaProtecoes;
 }
 
 function abrir(opcoes: OpcoesConexaoBanco): { conexao: Conexao; portas: PortasMotor } {
@@ -50,13 +52,13 @@ function abrir(opcoes: OpcoesConexaoBanco): { conexao: Conexao; portas: PortasMo
     ...(opcoes.aoAviso ? { aoAviso: opcoes.aoAviso } : {}),
   });
   const { db } = conexao;
+  const validade =
+    opcoes.validadeAprovacaoMs !== undefined ? { validadeAprovacaoMs: opcoes.validadeAprovacaoMs } : {};
   const portas: PortasMotor = {
     robos: portaRobos(db),
-    decisoes: portaDecisoes(
-      db,
-      opcoes.validadeAprovacaoMs !== undefined ? { validadeAprovacaoMs: opcoes.validadeAprovacaoMs } : {},
-    ),
+    decisoes: portaDecisoes(db, validade),
     ordens: portaOrdens(db),
+    protecoes: portaProtecoes(db, validade),
   };
   return { conexao, portas };
 }

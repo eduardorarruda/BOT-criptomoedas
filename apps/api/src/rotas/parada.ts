@@ -23,7 +23,7 @@ export const rotasParada: FastifyPluginAsyncZod<{ deps: Dependencias }> = async 
           tipo: "parada_total",
           titulo: ligada ? "Parada total ligada" : "Parada total desligada",
           mensagem: ligada
-            ? "Nenhum robô envia ordem até alguém desligar a parada."
+            ? "Nenhuma entrada nova até alguém desligar a parada; o stop e o alvo das posições abertas seguem valendo na corretora."
             : "Os robôs voltaram a poder operar.",
           em: deps.agora(),
         });

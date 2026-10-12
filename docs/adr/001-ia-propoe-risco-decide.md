@@ -16,6 +16,6 @@ Modelos de linguagem erram com confiança, alucinam fontes, saem do ar e podem s
 ## Consequências
 
 - O pior caso de uma IA ruim é perder oportunidades, não perder dinheiro além dos limites.
-- Vendas que encerram posição passam mesmo com perda diária estourada ou confiança baixa: sair reduz risco. Só a parada total e a frequência barram vendas.
+- Vendas que encerram posição passam mesmo com perda diária estourada ou confiança baixa: sair reduz risco. A parada total, a pausa e a frequência barram só a venda pela regra de saída ou por tempo; a proteção (stop e alvo) sai sempre ([ADR 007](007-protecao-sai-sempre.md)).
 - Mudanças no risco exigem teste; o pacote `dominio` exige 90% de cobertura.
 - Ninguém abre exceção a isso, nem para "só desta vez" (está no [CONTRIBUTING](../../CONTRIBUTING.md)).

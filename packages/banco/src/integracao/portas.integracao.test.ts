@@ -132,7 +132,9 @@ describe("portas do motor contra o PostgreSQL", () => {
     await c.banco.configuracao.definirParadaTotal(c.ana.id, false);
     await c.banco.robos.atualizar(c.beto.id, c.beto.robo.id, { pausado: true });
     expect(await c.banco.portas.robos.pausado(c.beto.robo.id)).toBe(true);
-    expect((await c.banco.portas.robos.ativos()).map((r) => r.id)).not.toContain(c.beto.robo.id);
+    // Os testes anteriores deixaram posição aberta no robô do Beto: pausado, ele segue
+    // na lista para o stop continuar vigiado (sem posição, sairia; ver protecoes.integracao).
+    expect((await c.banco.portas.robos.ativos()).map((r) => r.id)).toContain(c.beto.robo.id);
     // robô que não existe conta como pausado: na dúvida, não operar
     expect(await c.banco.portas.robos.pausado("00000000-0000-0000-0000-000000000000")).toBe(true);
     await c.banco.robos.atualizar(c.beto.id, c.beto.robo.id, { pausado: false });

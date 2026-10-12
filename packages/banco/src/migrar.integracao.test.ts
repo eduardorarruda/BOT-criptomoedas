@@ -31,7 +31,7 @@ describe("migrações aplicadas do zero", () => {
   it("liga RLS nas tabelas de dados e cria os índices hnsw e gin", async () => {
     const semRls = await sql`
       select relname from pg_class
-      where relname in ('robos', 'decisoes', 'ordens', 'execucoes', 'contas_corretora', 'documentos', 'trechos')
+      where relname in ('robos', 'decisoes', 'ordens', 'execucoes', 'protecoes_corretora', 'contas_corretora', 'documentos', 'trechos')
         and not relrowsecurity`;
     expect(semRls).toHaveLength(0);
     const indices = await sql`select indexname from pg_indexes where tablename = 'trechos'`;

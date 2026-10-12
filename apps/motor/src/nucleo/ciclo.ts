@@ -1,5 +1,11 @@
 import type { EstadoDecisao, NovaDecisao, RoboConfig } from "@zentrade/contratos";
-import { formatarNumero, paraTexto, type Sinal } from "@zentrade/dominio";
+import {
+  BARREIRA_PAUSADO,
+  formatarNumero,
+  paraTexto,
+  type FinalidadeOrdem,
+  type Sinal,
+} from "@zentrade/dominio";
 import { concorda, consultarAgente } from "./analise.js";
 import { registrarDecisao, mudarEstado, type DecisaoRegistrada } from "./diario.js";
 import { exposicao, montarEstadoRisco } from "./estado-risco.js";
@@ -11,8 +17,18 @@ export type { EntradaCiclo, ResultadoCiclo } from "./tipos.js";
 
 type SinalOperacao = Extract<Sinal, { acao: "COMPRAR" | "VENDER" }>;
 
-/** Venda por stop: sair reduz risco; não espera agente nem aprovação. */
-export const ehStop = (sinal: Sinal): boolean => sinal.acao === "VENDER" && sinal.motivo === "stop";
+/**
+ * Venda que cumpre o combinado na entrada — stop ou alvo, os mesmos que ficam na
+ * corretora. Não espera agente nem aprovação, vale em qualquer modo e nem pausa,
+ * parada total ou frequência a barram (ADR 007).
+ */
+export const ehProtecao = (sinal: Sinal): boolean =>
+  sinal.acao === "VENDER" && (sinal.motivo === "stop" || sinal.motivo === "alvo");
+
+export const finalidadeDoSinal = (sinal: SinalOperacao): FinalidadeOrdem => {
+  if (sinal.acao === "COMPRAR") return "entrada";
+  return ehProtecao(sinal) ? "protecao" : "saida";
+};
 
 const base = (robo: RoboConfig, e: EntradaCiclo) => ({
   roboId: robo.id,
@@ -29,7 +45,16 @@ export async function processarSinal(
 ): Promise<ResultadoCiclo> {
   if (e.sinal.acao === "AGUARDAR") return { estado: null };
   const sinal: SinalOperacao = e.sinal;
-  const analise = ehStop(sinal) ? null : await consultarAgente(deps, robo, e);
+  // Pausado não analisa: a barreira sai antes de gastar uma consulta ao agente.
+  if (!ehProtecao(sinal) && (await deps.robos.pausado(robo.id))) {
+    await registrarDecisao(deps, {
+      ...base(robo, e),
+      risco: { aprovada: false, barreiras: [{ ...BARREIRA_PAUSADO }] },
+      estado: "barrada",
+    });
+    return { estado: "barrada" };
+  }
+  const analise = ehProtecao(sinal) ? null : await consultarAgente(deps, robo, e);
   if (analise?.tipo === "falhou" && deps.opcoes.agenteObrigatorio) {
     const barreira = {
       codigo: "agente_indisponivel",
@@ -60,10 +85,14 @@ export async function processarSinal(
   return planejarEDecidir(deps, robo, e, sinal, comAgente);
 }
 
-/** Observar só registra; sugerir pede aprovação (menos no stop); auto executa. */
+/**
+ * Observar só registra; sugerir pede aprovação; auto executa. A proteção (stop e alvo)
+ * executa em qualquer modo: a posição aberta pelo robô fica protegida até fechar.
+ */
 const estadoInicial = (robo: RoboConfig, sinal: Sinal): EstadoDecisao => {
+  if (ehProtecao(sinal)) return "aprovada";
   if (robo.modo === "observar") return "registrada";
-  return robo.modo === "sugerir" && !ehStop(sinal) ? "aguardando_aprovacao" : "aprovada";
+  return robo.modo === "sugerir" ? "aguardando_aprovacao" : "aprovada";
 };
 
 function montarDecisao(

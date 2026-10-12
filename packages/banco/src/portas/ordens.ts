@@ -91,7 +91,7 @@ export function portaOrdens(db: Db): PortaOrdens {
   };
 }
 
-function linhaExecucao(ordem: { id: string; usuarioId: string }, sequencia: number, e: Execucao) {
+export function linhaExecucao(ordem: { id: string; usuarioId: string }, sequencia: number, e: Execucao) {
   return {
     usuarioId: ordem.usuarioId,
     ordemId: ordem.id,

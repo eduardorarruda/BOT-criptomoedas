@@ -14,12 +14,26 @@ import { CorretoraPapelAoVivo } from "./papel-ao-vivo.js";
 import { AgenteFixo } from "./portas/agente-fixo.js";
 import { AgenteHttp } from "./portas/agente-http.js";
 import { EventosNoRegistro } from "./portas/eventos-registro.js";
-import { AprovacaoMemoria, DecisoesMemoria, OrdensMemoria, RobosMemoria } from "./portas/memoria.js";
+import {
+  AprovacaoMemoria,
+  DecisoesMemoria,
+  OrdensMemoria,
+  ProtecoesMemoria,
+  RobosMemoria,
+} from "./portas/memoria.js";
 import { EventosRedis, type ClienteRedis } from "./portas/redis.js";
 import { RelogioManual } from "./relogio.js";
 import { criarRegistro } from "./registro.js";
 import { montarCenario, registroDeTeste } from "./teste/cenario.js";
 import { candle } from "./teste/candles.js";
+
+/** Portas "do banco" em memória: as mesmas que o motor usa sem banco. */
+const portasDeTeste = (robos: RobosMemoria, decisoes: DecisoesMemoria, ordens: OrdensMemoria) => ({
+  robos,
+  decisoes,
+  ordens,
+  protecoes: new ProtecoesMemoria(decisoes, ordens, new RelogioManual(0)),
+});
 
 describe("composição do motor", () => {
   it("papel: dados de mercado de uma rede, ordens simuladas no papel", () => {
@@ -54,11 +68,11 @@ describe("composição do motor", () => {
     };
     const fontes: FontesMotor = {
       banco: {
-        portas: {
-          robos: new RobosMemoria([]),
-          decisoes: new DecisoesMemoria(),
-          ordens: new OrdensMemoria(new RelogioManual(0)),
-        },
+        portas: portasDeTeste(
+          new RobosMemoria([]),
+          new DecisoesMemoria(),
+          new OrdensMemoria(new RelogioManual(0)),
+        ),
         mercado: { gravar: async () => undefined },
         credenciais,
       },
@@ -115,7 +129,7 @@ describe("composição do motor", () => {
     const ordens = new OrdensMemoria(new RelogioManual(0));
     const mercado = { gravar: async () => undefined };
     const fontes: FontesMotor = {
-      banco: { portas: { robos, decisoes: c.decisoes, ordens }, mercado },
+      banco: { portas: portasDeTeste(robos, c.decisoes, ordens), mercado },
       redis,
     };
     const { registro } = registroDeTeste();
@@ -123,6 +137,7 @@ describe("composição do motor", () => {
     expect((await deps.robos.ativos()).map((r) => r.id)).toEqual(["r1"]);
     expect(deps.decisoes).toBe(c.decisoes);
     expect(deps.ordens).toBe(ordens);
+    expect(deps.protecoes).toBe(fontes.banco?.portas.protecoes);
     expect(deps.candles).toBe(mercado);
     expect(deps.eventos).toBeInstanceOf(EventosRedis);
     expect(opcoesMotor.intervaloRecargaMs).toBe(12_000);
@@ -150,7 +165,7 @@ describe("composição do motor", () => {
     });
     const fontes: FontesMotor = {
       banco: {
-        portas: { robos: new RobosMemoria([robo]), decisoes: new DecisoesMemoria(), ordens },
+        portas: portasDeTeste(new RobosMemoria([robo]), new DecisoesMemoria(), ordens),
         mercado: { gravar: async () => undefined },
       },
     };

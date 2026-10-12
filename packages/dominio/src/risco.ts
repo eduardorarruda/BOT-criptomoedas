@@ -8,7 +8,8 @@ import type { FiltrosAtivo, Lado } from "./tipos.js";
  * propõe, isto aprova ou barra. Se a IA errar ou alucinar, o pior caso é não operar.
  *
  * Vendas que encerram posição passam mesmo com perda do dia estourada ou confiança
- * baixa — sair reduz risco. Só a parada total e a frequência barram vendas.
+ * baixa — sair reduz risco. A pausa, a parada total e a frequência barram entradas e
+ * saídas pela regra, nunca a proteção (ver `FinalidadeOrdem` e o ADR 007).
  */
 export interface LimitesRisco {
   readonly perdaDiariaMaxima: Valor;
@@ -27,6 +28,17 @@ export interface EstadoRisco {
   readonly agora: number;
 }
 
+/**
+ * Para que serve a ordem: decide quais barreiras valem (ADR 007).
+ * - "entrada": a compra. Passa por todas as barreiras.
+ * - "saida": venda pela regra de saída — uma decisão nova da estratégia e do agente.
+ *   Pausa, parada total e frequência barram.
+ * - "protecao": venda que cumpre o combinado na entrada (stop e alvo, os mesmos que
+ *   ficam na corretora) e, quando existir o comando, o "zerar posição" pedido pela pessoa. Só a quantidade e os
+ *   filtros da corretora barram: sair reduz risco, e posição sem stop é o pior caso.
+ */
+export type FinalidadeOrdem = "entrada" | "saida" | "protecao";
+
 export interface PropostaOrdem {
   readonly lado: Lado;
   readonly quantidade: Valor;
@@ -34,6 +46,8 @@ export interface PropostaOrdem {
   readonly stop?: Valor;
   readonly alvo?: Valor;
   readonly confianca: number;
+  /** Sem ela, venda conta como "saida" (o mais restritivo). Compra é sempre "entrada". */
+  readonly finalidade?: FinalidadeOrdem;
 }
 
 export type CodigoBarreira =
@@ -50,7 +64,8 @@ export type CodigoBarreira =
   | "quantidade_minima"
   | "quantidade_maxima"
   | "passo_quantidade"
-  | "valor_minimo";
+  | "valor_minimo"
+  | "poeira";
 
 export interface Barreira {
   readonly codigo: CodigoBarreira;
@@ -87,6 +102,46 @@ function barreirasDaQuantidade(p: PropostaOrdem, f: FiltrosAtivo): Barreira[] {
     b.push({
       codigo: "valor_minimo",
       mensagem: `A ordem vale ${formatarDolar(valor)}; a corretora exige pelo menos ${formatarDolar(f.valorMinimo)}.`,
+    });
+  return b;
+}
+
+export const finalidadeDe = (p: Pick<PropostaOrdem, "lado" | "finalidade">): FinalidadeOrdem =>
+  p.lado === "COMPRA" ? "entrada" : (p.finalidade ?? "saida");
+
+/**
+ * Venda abaixo do mínimo da corretora (quantidade ou valor): é poeira. Não há ordem que
+ * a venda; dizer só "abaixo do mínimo" deixaria a pessoa achando que é um erro do robô.
+ */
+function poeira(p: PropostaOrdem, f: FiltrosAtivo): Barreira | null {
+  const q = p.quantidade;
+  const valor = q.times(p.precoReferencia);
+  if (q.gt(0) && q.gte(f.quantidadeMinima) && valor.gte(f.valorMinimo)) return null;
+  return {
+    codigo: "poeira",
+    mensagem: `A posição a vender (${q.toFixed()}, cerca de ${formatarDolar(valor)}) está abaixo do mínimo da corretora (${f.quantidadeMinima.toFixed()} e ${formatarDolar(f.valorMinimo)}): é poeira e nenhuma ordem consegue vendê-la, nem o stop. Ela fica na carteira; na Binance, "Converter saldos pequenos em BNB" a recolhe.`,
+  };
+}
+
+function barreirasDaVenda(p: PropostaOrdem, f: FiltrosAtivo): Barreira[] {
+  const resto = poeira(p, f);
+  return resto ? [resto] : barreirasDaQuantidade(p, f);
+}
+
+export const BARREIRA_PAUSADO: Barreira = {
+  codigo: "pausado",
+  mensagem:
+    "O robô está pausado (ou a parada total está ligada): nenhuma entrada nem saída pela regra sai até alguém religar. O stop e o alvo seguem valendo.",
+};
+
+/** Pausa (do robô ou parada total) e frequência: valem para entrada e saída pela regra. */
+function barreirasDeOperacao(e: EstadoRisco, l: LimitesRisco): Barreira[] {
+  const b: Barreira[] = [];
+  if (e.pausado) b.push(BARREIRA_PAUSADO);
+  if (e.ordensUltimaHora >= l.ordensPorHoraMax)
+    b.push({
+      codigo: "frequencia",
+      mensagem: `Já foram ${e.ordensUltimaHora} ordens na última hora; o limite é ${l.ordensPorHoraMax}.`,
     });
   return b;
 }
@@ -134,18 +189,12 @@ export function avaliarRisco(
   f: FiltrosAtivo,
   taxa: number,
 ): ResultadoRisco {
-  const barreiras: Barreira[] = [];
-  if (e.pausado)
-    barreiras.push({
-      codigo: "pausado",
-      mensagem: "A parada total está ligada: nenhuma ordem sai até alguém religar o robô.",
-    });
-  if (e.ordensUltimaHora >= l.ordensPorHoraMax)
-    barreiras.push({
-      codigo: "frequencia",
-      mensagem: `Já foram ${e.ordensUltimaHora} ordens na última hora; o limite é ${l.ordensPorHoraMax}.`,
-    });
-  barreiras.push(...barreirasDaQuantidade(p, f));
-  if (p.lado === "COMPRA") barreiras.push(...barreirasDaCompra(p, e, l, taxa));
+  const finalidade = finalidadeDe(p);
+  const barreiras: Barreira[] = [
+    ...(finalidade === "protecao" ? [] : barreirasDeOperacao(e, l)),
+    ...(p.lado === "COMPRA"
+      ? [...barreirasDaQuantidade(p, f), ...barreirasDaCompra(p, e, l, taxa)]
+      : barreirasDaVenda(p, f)),
+  ];
   return barreiras.length === 0 ? { aprovada: true } : { aprovada: false, barreiras };
 }

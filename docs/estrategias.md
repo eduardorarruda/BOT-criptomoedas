@@ -177,7 +177,12 @@ const sinal = decidir(estrategia, { ...contexto, preco, acompanhamento }, posica
 - Comprou agora? `iniciarAcompanhamento(estrategia, posicao)` começa com o stop da posição, a máxima na entrada e zero candles. Depois de um reinício, `reconstruirAcompanhamento(estrategia, inicial, contexto, candlesDesdeEntrada)` repassa os candles um a um, cada um só com o que se sabia naquele momento.
 - Sem acompanhamento no contexto, `decidir` usa o stop da entrada e não conta tempo — o comportamento de antes.
 
-> **Estado da integração.** O domínio, o contrato, o banco e o construtor já tratam `stopMovel`, `empate` e `tempoMaximo`, mas o motor ainda não guarda o `Acompanhamento` nem chama `atualizarStop` (isso entra junto com as ordens de stop na corretora). Até lá, essas três saídas **não têm efeito** nos robôs: vale o stop da entrada. `stopAtr` e `tamanhoPorVolatilidade` já valem, porque são resolvidos na compra.
+**No motor** (`apps/motor/src/nucleo/acompanhamento.ts`), o `Acompanhamento` vive em memória e é atualizado a cada candle fechado do intervalo com posição aberta:
+
+- Stop que subiu vira o **stop efetivo**: vai para o diário (`stop_efetivo` da compra, só sobe) e a proteção no livro da corretora é trocada pelo caminho idempotente do stop na corretora — cancela a ordem antiga e coloca a nova, uma vez por alta ([ADR 007](adr/007-protecao-sai-sempre.md)).
+- A vigia de 1 minuto (a segunda linha de defesa) usa o mesmo stop efetivo.
+- A **saída por tempo** é tratada como a regra de saída: é uma decisão nova (consulta o agente, pede aprovação no modo sugerir, a pausa barra) e, antes de vender, tira a proteção do livro.
+- Depois de um reinício, o motor refaz o acompanhamento com `reconstruirAcompanhamento`, a partir do stop gravado e dos candles do buffer fechados desde a primeira compra da posição; os testes conferem que o resultado bate com o caminho ao vivo.
 
 ## Quanto comprar
 

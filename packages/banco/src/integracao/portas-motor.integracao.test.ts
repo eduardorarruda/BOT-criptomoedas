@@ -64,6 +64,23 @@ describe("portas do motor: prazo, proteção, desfecho e pendentes", () => {
     expect((await c.banco.portas.decisoes.ultimaCompraExecutada(roboId))?.decisaoId).toBe(nova);
   });
 
+  it("subirStop: o stop efetivo da compra só sobe (stop móvel e empate sobrevivem ao reinício)", async () => {
+    const roboId = c.beto.robo.id;
+    const id = await c.banco.portas.decisoes.registrar(
+      compra(roboId, { em: Date.now() + 5_000, protecao: { stop: dec("98.5"), alvo: dec("101.25") } }),
+    );
+    await c.banco.portas.decisoes.mudarEstado(id, "executada");
+    await c.banco.portas.decisoes.subirStop(id, dec("99.1"));
+    await c.banco.portas.decisoes.subirStop(id, dec("98.9"));
+    const ultima = await c.banco.portas.decisoes.ultimaCompraExecutada(roboId);
+    expect(ultima?.decisaoId).toBe(id);
+    expect(ultima?.protecao?.stop.toFixed()).toBe("99.1");
+    expect(ultima?.protecao?.alvo.toFixed()).toBe("101.25");
+    await expect(
+      c.banco.portas.decisoes.subirStop("00000000-0000-0000-0000-000000000000", dec(1)),
+    ).rejects.toMatchObject({ codigo: "nao_encontrado" });
+  });
+
   it("compra executada sem proteção gravada volta sem proteção", async () => {
     const roboId = c.ana.robo.id;
     const id = await c.banco.portas.decisoes.registrar(compra(roboId, { em: Date.now() + 10_000 }));

@@ -1,6 +1,6 @@
 import type { PortaAgente, PortaCandles, RoboConfig } from "@zentrade/contratos";
 import { PapelCorretora } from "@zentrade/corretora";
-import { dec, type Estrategia } from "@zentrade/dominio";
+import { dec, type Estrategia, type LimitesRisco } from "@zentrade/dominio";
 import type { Dependencias, Registro } from "../nucleo/tipos.js";
 import { OPCOES_PADRAO } from "../nucleo/tipos.js";
 import { AgenteFixo, type ComportamentoAgente } from "../portas/agente-fixo.js";
@@ -9,6 +9,7 @@ import {
   DecisoesMemoria,
   EventosMemoria,
   OrdensMemoria,
+  ProtecoesMemoria,
   RobosMemoria,
 } from "../portas/memoria.js";
 import { RelogioManual } from "../relogio.js";
@@ -31,6 +32,20 @@ export const ESTRATEGIA: Estrategia = {
   alvoLiquido: 0.01,
   taxa: 0.001,
 };
+
+/** A mesma, com regra de saída: vende acima de 94,5 (entre o stop e o alvo de uma compra a 94). */
+export const ESTRATEGIA_COM_SAIDA: Estrategia = {
+  ...ESTRATEGIA,
+  saida: {
+    tipo: "comparar",
+    esquerda: { tipo: "preco" },
+    comparador: ">",
+    direita: { tipo: "numero", valor: 94.5 },
+  },
+};
+
+/** Preço que dispara a regra de saída de ESTRATEGIA_COM_SAIDA sem chegar ao alvo. */
+export const NA_SAIDA = "94.8";
 
 export function registroDeTeste() {
   const erros: { obj: object; msg: string }[] = [];
@@ -65,6 +80,13 @@ export interface OpcoesCenario {
   /** Troca o "dormir" da consulta de aprovação (padrão: avança o relógio na hora). */
   readonly dormir?: (ms: number) => Promise<void>;
   readonly candles?: PortaCandles;
+  /** Outra estratégia (ex.: com regra de saída). Padrão: ESTRATEGIA. */
+  readonly estrategia?: Estrategia;
+  readonly limites?: Partial<LimitesRisco>;
+  /** Liga a proteção no livro da corretora (stop-limit/OCO no papel). Padrão: só o robô vigia. */
+  readonly protecaoNaCorretora?: boolean;
+  /** Distância do limite abaixo do stop na corretora. Padrão: o do motor. */
+  readonly stopLimiteBps?: number;
 }
 
 export const USUARIO = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
@@ -84,17 +106,19 @@ export function montarCenario(o: OpcoesCenario = {}) {
     intervalo: "15m",
     modo: o.modo ?? "auto",
     rede: "papel",
-    estrategia: ESTRATEGIA,
+    estrategia: o.estrategia ?? ESTRATEGIA,
     limites: {
       perdaDiariaMaxima: dec(50),
       exposicaoMaxima: dec(1000),
       ordensPorHoraMax: 10,
       pausaAposPerdaMs: 0,
       confiancaMinima: 0.5,
+      ...o.limites,
     },
     riscoPorOperacao: dec(10),
   };
   const decisoes = new DecisoesMemoria();
+  const ordens = new OrdensMemoria(relogio);
   const agente = new AgenteTrocavel(new AgenteFixo("sempre_concorda"));
   if (o.agente) agente.trocar(o.agente);
   const { registro, erros } = registroDeTeste();
@@ -102,7 +126,8 @@ export function montarCenario(o: OpcoesCenario = {}) {
     corretora: papel,
     robos: new RobosMemoria([robo]),
     decisoes,
-    ordens: new OrdensMemoria(relogio),
+    ordens,
+    ...(o.protecaoNaCorretora ? { protecoes: new ProtecoesMemoria(decisoes, ordens, relogio) } : {}),
     agente,
     eventos: new EventosMemoria(),
     aprovacao: new AprovacaoMemoria((id) => o.aoSolicitar?.(id, decisoes)),
@@ -114,6 +139,7 @@ export function montarCenario(o: OpcoesCenario = {}) {
       ...OPCOES_PADRAO,
       agenteObrigatorio: o.agenteObrigatorio ?? true,
       tamanhoHistorico: o.tamanhoHistorico ?? 100,
+      ...(o.stopLimiteBps ? { stopLimiteBps: o.stopLimiteBps } : {}),
     },
   } satisfies Dependencias;
 

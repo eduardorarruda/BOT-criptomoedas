@@ -9,14 +9,17 @@ interface Bloqueio {
 
 const chaveDo = (sinal: Sinal): string => (sinal.acao === "VENDER" ? `VENDER:${sinal.motivo}` : sinal.acao);
 
-/** Decidiu e não saiu ordem nem pedido de aprovação: barrada, agente aguardando ou só registrada. */
+/**
+ * Decidiu e não saiu ordem nem pedido de aprovação: barrada, agente aguardando ou só
+ * registrada. "falhou" sem ordem (a proteção não saiu do livro) não conta: tenta de novo.
+ */
 const bloqueada = (r: ResultadoCiclo | null): boolean =>
-  r !== null && r.estado !== null && !r.ordem && r.estado !== "aguardando_aprovacao";
+  r !== null && r.estado !== null && !r.ordem && r.estado !== "aguardando_aprovacao" && r.estado !== "falhou";
 
 /**
  * Lembra a última decisão bloqueada para os candles de 1 min não a repetirem a cada
- * minuto (parada total ligada com o preço no stop, agente dizendo "aguardar" numa
- * venda pelo alvo): uma decisão no diário, uma chamada ao agente. Volta a decidir com
+ * minuto (posição de poeira com o preço no stop, que nenhuma ordem vende): uma
+ * decisão no diário, uma chamada ao agente. Volta a decidir com
  * um candle novo do intervalo, com a posição mudando ou com a parada total mudando.
  */
 export class MemoriaBloqueio {
