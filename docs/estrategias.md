@@ -177,6 +177,8 @@ const sinal = decidir(estrategia, { ...contexto, preco, acompanhamento }, posica
 - Comprou agora? `iniciarAcompanhamento(estrategia, posicao)` começa com o stop da posição, a máxima na entrada e zero candles. Depois de um reinício, `reconstruirAcompanhamento(estrategia, inicial, contexto, candlesDesdeEntrada)` repassa os candles um a um, cada um só com o que se sabia naquele momento.
 - Sem acompanhamento no contexto, `decidir` usa o stop da entrada e não conta tempo — o comportamento de antes.
 
+> **Estado da integração.** O domínio, o contrato, o banco e o construtor já tratam `stopMovel`, `empate` e `tempoMaximo`, mas o motor ainda não guarda o `Acompanhamento` nem chama `atualizarStop` (isso entra junto com as ordens de stop na corretora). Até lá, essas três saídas **não têm efeito** nos robôs: vale o stop da entrada. `stopAtr` e `tamanhoPorVolatilidade` já valem, porque são resolvidos na compra.
+
 ## Quanto comprar
 
 A quantidade não vem da estratégia nem da IA. O dimensionamento procura, por **busca binária** sobre os múltiplos do passo de lote, a **maior quantidade** que respeita ao mesmo tempo:
