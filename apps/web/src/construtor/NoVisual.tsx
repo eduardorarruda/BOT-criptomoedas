@@ -7,6 +7,7 @@ import { TIPO_ARRASTE, useConstrutor } from "./contexto";
 import { frase } from "./descrever";
 import { EditorOperando } from "./EditorOperando";
 import type { Bloco } from "./estado";
+import { CONDICOES_PRONTAS } from "./prontas";
 import { ZonaSoltar } from "./Zona";
 
 /** Um nó da árvore, desenhado de forma recursiva (a estrutura é recursiva). */
@@ -163,6 +164,24 @@ function Adicionar({ destino }: { readonly destino: NoGrupo | NoNao }) {
           {rotulo}
         </button>
       ))}
+      <select
+        className="no__pronta"
+        aria-label={`Adicionar condição pronta ao ${nomeDestino}`}
+        value=""
+        onChange={(e) => {
+          const pronta = CONDICOES_PRONTAS.find((c) => c.id === e.target.value);
+          if (!pronta) return;
+          despachar({ tipo: "adicionar", destinoId: destino.id, indice, bloco: pronta.id });
+          anunciar(`Condição pronta “${pronta.nome}” adicionada ao ${nomeDestino}.`);
+        }}
+      >
+        <option value="">+ Condição pronta…</option>
+        {CONDICOES_PRONTAS.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.nome}: {c.dica}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

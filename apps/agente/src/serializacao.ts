@@ -16,7 +16,7 @@ const SinalJson = z.discriminatedUnion("acao", [
   }),
   z.object({
     acao: z.literal("VENDER"),
-    motivo: z.enum(["stop", "alvo", "regra de saída"]),
+    motivo: z.enum(["stop", "alvo", "regra de saída", "tempo"]),
     explicacao: z.string().max(2000),
   }),
   z.object({ acao: z.literal("AGUARDAR"), explicacao: z.string().max(2000) }),

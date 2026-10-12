@@ -1,9 +1,11 @@
-import { validarRegra } from "@zentrade/dominio";
+import { MODELOS, validarEstrategia, validarRegra } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
 import { ESTRATEGIAS } from "../demo/dados";
 import { localizar, type NoGrupo } from "./arvore";
 import {
+  criarBloco,
   deEstrategia,
+  deModelo,
   estadoVazio,
   fracaoDe,
   montar,
@@ -127,5 +129,101 @@ describe("construtor: editar", () => {
   it("lê percentuais digitados", () => {
     expect(fracaoDe("2,5")).toBe(0.025);
     expect(fracaoDe("")).toBeNull();
+  });
+});
+
+describe("construtor: saídas", () => {
+  const nomeado = () => aplicar(estadoVazio(), { tipo: "nome", nome: "Saídas" });
+
+  it("sem mexer nas saídas, a estratégia sai como antes (sem campos novos)", () => {
+    const m = montar(nomeado());
+    expect(Object.keys(m.estrategia!).sort()).toEqual(["alvoLiquido", "entrada", "nome", "stop", "taxa"]);
+  });
+
+  it("liga stop por ATR, stop móvel, empate, tempo e tamanho", () => {
+    const e = aplicar(nomeado(), {
+      tipo: "saidas",
+      mudanca: {
+        tipoStop: "atr",
+        stopAtrMultiplo: "2,5",
+        movel: "atr",
+        movelMultiplo: "3",
+        empate: true,
+        empateGatilho: "2",
+        tempo: true,
+        tempoCandles: "48",
+        tamanho: true,
+      },
+    });
+    const m = montar(e);
+    expect(m.problemas).toEqual([]);
+    expect(m.estrategia).toMatchObject({
+      stopAtr: { periodo: 14, multiplo: 2.5 },
+      stopMovel: { tipo: "atr", periodo: 14, multiplo: 3 },
+      empate: { gatilho: 0.02 },
+      tempoMaximo: 48,
+      tamanhoPorVolatilidade: { periodo: 14, multiplo: 2 },
+    });
+    const percentual = montar(
+      aplicar(e, { tipo: "saidas", mudanca: { movel: "percentual", movelDistancia: "1,5" } }),
+    );
+    expect(percentual.estrategia?.stopMovel).toEqual({ tipo: "percentual", distancia: 0.015 });
+  });
+
+  it("aponta o que não dá para ler e o que o domínio recusa", () => {
+    const ilegivel = aplicar(nomeado(), {
+      tipo: "saidas",
+      mudanca: {
+        tipoStop: "atr",
+        stopAtrPeriodo: "1,5",
+        stopAtrMultiplo: "x",
+        movel: "percentual",
+        movelDistancia: "",
+        empate: true,
+        empateGatilho: "?",
+        tempo: true,
+        tempoCandles: "dez",
+      },
+    });
+    expect(montar(ilegivel).problemas).toEqual(
+      expect.arrayContaining([
+        "o período do ATR do stop precisa ser um número inteiro, como 14",
+        "o múltiplo do ATR do stop precisa ser um número, como 2",
+        "a distância do stop móvel precisa ser um número, como 3",
+        "o gatilho do empate precisa ser um número, como 2",
+        "o tempo máximo precisa ser um número inteiro de candles, como 24",
+      ]),
+    );
+    const foraDaFaixa = aplicar(nomeado(), { tipo: "saidas", mudanca: { tempo: true, tempoCandles: "0" } });
+    expect(montar(foraDaFaixa).problemas).toEqual([expect.stringMatching(/tempo máximo/)]);
+  });
+
+  it("carrega uma estratégia com saídas e devolve os mesmos campos", () => {
+    const base = ESTRATEGIAS.find((x) => x.stopAtr)!;
+    const m = montar(deEstrategia(base));
+    expect(m.problemas).toEqual([]);
+    const { id: _id, versao: _versao, ...campos } = base;
+    expect(m.estrategia).toEqual(campos);
+  });
+
+  it.each(MODELOS.map((m) => [m.nome, m] as const))(
+    "modelo %s: vira estratégia nova, igual ao modelo",
+    (_, modelo) => {
+      const e = deModelo(modelo);
+      expect(e.id).toBeNull();
+      const m = montar(e);
+      expect(m.problemas).toEqual([]);
+      expect(m.estrategia).toEqual({ nome: modelo.nome, ...modelo.estrategia });
+      expect(validarEstrategia(modelo.estrategia)).toEqual([]);
+    },
+  );
+
+  it("condição pronta da paleta vira uma condição comum e editável", () => {
+    expect(criarBloco("pronta:rompimento")).toMatchObject({
+      tipo: "comparar",
+      esquerda: { tipo: "preco" },
+      direita: { nome: "donchian", saida: "superior" },
+    });
+    expect(criarBloco("pronta:inexistente")).toMatchObject({ tipo: "comparar" });
   });
 });

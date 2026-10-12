@@ -1,10 +1,17 @@
-import type { EstrategiaDTO } from "@zentrade/contratos/esquemas";
-import type { Estrategia } from "@zentrade/dominio";
+import { estrategiaDoDTO, type CamposEstrategia } from "@zentrade/contratos/esquemas";
+import type { ContextoMercado, Estrategia } from "@zentrade/dominio";
+import type { CandleApi } from "../api/esquemas";
 
-/** O DTO tem `saida?: Regra | undefined`; o domínio quer a chave ausente quando não há saída. */
-export function paraDominio(
-  e: Pick<EstrategiaDTO, "entrada" | "saida" | "stop" | "alvoLiquido" | "taxa">,
-): Estrategia {
-  const base = { entrada: e.entrada, stop: e.stop, alvoLiquido: e.alvoLiquido, taxa: e.taxa };
-  return e.saida ? { ...base, saida: e.saida } : base;
+/** O DTO aceita `campo: undefined` nos opcionais; o domínio quer a chave ausente. */
+export const paraDominio = (e: CamposEstrategia): Estrategia => estrategiaDoDTO(e);
+
+/** Velas da API (texto decimal) → contexto das regras. Indicador é análise: vira número aqui. */
+export function contextoDeVelas(velas: readonly CandleApi[]): ContextoMercado {
+  return {
+    fechamentos: velas.map((v) => Number(v.fecha)),
+    aberturas: velas.map((v) => Number(v.abre)),
+    maximas: velas.map((v) => Number(v.maxima)),
+    minimas: velas.map((v) => Number(v.minima)),
+    volumes: velas.map((v) => Number(v.volume)),
+  };
 }

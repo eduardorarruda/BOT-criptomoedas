@@ -41,6 +41,8 @@ describe("serialização do PedidoAnalise", () => {
       sinal: { acao: "VENDER", motivo: "alvo", explicacao: "alvo" },
     });
     expect(venda.sinal).toEqual({ acao: "VENDER", motivo: "alvo", explicacao: "alvo" });
+    const tempo = { acao: "VENDER", motivo: "tempo", explicacao: "a posição completou 10 candles" } as const;
+    expect(lerCorpoAnalise(pedidoParaJson({ ...pedido, sinal: tempo })).ok).toBe(true);
     const espera = pedidoParaJson({ ...pedido, sinal: { acao: "AGUARDAR", explicacao: "nada" } });
     expect(pedidoDeJson(espera).sinal).toEqual({ acao: "AGUARDAR", explicacao: "nada" });
   });

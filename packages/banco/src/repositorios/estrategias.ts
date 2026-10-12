@@ -1,8 +1,8 @@
-import { EstrategiaEsquema, type EstrategiaDTO } from "@zentrade/contratos";
+import { EstrategiaEsquema, estrategiaDoDTO, type EstrategiaDTO } from "@zentrade/contratos";
 import { validarEstrategia } from "@zentrade/dominio";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { comoUsuario, type Db, type Tx } from "../cliente.js";
-import { estrategiaDeLinha } from "../conversao.js";
+import { estrategiaDeLinha, regraGravada } from "../conversao.js";
 import { ErroDados, umaLinha } from "../erros.js";
 import { estrategias, estrategiaVersoes } from "../esquema/index.js";
 import { auditar } from "./auditoria.js";
@@ -23,8 +23,7 @@ export function validarDadosEstrategia(dados: DadosEstrategia): DadosEstrategia 
     const problemas = lido.error.issues.map((i) => `${i.path.join(".") || "estratégia"}: ${i.message}`);
     throw new ErroDados("invalido", `estratégia inválida: ${problemas.join("; ")}`);
   }
-  const { entrada, saida, stop, alvoLiquido, taxa } = lido.data;
-  const problemas = validarEstrategia({ entrada, ...(saida ? { saida } : {}), stop, alvoLiquido, taxa });
+  const problemas = validarEstrategia(estrategiaDoDTO(lido.data));
   if (problemas.length > 0) throw new ErroDados("invalido", `estratégia inválida: ${problemas.join("; ")}`);
   return lido.data;
 }
@@ -44,7 +43,7 @@ async function gravarVersao(
         versao,
         usuarioId,
         nome: d.nome,
-        regra: { entrada: d.entrada, ...(d.saida ? { saida: d.saida } : {}) },
+        regra: regraGravada(d),
         stop: String(d.stop),
         alvoLiquido: String(d.alvoLiquido),
         taxa: String(d.taxa),

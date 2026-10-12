@@ -1,13 +1,15 @@
-import type {
-  DecisaoDTO,
-  EstadoDecisao,
-  EstrategiaDTO,
-  OrdemDTO,
-  PropostaAgente,
-  RoboConfig,
-  RoboDTO,
+import {
+  estrategiaDoDTO,
+  type CamposEstrategia,
+  type DecisaoDTO,
+  type EstadoDecisao,
+  type EstrategiaDTO,
+  type OrdemDTO,
+  type PropostaAgente,
+  type RoboConfig,
+  type RoboDTO,
 } from "@zentrade/contratos";
-import { dec, paraTexto, type Estrategia, type Execucao, type Regra } from "@zentrade/dominio";
+import { dec, paraTexto, type Estrategia, type Execucao } from "@zentrade/dominio";
 import type { decisoes, estrategiaVersoes, execucoes, ordens, robos } from "./esquema/index.js";
 
 /**
@@ -27,28 +29,31 @@ type LinhaDecisao = typeof decisoes.$inferSelect;
 type LinhaOrdem = typeof ordens.$inferSelect;
 type LinhaExecucao = typeof execucoes.$inferSelect;
 
-export interface RegraGravada {
-  readonly entrada: Regra;
-  readonly saida?: Regra;
+/**
+ * O JSONB `regra` da versão: as árvores e, desde as saídas novas, a configuração
+ * opcional de stop por ATR, stop móvel, empate, tempo e tamanho. Versões antigas
+ * só têm `entrada` e `saida` e continuam lidas como antes.
+ */
+export type RegraGravada = Omit<CamposEstrategia, "stop" | "alvoLiquido" | "taxa">;
+
+/** Separa o que vai para o JSONB do que tem coluna própria (stop, alvo, taxa). */
+export function regraGravada(d: CamposEstrategia): RegraGravada {
+  const { stop: _stop, alvoLiquido: _alvo, taxa: _taxa, ...regra } = estrategiaDoDTO(d);
+  return regra;
 }
 
 export function estrategiaDeLinha(v: LinhaVersao): EstrategiaDTO {
-  const regra = v.regra as RegraGravada;
-  return {
-    id: v.estrategiaId,
-    nome: v.nome,
-    versao: v.versao,
-    entrada: regra.entrada,
-    ...(regra.saida ? { saida: regra.saida } : {}),
+  const regra = estrategiaDoDTO({
+    ...(v.regra as RegraGravada),
     stop: fracao(v.stop),
     alvoLiquido: fracao(v.alvoLiquido),
     taxa: fracao(v.taxa),
-  };
+  });
+  return { id: v.estrategiaId, nome: v.nome, versao: v.versao, ...regra };
 }
 
 export function estrategiaDominio(v: LinhaVersao): Estrategia {
-  const { entrada, saida, stop, alvoLiquido, taxa } = estrategiaDeLinha(v);
-  return { entrada, ...(saida ? { saida } : {}), stop, alvoLiquido, taxa };
+  return estrategiaDoDTO(estrategiaDeLinha(v));
 }
 
 export function roboDeLinha(r: LinhaRobo): RoboDTO {
