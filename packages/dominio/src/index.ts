@@ -7,6 +7,7 @@ export * from "./estrategia.js";
 export * from "./formatar.js";
 export * from "./indicadores.js";
 export * from "./livro.js";
+export * from "./modelos.js";
 export * from "./momento.js";
 export * from "./posicao.js";
 export * from "./regras.js";
