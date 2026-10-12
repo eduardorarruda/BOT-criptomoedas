@@ -43,7 +43,8 @@ function montar(o: Opcoes = {}) {
   const r = criarReconciliador({
     banco: {
       divergencias: {
-        alvos: async () => o.alvos ?? [{ usuarioId: ANA, rede: "testnet" }],
+        alvos: async (u?: string) =>
+          (o.alvos ?? [{ usuarioId: ANA, rede: "testnet" }]).filter((a) => !u || a.usuarioId === u),
         registrar: async (usuarioId, rede, conferencias) => {
           registros.push({ usuarioId, rede, conferencias });
           const novas: DivergenciaGravada[] = conferencias

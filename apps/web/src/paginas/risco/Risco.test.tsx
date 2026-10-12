@@ -38,7 +38,7 @@ describe("tela Risco: conta, pausas, divergências, orçamento e avisos", () => 
     const fonte = montar();
     const pausas = await painel("Pausas em vigor");
     expect(within(pausas).getByText("Sequência de stops (robô)")).toBeInTheDocument();
-    expect(within(pausas).getByText(/Libera sozinha às/)).toBeInTheDocument();
+    expect(within(pausas).getAllByText(/Libera sozinha às/).length).toBeGreaterThan(0);
     expect(within(pausas).getByText(/Só depois de resolver a divergência/)).toBeInTheDocument();
     await userEvent.click(within(pausas).getByRole("button", { name: "Liberar agora" }));
     await userEvent.click(await screen.findByRole("button", { name: "Liberar compras" }));

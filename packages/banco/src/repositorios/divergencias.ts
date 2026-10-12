@@ -141,12 +141,20 @@ async function gravarAjuste(tx: Tx, usuarioId: string, a: AjusteDePosicao, aceit
 /** Divergências entre a posição dos robôs e o saldo da corretora, sempre sob RLS. */
 export function repositorioDivergencias(db: Db) {
   return {
-    /** Acesso de sistema: as contas (pessoa + rede) que têm robô em testnet ou real. */
-    async alvos(): Promise<{ usuarioId: string; rede: RedeConta }[]> {
+    /**
+     * Acesso de sistema (só ids): as contas (pessoa + rede) que têm robô em testnet ou
+     * real. Com `usuarioId`, só as dessa pessoa (a conferência sob demanda).
+     */
+    async alvos(usuarioId?: string): Promise<{ usuarioId: string; rede: RedeConta }[]> {
       const linhas = await db
         .selectDistinct({ usuarioId: robos.usuarioId, rede: robos.rede })
         .from(robos)
-        .where(inArray(robos.rede, ["testnet", "real"]));
+        .where(
+          and(
+            inArray(robos.rede, ["testnet", "real"]),
+            usuarioId ? eq(robos.usuarioId, usuarioId) : undefined,
+          ),
+        );
       return linhas.flatMap((l) => (l.rede === "papel" ? [] : [{ usuarioId: l.usuarioId, rede: l.rede }]));
     },
 

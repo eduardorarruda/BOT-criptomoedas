@@ -20,7 +20,7 @@ const IDADE_PRECO_MS = 3_600_000;
 export interface DependenciasReconciliacao {
   readonly banco: {
     readonly divergencias: {
-      alvos(): Promise<{ usuarioId: string; rede: RedeConta }[]>;
+      alvos(usuarioId?: string): Promise<{ usuarioId: string; rede: RedeConta }[]>;
       registrar(
         usuarioId: string,
         rede: RedeConta,
@@ -177,7 +177,7 @@ export function criarReconciliador(d: DependenciasReconciliacao): Reconciliador 
   return {
     conferir: conferirComErro,
     async conferirPessoa(usuarioId) {
-      const redes = (await d.banco.divergencias.alvos()).filter((a) => a.usuarioId === usuarioId);
+      const redes = await d.banco.divergencias.alvos(usuarioId);
       const conferidas: ConferenciaConta[] = [];
       for (const { rede } of redes) {
         try {

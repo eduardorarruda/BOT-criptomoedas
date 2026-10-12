@@ -94,6 +94,7 @@ describe("conta de demonstração", () => {
   it("mostra a pausa da sequência de stops e a divergência; liberar e aceitar mudam a tela", () => {
     const d = demoRisco(agora);
     expect(d.situacao(agora).pausas.map((p) => p.codigo)).toEqual([
+      "sequencia_stops",
       "sequencia_stops_robo",
       "divergencia_saldo",
     ]);

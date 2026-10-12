@@ -1,5 +1,5 @@
 import type { Execucao } from "@zentrade/dominio";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import type { Executor } from "../cliente.js";
 import { execucaoDeLinha } from "../conversao.js";
 import { execucoes, ordens } from "../esquema/index.js";
@@ -15,12 +15,19 @@ export async function execucoesDoRobo(executor: Executor, roboId: string): Promi
   return linhas.map((l) => execucaoDeLinha(l.lado, l.e));
 }
 
-/** Execuções de todos os robôs que o executor enxerga, agrupadas por robô. */
-export async function execucoesPorRobo(executor: Executor): Promise<Map<string, Execucao[]>> {
+/**
+ * Execuções de todos os robôs que o executor enxerga (ou só dos `roboIds`), agrupadas
+ * por robô.
+ */
+export async function execucoesPorRobo(
+  executor: Executor,
+  roboIds?: readonly string[],
+): Promise<Map<string, Execucao[]>> {
   const linhas = await executor
     .select({ roboId: ordens.roboId, lado: ordens.lado, e: execucoes })
     .from(execucoes)
     .innerJoin(ordens, eq(ordens.id, execucoes.ordemId))
+    .where(roboIds ? inArray(ordens.roboId, [...roboIds]) : undefined)
     .orderBy(asc(execucoes.em), asc(execucoes.id));
   const porRobo = new Map<string, Execucao[]>();
   for (const l of linhas) {

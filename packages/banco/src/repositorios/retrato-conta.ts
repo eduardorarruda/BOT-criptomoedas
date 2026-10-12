@@ -82,7 +82,8 @@ export async function retratoDaConta(
     .from(robos)
     .where(eq(robos.rede, rede));
   const ids = daRede.map((r) => r.id);
-  const execs = ids.length > 0 ? await execucoesPorRobo(tx) : new Map<string, Execucao[]>();
+  // Só os robôs desta rede: a posição de cada um precisa da história inteira dele.
+  const execs = ids.length > 0 ? await execucoesPorRobo(tx, ids) : new Map<string, Execucao[]>();
   const comPosicao = daRede.map((r) => {
     const p = posicaoDe(execs.get(r.id) ?? []);
     return { ...r, quantidade: p.quantidade, precoMedio: p.precoMedio };

@@ -227,6 +227,16 @@ export function demoRisco(inicio: number) {
         liberavel: true,
       });
     const max = limites.sequenciaStopsMax;
+    // Os 3 stops do SOL também contam na conta (a testnet soma 3 saídas com perda).
+    if (liberadaEm === null && max !== null && max <= 3 && limites.sequenciaStopsEscopo !== "robo")
+      lista.push({
+        codigo: "sequencia_stops",
+        rede: "testnet",
+        roboId: null,
+        motivo: `3 saídas com perda nas últimas ${limites.sequenciaStopsJanelaHoras} h (somando os robôs da conta). Compras pausadas ou até você liberar.`,
+        ate: fimSequenciaSol,
+        liberavel: true,
+      });
     if (liberadaEm === null && max !== null && max <= 3 && limites.sequenciaStopsEscopo !== "conta")
       lista.push({
         codigo: "sequencia_stops_robo",

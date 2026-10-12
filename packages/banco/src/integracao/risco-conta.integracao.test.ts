@@ -219,6 +219,9 @@ describe("limites da conta, divergências, avisos e gasto de IA", () => {
         ]),
       );
       expect(alvos.some((a) => (a.rede as string) === "papel")).toBe(false);
+      expect(await c.banco.divergencias.alvos(c.beto.id)).toEqual([
+        { usuarioId: c.beto.id, rede: "testnet" },
+      ]);
     });
   });
 
