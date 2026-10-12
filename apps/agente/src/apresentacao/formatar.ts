@@ -11,7 +11,7 @@ const porcento = (fracao: number): string => `${Math.round(fracao * 100)}%`;
 function resumoBruto(r: Resumo): string {
   return [
     "ZenTrade — resumo",
-    `Parada total: ${r.paradaTotal ? "LIGADA (nenhuma ordem sai)" : "desligada"}`,
+    `Parada total: ${r.paradaTotal ? "LIGADA (nenhuma entrada nova; stop e alvo seguem valendo)" : "desligada"}`,
     `Resultado hoje: ${dolar(r.resultadoHoje)}`,
     `Exposição: ${dolar(r.exposicao)}`,
     `Maior queda (30 dias): ${dolar(r.maiorQueda30d)}`,

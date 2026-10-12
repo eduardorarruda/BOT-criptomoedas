@@ -24,6 +24,7 @@ import {
 } from "../componentes/filtros";
 import { PrecoAoVivo } from "../componentes/PrecoAoVivo";
 import { Selo } from "../componentes/Selo";
+import { SeloStopCorretora } from "../componentes/SeloStopCorretora";
 import { useDecisoes, useOrdens, usePosicoes, useRobos } from "../ganchos/consultas";
 import { lojaPrecos } from "../ganchos/lojas";
 import { useAgora } from "../ganchos/useAgora";
@@ -75,6 +76,9 @@ function LinhaPosicao({
       </td>
       <td className="tabela__num">
         <Dinheiro valor={p.taxasPagas} className={temQuantidade(p.taxasPagas) ? "perda" : "apagado"} />
+      </td>
+      <td>
+        <SeloStopCorretora protecao={p.protecaoCorretora} aberta={aberta} />
       </td>
     </tr>
   );
@@ -129,6 +133,7 @@ function Posicoes({
             <th scope="col" className="tabela__num">
               Taxas pagas
             </th>
+            <th scope="col">Stop na corretora</th>
           </tr>
         </thead>
         <tbody>

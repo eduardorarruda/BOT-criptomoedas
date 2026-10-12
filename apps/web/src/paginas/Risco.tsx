@@ -26,7 +26,7 @@ function ParadaTotal() {
         avisar(
           valor ? "info" : "sucesso",
           valor
-            ? "Parada total ligada. Nenhum robô envia ordens."
+            ? "Parada total ligada. Nenhuma entrada nova; o stop e o alvo seguem valendo."
             : "Parada total desligada. Os robôs voltam a seguir seus modos.",
         ),
       onError: (e) => avisar("erro", mensagemDe(e)),
@@ -43,8 +43,9 @@ function ParadaTotal() {
             Parada total ligada
           </h2>
           <p>
-            Nenhum robô analisa nem envia ordens. Posições abertas continuam na corretora com os stops que já
-            estavam lá.
+            Nenhuma entrada nova: os robôs não compram, não consultam a IA e não vendem pela regra de saída.
+            As posições abertas seguem protegidas: o stop e o alvo continuam no livro da corretora e o robô
+            vende neles.
           </p>
         </div>
         <Botao
@@ -69,8 +70,9 @@ function ParadaTotal() {
           Parada total
         </h2>
         <p>
-          Para todos os robôs na hora: nada é analisado e nenhuma ordem nova sai. Use quando algo parecer
-          errado — é melhor parar e olhar.
+          Para todos os robôs na hora: nenhuma compra nova e nenhuma venda pela regra de saída. O stop e o
+          alvo das posições abertas continuam valendo, na corretora. Use quando algo parecer errado — é melhor
+          parar e olhar.
         </p>
       </div>
       <BotaoSegurar aoConfirmar={() => definir(true)} desabilitado={parada.isPending}>
