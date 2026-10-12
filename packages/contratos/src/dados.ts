@@ -1,7 +1,14 @@
+import type { Estrategia } from "@zentrade/dominio";
 import { z } from "zod";
 import { Fracao, Id, Instante, Intervalo, Lado, ModoRobo, Rede, TextoDecimal } from "./comum.js";
 import { PropostaAgenteEsquema } from "./proposta.js";
 import { RegraEsquema } from "./regra.js";
+
+/** Um uso do ATR: período do indicador e quantos ATR (stop, stop móvel, tamanho). */
+const UsoAtr = z.object({
+  periodo: z.number().int().min(1).max(500),
+  multiplo: z.number().gt(0).max(20),
+});
 
 /** Formatos que trafegam entre API, tela, motor e n8n. Decimais sempre em texto. */
 export const EstrategiaEsquema = z.object({
@@ -13,8 +20,42 @@ export const EstrategiaEsquema = z.object({
   stop: z.number().gt(0).lt(0.5),
   alvoLiquido: z.number().gt(0).lt(1),
   taxa: z.number().min(0).lt(0.01),
+  stopAtr: UsoAtr.optional(),
+  stopMovel: z
+    .discriminatedUnion("tipo", [
+      z.object({ tipo: z.literal("percentual"), distancia: z.number().gt(0).lt(0.5) }),
+      UsoAtr.extend({ tipo: z.literal("atr") }),
+    ])
+    .optional(),
+  empate: z.object({ gatilho: z.number().gt(0).lt(1) }).optional(),
+  tempoMaximo: z.number().int().min(1).max(1000).optional(),
+  tamanhoPorVolatilidade: UsoAtr.optional(),
 });
 export type EstrategiaDTO = z.infer<typeof EstrategiaEsquema>;
+
+/** O que define o comportamento da estratégia (sem id, nome e versão). */
+export type CamposEstrategia = Omit<EstrategiaDTO, "id" | "nome" | "versao">;
+
+/**
+ * DTO → estratégia do domínio. O DTO aceita `campo: undefined` nos opcionais; o
+ * domínio quer a chave ausente (exactOptionalPropertyTypes). Também tira id, nome e
+ * versão, que não mudam decisão nenhuma.
+ */
+export function estrategiaDoDTO(e: CamposEstrategia): Estrategia {
+  const { entrada, stop, alvoLiquido, taxa } = e;
+  return {
+    entrada,
+    stop,
+    alvoLiquido,
+    taxa,
+    ...(e.saida ? { saida: e.saida } : {}),
+    ...(e.stopAtr ? { stopAtr: e.stopAtr } : {}),
+    ...(e.stopMovel ? { stopMovel: e.stopMovel } : {}),
+    ...(e.empate ? { empate: e.empate } : {}),
+    ...(e.tempoMaximo !== undefined ? { tempoMaximo: e.tempoMaximo } : {}),
+    ...(e.tamanhoPorVolatilidade ? { tamanhoPorVolatilidade: e.tamanhoPorVolatilidade } : {}),
+  };
+}
 
 export const LimitesRiscoEsquema = z.object({
   perdaDiariaMaxima: TextoDecimal,
