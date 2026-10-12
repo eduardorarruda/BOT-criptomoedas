@@ -11,6 +11,13 @@ const ESPERA_CONSULTA_MS = 1_000;
 
 const naoSabeSeChegou = (e: unknown): boolean => e instanceof ErroRede;
 
+export interface OrdemConsultada {
+  readonly resultado: ResultadoOrdem;
+  /** Status cru da Binance (NEW, PARTIALLY_FILLED, FILLED, CANCELED, EXPIRED...). */
+  readonly status: string;
+  readonly idLista: number;
+}
+
 /**
  * Envio e consulta de ordens. Regra central: se o envio falhar sem resposta, a ordem
  * pode ter entrado. Nunca reenviar às cegas — consultar pelo idCliente.
@@ -59,6 +66,14 @@ export class OrdensBinance {
   }
 
   async consultar(simbolo: string, idCliente: string): Promise<ResultadoOrdem | null> {
+    return (await this.consultarDetalhada(simbolo, idCliente))?.resultado ?? null;
+  }
+
+  /**
+   * A ordem pelo idCliente, com o status cru da Binance (a proteção precisa saber se a
+   * perna ainda está no livro) e a lista a que pertence (-1 se nenhuma). `null` se não existe.
+   */
+  async consultarDetalhada(simbolo: string, idCliente: string): Promise<OrdemConsultada | null> {
     let r;
     try {
       r = await this.cliente.assinado(
@@ -76,13 +91,14 @@ export class OrdensBinance {
     const convertidas = executada.gt(0)
       ? await this.execucoesDaOrdem(simbolo, r.orderId, lado)
       : { execucoes: [] };
-    return {
+    const resultado: ResultadoOrdem = {
       idCliente,
       idCorretora: String(r.orderId),
       estado: estadoDaOrdem(r.status, executada),
       execucoes: convertidas.execucoes,
       ...(convertidas.motivo ? { motivo: convertidas.motivo } : {}),
     };
+    return { resultado, status: r.status, idLista: r.orderListId ?? -1 };
   }
 
   private async execucoesDaOrdem(simbolo: string, idOrdem: number, lado: Lado) {

@@ -1,9 +1,12 @@
 import type {
   Corretora,
   EstadoConexao,
+  IdsProtecao,
   Intervalo,
   PedidoOrdemMercado,
+  PedidoProtecao,
   ResultadoOrdem,
+  ResultadoProtecao,
 } from "@zentrade/contratos";
 import {
   dec,
@@ -18,6 +21,7 @@ import { candleDeKline, filtrosDoSimbolo, type AtivosDoPar } from "./conversao.j
 import { ErroConfiguracao, ErroCorretora } from "./erros.js";
 import { RespostaConta, RespostaExchangeInfo, RespostaKlines, RespostaLivro } from "./esquemas.js";
 import { OrdensBinance } from "./binance-ordens.js";
+import { ProtecaoBinance } from "./binance-protecao.js";
 import { URLS_BINANCE, type RedeBinance } from "./urls.js";
 import { assinarKlines, type OpcoesAssinatura } from "./websocket.js";
 import type { Disjuntor } from "./disjuntor.js";
@@ -54,6 +58,7 @@ export class BinanceCorretora implements Corretora {
   readonly rede: RedeBinance;
   private readonly cliente: ClienteBinance;
   private readonly ordens: OrdensBinance;
+  private readonly protecao: ProtecaoBinance;
   private readonly infos = new Map<string, Promise<InfoSimbolo>>();
 
   constructor(private readonly opcoes: OpcoesBinance) {
@@ -71,12 +76,14 @@ export class BinanceCorretora implements Corretora {
       ...(opcoes.timeoutMs ? { timeoutMs: opcoes.timeoutMs } : {}),
       ...(opcoes.disjuntor ? { disjuntor: opcoes.disjuntor } : {}),
     });
+    const dormir = opcoes.dormir ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
     this.ordens = new OrdensBinance(
       this.cliente,
       (s) => this.ativos(s),
       opcoes.taxaEstimada ?? 0.001,
-      opcoes.dormir ?? ((ms) => new Promise((r) => setTimeout(r, ms))),
+      dormir,
     );
+    this.protecao = new ProtecaoBinance(this.cliente, this.ordens, dormir);
   }
 
   async filtros(simbolo: string): Promise<FiltrosAtivo> {
@@ -138,6 +145,18 @@ export class BinanceCorretora implements Corretora {
 
   consultarOrdem(simbolo: string, idCliente: string): Promise<ResultadoOrdem | null> {
     return this.ordens.consultar(simbolo, idCliente);
+  }
+
+  colocarProtecao(pedido: PedidoProtecao): Promise<ResultadoProtecao> {
+    return this.protecao.colocar(pedido);
+  }
+
+  consultarProtecao(simbolo: string, ids: IdsProtecao): Promise<ResultadoProtecao | null> {
+    return this.protecao.consultar(simbolo, ids);
+  }
+
+  cancelarProtecao(simbolo: string, ids: IdsProtecao): Promise<ResultadoProtecao | null> {
+    return this.protecao.cancelar(simbolo, ids);
   }
 
   assinarCandles(

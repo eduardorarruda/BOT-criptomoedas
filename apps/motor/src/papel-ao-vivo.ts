@@ -1,9 +1,12 @@
 import type {
   Corretora,
   EstadoConexao,
+  IdsProtecao,
   Intervalo,
   PedidoOrdemMercado,
+  PedidoProtecao,
   ResultadoOrdem,
+  ResultadoProtecao,
 } from "@zentrade/contratos";
 import type { PapelCorretora } from "@zentrade/corretora";
 import type { Candle, Execucao, FiltrosAtivo, NivelLivro, Valor } from "@zentrade/dominio";
@@ -11,7 +14,8 @@ import type { Candle, Execucao, FiltrosAtivo, NivelLivro, Valor } from "@zentrad
 /**
  * Modo papel ao vivo: mercado (candles, filtros, livro) de uma corretora de verdade e
  * ordens/saldos simulados no papel. O papel é alimentado pelo MESMO stream que o robô
- * usa para decidir — uma fonte só de preço.
+ * usa para decidir — uma fonte só de preço. As proteções ficam no livro do papel e
+ * disparam pela mínima/máxima de cada candle alimentado (o de 1 min e o do intervalo).
  */
 export class CorretoraPapelAoVivo implements Corretora {
   readonly rede = "papel" as const;
@@ -53,6 +57,18 @@ export class CorretoraPapelAoVivo implements Corretora {
 
   consultarOrdem(simbolo: string, idCliente: string): Promise<ResultadoOrdem | null> {
     return this.papel.consultarOrdem(simbolo, idCliente);
+  }
+
+  colocarProtecao(pedido: PedidoProtecao): Promise<ResultadoProtecao> {
+    return this.papel.colocarProtecao(pedido);
+  }
+
+  consultarProtecao(simbolo: string, ids: IdsProtecao): Promise<ResultadoProtecao | null> {
+    return this.papel.consultarProtecao(simbolo, ids);
+  }
+
+  cancelarProtecao(simbolo: string, ids: IdsProtecao): Promise<ResultadoProtecao | null> {
+    return this.papel.cancelarProtecao(simbolo, ids);
   }
 
   assinarCandles(
