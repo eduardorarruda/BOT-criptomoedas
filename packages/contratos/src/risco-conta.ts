@@ -64,7 +64,8 @@ export type CodigoPausa = z.infer<typeof CodigoPausa>;
 /** Uma pausa de compras em vigor, com o motivo e quando acaba. */
 export const PausaContaEsquema = z.object({
   codigo: CodigoPausa,
-  rede: Rede,
+  /** A conta (rede) pausada; `null` quando vale para todas (orçamento de IA). */
+  rede: Rede.nullable(),
   roboId: Id.nullable(),
   motivo: z.string(),
   /** Quando libera sozinha; `null` = só com ação da pessoa (ou na virada do dia/mês). */

@@ -2,6 +2,7 @@ import { conectar } from "../cliente.js";
 import { repositorioAssistente } from "./assistente.js";
 import { redesComConta, repositorioCarteira } from "./carteira.js";
 import { repositorioDecisoes } from "./decisoes.js";
+import { repositorioGastosIa } from "./gastos-ia.js";
 import { repositorioImobiliario } from "./imobiliario.js";
 import { repositorioMercado } from "./mercado.js";
 import { repositorioOrdens } from "./ordens.js";
@@ -18,9 +19,10 @@ export interface OpcoesBancoDoAgente {
 /**
  * O que o agente de IA lê do banco: a configuração do assistente e, para as ferramentas
  * do chat, o resumo, os robôs, as decisões, as ordens e os investimentos (carteira
- * sincronizada da Binance, renda fixa e imobiliário) da pessoa. Só leitura e sempre sob
+ * sincronizada da Binance, renda fixa e imobiliário) da pessoa. Leitura sempre sob
  * RLS (comoUsuario): mesmo um bug no agente não alcança dado de outra pessoa. Índices do
- * BCB e candles são dados públicos, iguais para todos. Não pede a chave mestra: o agente
+ * BCB e candles são dados públicos, iguais para todos. A única escrita é o livro do gasto
+ * com IA (gastos_ia), também sob RLS. Não pede a chave mestra: o agente
  * nunca lê chave de corretora nem segredo de login.
  */
 export function criarBancoDoAgente(opcoes: OpcoesBancoDoAgente) {
@@ -36,6 +38,7 @@ export function criarBancoDoAgente(opcoes: OpcoesBancoDoAgente) {
   const ordens = repositorioOrdens(db);
   const carteira = repositorioCarteira(db);
   const rendaFixa = repositorioRendaFixa(db);
+  const gastosIa = repositorioGastosIa(db);
   return {
     conexao,
     config: assistente.config,
@@ -53,6 +56,9 @@ export function criarBancoDoAgente(opcoes: OpcoesBancoDoAgente) {
     titulosRendaFixa: (usuarioId: string) => rendaFixa.listar(usuarioId),
     indicador: repositorioIndicadores(db).ler,
     imobiliario: repositorioImobiliario(db).listar,
+    /** O orçamento de IA: o agente confere antes de chamar o modelo e grava o gasto depois. */
+    usoOrcamentoIa: gastosIa.uso,
+    registrarGastoIa: gastosIa.registrar,
     fechar: () => conexao.fechar(),
   };
 }

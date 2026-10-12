@@ -31,6 +31,29 @@ export type {
   SaldoCarteira,
 } from "./repositorios/carteira.js";
 export { portaCredenciais } from "./portas/credenciais.js";
+export { portaRiscoConta, type AtivoDoSimbolo } from "./portas/risco-conta.js";
+export type { NovoAviso, RepositorioAvisos } from "./repositorios/avisos.js";
+export type {
+  Aceite,
+  AjusteDePosicao,
+  ConferenciaAtivo,
+  DivergenciaGravada,
+  RepositorioDivergencias,
+  ResultadoRegistro,
+} from "./repositorios/divergencias.js";
+export {
+  inicioDoMesUtc,
+  type OrigemGastoIa,
+  type RepositorioGastosIa,
+  type UsoOrcamentoIa,
+} from "./repositorios/gastos-ia.js";
+export {
+  limitesDominio,
+  type LimitesGravados,
+  type RepositorioLimitesConta,
+} from "./repositorios/limites-conta.js";
+export type { RetratoConta, RoboDoRetrato, SaidaComPerda } from "./repositorios/retrato-conta.js";
+export type { DadosSituacaoConta, RepositorioRiscoConta } from "./repositorios/risco-conta.js";
 export type { ContaCorretora, NovaConta, RedeConta } from "./repositorios/contas.js";
 export type { DadosProposta, DecisaoComOrdem, FiltroDecisoes } from "./repositorios/decisoes.js";
 export type { DadosEstrategia, DetalheEstrategia } from "./repositorios/estrategias.js";
