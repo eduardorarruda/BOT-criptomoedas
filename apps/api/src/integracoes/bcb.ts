@@ -85,9 +85,12 @@ export function criarClienteBcb(o: OpcoesClienteBcb = {}): ClienteBcb {
 
   return {
     async serie(codigo, de, ate) {
-      const pontos: PontoSgs[] = [];
-      for (const [inicio, fim] of janelas(de, ate)) pontos.push(...(await consultar(codigo, inicio, fim)));
-      return pontos;
+      // Série mensal: o mês que a divisa entre duas janelas corta vem nas duas. Fica um
+      // ponto por dia, o da consulta mais nova, na ordem em que apareceram.
+      const porDia = new Map<string, PontoSgs>();
+      for (const [inicio, fim] of janelas(de, ate))
+        for (const p of await consultar(codigo, inicio, fim)) porDia.set(p.dia, p);
+      return [...porDia.values()];
     },
   };
 }

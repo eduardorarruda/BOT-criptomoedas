@@ -187,7 +187,10 @@ const LOTE = 1000;
 /** Cache das séries do Banco Central. Acesso de sistema: os dados são públicos e iguais para todos. */
 export function repositorioIndicadores(db: Db) {
   return {
-    async gravar(serie: SerieIndicador, pontos: readonly PontoIndicador[]): Promise<number> {
+    async gravar(serie: SerieIndicador, recebidos: readonly PontoIndicador[]): Promise<number> {
+      // Um dia repetido no mesmo lote derruba o upsert inteiro ("cannot affect row a
+      // second time"): vale o último que chegou.
+      const pontos = [...new Map(recebidos.map((p) => [p.dia, p])).values()];
       for (let i = 0; i < pontos.length; i += LOTE) {
         const lote = pontos
           .slice(i, i + LOTE)

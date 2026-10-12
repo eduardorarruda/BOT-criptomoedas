@@ -150,6 +150,20 @@ describe("renda fixa no banco", () => {
     expect((await c.banco.rendaFixa.listar(c.ana.id, true)).filter((t) => t.origem === "pluggy")).toEqual([]);
   });
 
+  it("indicadores: dia repetido no mesmo lote não derruba a gravação (vale o último)", async () => {
+    await expect(
+      c.banco.indicadores.gravar("IPCA", [
+        { dia: "2026-01-01", valor: "0.16" },
+        { dia: "2026-01-01", valor: "0.33" },
+        { dia: "2026-02-01", valor: "0.70" },
+      ]),
+    ).resolves.toBe(2);
+    expect(await c.banco.indicadores.ler("IPCA", "2026-01-01")).toEqual([
+      { dia: "2026-01-01", valor: "0.33", diaFim: null },
+      { dia: "2026-02-01", valor: "0.7", diaFim: null },
+    ]);
+  });
+
   it("indicadores: grava em lote, sobrescreve e registra a verificação", async () => {
     await c.banco.indicadores.gravar("CDI", [
       { dia: "2026-10-08", valor: "0.050788" },

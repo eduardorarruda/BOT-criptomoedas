@@ -35,6 +35,29 @@ describe("cliente do SGS (fetch simulado, nunca o Banco Central de verdade)", ()
     expect(buscar).toHaveBeenCalledTimes(3);
   });
 
+  it("série mensal: o mês que cai nas duas janelas vem uma vez só (o valor mais novo)", async () => {
+    // O SGS devolve o mês inteiro sempre que a janela toca nele; janelas vizinhas que
+    // cortam um mês ao meio trazem o mesmo ponto duas vezes.
+    const buscar = vi
+      .fn()
+      .mockResolvedValueOnce(
+        resposta(200, [
+          { data: "01/12/2016", valor: "0.30" },
+          { data: "01/01/2017", valor: "0.38" },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        resposta(200, [
+          { data: "01/01/2017", valor: "0.38" },
+          { data: "01/02/2017", valor: "0.33" },
+        ]),
+      );
+    const cliente = criarClienteBcb({ fetch: buscar as unknown as typeof fetch });
+    const pontos = await cliente.serie(433, "2008-01-01", "2017-06-01");
+    expect(buscar).toHaveBeenCalledTimes(2);
+    expect(pontos.map((p) => p.dia)).toEqual(["2016-12-01", "2017-01-01", "2017-02-01"]);
+  });
+
   it("404 do SGS é período sem dado, não erro", async () => {
     const cliente = criarClienteBcb({
       fetch: (async () => resposta(404, { erro: "Value(s) not found" })) as unknown as typeof fetch,
