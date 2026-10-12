@@ -1,4 +1,21 @@
-import { contextoDeCandles, type Candle, type ContextoMercado } from "@zentrade/dominio";
+import type { Candle, ContextoMercado } from "@zentrade/dominio";
+
+/** O candle já em número, convertido uma vez só ao entrar (as regras pedem o contexto a cada decisão). */
+interface VelaNumerica {
+  readonly abre: number;
+  readonly maxima: number;
+  readonly minima: number;
+  readonly fecha: number;
+  readonly volume: number;
+}
+
+const emNumero = (c: Candle): VelaNumerica => ({
+  abre: c.abre.toNumber(),
+  maxima: c.maxima.toNumber(),
+  minima: c.minima.toNumber(),
+  fecha: c.fecha.toNumber(),
+  volume: c.volume.toNumber(),
+});
 
 /**
  * Os últimos N candles fechados, num buffer circular: memória fixa por robô, sem
@@ -7,6 +24,7 @@ import { contextoDeCandles, type Candle, type ContextoMercado } from "@zentrade/
  */
 export class BufferCandles {
   private readonly itens: (Candle | undefined)[];
+  private readonly numeros: (VelaNumerica | undefined)[];
   private inicio = 0;
   private quantidade = 0;
 
@@ -14,6 +32,7 @@ export class BufferCandles {
     if (!Number.isInteger(capacidade) || capacidade < 1)
       throw new RangeError("A capacidade do buffer de candles precisa ser um inteiro positivo.");
     this.itens = new Array<Candle | undefined>(capacidade);
+    this.numeros = new Array<VelaNumerica | undefined>(capacidade);
   }
 
   get tamanho(): number {
@@ -29,13 +48,12 @@ export class BufferCandles {
   adicionar(candle: Candle): boolean {
     const ultimo = this.ultimo();
     if (ultimo && candle.abertura <= ultimo.abertura) return false;
-    if (this.quantidade < this.capacidade) {
-      this.itens[(this.inicio + this.quantidade) % this.capacidade] = candle;
-      this.quantidade++;
-    } else {
-      this.itens[this.inicio] = candle;
-      this.inicio = (this.inicio + 1) % this.capacidade;
-    }
+    const posicao =
+      this.quantidade < this.capacidade ? (this.inicio + this.quantidade) % this.capacidade : this.inicio;
+    this.itens[posicao] = candle;
+    this.numeros[posicao] = emNumero(candle);
+    if (this.quantidade < this.capacidade) this.quantidade++;
+    else this.inicio = (this.inicio + 1) % this.capacidade;
     return true;
   }
 
@@ -47,13 +65,27 @@ export class BufferCandles {
     );
   }
 
+  private emOrdem(): VelaNumerica[] {
+    return Array.from(
+      { length: this.quantidade },
+      (_, i) => this.numeros[(this.inicio + i) % this.capacidade] as VelaNumerica,
+    );
+  }
+
   /** Indicadores são number; o preço de decisão continua decimal exato. */
   fechamentos(): number[] {
-    return this.lista().map((c) => c.fecha.toNumber());
+    return this.emOrdem().map((v) => v.fecha);
   }
 
   /** Contexto completo (abertura, máxima, mínima, fechamento e volume) para as regras. */
   contexto(): ContextoMercado {
-    return contextoDeCandles(this.lista());
+    const v = this.emOrdem();
+    return {
+      fechamentos: v.map((x) => x.fecha),
+      aberturas: v.map((x) => x.abre),
+      maximas: v.map((x) => x.maxima),
+      minimas: v.map((x) => x.minima),
+      volumes: v.map((x) => x.volume),
+    };
   }
 }

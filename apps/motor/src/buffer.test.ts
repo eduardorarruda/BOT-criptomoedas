@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { contextoDeCandles } from "@zentrade/dominio";
 import { BufferCandles } from "./buffer.js";
 import { candle } from "./teste/candles.js";
 
@@ -22,13 +23,11 @@ describe("buffer circular de candles", () => {
 
   it("entrega o contexto completo (OHLCV) alinhado, para as regras com máxima, mínima e volume", () => {
     const b = new BufferCandles(3);
-    [1, 2].forEach((i) => b.adicionar(candle(i * 60_000, 100 + i)));
-    const ctx = b.contexto();
-    expect(ctx.fechamentos).toEqual(b.fechamentos());
-    expect(ctx.maximas).toHaveLength(2);
-    expect(ctx.minimas).toHaveLength(2);
-    expect(ctx.aberturas).toHaveLength(2);
-    expect(ctx.volumes).toHaveLength(2);
+    [1, 2, 3, 4].forEach((i) =>
+      b.adicionar(candle(i * 60_000, 100 + i, 60_000, { minima: String(99 + i), maxima: String(102 + i) })),
+    );
+    expect(b.contexto()).toEqual(contextoDeCandles(b.lista()));
+    expect(b.contexto().maximas).toEqual([104, 105, 106]);
   });
 
   it("vazio não tem último; capacidade precisa ser positiva", () => {
