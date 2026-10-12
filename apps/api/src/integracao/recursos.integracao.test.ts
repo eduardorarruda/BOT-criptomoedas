@@ -298,7 +298,79 @@ describe("rotas de recursos contra banco e Redis reais", () => {
       estado: "concluido",
       metricas,
       curva: [{ em: 1, patrimonio: "1000" }],
+      // Pedido sem configuração: a API gravou os padrões (custos realistas, limites do robô).
+      configuracao: {
+        custos: { taxaPorLado: 0.001, deslizamentoBps: 5, meioSpreadBps: 2 },
+        risco: { modo: "robo" },
+        validacao: { fracaoDentroDaAmostra: 0.7 },
+      },
+      // Backtest sem Sharpe gravado conta como tentativa, mas sem Sharpe deflacionado.
+      tentativas: { total: 1, daVersao: 1, versoes: 1, sharpeDeflacionado: null },
     });
+  });
+
+  it("backtest com configuração própria; cada rodada concluída conta como tentativa", async () => {
+    const DIA = 86_400_000;
+    const pedido = {
+      estrategiaId,
+      versao: 1,
+      simbolo: "ETHUSDT",
+      intervalo: "4h",
+      inicio: 0,
+      fim: 400 * DIA,
+      configuracao: {
+        custos: { taxaPorLado: 0.00075, deslizamentoBps: 10 },
+        risco: { modo: "sem_limites" },
+        validacao: { fracaoDentroDaAmostra: 0.8, janelas: 4, modoJanelas: "ancorada", semente: 7 },
+      },
+    };
+    const r = await chamar(ana, "POST", "/backtests", pedido);
+    expect(r.statusCode).toBe(202);
+    expect(r.json()).toMatchObject({
+      configuracao: {
+        custos: { taxaPorLado: 0.00075, deslizamentoBps: 10, meioSpreadBps: 2 },
+        risco: { modo: "sem_limites" },
+        precisaoMinuto: false,
+        validacao: { fracaoDentroDaAmostra: 0.8, janelas: 4, modoJanelas: "ancorada", semente: 7 },
+      },
+      validacao: null,
+      tentativas: null,
+    });
+    const minutoLongo = { ...pedido, configuracao: { precisaoMinuto: true } };
+    const recusado = await chamar(ana, "POST", "/backtests", minutoLongo);
+    expect(recusado.statusCode).toBe(400);
+    expect(JSON.stringify(recusado.json())).toMatch(/31 dias/);
+    const fracaoRuim = { ...pedido, configuracao: { validacao: { fracaoDentroDaAmostra: 0.99 } } };
+    expect((await chamar(ana, "POST", "/backtests", fracaoRuim)).statusCode).toBe(400);
+
+    const metricas = (sharpe: number) => ({
+      resultadoLiquido: "40",
+      maiorQueda: "10",
+      maiorQuedaPercentual: 0.01,
+      operacoes: 150,
+      acertos: 80,
+      taxaAcerto: 0.5333,
+      taxasPagas: "3",
+      sharpe,
+      observacoes: 2400,
+      barrasPorAno: 2190,
+      assimetria: -0.2,
+      curtose: 5,
+      anos: 400 / 365,
+    });
+    const id = r.json<{ id: string }>().id;
+    await api.banco.backtests.concluir(id, { metricas: metricas(1.8), curva: [] });
+    const segundo = await chamar(ana, "POST", "/backtests", pedido);
+    const id2 = segundo.json<{ id: string }>().id;
+    await api.banco.backtests.concluir(id2, { metricas: metricas(0.2), curva: [] });
+    const lido = await chamar(ana, "GET", `/backtests/${id2}`);
+    const t = lido.json<{ tentativas: Record<string, number | null> }>().tentativas;
+    // O primeiro backtest desta estratégia (sem Sharpe) + estes dois.
+    expect(t).toMatchObject({ total: 3, daVersao: 3, versoes: 1 });
+    expect(t.sharpeDeflacionado).toBeLessThan(t.probabilidadeSharpe ?? 0);
+    const lista = (await chamar(ana, "GET", "/backtests")).json<{ id: string; tentativas: unknown }[]>();
+    expect(lista.find((x) => x.id === id)?.tentativas).toMatchObject({ total: 2 });
+    expect((await chamar(beto, "GET", `/backtests/${id2}`)).statusCode).toBe(404);
   });
 
   it("conhecimento: nota vira documento com trechos; repetida não duplica", async () => {

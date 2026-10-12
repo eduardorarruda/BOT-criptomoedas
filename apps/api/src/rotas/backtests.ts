@@ -4,6 +4,7 @@ import { z } from "zod";
 import { usuarioIdDe } from "../autenticacao/plugin.js";
 import type { Dependencias } from "../dependencias.js";
 import { ErroApi } from "../erros.js";
+import { comTentativas } from "./backtests-tentativas.js";
 import { exigirUuid, ouNaoEncontrado, ParamId } from "./comum.js";
 
 /** Backtest guarda a curva inteira: a lista tem teto menor que as outras. */
@@ -19,10 +20,15 @@ export const rotasBacktests: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
       config: { acesso: "leitura" },
       schema: { querystring: Lista, response: { 200: z.array(BacktestEsquema) } },
     },
-    async (req) => backtests.listar(usuarioIdDe(req), req.query.limite ?? 20),
+    async (req) => {
+      const usuarioId = usuarioIdDe(req);
+      return comTentativas(backtests, usuarioId, await backtests.listar(usuarioId, req.query.limite ?? 20));
+    },
   );
 
   // Escopo "operar": backtest não envia ordem, mas consome CPU do motor e dados da corretora.
+  // A configuração chega com os padrões aplicados (custos realistas, limites do robô) e é
+  // gravada assim: o resultado sempre diz com que custos e limites rodou.
   app.post(
     "/backtests",
     {
@@ -43,17 +49,23 @@ export const rotasBacktests: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
           "a fila de backtests está fora do ar; tente de novo em instantes",
         );
       }
-      return reply.code(202).send(ouNaoEncontrado(await backtests.obter(usuarioId, criado.id), "backtest"));
+      // Na fila ainda não é tentativa: sai com `tentativas: null`, como na lista.
+      const naFila = ouNaoEncontrado(await backtests.obter(usuarioId, criado.id), "backtest");
+      return reply.code(202).send({ ...naFila, tentativas: null });
     },
   );
 
   app.get(
     "/backtests/:id",
     { config: { acesso: "leitura" }, schema: { params: ParamId, response: { 200: BacktestEsquema } } },
-    async (req) =>
-      ouNaoEncontrado(
-        await backtests.obter(usuarioIdDe(req), exigirUuid(req.params.id, "backtest")),
+    async (req) => {
+      const usuarioId = usuarioIdDe(req);
+      const b = ouNaoEncontrado(
+        await backtests.obter(usuarioId, exigirUuid(req.params.id, "backtest")),
         "backtest",
-      ),
+      );
+      const [comContagem] = await comTentativas(backtests, usuarioId, [b]);
+      return comContagem;
+    },
   );
 };
