@@ -1,0 +1,104 @@
+/* ---------- tela de Risco: conta, pausas, divergências, avisos ---------- */
+.pausas,
+.avisos-conta {
+  display: grid;
+}
+.pausa,
+.divergencia,
+.aviso-conta {
+  display: grid;
+  gap: 6px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--linha-suave);
+  font-size: var(--t-ui);
+}
+.pausa:last-child,
+.divergencia:last-child,
+.aviso-conta:last-child {
+  border-bottom: 0;
+}
+.pausa p,
+.divergencia p,
+.aviso-conta p {
+  margin: 0;
+}
+.pausa__topo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+}
+.aviso-conta--novo {
+  box-shadow: inset 3px 0 0 var(--atencao);
+  padding-left: var(--espaco-3);
+}
+.divergencia__investigar summary {
+  cursor: pointer;
+  width: fit-content;
+  font-size: 13px;
+  color: var(--apagado);
+}
+.divergencia__investigar ul {
+  margin: 6px 0 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.divergencias__historico {
+  display: grid;
+  gap: 4px;
+  margin: var(--espaco-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.conta-redes {
+  display: grid;
+  gap: var(--espaco-5);
+}
+.conta-rede {
+  display: grid;
+  gap: var(--espaco-3);
+}
+.conta-rede__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+.medidor--livre .medidor__topo {
+  color: var(--texto-2);
+}
+.limites-conta {
+  gap: var(--espaco-4);
+}
+.limites-conta__grupo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--espaco-4);
+  margin: 0;
+  padding: var(--espaco-4);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  min-width: 0;
+}
+.limites-conta__grupo legend {
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.limites-conta__grupo .caixa {
+  align-self: center;
+}
+
+/* avisos da chave em Contas e chaves */
+.chave__avisos {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: 12px;
+}

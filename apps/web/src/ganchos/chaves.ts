@@ -23,4 +23,6 @@ export const chaves = {
   documentos: ["documentos"] as const,
   automacoes: ["automacoes"] as const,
   aoVivo: (roboId?: string) => ["aovivo", roboId ?? "todos"] as const,
+  /** Limites da conta, pausas, divergências, orçamento de IA e avisos (tela de Risco). */
+  risco: ["risco"] as const,
 };

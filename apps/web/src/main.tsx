@@ -12,6 +12,7 @@ import "./estilos/paginas2.css";
 import "./estilos/decisao.css";
 import "./estilos/construtor.css";
 import "./estilos/aovivo.css";
+import "./estilos/risco.css";
 import "./estilos/interacoes.css";
 import "./estilos/responsivo.css";
 import { StrictMode } from "react";

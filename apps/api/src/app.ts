@@ -62,7 +62,7 @@ async function registrarPlugins(app: FastifyInstance, deps: Dependencias): Promi
   await app.register(cors, {
     origin: [deps.config.ZENTRADE_ORIGEM_WEB],
     credentials: true,
-    methods: ["GET", "POST", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["content-type", "authorization", CABECALHO_CSRF],
   });
   await app.register(cookie);
