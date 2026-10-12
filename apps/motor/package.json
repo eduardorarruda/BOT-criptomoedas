@@ -26,6 +26,7 @@
     "@zentrade/contratos": "workspace:*",
     "@zentrade/corretora": "workspace:*",
     "@zentrade/dominio": "workspace:*",
+    "@zentrade/financas": "workspace:*",
     "bullmq": "^6.3.12",
     "ioredis": "^6.0.0",
     "pino": "^10.4.0",

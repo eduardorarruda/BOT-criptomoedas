@@ -1,10 +1,20 @@
-import type { BacktestParaRodar } from "@zentrade/banco";
+import type { BacktestParaRodar, ResultadoBacktestGravado } from "@zentrade/banco";
+import {
+  ConfiguracaoBacktestEsquema,
+  MetricasBacktestEsquema,
+  ValidacaoBacktestEsquema,
+} from "@zentrade/contratos";
 import { PapelCorretora } from "@zentrade/corretora";
 import { dec } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
 import { registroDeTeste } from "../teste/cenario.js";
 import { serie } from "../teste/candles.js";
-import { processarBacktest, reduzirCurva, type RepositorioBacktestsDoMotor } from "./servico.js";
+import {
+  limitesDoBacktest,
+  processarBacktest,
+  reduzirCurva,
+  type RepositorioBacktestsDoMotor,
+} from "./servico.js";
 
 const H = 3_600_000;
 const INICIO = Date.UTC(2026, 0, 10);
@@ -26,6 +36,8 @@ const pedido = (extra: Partial<BacktestParaRodar> = {}): BacktestParaRodar => ({
   erro: null,
   criadoEm: 0,
   concluidoEm: null,
+  configuracao: null,
+  validacao: null,
   estrategia: {
     entrada: {
       tipo: "comparar",
@@ -43,7 +55,7 @@ const pedido = (extra: Partial<BacktestParaRodar> = {}): BacktestParaRodar => ({
 function montar(p: BacktestParaRodar | null) {
   const papel = new PapelCorretora({ saldos: {}, taxa: 0, deslizamentoBps: 0 });
   serie(INICIO, PRECOS, H).forEach((c) => papel.alimentar("BTCUSDT", "1h", c));
-  const gravado: { concluido?: { metricas: unknown; curva: unknown }; falhou?: string } = {};
+  const gravado: { concluido?: ResultadoBacktestGravado; falhou?: string } = {};
   const backtests: RepositorioBacktestsDoMotor = {
     paraRodar: async () => p,
     concluir: async (_id, r) => void (gravado.concluido = r),
@@ -60,23 +72,22 @@ describe("job de backtest", () => {
     const m = montar(pedido());
     expect(await processarBacktest(m.deps, m.opcoes, "b1")).toBe("concluido");
     const metricas = m.gravado.concluido?.metricas as Record<string, unknown>;
-    expect(Object.keys(metricas).sort()).toEqual(
-      [
-        "acertos",
-        "candles",
-        "maiorQueda",
-        "maiorQuedaPercentual",
-        "operacoes",
-        "ordens",
-        "patrimonioFinal",
-        "resultadoLiquido",
-        "resultadoPercentual",
-        "riscoPorOperacao",
-        "saldoInicial",
-        "taxaAcerto",
-        "taxasPagas",
-      ].sort(),
-    );
+    const ESTAVEIS = [
+      "acertos",
+      "candles",
+      "maiorQueda",
+      "maiorQuedaPercentual",
+      "operacoes",
+      "ordens",
+      "patrimonioFinal",
+      "resultadoLiquido",
+      "resultadoPercentual",
+      "riscoPorOperacao",
+      "saldoInicial",
+      "taxaAcerto",
+      "taxasPagas",
+    ];
+    expect(Object.keys(metricas)).toEqual(expect.arrayContaining(ESTAVEIS));
     expect(metricas).toMatchObject({
       operacoes: 1,
       acertos: 1,
@@ -84,13 +95,97 @@ describe("job de backtest", () => {
       ordens: 2,
       saldoInicial: "1000",
     });
-    expect(metricas.riscoPorOperacao).toBe("10");
+    // Padrão: os limites de um robô novo (risco por operação = 0,5% do saldo).
+    expect(metricas.riscoPorOperacao).toBe("5");
     expect(typeof metricas.resultadoLiquido).toBe("string");
     expect(dec(metricas.resultadoLiquido as string).gt(0)).toBe(true);
     expect(typeof metricas.maiorQuedaPercentual).toBe("number");
-    const curva = m.gravado.concluido?.curva as { em: number; patrimonio: string }[];
-    expect(curva[0]).toEqual({ em: INICIO + 21 * H - 1, patrimonio: "1000" });
+    const curva = m.gravado.concluido?.curva as { em: number; patrimonio: string; buyHold?: string }[];
+    expect(curva[0]).toMatchObject({ em: INICIO + 21 * H - 1, patrimonio: "1000" });
     expect(curva.at(-1)?.patrimonio).toBe(metricas.patrimonioFinal);
+    expect(curva.every((p) => typeof p.buyHold === "string")).toBe(true);
+  });
+
+  it("custos padrão em toda execução, buy and hold, risco e validação gravados no contrato", async () => {
+    const m = montar(pedido());
+    await processarBacktest(m.deps, m.opcoes, "b1");
+    const metricas = m.gravado.concluido?.metricas as Record<string, unknown>;
+    expect(dec(metricas.deslizamentoPago as string).gt(0)).toBe(true);
+    // Bruto = líquido + taxas + deslizamento.
+    expect(dec(metricas.resultadoBruto as string).toFixed()).toBe(
+      dec(metricas.resultadoLiquido as string)
+        .plus(metricas.taxasPagas as string)
+        .plus(metricas.deslizamentoPago as string)
+        .toFixed(),
+    );
+    expect(metricas).toMatchObject({
+      barrasPorAno: 8760,
+      precisaoMinuto: false,
+      stopsIntrabar: 0,
+      alvosIntrabar: expect.any(Number),
+    });
+    expect(typeof metricas.buyHoldResultadoPercentual).toBe("number");
+    expect(typeof metricas.sharpe).toBe("number");
+    // O que o motor grava passa no contrato que a API e a tela leem.
+    expect(MetricasBacktestEsquema.safeParse(metricas).error).toBeUndefined();
+    const validacao = ValidacaoBacktestEsquema.parse(m.gravado.concluido?.validacao);
+    expect(validacao.amostra?.fracaoDentro).toBe(0.7);
+    expect(validacao.walkForward?.janelas).toHaveLength(5);
+    expect(validacao.monteCarlo).toBeNull();
+    expect(validacao.avisos.map((a) => a.codigo)).toEqual(
+      expect.arrayContaining(["poucas_operacoes", "periodo_curto"]),
+    );
+  });
+
+  it("sem limites e saldo próprio: risco do ambiente sobre o saldo pedido, com aviso", async () => {
+    const configuracao = ConfiguracaoBacktestEsquema.parse({
+      saldoInicial: "2000",
+      risco: { modo: "sem_limites" },
+    });
+    const m = montar(pedido({ configuracao }));
+    await processarBacktest(m.deps, m.opcoes, "b1");
+    const metricas = m.gravado.concluido?.metricas as Record<string, unknown>;
+    expect(metricas).toMatchObject({ saldoInicial: "2000", riscoPorOperacao: "20" });
+    const validacao = ValidacaoBacktestEsquema.parse(m.gravado.concluido?.validacao);
+    expect(validacao.avisos.map((a) => a.codigo)).toContain("sem_limites");
+  });
+
+  it("precisão de 1 minuto pede os candles de 1 minuto da janela à fonte", async () => {
+    const m = montar(pedido({ configuracao: ConfiguracaoBacktestEsquema.parse({ precisaoMinuto: true }) }));
+    const pedidos: string[] = [];
+    const corretora = m.deps.fontes.corretora;
+    const fontes = {
+      corretora: {
+        candles: (...a: Parameters<typeof corretora.candles>) => {
+          pedidos.push(a[1]);
+          return corretora.candles(...a);
+        },
+      },
+    };
+    expect(await processarBacktest({ ...m.deps, fontes }, m.opcoes, "b1")).toBe("concluido");
+    expect(pedidos).toContain("1m");
+    // Sem candles de 1 minuto na fonte, cai no candle do intervalo e diz isso.
+    expect((m.gravado.concluido?.metricas as Record<string, unknown>).precisaoMinuto).toBe(false);
+  });
+
+  it("limites do robô informados valem no lugar dos padrões", () => {
+    const limites = {
+      perdaDiariaMaxima: "7",
+      exposicaoMaxima: "70",
+      riscoPorOperacao: "2",
+      ordensPorHoraMax: 2,
+      pausaAposPerdaMin: 30,
+      confiancaMinima: 0.5,
+    };
+    const c = ConfiguracaoBacktestEsquema.parse({ risco: { modo: "robo", limites } });
+    const r = limitesDoBacktest(c, dec(1000), 0.01);
+    expect(r.riscoPorOperacao.toFixed()).toBe("2");
+    expect(r.limites).toMatchObject({
+      ordensPorHoraMax: 2,
+      pausaAposPerdaMs: 1_800_000,
+      confiancaMinima: 0.5,
+    });
+    expect(r.limites.exposicaoMaxima.toFixed()).toBe("70");
   });
 
   it("pedido que já terminou (ou não existe): nada a fazer", async () => {

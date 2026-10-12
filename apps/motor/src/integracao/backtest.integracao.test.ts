@@ -65,6 +65,12 @@ describe("fila de backtests (BullMQ + PostgreSQL)", () => {
       const curva = b?.curva as { em: number; patrimonio: string }[];
       expect(curva.length).toBe(PRECOS.length - 200);
       expect(curva[0]?.patrimonio).toBe("1000");
+      // Custos padrão, buy and hold e validação gravados e lidos pelo contrato.
+      expect(b?.metricas?.deslizamentoPago).toMatch(/^\d/);
+      expect(typeof b?.metricas?.buyHoldResultadoPercentual).toBe("number");
+      expect(curva[0]).toHaveProperty("buyHold");
+      expect(b?.validacao?.walkForward?.janelas).toHaveLength(5);
+      expect(b?.validacao?.amostra?.fracaoDentro).toBe(0.7);
       await ate(
         async () => r.erros.map((e) => e.msg),
         (m) => m.some((x) => /job de backtest falhou/.test(x)),

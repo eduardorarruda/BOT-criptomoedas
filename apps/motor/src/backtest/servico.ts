@@ -1,14 +1,23 @@
-import type { BacktestParaRodar } from "@zentrade/banco";
-import { paraTexto, type LimitesRisco, type Valor } from "@zentrade/dominio";
+import type { BacktestParaRodar, ResultadoBacktestGravado } from "@zentrade/banco";
+import {
+  ConfiguracaoBacktestEsquema,
+  limitesPadraoDoBacktest,
+  type ConfiguracaoBacktest,
+  type LimitesRiscoDTO,
+  type PontoCurvaBacktest,
+} from "@zentrade/contratos";
+import { dec, paraTexto, type LimitesRisco, type Valor } from "@zentrade/dominio";
 import type { Registro } from "../nucleo/tipos.js";
 import { candlesHistoricos, type FontesCandles } from "./candles-historicos.js";
-import type { PontoCurva } from "./metricas.js";
+import { metricasGravadas } from "./metricas-gravadas.js";
+import { barrasPorAno } from "./metricas-retorno.js";
 import { rodarBacktest, type ResultadoBacktest } from "./rodar.js";
+import { validarBacktest } from "./validacao/index.js";
 
 /** O pedaço do repositório de backtests (packages/banco) que o motor usa. */
 export interface RepositorioBacktestsDoMotor {
   paraRodar(id: string): Promise<BacktestParaRodar | null>;
-  concluir(id: string, resultado: { metricas: unknown; curva: unknown }): Promise<void>;
+  concluir(id: string, resultado: ResultadoBacktestGravado): Promise<void>;
   falhar(id: string, erro: string): Promise<void>;
 }
 
@@ -19,108 +28,109 @@ export interface DependenciasBacktest {
 }
 
 export interface OpcoesBacktest {
+  /** Saldo quando o pedido não traz um. */
   readonly saldoInicial: Valor;
-  /** Fração do saldo arriscada por operação (0,01 = 1%). */
+  /** Fração do saldo arriscada por operação no modo "sem limites" (0,01 = 1%). */
   readonly riscoPorOperacao: number;
-}
-
-/** Métricas gravadas em backtests.metricas (nomes estáveis; dinheiro em texto, frações em número). */
-export interface MetricasGravadas {
-  readonly resultadoLiquido: string;
-  readonly resultadoPercentual: number;
-  readonly maiorQueda: string;
-  readonly maiorQuedaPercentual: number;
-  readonly operacoes: number;
-  readonly acertos: number;
-  readonly taxaAcerto: number;
-  readonly taxasPagas: string;
-  readonly ordens: number;
-  readonly saldoInicial: string;
-  readonly patrimonioFinal: string;
-  readonly riscoPorOperacao: string;
-  readonly candles: number;
-}
-
-/** Ponto de backtests.curva. */
-export interface PontoCurvaGravado {
-  readonly em: number;
-  readonly patrimonio: string;
 }
 
 const AQUECIMENTO = 200;
 const PONTOS_CURVA = 1000;
 
-/** No máximo `maximo` pontos igualmente espaçados, sempre com o primeiro e o último. */
-export function reduzirCurva(curva: readonly PontoCurva[], maximo: number): PontoCurva[] {
+/** No máximo `maximo` itens igualmente espaçados, sempre com o primeiro e o último. */
+export function reduzirCurva<T>(curva: readonly T[], maximo: number): T[] {
   if (curva.length <= maximo) return [...curva];
   const passo = (curva.length - 1) / (maximo - 1);
-  return Array.from({ length: maximo }, (_, i) => curva[Math.round(i * passo)] as PontoCurva);
+  return Array.from({ length: maximo }, (_, i) => curva[Math.round(i * passo)] as T);
 }
+
+const doDTO = (l: LimitesRiscoDTO): LimitesRisco => ({
+  perdaDiariaMaxima: dec(l.perdaDiariaMaxima),
+  exposicaoMaxima: dec(l.exposicaoMaxima),
+  ordensPorHoraMax: l.ordensPorHoraMax,
+  pausaAposPerdaMs: l.pausaAposPerdaMin * 60_000,
+  confiancaMinima: l.confiancaMinima,
+});
 
 /**
- * Sem robô por trás, o backtest mede a estratégia: risco por operação e exposição
- * vêm do saldo; sem freio de perda diária, de frequência ou de pausa após perda.
+ * `robo` (padrão): os limites do robô de verdade — os informados ou os de um robô novo
+ * proporcionais ao saldo. `sem_limites`: só a estratégia, sem freio de perda diária,
+ * frequência ou pausa após perda (menos realista); risco por operação do ambiente.
  */
-function limitesDoBacktest(saldo: Valor): LimitesRisco {
-  return {
-    perdaDiariaMaxima: saldo,
-    exposicaoMaxima: saldo,
-    ordensPorHoraMax: 1_000,
-    pausaAposPerdaMs: 0,
-    confiancaMinima: 0,
-  };
+export function limitesDoBacktest(
+  c: ConfiguracaoBacktest,
+  saldo: Valor,
+  riscoSemLimites: number,
+): { limites: LimitesRisco; riscoPorOperacao: Valor } {
+  if (c.risco.modo === "sem_limites")
+    return {
+      limites: {
+        perdaDiariaMaxima: saldo,
+        exposicaoMaxima: saldo,
+        ordensPorHoraMax: 1_000,
+        pausaAposPerdaMs: 0,
+        confiancaMinima: 0,
+      },
+      riscoPorOperacao: saldo.times(riscoSemLimites),
+    };
+  const l = c.risco.limites ?? limitesPadraoDoBacktest(paraTexto(saldo));
+  return { limites: doDTO(l), riscoPorOperacao: dec(l.riscoPorOperacao) };
 }
 
-function metricasGravadas(
-  r: ResultadoBacktest,
-  o: OpcoesBacktest,
-  risco: Valor,
-  candles: number,
-): MetricasGravadas {
-  return {
-    resultadoLiquido: paraTexto(r.resultadoLiquido),
-    resultadoPercentual: r.resultadoLiquido.div(o.saldoInicial).toNumber(),
-    maiorQueda: paraTexto(r.maiorQueda),
-    maiorQuedaPercentual: r.maiorQuedaPercentual,
-    operacoes: r.operacoes,
-    acertos: r.acertos,
-    taxaAcerto: r.taxaAcerto,
-    taxasPagas: paraTexto(r.taxasPagas),
-    ordens: r.ordens,
-    saldoInicial: paraTexto(o.saldoInicial),
-    patrimonioFinal: paraTexto(r.patrimonioFinal),
-    riscoPorOperacao: paraTexto(risco),
-    candles,
-  };
+function curvaGravada(r: ResultadoBacktest): PontoCurvaBacktest[] {
+  const pontos = r.curva.map((p, i) => {
+    const bh = r.buyHold.curva[i];
+    return {
+      em: p.em,
+      patrimonio: paraTexto(p.patrimonio),
+      ...(bh ? { buyHold: paraTexto(bh.patrimonio) } : {}),
+    };
+  });
+  return reduzirCurva(pontos, PONTOS_CURVA);
 }
 
 async function rodar(d: DependenciasBacktest, o: OpcoesBacktest, p: BacktestParaRodar) {
+  const config = ConfiguracaoBacktestEsquema.parse(p.configuracao ?? {});
+  const saldo = config.saldoInicial ? dec(config.saldoInicial) : o.saldoInicial;
+  const { limites, riscoPorOperacao } = limitesDoBacktest(config, saldo, o.riscoPorOperacao);
   const consulta = { simbolo: p.simbolo, intervalo: p.intervalo, inicio: p.inicio, fim: p.fim };
   const candles = await candlesHistoricos(d.fontes, consulta, AQUECIMENTO);
-  const risco = o.saldoInicial.times(o.riscoPorOperacao);
+  const minutos = config.precisaoMinuto
+    ? await candlesHistoricos(d.fontes, { ...consulta, intervalo: "1m" }, 0)
+    : undefined;
   const r = await rodarBacktest({
     ...consulta,
     candles,
     estrategia: p.estrategia,
-    limites: limitesDoBacktest(o.saldoInicial),
-    riscoPorOperacao: risco,
-    saldoInicial: o.saldoInicial,
+    limites,
+    riscoPorOperacao,
+    saldoInicial: saldo,
     agente: "sempre_concorda",
     aquecimento: AQUECIMENTO,
+    custos: config.custos,
+    ...(minutos ? { minutos } : {}),
   });
-  const curva: PontoCurvaGravado[] = reduzirCurva(r.curva, PONTOS_CURVA).map((c) => ({
-    em: c.em,
-    patrimonio: paraTexto(c.patrimonio),
-  }));
-  const naJanela = candles.filter((c) => c.abertura >= p.inicio).length;
-  return { metricas: metricasGravadas(r, o, risco, naJanela), curva };
+  const porAno = barrasPorAno(p.intervalo);
+  const contexto = { saldoInicial: saldo, riscoPorOperacao, porAno, inicio: p.inicio, fim: p.fim };
+  const metricas = metricasGravadas(r, { ...contexto, precisaoMinuto: Boolean(minutos?.length) });
+  const validacao = validarBacktest(
+    { saldoInicial: saldo, curva: r.curva, buyHold: r.buyHold.curva, operacoes: r.operacoesFechadas, porAno },
+    { inicio: p.inicio, fim: p.fim },
+    config.validacao,
+    {
+      semLimites: config.risco.modo === "sem_limites",
+      candlesAmbiguos: r.saidasIntrabar.ambiguos,
+      precisaoMinuto: Boolean(minutos?.length),
+    },
+  );
+  return { metricas, curva: curvaGravada(r), validacao };
 }
 
 /**
  * Um job da fila `backtests`: lê o pedido no banco, baixa os candles, roda com as
- * mesmas funções do robô ao vivo e grava o resultado. Erro do backtest (estratégia,
- * janela sem candles) vira `falhou` com a mensagem; erro do banco sobe para a fila
- * tentar de novo.
+ * mesmas funções do robô ao vivo, valida (dentro/fora da amostra, walk-forward, Monte
+ * Carlo, avisos) e grava o resultado. Erro do backtest (estratégia, janela sem candles)
+ * vira `falhou` com a mensagem; erro do banco sobe para a fila tentar de novo.
  */
 export async function processarBacktest(
   d: DependenciasBacktest,

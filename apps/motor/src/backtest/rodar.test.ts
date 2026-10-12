@@ -1,8 +1,8 @@
-import { dec, type Estrategia } from "@zentrade/dominio";
+import { dec, type Candle, type Estrategia } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
-import { serie } from "../teste/candles.js";
+import { candle, serie } from "../teste/candles.js";
 import { ESTRATEGIA } from "../teste/cenario.js";
-import { maiorQueda } from "./metricas.js";
+import { duracaoDaQueda, maiorQueda } from "./metricas.js";
 import { rodarBacktest, type EntradaBacktest } from "./rodar.js";
 
 const QUINZE = 15 * 60_000;
@@ -87,7 +87,9 @@ describe("backtest", () => {
   });
 
   it("é determinístico: mesma entrada, mesmo resultado", async () => {
-    const e = entrada([...plano, 94, 92, 93, 94, 96, 90, 94, 97], { deslizamentoBps: 5 });
+    const e = entrada([...plano, 94, 92, 93, 94, 96, 90, 94, 97], {
+      custos: { taxaPorLado: 0.001, deslizamentoBps: 5, meioSpreadBps: 2 },
+    });
     expect(await rodarBacktest(e)).toEqual(await rodarBacktest(e));
   });
 
@@ -101,6 +103,86 @@ describe("backtest", () => {
   });
 });
 
+/** Candle do intervalo com abertura, máxima, mínima e fechamento informados. */
+const vela = (i: number, abre: number, maxima: number, minima: number, fecha: number): Candle => ({
+  ...candle(T0 + i * QUINZE, fecha, QUINZE),
+  abre: dec(abre),
+  maxima: dec(maxima),
+  minima: dec(minima),
+});
+
+describe("stop e alvo dentro do candle", () => {
+  // Compra no fechamento a 94: stop 92,12; alvo líquido em 95,13.
+  const comVelas = (velas: Candle[], extra: Partial<EntradaBacktest> = {}) =>
+    entrada([], { candles: [...serie(T0, [...plano, 94], QUINZE), ...velas], ...extra });
+
+  it("a mínima furou o stop e o candle fechou acima: sai NO stop, não no fechamento", async () => {
+    const r = await rodarBacktest(comVelas([vela(21, 94, 94.5, 92, 96), vela(22, 96, 96, 96, 96)]));
+    expect(r.operacoes).toBe(1);
+    expect(r.acertos).toBe(0);
+    expect(r.saidasIntrabar).toEqual({ stop: 1, alvo: 0, ambiguos: 0 });
+    expect(r.operacoesFechadas[0]?.resultado.lt(0)).toBe(true);
+    expect(r.barrasExpostas).toBe(1);
+  });
+
+  it("a máxima tocou o alvo e o candle fechou abaixo: sai no alvo", async () => {
+    const r = await rodarBacktest(comVelas([vela(21, 94, 95.5, 93.5, 95.05), vela(22, 96, 96, 96, 96)]));
+    expect(r.saidasIntrabar).toEqual({ stop: 0, alvo: 1, ambiguos: 0 });
+    expect(r.acertos).toBe(1);
+  });
+
+  it("stop e alvo no mesmo candle: pior caso, conta o stop", async () => {
+    const r = await rodarBacktest(comVelas([vela(21, 94, 96, 92, 95.5), vela(22, 96, 96, 96, 96)]));
+    expect(r.saidasIntrabar).toEqual({ stop: 1, alvo: 0, ambiguos: 1 });
+    expect(r.acertos).toBe(0);
+  });
+
+  it("com candles de 1 minuto, a ordem real decide: aqui o alvo veio antes", async () => {
+    const inicio = T0 + 21 * QUINZE;
+    const minutos: Candle[] = [
+      { ...candle(inicio, 95.8), abre: dec(94), maxima: dec(96) },
+      { ...candle(inicio + 60_000, 92.5), minima: dec(92) },
+      candle(inicio + 120_000, 95.5),
+    ];
+    const r = await rodarBacktest(
+      comVelas([vela(21, 94, 96, 92, 95.5), vela(22, 96, 96, 96, 96)], { minutos }),
+    );
+    expect(r.saidasIntrabar).toEqual({ stop: 0, alvo: 1, ambiguos: 0 });
+    expect(r.acertos).toBe(1);
+  });
+});
+
+describe("custos em toda execução", () => {
+  const precos = [...plano, 94, 94.5, 96, 96];
+
+  it("deslizamento e meio spread pioram cada execução e são somados à parte das taxas", async () => {
+    const custos = { taxaPorLado: 0.001, deslizamentoBps: 5, meioSpreadBps: 2 };
+    const sem = await rodarBacktest(entrada(precos));
+    const com = await rodarBacktest(entrada(precos, { custos }));
+    expect(sem.deslizamentoPago.isZero()).toBe(true);
+    expect(com.deslizamentoPago.gt(0)).toBe(true);
+    expect(com.resultadoLiquido.lt(sem.resultadoLiquido)).toBe(true);
+    expect(com.operacoesFechadas).toHaveLength(1);
+    expect(com.taxasPagas.gt(0)).toBe(true);
+  });
+
+  it("taxa com BNB (0,075%) paga menos taxa que a VIP0 (0,1%)", async () => {
+    const vip0 = await rodarBacktest(
+      entrada(precos, { custos: { taxaPorLado: 0.001, deslizamentoBps: 0, meioSpreadBps: 0 } }),
+    );
+    const bnb = await rodarBacktest(
+      entrada(precos, { custos: { taxaPorLado: 0.00075, deslizamentoBps: 0, meioSpreadBps: 0 } }),
+    );
+    expect(bnb.taxasPagas.lt(vip0.taxasPagas)).toBe(true);
+  });
+
+  it("traz o buy and hold do mesmo período, ponto a ponto com a curva", async () => {
+    const r = await rodarBacktest(entrada(precos));
+    expect(r.buyHold.curva.map((p) => p.em)).toEqual(r.curva.map((p) => p.em));
+    expect(r.candles).toHaveLength(precos.length);
+  });
+});
+
 describe("maior queda", () => {
   it("maior distância de um pico até um vale posterior", () => {
     const curva = [100, 120, 90, 130, 117, 140].map((p, em) => ({ em, patrimonio: dec(p) }));
@@ -108,5 +190,17 @@ describe("maior queda", () => {
     expect(q.valor.equals(dec(30))).toBe(true);
     expect(q.percentual).toBeCloseTo(0.25, 10);
     expect(maiorQueda([]).valor.isZero()).toBe(true);
+  });
+
+  it("duração: do pico até recuperar o pico, ou até o fim se não recuperou", () => {
+    const curva = (valores: number[]) => valores.map((p, i) => ({ em: i * 10, patrimonio: dec(p) }));
+    const recuperou = curva([100, 120, 90, 110, 125, 100]);
+    expect(duracaoDaQueda(recuperou, maiorQueda(recuperou))).toEqual({ duracaoMs: 30, recuperada: true });
+    const naoRecuperou = curva([100, 120, 90, 110]);
+    expect(duracaoDaQueda(naoRecuperou, maiorQueda(naoRecuperou))).toEqual({
+      duracaoMs: 20,
+      recuperada: false,
+    });
+    expect(duracaoDaQueda([], maiorQueda([]))).toEqual({ duracaoMs: 0, recuperada: true });
   });
 });
