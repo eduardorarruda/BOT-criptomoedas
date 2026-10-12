@@ -8,6 +8,7 @@ import type {
   PortaEventos,
   PortaOrdens,
   PortaProtecoes,
+  PortaRiscoConta,
   PortaRobos,
   Relogio,
   ResultadoOrdem,
@@ -87,6 +88,8 @@ export interface Dependencias {
   readonly aprovacao: PortaAprovacao;
   /** Onde gravar os candles fechados (gráfico e backtest). Sem banco, não grava. */
   readonly candles?: PortaCandles;
+  /** Limites da conta (todos os robôs da pessoa na rede). Sem banco, só os do robô valem. */
+  readonly riscoConta?: PortaRiscoConta;
   readonly relogio: Relogio;
   readonly registro: Registro;
   readonly dormir: (ms: number) => Promise<void>;

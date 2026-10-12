@@ -21,11 +21,20 @@ export async function montarEstadoRisco(
   exposicaoAtual: Valor,
 ): Promise<EstadoRisco> {
   const agora = deps.relogio.agora();
-  const [pausado, resultadoDoDia, ordensUltimaHora, ultimaPerdaEm] = await Promise.all([
+  const [pausado, resultadoDoDia, ordensUltimaHora, ultimaPerdaEm, conta] = await Promise.all([
     deps.robos.pausado(roboId),
     deps.ordens.resultadoDesde(roboId, inicioDoDia(agora)),
     deps.ordens.contarDesde(roboId, agora - HORA_MS),
     deps.ordens.ultimaPerdaEm(roboId),
+    deps.riscoConta?.estado(roboId, agora),
   ]);
-  return { pausado, resultadoDoDia, exposicaoAtual, ordensUltimaHora, ultimaPerdaEm, agora };
+  return {
+    pausado,
+    resultadoDoDia,
+    exposicaoAtual,
+    ordensUltimaHora,
+    ultimaPerdaEm,
+    agora,
+    ...(conta ? { conta } : {}),
+  };
 }

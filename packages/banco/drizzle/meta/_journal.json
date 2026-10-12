@@ -73,6 +73,13 @@
       "breakpoints": true
     },
     {
+      "idx": 10,
+      "version": "7",
+      "when": 1791803388102,
+      "tag": "0010_risco_conta",
+      "breakpoints": true
+    },
+    {
       "idx": 11,
       "version": "7",
       "when": 1791804969038,

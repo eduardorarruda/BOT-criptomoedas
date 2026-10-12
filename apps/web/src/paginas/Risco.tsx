@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Gauge, OctagonX, Play, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ArrowRight, Gauge, OctagonX, Play, ShieldAlert, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { mensagemDe } from "../api/erros";
 import { useAvisos } from "../componentes/Avisos";
 import { Botao } from "../componentes/Botao";
@@ -12,6 +12,13 @@ import { useParadaTotal } from "../ganchos/mutacoes";
 import { formatarDinheiro, formatarPercentual } from "../lib/formatar";
 import { useLoja } from "../lib/loja";
 import { formatarRelativo } from "../lib/tempo";
+import { FormLimites } from "./risco/FormLimites";
+import { useSituacaoConta } from "./risco/ganchos";
+import { PainelAvisos } from "./risco/PainelAvisos";
+import { PainelConta } from "./risco/PainelConta";
+import { PainelDivergencias } from "./risco/PainelDivergencias";
+import { PainelOrcamentoIa } from "./risco/PainelOrcamentoIa";
+import { PainelPausas } from "./risco/PainelPausas";
 
 function ParadaTotal() {
   const resumo = useResumo();
@@ -179,6 +186,33 @@ function Barreiras() {
   );
 }
 
+/** Limites da conta (todos os robôs da pessoa), pausas, orçamento de IA e o formulário. */
+function Conta() {
+  const situacao = useSituacaoConta();
+  if (situacao.isPending) return <Esqueleto altura={220} rotulo="Carregando os limites da conta" />;
+  if (situacao.error)
+    return <ErroCarregar erro={situacao.error} tentarDeNovo={() => void situacao.refetch()} />;
+  const s = situacao.data;
+  return (
+    <>
+      <PainelPausas pausas={s.pausas} agora={s.em} />
+      <div className="grade-dupla">
+        <PainelConta situacao={s} />
+        <PainelOrcamentoIa orcamento={s.orcamentoIa} limites={s.limites} />
+      </div>
+      <PainelDivergencias />
+      <Painel
+        titulo="Limites da conta"
+        id="titulo-limites-conta"
+        icone={SlidersHorizontal}
+        descricao="Valem para todos os robôs juntos, além dos limites de cada um. Só barram compras."
+      >
+        <FormLimites key={JSON.stringify(s.limites)} limites={s.limites} />
+      </Painel>
+    </>
+  );
+}
+
 export function Risco() {
   return (
     <>
@@ -188,6 +222,8 @@ export function Risco() {
       </Cabecalho>
       <ParadaTotal />
       <div className="pilha">
+        <Conta />
+        <PainelAvisos />
         <Painel
           titulo="Limites por robô"
           id="titulo-limites"

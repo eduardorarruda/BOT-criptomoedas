@@ -9,14 +9,18 @@ export interface AntiReplay {
 }
 
 export const PREFIXO_ASSINATURA_USADA = "zentrade:webhook:assinatura:";
+/** Mesma ideia para os alertas: o mesmo fato dentro da janela vira um aviso só. */
+export const PREFIXO_ALERTA_ENVIADO = "zentrade:alerta:";
 
 /** SET NX EX: atômico, então duas cópias simultâneas não passam juntas. */
-export function antiReplayRedis(redis: {
-  set(chave: string, valor: string, ex: "EX", segundos: number, nx: "NX"): Promise<"OK" | null>;
-}): AntiReplay {
+export function antiReplayRedis(
+  redis: {
+    set(chave: string, valor: string, ex: "EX", segundos: number, nx: "NX"): Promise<"OK" | null>;
+  },
+  prefixo: string = PREFIXO_ASSINATURA_USADA,
+): AntiReplay {
   return {
-    primeiraVez: async (chave, ttl) =>
-      (await redis.set(`${PREFIXO_ASSINATURA_USADA}${chave}`, "1", "EX", ttl, "NX")) === "OK",
+    primeiraVez: async (chave, ttl) => (await redis.set(`${prefixo}${chave}`, "1", "EX", ttl, "NX")) === "OK",
   };
 }
 

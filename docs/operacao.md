@@ -136,6 +136,51 @@ Depois de cada compra executada, o motor deixa no livro da corretora a proteçã
 - Recusa da corretora (ex.: filtro de preço), poeira (posição abaixo do mínimo da corretora) e saldo menor que a posição aparecem como aviso de risco na tela, uma vez. Poeira não tem ordem que a venda: recolha na Binance em "Converter saldos pequenos em BNB".
 - **Vender na mão:** a proteção trava a base; se você cancelá-la na Binance com o robô ligado (mesmo pausado), o motor coloca outra no candle seguinte. Para fechar a posição na mão, desligue antes a proteção na corretora (`MOTOR_STOP_NA_CORRETORA=false`) ou deixe o robô sair pelo stop, pelo alvo ou pela regra. Um comando "zerar posição" na tela ainda não existe; quando existir, ele sai como proteção (nada o barra).
 
+## Limites da conta
+
+Além dos limites de cada robô, a tela **Risco → Limites da conta** define limites que somam **todos os robôs da pessoa na mesma rede** (papel, testnet e real são contas separadas e não se somam). Como os do robô, eles **só barram compras**: vendas, saídas pela regra e stops sempre passam. Vazio = sem limite.
+
+| Limite               | O que conta                                                                                                                     | Quando volta                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Perda máxima do dia  | resultado realizado desde 00:00 UTC (21h de Brasília), somando os robôs; opcionalmente com o não realizado das posições abertas | na virada do dia UTC                                      |
+| Exposição máxima     | valor das posições abertas (ao último preço de 1 min; sem preço recente, ao preço médio) + a compra                             | quando a exposição cair                                   |
+| Posições abertas     | robôs com posição; só barra a compra que abriria mais uma                                                                       | quando uma posição fechar                                 |
+| Queda máxima do pico | resultado realizado acumulado dentro da janela (padrão 72 h), partindo de zero: pico − atual (com o não realizado, se marcado)  | quando o pico sair da janela, ou **Liberar agora**        |
+| Sequência de stops   | N saídas com perda em X horas (StoplossGuard), por robô, pela conta ou os dois                                                  | quando a mais antiga sair da janela, ou **Liberar agora** |
+
+Detalhes que importam:
+
+- **O dia é UTC**, igual ao limite do robô e ao relatório: 00:00 UTC são 21h em Brasília.
+- **Saída com perda** é qualquer venda que realizou prejuízo (stop ou regra de saída), contada pela execução, não pelo motivo da decisão: assim conta também a saída registrada a partir de um stop na própria corretora.
+- **O pico vem do realizado** (como o MaxDrawdown do Freqtrade): oscilações não realizadas de uma posição não criam pico; o não realizado entra só no ponto de agora, se marcado.
+- **Liberar agora** pede reautenticação e grava o instante: pico e perdas anteriores deixam de contar. Não mexe na perda do dia, nas divergências nem no orçamento de IA.
+- **Afrouxar** (subir, tirar, encurtar a janela, deixar de somar o não realizado, estreitar o escopo dos stops) pede reautenticação; apertar vale na hora.
+- Se o banco falhar ao ler a conta, o motor barra só a compra (`conta_indisponivel`) e segue vendendo e vigiando stops.
+
+As pausas em vigor aparecem em **Risco → Pausas em vigor**, com o motivo e quando acabam, e viram [alerta](alertas.md).
+
+## Reconciliação com a corretora
+
+A cada `RECONCILIACAO_MIN` minutos (padrão 10) e pelo botão **Conferir agora**, a API compara a posição que os robôs registram (derivada das execuções) com o saldo real da Binance, **livre + bloqueado** (o ativo preso num stop da corretora continua sendo seu). Papel não tem o que conferir.
+
+- **Só falta conta.** Saldo a mais é normal (moedas suas fora dos robôs, saldo inicial da testnet). Dois robôs do mesmo ativo somam a posição.
+- **Tolerância:** 0,5% da posição (a Binance cobra a taxa da compra no próprio ativo quando você não paga com BNB) ou US$ 1 de poeira, o que for maior.
+- **Com falta:** abre uma divergência, **pausa as compras daquele ativo** (barreira `divergencia_saldo`) e avisa. **Nada é comprado nem vendido para corrigir.**
+- **Se o saldo voltar** (uma ordem que estava em andamento, por exemplo), a próxima conferência fecha a divergência sozinha.
+- **Investigar:** na Binance, veja o histórico de ordens e negociações do ativo (venda manual?), saques, conversão de poeira e transferências. Compare com **Ordens** no ZenTrade.
+- **Aceitar saldo da corretora** (reautenticação): a API confere de novo e, se ainda faltar, grava uma **baixa contábil** na posição dos robôs — uma venda registrada ao preço médio, sem taxa e sem ordem na corretora, então o resultado não muda. Use só depois de entender a diferença.
+
+A reconciliação usa a mesma chave de leitura da carteira, o disjuntor da Binance e para a rodada no primeiro sinal de limite (429/418).
+
+## Orçamento de IA
+
+Em **Risco → Orçamento de IA**, cada pessoa define um teto mensal (e, se quiser, diário) em US$ para o que a IA gasta: análises dos robôs e respostas do assistente, nos dois provedores. O agente confere **antes** de chamar o modelo e grava o gasto de cada chamada (tabela `gastos_ia`). Mês e dia são UTC. No Claude Code do seu plano, o custo é a estimativa que o próprio CLI informa.
+
+- **No teto:** a análise volta como `aguardar` com o motivo "orçamento de IA do mês atingido" e o modelo nem é chamado; o assistente responde que parou e por quê.
+- **Robôs:** com `MOTOR_AGENTE_OBRIGATORIO=true`, sem orçamento é como agente fora do ar: **compras param**; stops seguem (o stop nunca pergunta ao agente). Com o agente opcional, o robô segue sem a análise.
+- **Avisos** em 80% e 100% (uma vez por mês, ou por dia no teto diário).
+- Se o banco não responder na conferência, o agente não gasta (na dúvida, não chama o modelo).
+
 ## Assistente e o Claude Code (o seu plano)
 
 O analista dos robôs e o **Assistente** (o chat em Acompanhar → Assistente) podem responder por dois "cérebros", escolhidos por pessoa em **Assistente → Configurações**:

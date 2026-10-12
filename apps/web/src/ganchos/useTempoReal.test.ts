@@ -62,6 +62,26 @@ describe("aplicarEvento", () => {
     expect(lojaBarreiras.obter()[0]).toMatchObject({ codigo: "exposicao", roboId: "r1" });
   });
 
+  it("alerta novo faz a tela de Risco reler avisos e pausas, sem entrar no histórico do robô", () => {
+    const qc = new QueryClient();
+    const invalidar = vi.spyOn(qc, "invalidateQueries");
+    const antes = lojaAoVivo.obter().length;
+    aplicarEvento(qc, {
+      tipo: "alerta",
+      alerta: {
+        tipo: "stop_atingido",
+        gravidade: "atencao",
+        titulo: "Stop atingido",
+        mensagem: "m",
+        chave: "stop:d1",
+        roboId: "r1",
+        em: 1,
+      },
+    });
+    expect(invalidar).toHaveBeenCalledWith({ queryKey: chaves.risco });
+    expect(lojaAoVivo.obter()).toHaveLength(antes);
+  });
+
   it("mostra a análise ao vivo e a retira um pouco depois de concluída", () => {
     const qc = new QueryClient();
     const agendar = vi.fn();

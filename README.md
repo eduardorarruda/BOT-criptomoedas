@@ -109,6 +109,7 @@ O que existe e tem teste automatizado:
 - **Agente**: análise com saída estruturada, ferramentas só de leitura, CLI e MCP, testados com um cliente da Anthropic falso. O "cérebro" é escolhido por pessoa: a API da Anthropic ou o Claude Code do plano dela (`claude -p` travado, só com as ferramentas de leitura pela ponte MCP), com o passo a passo de cada análise ao vivo na tela.
 - **Assistente**: chat com os seus dados (resumo, robôs, decisões, ordens, conhecimento), só leitura, com as fontes consultadas e resposta em streaming.
 - **Conhecimento**: arquivos (PDF, DOCX, MD, TXT, HTML), links (baixados com defesa contra SSRF) e notas, por pessoa, buscáveis na tela.
+- **Risco da conta**: limites somando os robôs de cada rede (perda do dia, exposição, posições abertas, queda do pico e sequência de stops, como as proteções do Freqtrade), que só barram compras; reconciliação periódica da posição com o saldo da Binance (livre + bloqueado), que pausa as compras do ativo e nunca opera para corrigir; orçamento de IA por pessoa; chave real com saque recusada; alertas deduplicados na tela e no Telegram.
 - **Tela**: todas as páginas, com modo de demonstração e testes de componentes.
 - **Docker**: as quatro imagens constroem e o perfil `app` sobe com o motor em papel e o agente fixo.
 
@@ -117,17 +118,22 @@ O que **ainda não foi testado contra o serviço real** (só com dublês):
 - ordens na **testnet da Binance** com chave de verdade, inclusive o stop no livro (`STOP_LOSS_LIMIT` e o OCO novo, `POST /api/v3/orderList/oco`);
 - análises com a **API da Anthropic** de verdade (custo, latência, qualidade das propostas); o **Claude Code** de verdade só teve um teste manual mínimo (flags, saída estruturada e a ponte MCP);
 - embeddings pela **Voyage** de verdade (o Ollama local com `bge-m3` também não foi exercitado aqui);
-- os fluxos do **n8n** importados num n8n real falando com o Telegram.
+- os fluxos do **n8n** importados num n8n real falando com o Telegram (inclusive os alertas novos e a segunda deduplicação por chave);
+- a **reconciliação** e a checagem de permissões da chave contra a Binance de verdade (testnet e real).
 
-O que **falta**: o motor gravar decisões, ordens e eventos no banco e no Redis (hoje roda com portas em memória e robôs de um arquivo), bater em `zentrade:motor:batida` e consumir a fila de backtests; usar a conta da corretora cadastrada na tela em vez das chaves do ambiente. Nos stops: o comando "zerar posição" na tela (o risco já o trata como proteção); ouvir o user data stream da Binance para saber da execução do stop na hora (hoje o motor confere a cada candle); e o papel simular execução parcial do stop-limit.
+O que **falta**:
 
-No **backtest**, falta: um otimizador de parâmetros (hoje o walk-forward avalia a estratégia fixa em cada janela, sem otimizar dentro e testar fora), deslizamento que dependa do tamanho da ordem e do livro, Monte Carlo que preserve sequências de perdas (blocos) e as ordens de stop em repouso da corretora de papel no lugar da vigia intrabar do próprio backtest. Veja [como ler o backtest](docs/estrategias.md#como-ler-o-backtest).
+- **Dinheiro real:** o motor ainda só aceita papel e testnet. A checagem da chave sem saque e os portões de 2FA já estão prontos para a rede real.
+- **Stops:** o comando "zerar posição" na tela (o risco já o trata como proteção); ouvir o user data stream da Binance para saber da execução do stop na hora (hoje o motor confere a cada candle); varrer ordens abertas na corretora sem registro no banco; e o papel simular execução parcial do stop-limit.
+- **Risco:** um destino de alerta por pessoa (hoje o Telegram é um só por instalação) e o pico da queda acompanhar também o não realizado ao longo do tempo (hoje vem do realizado).
+- **Backtest:** um otimizador de parâmetros (hoje o walk-forward avalia a estratégia fixa em cada janela), deslizamento que dependa do tamanho da ordem e do livro, Monte Carlo em blocos (que preserve sequências de perdas) e usar as ordens de stop em repouso da corretora de papel no lugar da vigia intrabar do próprio backtest. Veja [como ler o backtest](docs/estrategias.md#como-ler-o-backtest).
 
 ## Documentação
 
 - [Arquitetura](docs/arquitetura.md) — serviços, fluxo de uma decisão e princípios.
 - [Contrato entre os serviços](docs/contrato-api.md) — rotas, webhooks, assinatura, filas e o esquema do RAG.
-- [Operação](docs/operacao.md) — subir o ambiente, criar a primeira pessoa, levar um robô de observar a auto, parada total, backups.
+- [Operação](docs/operacao.md) — subir o ambiente, criar a primeira pessoa, levar um robô de observar a auto, parada total, limites da conta, reconciliação com a corretora, orçamento de IA, backups.
+- [Alertas](docs/alertas.md) — o que avisa (stop, perda do dia, pausas, ordens, robô, WebSocket, divergência, orçamento de IA), como deduplica e onde chega.
 - [Estratégias](docs/estrategias.md) — como montar e ler um backtest.
 - [Fundamentação](docs/fundamentacao.md) — o que reguladores, estudos e plataformas dizem sobre robôs de investimento, com 48 fontes, e onde o ZenTrade se encaixa.
 - [Segurança](docs/seguranca.md) e [ADRs](docs/adr/) — as decisões de fundo.

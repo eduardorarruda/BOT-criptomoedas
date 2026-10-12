@@ -143,7 +143,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Valida o alerta ({ tipo, titulo, mensagem, em }) e monta o texto para o Telegram.\nconst LIMITE_TELEGRAM = 4000;\nconst escaparHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nconst a = $input.first().json.dados;\nconst texto = (v, min, max) => typeof v === 'string' && v.length >= min && v.length <= max;\n\nconst problemas = [];\nif (!a || typeof a !== 'object' || Array.isArray(a)) {\n  problemas.push('o corpo precisa ser um objeto');\n} else {\n  if (!texto(a.tipo, 1, 40)) problemas.push('tipo');\n  if (!texto(a.titulo, 1, 200)) problemas.push('titulo');\n  if (!texto(a.mensagem, 0, 4000)) problemas.push('mensagem');\n  if (!Number.isSafeInteger(a.em) || a.em < 0) problemas.push('em');\n}\nif (problemas.length > 0) {\n  return [{ json: { ok: false, motivo: `campos inválidos: ${problemas.join(', ')}` } }];\n}\n\nconst quando = new Date(a.em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\nconst completo = `ZenTrade: ${a.titulo}\\n\\n${a.mensagem}\\n\\n${a.tipo} · ${quando}`;\nconst textoFinal =\n  completo.length <= LIMITE_TELEGRAM ? completo : `${completo.slice(0, LIMITE_TELEGRAM - 1)}…`;\n\nreturn [\n  {\n    json: {\n      ok: true,\n      assunto: `[ZenTrade] ${a.titulo}`,\n      texto: textoFinal,\n      textoTelegram: escaparHtml(textoFinal),\n    },\n  },\n];"
+        "jsCode": "// Valida o alerta ({ tipo, titulo, mensagem, em, gravidade?, chave? }), descarta o mesmo\n// fato repetido em 10 min (a API já deduplica; isto é a segunda rede) e monta o texto.\nconst LIMITE_TELEGRAM = 4000;\nconst JANELA_REPETIDO_MS = 10 * 60 * 1000;\nconst GRAVIDADES = { critico: '[CRÍTICO] ', atencao: '[ATENÇÃO] ', info: '' };\nconst escaparHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nconst a = $input.first().json.dados;\nconst texto = (v, min, max) => typeof v === 'string' && v.length >= min && v.length <= max;\n\nconst problemas = [];\nif (!a || typeof a !== 'object' || Array.isArray(a)) {\n  problemas.push('o corpo precisa ser um objeto');\n} else {\n  if (!texto(a.tipo, 1, 40)) problemas.push('tipo');\n  if (!texto(a.titulo, 1, 200)) problemas.push('titulo');\n  if (!texto(a.mensagem, 0, 4000)) problemas.push('mensagem');\n  if (!Number.isSafeInteger(a.em) || a.em < 0) problemas.push('em');\n  if (a.gravidade !== undefined && !(a.gravidade in GRAVIDADES)) problemas.push('gravidade');\n  if (a.chave !== undefined && !texto(a.chave, 1, 200)) problemas.push('chave');\n}\nif (problemas.length > 0) {\n  return [{ json: { ok: false, motivo: `campos inválidos: ${problemas.join(', ')}` } }];\n}\n\nconst agora = Date.now();\nconst estado = $getWorkflowStaticData('global');\nconst vistos = Object.fromEntries(\n  Object.entries(estado.alertasVistos || {}).filter(([, em]) => agora - em < JANELA_REPETIDO_MS),\n);\nconst duplicado = typeof a.chave === 'string' && vistos[a.chave] !== undefined;\nif (typeof a.chave === 'string' && !duplicado) vistos[a.chave] = agora;\nestado.alertasVistos = vistos;\n\nconst titulo = `${GRAVIDADES[a.gravidade ?? 'info']}${a.titulo}`;\nconst quando = new Date(a.em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\nconst completo = `ZenTrade: ${titulo}\\n\\n${a.mensagem}\\n\\n${a.tipo} · ${quando}`;\nconst textoFinal =\n  completo.length <= LIMITE_TELEGRAM ? completo : `${completo.slice(0, LIMITE_TELEGRAM - 1)}…`;\n\nreturn [\n  {\n    json: {\n      ok: true,\n      duplicado,\n      assunto: `[ZenTrade] ${titulo}`,\n      texto: textoFinal,\n      textoTelegram: escaparHtml(textoFinal),\n    },\n  },\n];"
       },
       "id": "e0dc61d5-ed79-43e0-ad13-baf0d861ad6f",
       "name": "Ler alerta",
@@ -224,6 +224,40 @@
     },
     {
       "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5b0e7f1c-2a4d-4c8e-9b3f-6d1a2e4c7f90",
+              "leftValue": "={{ $json.duplicado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9d4c2b7a-1e3f-4a5b-8c6d-0f2e1a3b5c7d",
+      "name": "Alerta novo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        100
+      ]
+    },
+    {
+      "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "={{ $json.textoTelegram }}",
         "additionalFields": {
@@ -236,7 +270,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1980,
+        2200,
         0
       ],
       "credentials": {
@@ -277,7 +311,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1980,
+        2200,
         200
       ]
     },
@@ -297,7 +331,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        2200,
+        2420,
         200
       ],
       "credentials": {
@@ -417,12 +451,7 @@
       "main": [
         [
           {
-            "node": "Avisar no Telegram",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "E-mail configurado?",
+            "node": "Alerta novo?",
             "type": "main",
             "index": 0
           }
@@ -439,6 +468,22 @@
           }
         ]
       ]
+    },
+    "Alerta novo?": {
+      "main": [
+        [
+          {
+            "node": "Avisar no Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "E-mail configurado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -447,7 +492,7 @@
     "timezone": "America/Sao_Paulo",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "a4529ebb-78cb-4a54-a8f6-a35dc7aa5439",
+  "versionId": "3e7a9c1d-5b2f-4e8a-9d6c-1f0b3a5e7c92",
   "meta": {
     "templateCredsSetupCompleted": false
   },

@@ -1,4 +1,5 @@
 import { criarBancoDoMotor, type BancoDoMotor } from "@zentrade/banco";
+import { ativosDoSimbolo } from "@zentrade/corretora";
 import { dec } from "@zentrade/dominio";
 import { Redis } from "ioredis";
 import { resolve } from "node:path";
@@ -22,6 +23,7 @@ function abrirInfra(config: Config, registro: Logger): Infra {
         url: config.DATABASE_URL,
         validadeAprovacaoMs: config.APROVACAO_VALIDADE_MIN * 60_000,
         ...(config.ZENTRADE_CHAVE_MESTRA ? { chaveMestra: config.ZENTRADE_CHAVE_MESTRA } : {}),
+        ativoDoSimbolo: (simbolo) => ativosDoSimbolo(simbolo).base,
         aoAviso: (mensagem) => registro.debug({ mensagem }, "aviso do PostgreSQL"),
       })
     : undefined;
@@ -61,7 +63,12 @@ async function principal(): Promise<void> {
     ? undefined
     : await carregarRobos(resolve(config.MOTOR_ROBOS_ARQUIVO), config.MOTOR_REDE);
   const banco = infra.banco
-    ? { portas: infra.banco.portas, mercado: infra.banco.mercado, credenciais: infra.banco.credenciais }
+    ? {
+        portas: infra.banco.portas,
+        mercado: infra.banco.mercado,
+        credenciais: infra.banco.credenciais,
+        riscoConta: infra.banco.riscoConta,
+      }
     : undefined;
   const fontes = {
     ...(banco ? { banco } : {}),

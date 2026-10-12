@@ -4,23 +4,29 @@ import { portaCredenciais } from "./portas/credenciais.js";
 import { portaDecisoes } from "./portas/decisoes.js";
 import { portaOrdens } from "./portas/ordens.js";
 import { portaProtecoes } from "./portas/protecoes.js";
+import { portaRiscoConta, type AtivoDoSimbolo } from "./portas/risco-conta.js";
 import { portaRobos } from "./portas/robos.js";
 import { repositorioAssistente } from "./repositorios/assistente.js";
 import { repositorioConhecimentoDetalhe } from "./repositorios/assistente-conhecimento.js";
 import { repositorioAuditoria } from "./repositorios/auditoria.js";
+import { repositorioAvisos } from "./repositorios/avisos.js";
 import { repositorioBacktests } from "./repositorios/backtests.js";
 import { repositorioCarteira } from "./repositorios/carteira.js";
 import { repositorioConfiguracao } from "./repositorios/configuracao.js";
 import { repositorioConhecimento } from "./repositorios/conhecimento.js";
 import { repositorioContas } from "./repositorios/contas.js";
 import { repositorioDecisoes } from "./repositorios/decisoes.js";
+import { repositorioDivergencias } from "./repositorios/divergencias.js";
 import { repositorioEstrategias } from "./repositorios/estrategias.js";
+import { repositorioGastosIa } from "./repositorios/gastos-ia.js";
 import { repositorioImobiliario } from "./repositorios/imobiliario.js";
+import { repositorioLimitesConta } from "./repositorios/limites-conta.js";
 import { repositorioMercado } from "./repositorios/mercado.js";
 import { repositorioOrdens } from "./repositorios/ordens.js";
 import { repositorioPluggy } from "./repositorios/pluggy.js";
 import { repositorioIndicadores, repositorioRendaFixa } from "./repositorios/renda-fixa.js";
 import { repositorioResumo } from "./repositorios/resumo.js";
+import { repositorioRiscoConta } from "./repositorios/risco-conta.js";
 import { repositorioRobos } from "./repositorios/robos.js";
 import { repositorioSessoes } from "./repositorios/sessoes.js";
 import { repositorioSistema } from "./repositorios/sistema.js";
@@ -66,6 +72,11 @@ function abrir(opcoes: OpcoesConexaoBanco): { conexao: Conexao; portas: PortasMo
 export interface OpcoesBancoDoMotor extends OpcoesConexaoBanco {
   /** Só fora do papel: decifra a chave de corretora de cada pessoa (PortaCredenciais). */
   readonly chaveMestra?: Buffer;
+  /**
+   * O ativo-base de um par ("BTCUSDT" → "BTC"), para achar as divergências do robô.
+   * Sem ele, `riscoConta` fica null e o motor só aplica os limites de cada robô.
+   */
+  readonly ativoDoSimbolo?: AtivoDoSimbolo;
 }
 
 /**
@@ -78,6 +89,7 @@ export function criarBancoDoMotor(opcoes: OpcoesBancoDoMotor) {
     conexao,
     portas,
     credenciais: opcoes.chaveMestra ? portaCredenciais(conexao.db, opcoes.chaveMestra) : null,
+    riscoConta: opcoes.ativoDoSimbolo ? portaRiscoConta(conexao.db, opcoes.ativoDoSimbolo) : null,
     mercado: repositorioMercado(conexao.db),
     backtests: repositorioBacktests(conexao.db),
     fechar: () => conexao.fechar(),
@@ -119,6 +131,11 @@ export function criarBanco(opcoes: OpcoesBanco) {
     rendaFixa: repositorioRendaFixa(db),
     indicadores: repositorioIndicadores(db),
     pluggy: repositorioPluggy(db),
+    limitesConta: repositorioLimitesConta(db),
+    riscoConta: repositorioRiscoConta(db),
+    divergencias: repositorioDivergencias(db),
+    avisos: repositorioAvisos(db),
+    gastosIa: repositorioGastosIa(db),
     fechar: () => conexao.fechar(),
   };
 }

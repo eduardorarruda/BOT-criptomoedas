@@ -3,13 +3,14 @@ import {
   MOEDA_REFERENCIA,
   type Carteira,
   type CarteiraAtivo,
+  type CredenciaisCorretora,
   type NegociacaoCarteira,
   type PedidoSincronizacao,
   type RedeConta,
   type Sincronizacao,
   type StatusBinance,
 } from "@zentrade/contratos";
-import { calcularCarteira, dinheiro, precosUsdtDaTabela } from "@zentrade/corretora";
+import { calcularCarteira, dinheiro, precosUsdtDaTabela, type RestricoesChave } from "@zentrade/corretora";
 import { dec, type Valor } from "@zentrade/dominio";
 import { ErroApi, naoEncontrado } from "../erros.js";
 import {
@@ -41,6 +42,8 @@ export interface ServicoCarteira {
   cambioReais(usuarioId: string, rede: RedeConta): Promise<CambioReais | null>;
   /** Uma pessoa e rede por vez (o peso da Binance é por IP). Falha de uma não para as outras. */
   sincronizarTodos(): Promise<void>;
+  /** Permissões de uma chave ainda não salva (só a rede real informa; a testnet devolve null). */
+  restricoesDaChave(rede: RedeConta, credenciais: CredenciaisCorretora): Promise<RestricoesChave | null>;
 }
 
 export interface CambioReais {
@@ -288,7 +291,15 @@ export function criarServicoCarteira(d: DependenciasCarteira): ServicoCarteira {
     }
   }
 
-  return { carteira, ativo, sincronizar, status, cambioReais, sincronizarTodos };
+  return {
+    carteira,
+    ativo,
+    sincronizar,
+    status,
+    cambioReais,
+    sincronizarTodos,
+    restricoesDaChave: (rede, credenciais) => d.criarConta(rede, credenciais).restricoes(),
+  };
 }
 
 const servicos = new WeakMap<object, ServicoCarteira>();

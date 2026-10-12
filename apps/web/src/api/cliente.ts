@@ -8,7 +8,7 @@ import { ErroRespostaEsquema } from "./esquemas";
  * levam o token CSRF no cabeçalho `X-CSRF-Token`: o `csrf` que a API devolve em
  * `POST /sessao` e `GET /sessao` (ou, na falta dele, o cookie legível `zt_csrf`).
  */
-export type Metodo = "GET" | "POST" | "PATCH" | "DELETE";
+export type Metodo = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type Consulta = Record<string, string | number | boolean | undefined>;
 
 export const COOKIE_CSRF = "zt_csrf";

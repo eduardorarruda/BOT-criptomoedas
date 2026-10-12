@@ -122,7 +122,10 @@ const ROTAS: Record<string, Rota> = {
   "/api/v3/ticker/price": (_u, e) =>
     resposta(Object.entries(e.precos).map(([symbol, price]) => ({ symbol, price }))),
   "/api/v3/klines": velas,
-  "/sapi/v1/account/apiRestrictions": (_u, e) => resposta({ ...e.restricoes, createTime: 1 }),
+  "/sapi/v1/account/apiRestrictions": (_u, e) =>
+    e.chaveInvalida
+      ? resposta({ code: -2015, msg: "Invalid API-key, IP, or permissions for action." }, 401)
+      : resposta({ ...e.restricoes, createTime: 1 }),
 };
 
 export function fetchDaBinanceFalsa(e: EstadoBinanceFalsa): typeof fetch {

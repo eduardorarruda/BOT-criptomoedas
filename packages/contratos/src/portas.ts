@@ -1,6 +1,7 @@
 import type {
   Candle,
   Estrategia,
+  EstadoConta,
   Execucao,
   Lado,
   LimitesRisco,
@@ -200,6 +201,11 @@ export interface PedidoAnalise {
 export interface RespostaAnalise {
   readonly proposta: PropostaAgente;
   readonly custoUsd: Valor;
+  /**
+   * O orçamento de IA da pessoa acabou: a proposta é "aguardar" com o motivo e o
+   * modelo nem foi chamado. O motor trata como agente indisponível (agenteObrigatorio).
+   */
+  readonly semOrcamento?: boolean;
 }
 
 /** O agente de IA, visto pelo motor. Pode falhar: o motor segue sem ele (não opera). */
@@ -219,4 +225,12 @@ export interface PortaEventos {
 /** Pede aprovação humana (modo Sugerir). A resposta chega pela API e muda o estado da decisão. */
 export interface PortaAprovacao {
   solicitar(decisaoId: string, resumo: string, expiraEm: number): Promise<void>;
+}
+
+/**
+ * Estado da conta da dona do robô (todos os robôs dela na mesma rede) para as barreiras
+ * da conta. Lido sob RLS: só enxerga os dados da própria pessoa.
+ */
+export interface PortaRiscoConta {
+  estado(roboId: string, agora: number): Promise<EstadoConta>;
 }

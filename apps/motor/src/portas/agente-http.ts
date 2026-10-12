@@ -16,7 +16,12 @@ export interface OpcoesAgenteHttp {
   readonly fetch?: typeof fetch;
 }
 
-const Resposta = z.object({ proposta: PropostaAgenteEsquema, custoUsd: TextoDecimal });
+const Resposta = z.object({
+  proposta: PropostaAgenteEsquema,
+  custoUsd: TextoDecimal,
+  /** O orçamento de IA da pessoa acabou: o agente nem chamou o modelo. */
+  semOrcamento: z.boolean().optional(),
+});
 
 function sinalNoFio(s: Sinal) {
   return s.acao === "COMPRAR" ? { ...s, stop: paraTexto(s.stop), alvo: paraTexto(s.alvo) } : { ...s };
@@ -79,7 +84,11 @@ export class AgenteHttp implements PortaAgente {
       throw new Error(
         `A resposta do agente veio num formato inválido (${corpo.error.issues[0]?.message ?? "?"}).`,
       );
-    return { proposta: corpo.data.proposta, custoUsd: dec(corpo.data.custoUsd) };
+    return {
+      proposta: corpo.data.proposta,
+      custoUsd: dec(corpo.data.custoUsd),
+      ...(corpo.data.semOrcamento ? { semOrcamento: true } : {}),
+    };
   }
 
   private async enviar(pedido: PedidoAnalise): Promise<Response> {

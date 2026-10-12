@@ -11,7 +11,9 @@ import { lerConfig } from "../config.js";
 import type { Dependencias, FilaBacktests } from "../dependencias.js";
 import type { ServicoCarteira } from "../integracoes/binance-carteira.js";
 import type { Embeddings } from "@zentrade/conhecimento";
-import { antiReplayRedis } from "../integracoes/anti-replay.js";
+import { criarCentralAlertas } from "../integracoes/alertas.js";
+import { criarTradutorAlertas } from "../integracoes/alertas-eventos.js";
+import { antiReplayRedis, PREFIXO_ALERTA_ENVIADO } from "../integracoes/anti-replay.js";
 import type { ClienteCotacoesB3 } from "../integracoes/cotacoes-b3.js";
 import { armazemMemoria, criarRegistroAutomacoes } from "../integracoes/automacoes.js";
 import { criarServicoConhecimento, repositorioRag } from "../integracoes/conhecimento.js";
@@ -83,6 +85,8 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     N8N_WEBHOOK_SEGREDO: SEGREDO_WEBHOOK,
     ZENTRADE_ORIGEM_WEB: ORIGEM,
     LOG_LEVEL: process.env.ZT_TESTE_LOG ?? "silent",
+    // A conferência periódica chamaria a Binance de verdade: nos testes, só pelo botão.
+    RECONCILIACAO_MIN: "0",
     ...o.ambiente,
   });
   const banco = criarBanco({
@@ -106,6 +110,15 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
   );
   const hub = criarHubEventos({ donos: banco.sistema, log: silencioso });
   hub.aoEvento(criarRetransmissorN8n({ decisoes: banco.decisoes, n8n: clienteN8n, log: silencioso }));
+  const alertas = criarCentralAlertas({
+    avisos: banco.avisos,
+    n8n: clienteN8n,
+    dedup: antiReplayRedis(redis, PREFIXO_ALERTA_ENVIADO),
+    donoDoRobo: (id) => banco.sistema.donoDoRobo(id),
+    log: silencioso,
+    agora,
+  });
+  hub.aoEvento(criarTradutorAlertas({ central: alertas, consultas: banco.sistema, log: silencioso }));
   await assinarEventos(assinante, hub);
   const conhecimento = criarServicoConhecimento({
     repositorio: repositorioRag(banco),
@@ -126,6 +139,7 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     saude: verificadorSaude({ redis, log: silencioso, agora }),
     agora,
     verificacaoTempoRealMs: 50,
+    alertas,
     ...(o.carteira ? { carteira: o.carteira(banco, agora) } : {}),
     ...o.extras?.(banco, conhecimento),
     ...(o.rendaFixa ? { rendaFixa: o.rendaFixa(banco, agora) } : {}),

@@ -34,6 +34,10 @@ export const AlertaEsquema = z.object({
   titulo: z.string().min(1).max(120),
   mensagem: z.string().min(1).max(1000),
   em: Instante,
+  /** info, atencao ou critico: o n8n põe um sinal na frente do título. */
+  gravidade: z.enum(["info", "atencao", "critico"]).optional(),
+  /** O mesmo fato repetido dentro de 10 min não vira segunda mensagem no n8n. */
+  chave: z.string().min(1).max(200).optional(),
 });
 export type Alerta = z.infer<typeof AlertaEsquema>;
 

@@ -8,7 +8,7 @@ Testados com o **n8n 2.42.6** (imagem oficial `docker.n8n.io/n8nio/n8n`). Usam s
 | ------------------------------ | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `zentrade-noticias`            | a cada 15 min                     | Lê os anúncios da Binance e os feeds RSS, monta um resumo curto com link e envia para `POST /webhooks/n8n/conhecimento` (assinado).                        |
 | `zentrade-aprovacao`           | `POST /webhook/zentrade-proposta` | Confere a assinatura, manda a proposta no Telegram com **Aprovar/Recusar**, espera até 5 min e devolve a resposta assinada para `/webhooks/n8n/aprovacao`. |
-| `zentrade-alertas`             | `POST /webhook/zentrade-alerta`   | Confere a assinatura e repassa o alerta para o Telegram (e para o e-mail, se configurado).                                                                 |
+| `zentrade-alertas`             | `POST /webhook/zentrade-alerta`   | Confere a assinatura, descarta o mesmo fato repetido em 10 min e repassa o alerta para o Telegram (e para o e-mail, se configurado). Ver a seção 6.      |
 | `zentrade-relatorio-diario`    | todo dia às 21h (Brasília)        | Busca `GET /api/v1/resumo`, `/decisoes` e `/ordens` e envia o relatório: resultado, decisões, taxas e custo de IA.                                         |
 | `zentrade-vigia-saude`         | a cada minuto                     | Chama `POST /webhooks/n8n/saude`. Se o motor está sem sinal há mais de 3 min, liga a parada total e avisa.                                                 |
 | `zentrade-revalidacao-semanal` | domingo às 8h (Brasília)          | Dispara backtests das estratégias dos robôs ativos (últimos 30 dias × 90 dias anteriores) e envia a comparação.                                            |
@@ -112,6 +112,26 @@ Esperado: `202 {"recebida":true}`, a proposta no Telegram com os dois botões e,
 **Notícias, relatório, revalidação**: abra o fluxo no n8n e clique em **Execute workflow**. Confira a saída de cada nó. Numa execução manual o n8n não grava os dados estáticos, então as notícias podem ser reenviadas; a API descarta repetidas (`hash_conteudo` único).
 
 **Vigia de saúde**: com tudo de pé, a execução termina em "Avaliar saúde" sem saída (está tudo bem). Para ver o alarme, pare o motor (`docker stop zentrade-motor`) e espere 4 minutos: a parada total liga e o aviso chega. Ao religar o motor, chega o aviso de volta, mas a **parada total continua ligada** até você desligá-la pela tela.
+
+## 6.1 Os alertas que chegam
+
+A API manda ao `zentrade-alerta` um `Alerta` assinado: `{ tipo, titulo, mensagem, em, gravidade?, chave? }`. A lista completa, quem emite cada um e as janelas de deduplicação estão em [docs/alertas.md](../../docs/alertas.md). Em resumo:
+
+| `tipo`                                         | Gravidade | Quando                                                                        |
+| ---------------------------------------------- | --------- | ----------------------------------------------------------------------------- |
+| `stop_atingido`                                | atenção   | um robô vendeu a posição no stop                                              |
+| `perda_diaria_robo` / `perda_diaria_conta`     | atenção / crítico | a perda do dia do robô (ou da conta) chegou ao limite                 |
+| `pausa_sequencia_stops` / `pausa_queda`        | atenção / crítico | N stops em X horas, ou a queda do pico passou do limite: compras pausadas |
+| `ordem_rejeitada` / `ordem_incerta`            | atenção / crítico | a corretora recusou a ordem, ou não se sabe se ela entrou             |
+| `robo_nao_ligou`                               | crítico   | o robô não liga (chave recusada, rede errada...)                              |
+| `websocket_fora`                               | crítico   | o WebSocket de candles está fora há mais de `MOTOR_ALERTA_WEBSOCKET_MIN`      |
+| `divergencia_saldo`                            | crítico   | o saldo da Binance está abaixo do que os robôs registram                      |
+| `orcamento_ia_80` / `orcamento_ia_100`         | atenção / crítico | o gasto com IA do mês (ou do dia) passou de 80% / chegou a 100%       |
+| `parada_total`                                 | —         | a parada total foi ligada ou desligada                                        |
+
+O fluxo põe `[CRÍTICO]` ou `[ATENÇÃO]` na frente do título e, se a mesma `chave` voltar dentro de 10 minutos, responde 202 mas não manda a segunda mensagem (a API já deduplica com janelas maiores; esta é a segunda rede). A memória dos repetidos usa os dados estáticos do fluxo, que o n8n só guarda nas execuções de produção (fluxo publicado).
+
+O ZenTrade tem uma conversa só no Telegram (`TELEGRAM_CHAT_ID`): numa instalação com várias pessoas, todos os alertas vão para ela. Cada pessoa vê os próprios avisos na tela, em **Risco → Avisos**.
 
 ## 7. O que os fluxos não fazem
 

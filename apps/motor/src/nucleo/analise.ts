@@ -73,6 +73,9 @@ async function pedirAoAgente(
       analiseId,
       ...(orc ? { orcamento: orc } : {}),
     });
+    // Sem orçamento de IA o agente não analisou: vale a regra do agente fora do ar
+    // (obrigatório barra; opcional segue sem ele). Stop nem pergunta ao agente.
+    if (resposta.semOrcamento) return { tipo: "falhou", motivo: resposta.proposta.justificativa };
     return { tipo: "ok", resposta };
   } catch (erro) {
     const motivo = erro instanceof Error ? erro.message : String(erro);

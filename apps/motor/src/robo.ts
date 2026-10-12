@@ -14,6 +14,8 @@ type Fluxo = "intervalo" | "minuto";
 export class RoboAoVivo {
   readonly nucleo: NucleoRobo;
   private readonly estados = new Map<Fluxo, EstadoConexao>();
+  /** Desde quando algum fluxo de candles está fora; `null` com tudo conectado. */
+  private foraDesde: number | null = null;
   private paradas: (() => void)[] = [];
   private recuperando: Promise<void> = Promise.resolve();
   private gravando: Promise<void> = Promise.resolve();
@@ -55,6 +57,11 @@ export class RoboAoVivo {
 
   conectado(): boolean {
     return this.estados.size > 0 && [...this.estados.values()].every((e) => e === "conectado");
+  }
+
+  /** Instante em que a conexão de candles caiu (o fluxo mais antigo fora), ou `null`. */
+  foraDoArDesde(): number | null {
+    return this.foraDesde;
   }
 
   /** Resolve quando não há decisão nem recuperação em andamento. */
@@ -101,6 +108,8 @@ export class RoboAoVivo {
   private aoEstado(fluxo: Fluxo, estado: EstadoConexao): void {
     const anterior = this.estados.get(fluxo);
     this.estados.set(fluxo, estado);
+    if (this.conectado()) this.foraDesde = null;
+    else if (estado !== "conectado") this.foraDesde ??= this.deps.relogio.agora();
     if (estado !== "conectado" && estado !== anterior)
       this.deps.registro.warn({ roboId: this.robo.id, fluxo, estado }, "conexão de candles mudou");
     if (fluxo === "intervalo" && estado === "conectado" && anterior !== "conectado")

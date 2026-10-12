@@ -20,11 +20,11 @@ export function avisosDaChave(rede: ContaCorretora["rede"], r: RestricoesChave |
   const avisos: string[] = [];
   if (r.podeSacar)
     avisos.push(
-      "Esta chave tem permissão de SAQUE. O ZenTrade nunca saca: crie outra chave sem saque na Binance e troque aqui.",
+      "BLOQUEADA: esta chave tem permissão de SAQUE, e os robôs não operam com ela. O ZenTrade nunca saca: crie outra chave sem saque na Binance e troque aqui.",
     );
   if (!r.ipRestrito)
     avisos.push(
-      "A chave não está presa a um IP: quem a obtiver pode usá-la de qualquer lugar. Restrinja ao IP do servidor.",
+      "ATENÇÃO: a chave não está presa a um IP. Quem a obtiver (vazamento, backup, máquina invadida) pode negociar na sua conta de qualquer lugar. A Binance recomenda restringir ao IP do servidor; faça isso se o seu IP for fixo.",
     );
   if (!r.podeNegociar)
     avisos.push(

@@ -13,6 +13,7 @@ import { Selo } from "../componentes/Selo";
 import { useContas } from "../ganchos/consultas";
 import { useCriarConta, useRemoverConta } from "../ganchos/mutacoes";
 import { REDE } from "../lib/rotulos";
+import { useStatusBinance } from "./carteira/ganchos";
 import { formatarData } from "../lib/tempo";
 
 function FormConta() {
@@ -27,8 +28,8 @@ function FormConta() {
 
   const enviar = (e: FormEvent): void => {
     e.preventDefault();
-    if (!semSaque || !presaIp) {
-      setErro("Confirme os dois cuidados: a chave sem permissão de saque e presa ao IP do servidor.");
+    if (!semSaque) {
+      setErro("Confirme que a chave não tem permissão de saque: chave com saque é recusada.");
       return;
     }
     if (apiKey.trim().length < 16 || apiSecret.trim().length < 16) {
@@ -64,13 +65,16 @@ function FormConta() {
           </p>
           <ol>
             <li>
-              Crie a chave <strong>sem permissão de saque</strong>. O ZenTrade só precisa ler e negociar.
+              Crie a chave <strong>sem permissão de saque</strong>. O ZenTrade só precisa ler e negociar. Na
+              rede real ele confere as permissões na Binance antes de salvar:{" "}
+              <strong>chave com saque é recusada</strong>, e uma chave que ganhe saque depois deixa de operar.
             </li>
             <li>
-              <strong>Restrinja a chave ao IP</strong> do servidor onde o ZenTrade roda. Chave sem IP fixo
-              pode ser usada de qualquer lugar.
+              <strong>Restrinja a chave ao IP</strong> do servidor onde o ZenTrade roda (recomendação da
+              Binance). Sem isso a chave é aceita, mas fica um aviso: quem a obtiver pode negociar na sua
+              conta de qualquer lugar.
             </li>
-            <li>Comece pela testnet. Dinheiro real só depois de semanas observando.</li>
+            <li>Comece pela testnet. Dinheiro real só depois de semanas observando, e com 2FA ligado.</li>
           </ol>
         </div>
       </div>
@@ -106,8 +110,14 @@ function FormConta() {
       </label>
       <label className="caixa">
         <input type="checkbox" checked={presaIp} onChange={(e) => setPresaIp(e.target.checked)} />
-        <span>A chave está presa ao IP do servidor do ZenTrade.</span>
+        <span>A chave está presa ao IP do servidor do ZenTrade (recomendado).</span>
       </label>
+      {rede === "real" && !presaIp ? (
+        <p className="formulario__erro" role="note">
+          Chave de dinheiro real sem restrição de IP: se ela vazar, qualquer um negocia na sua conta. Se o IP
+          do servidor é fixo, restrinja a chave a ele na Binance antes de cadastrar.
+        </p>
+      ) : null}
       {erro ? (
         <p className="formulario__erro" role="alert">
           {erro}
@@ -120,6 +130,22 @@ function FormConta() {
       </div>
       <p className="apagado">Cadastrar uma chave pede que você confirme sua identidade.</p>
     </form>
+  );
+}
+
+/** O que a Binance diz da chave agora (permissões, IP): bloqueio e riscos em destaque. */
+function AvisosDaChave({ rede }: { readonly rede: ContaCorretora["rede"] }) {
+  const status = useStatusBinance();
+  const avisos = status.data?.contas.find((s) => s.rede === rede)?.avisos ?? [];
+  if (avisos.length === 0) return null;
+  return (
+    <span className="chave__avisos">
+      {avisos.map((a) => (
+        <span key={a} className={/^(BLOQUEADA|ATENÇÃO)/.test(a) ? "formulario__erro" : "apagado"}>
+          {a}
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -159,6 +185,7 @@ export function Contas() {
                     <Selo tom={REDE[c.rede].tom}>{REDE[c.rede].texto}</Selo>
                   </span>
                   <span className="chave__meta">desde {formatarData(c.criadaEm)}</span>
+                  <AvisosDaChave rede={c.rede} />
                 </span>
                 <Botao
                   pequeno

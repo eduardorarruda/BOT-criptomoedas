@@ -109,8 +109,8 @@ describe("zentrade-aprovacao", () => {
 
 describe("zentrade-alertas", () => {
   const fluxo = carregarFluxo("zentrade-alertas");
-  const ler = (dados: unknown) =>
-    executarCodigo(codigoDo(fluxo, "Ler alerta"), { entrada: [{ json: { dados } }], agoraMs: AGORA });
+  const ler = (dados: unknown, estado: Record<string, unknown> = {}, agoraMs = AGORA) =>
+    executarCodigo(codigoDo(fluxo, "Ler alerta"), { entrada: [{ json: { dados } }], agoraMs, estado });
 
   it("monta o texto e escapa o HTML para o Telegram", async () => {
     const r = json(await ler({ tipo: "risco", titulo: "Perda <diária>", mensagem: "A & B", em: AGORA }));
@@ -129,6 +129,46 @@ describe("zentrade-alertas", () => {
   it("corta mensagens maiores que o limite do Telegram", async () => {
     const r = json(await ler({ tipo: "x", titulo: "t", mensagem: "a".repeat(4000), em: AGORA }));
     expect(String(r.texto).length).toBeLessThanOrEqual(4000);
+  });
+
+  const alerta = {
+    tipo: "robo_nao_ligou",
+    titulo: "Robô BTC não ligou",
+    mensagem: "chave recusada",
+    em: AGORA,
+    gravidade: "critico",
+    chave: "robo_nao_ligou:r1",
+  };
+
+  it("marca a gravidade no título; info não ganha marca", async () => {
+    expect(json(await ler(alerta)).assunto).toBe("[ZenTrade] [CRÍTICO] Robô BTC não ligou");
+    expect(json(await ler({ ...alerta, gravidade: "atencao" })).assunto).toBe(
+      "[ZenTrade] [ATENÇÃO] Robô BTC não ligou",
+    );
+    expect(json(await ler({ ...alerta, gravidade: "info" })).assunto).toBe("[ZenTrade] Robô BTC não ligou");
+    expect(json(await ler({ ...alerta, gravidade: "grave", chave: "" }))).toEqual({
+      ok: false,
+      motivo: "campos inválidos: gravidade, chave",
+    });
+  });
+
+  it("o mesmo fato (chave) em 10 min não manda segunda mensagem; sem chave, sempre manda", async () => {
+    const estado = {};
+    expect(json(await ler(alerta, estado)).duplicado).toBe(false);
+    expect(json(await ler(alerta, estado, AGORA + 9 * MIN)).duplicado).toBe(true);
+    expect(json(await ler(alerta, estado, AGORA + 21 * MIN)).duplicado).toBe(false);
+    const { chave: _sem, ...semChave } = alerta;
+    expect(json(await ler(semChave, estado)).duplicado).toBe(false);
+    expect(json(await ler(semChave, estado)).duplicado).toBe(false);
+  });
+
+  it("o alerta repetido para antes do Telegram e do e-mail", () => {
+    expect(fluxo.connections["Aceitar (202)"]?.main?.[0]?.map((l) => l.node)).toEqual(["Alerta novo?"]);
+    expect(fluxo.connections["Alerta novo?"]?.main?.[0]?.map((l) => l.node)).toEqual([
+      "Avisar no Telegram",
+      "E-mail configurado?",
+    ]);
+    expect(fluxo.connections["Alerta novo?"]?.main?.[1] ?? []).toEqual([]);
   });
 });
 

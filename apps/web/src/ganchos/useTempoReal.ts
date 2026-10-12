@@ -73,6 +73,10 @@ export function aplicarEvento(qc: QueryClient, e: EventoTela, agendar = setTimeo
     case "saude":
       void qc.invalidateQueries({ queryKey: chaves.saude });
       return;
+    case "alerta":
+      // Um alerta novo (stop, pausa, divergência...): a tela de Risco relê avisos e pausas.
+      void qc.invalidateQueries({ queryKey: chaves.risco });
+      return;
     case "candle":
     case "sinal":
       return;

@@ -6,3 +6,4 @@ export * from "./mercado.js";
 export * from "./operacao.js";
 export * from "./renda-fixa.js";
 export * from "./imobiliario.js";
+export * from "./risco-conta.js";

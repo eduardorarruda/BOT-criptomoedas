@@ -19,9 +19,9 @@ export const CATEGORIAS: readonly { readonly valor: Categoria; readonly rotulo: 
 
 export const TETO_AO_VIVO = 500;
 
-/** `null` para o que não é de um robô (preço, saúde, configuração). */
+/** `null` para o que não é de um robô (preço, saúde, configuração) e para alertas (vão para Avisos). */
 export function categoriaDe(e: Evento): Categoria | null {
-  return e.tipo === "preco" || e.tipo === "saude" || e.tipo === "robo" ? null : e.tipo;
+  return e.tipo === "preco" || e.tipo === "saude" || e.tipo === "robo" || e.tipo === "alerta" ? null : e.tipo;
 }
 
 /** O robô do evento. A ordem só traz a decisão: o robô vem dela. */
@@ -70,6 +70,8 @@ export function chaveEvento(e: Evento): string {
       return `saude:${e.servico}:${e.em}`;
     case "robo":
       return `robo:${e.robo.id}:${e.robo.modo}:${e.robo.pausado}:${e.robo.nome}`;
+    case "alerta":
+      return `alerta:${e.alerta.chave}:${e.alerta.em}`;
   }
 }
 
