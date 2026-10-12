@@ -1,6 +1,7 @@
 import { ehMultiplo, type Valor } from "./dinheiro.js";
 import { precoAlvo } from "./estrategia.js";
 import { formatarDolar, formatarNumero } from "./formatar.js";
+import { barreirasDaConta, type CodigoBarreiraConta, type EstadoConta } from "./risco-conta.js";
 import type { FiltrosAtivo, Lado } from "./tipos.js";
 
 /**
@@ -25,6 +26,8 @@ export interface EstadoRisco {
   readonly ordensUltimaHora: number;
   readonly ultimaPerdaEm: number | null;
   readonly agora: number;
+  /** Limites da conta (todos os robôs da pessoa na rede). Sem isto, só os do robô valem. */
+  readonly conta?: EstadoConta;
 }
 
 export interface PropostaOrdem {
@@ -50,7 +53,8 @@ export type CodigoBarreira =
   | "quantidade_minima"
   | "quantidade_maxima"
   | "passo_quantidade"
-  | "valor_minimo";
+  | "valor_minimo"
+  | CodigoBarreiraConta;
 
 export interface Barreira {
   readonly codigo: CodigoBarreira;
@@ -147,5 +151,6 @@ export function avaliarRisco(
     });
   barreiras.push(...barreirasDaQuantidade(p, f));
   if (p.lado === "COMPRA") barreiras.push(...barreirasDaCompra(p, e, l, taxa));
+  if (p.lado === "COMPRA" && e.conta) barreiras.push(...barreirasDaConta(p, e.conta));
   return barreiras.length === 0 ? { aprovada: true } : { aprovada: false, barreiras };
 }

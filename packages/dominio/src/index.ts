@@ -6,6 +6,8 @@ export * from "./formatar.js";
 export * from "./indicadores.js";
 export * from "./livro.js";
 export * from "./posicao.js";
+export * from "./reconciliacao.js";
 export * from "./regras.js";
 export * from "./risco.js";
+export * from "./risco-conta.js";
 export * from "./tipos.js";
