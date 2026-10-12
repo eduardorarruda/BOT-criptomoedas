@@ -65,6 +65,28 @@ describe("proteção: robô pausado com posição aberta segue vigiado", () => {
     expect(await ativos()).not.toContain(comPosicao.id);
   });
 
+  it("pausado com ordem incerta (PENDENTE) também segue na lista: a partida confere na corretora", async () => {
+    const robo = await novoRobo(c.ana.id, c.ana.estrategia.id);
+    const decisaoId = await c.banco.portas.decisoes.registrar(compra(robo.id));
+    await c.banco.portas.ordens.reservar({
+      decisaoId,
+      roboId: robo.id,
+      idCliente: "zt-ativos-pendente",
+      simbolo: "BTCUSDT",
+      lado: "COMPRA",
+      quantidade: dec("0.5"),
+    });
+    await c.banco.robos.atualizar(c.ana.id, robo.id, { pausado: true });
+    expect(await ativos()).toContain(robo.id);
+    await c.banco.portas.ordens.concluir("zt-ativos-pendente", {
+      idCliente: "zt-ativos-pendente",
+      idCorretora: null,
+      estado: "REJEITADA",
+      execucoes: [],
+    });
+    expect(await ativos()).not.toContain(robo.id);
+  });
+
   it("a parada total não tira ninguém da lista: quem decide é o risco, a cada decisão", async () => {
     await c.banco.configuracao.definirParadaTotal(c.beto.id, true);
     expect(await ativos()).toContain(c.beto.robo.id);

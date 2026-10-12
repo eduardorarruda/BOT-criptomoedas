@@ -14,7 +14,7 @@ import {
 import { RelogioManual } from "../relogio.js";
 import { ESTRATEGIA, registroDeTeste, USUARIO } from "../teste/cenario.js";
 import type { ProtecaoEfetiva } from "./posicao-aberta.js";
-import { liberarProtecao, StopNaCorretora } from "./stop-corretora.js";
+import { conferirProtecao, liberarProtecao, StopNaCorretora } from "./stop-corretora.js";
 import { OPCOES_PADRAO, type Dependencias } from "./tipos.js";
 
 const T0 = Date.UTC(2026, 9, 10, 12, 0);
@@ -163,6 +163,60 @@ describe("StopNaCorretora: a proteção no livro acompanha a posição", () => {
       ["ATIVA", "99.5"],
     ]);
     expect(m.papel.saldoBloqueado("BTC").toFixed()).toBe("0.1");
+  });
+
+  it("troca recusada pela corretora: a proteção anterior volta para o livro (a posição não fica descoberta)", async () => {
+    const m = await montar();
+    await m.ajustar("100");
+    const colocar = m.papel.colocarProtecao.bind(m.papel);
+    m.papel.colocarProtecao = (p) =>
+      p.stop.equals(dec("99.5"))
+        ? Promise.resolve({
+            estado: "REJEITADA" as const,
+            idCorretora: null,
+            pernas: [],
+            motivo: "Filter failure: PERCENT_PRICE_BY_SIDE.",
+          })
+        : colocar(p);
+    m.definir({ decisaoId: m.decisaoId, stop: dec("99.5"), alvo: dec("103.001") });
+    await m.ajustar("100.2");
+    const viva = await m.protecoes.viva("r1");
+    expect(viva?.estado).toBe("ATIVA");
+    expect(viva?.stop.toFixed()).toBe("98.01");
+    expect(m.papel.saldoBloqueado("BTC").toFixed()).toBe("0.1");
+    expect(m.eventos.doTipo("risco").map((e) => e.barreira.codigo)).toContain("protecao_recusada");
+  });
+
+  it("execução parcial que segue no livro: gravada e mostrada uma vez, não a cada conferência", async () => {
+    const m = await montar();
+    await m.ajustar("100");
+    const consultar = m.papel.consultarProtecao.bind(m.papel);
+    m.papel.consultarProtecao = async (s, ids) => {
+      const r = await consultar(s, ids);
+      if (!r) return r;
+      const execucao = {
+        lado: "VENDA" as const,
+        preco: dec(98),
+        quantidade: dec("0.04"),
+        taxaCotacao: dec(0),
+        em: T0,
+      };
+      return {
+        ...r,
+        pernas: r.pernas.map((x) =>
+          x.perna === "stop"
+            ? { ...x, ordem: { ...x.ordem, estado: "PARCIAL" as const, execucoes: [execucao] } }
+            : x,
+        ),
+      };
+    };
+    expect(await conferirProtecao(m.deps, ROBO)).toBe(true);
+    expect(await conferirProtecao(m.deps, ROBO)).toBe(false);
+    expect(await conferirProtecao(m.deps, ROBO)).toBe(false);
+    expect(m.eventos.doTipo("ordem")).toHaveLength(1);
+    expect(m.eventos.doTipo("decisao")).toHaveLength(1);
+    const vendas = (await m.deps.ordens.execucoes("r1")).filter((e) => e.lado === "VENDA");
+    expect(vendas.map((e) => e.quantidade.toFixed())).toEqual(["0.04"]);
   });
 
   it("alvo que o preço já passou: só o stop vai para o livro", async () => {

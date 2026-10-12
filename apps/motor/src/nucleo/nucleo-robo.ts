@@ -42,6 +42,8 @@ export class NucleoRobo {
   private readonly stopNaCorretora: StopNaCorretora;
   private readonly acompanhamento: AcompanhamentoPosicao;
   private ultimoMinuto = 0;
+  /** O último preço visto (candle de 1 min ou do intervalo): a proteção fora do candle usa ele. */
+  private ultimoPreco: Valor | null = null;
   private falhas = 0;
   private incertas: readonly OrdemIncerta[] = [];
   private aprovacao: AprovacaoPendente | null = null;
@@ -243,7 +245,7 @@ export class NucleoRobo {
       const r = await concluirAprovacao(this.deps, this.robo, p, fim, await this.posicao());
       if (r.ordem && r.plano && r.decisaoId) await this.aposOrdem(r.ordem, r.plano, r.decisaoId);
       // Compra aprovada fora do candle: a proteção vai para o livro já, sem esperar o próximo minuto.
-      if (r.ordem) await this.ajustarCorretora(p.entrada.preco);
+      if (r.ordem) await this.ajustarCorretora(this.ultimoPreco ?? p.entrada.preco);
     });
   }
 
@@ -322,6 +324,7 @@ export class NucleoRobo {
   }
 
   private publicarPreco(c: Candle): Promise<void> {
+    this.ultimoPreco = c.fecha;
     return publicar(this.deps, {
       tipo: "preco",
       simbolo: this.robo.simbolo,

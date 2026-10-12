@@ -73,14 +73,14 @@ function decisaoDaSaida(
   };
 }
 
-/** Grava a venda de uma perna (decisão, ordem e execuções) e avisa a tela. */
+/** Grava a venda de uma perna (decisão, ordem e execuções); idempotente pela perna. */
 async function gravarPerna(
   deps: Dependencias,
   porta: PortaProtecoes,
   robo: RoboConfig,
   viva: ProtecaoGravada,
   perna: PernaProtecao,
-): Promise<void> {
+): Promise<() => Promise<void>> {
   const executada = perna.ordem.execucoes.reduce((t, e) => t.plus(e.quantidade), dec(0));
   const decisao = decisaoDaSaida(deps, robo, perna, executada);
   const { decisaoId, nova } = await porta.registrarSaida(viva.ids.lista, {
@@ -88,15 +88,18 @@ async function gravarPerna(
     ordem: perna.ordem,
     quantidade: viva.quantidade,
   });
-  if (nova)
+  // Avisar a tela só quando algo novo entrou (a conferência repete a cada candle).
+  return async () => {
+    if (nova)
+      await publicar(deps, {
+        tipo: "decisao",
+        decisao: decisaoDTO({ id: decisaoId, decisao, ordemId: perna.ordem.idCliente }),
+      });
     await publicar(deps, {
-      tipo: "decisao",
-      decisao: decisaoDTO({ id: decisaoId, decisao, ordemId: perna.ordem.idCliente }),
+      tipo: "ordem",
+      ordem: ordemDTO(decisaoId, robo, "VENDA", viva.quantidade, perna.ordem, viva.criadaEm),
     });
-  await publicar(deps, {
-    tipo: "ordem",
-    ordem: ordemDTO(decisaoId, robo, "VENDA", viva.quantidade, perna.ordem, viva.criadaEm),
-  });
+  };
 }
 
 const motivoSumiu = (viva: ProtecaoGravada): string =>
@@ -126,9 +129,11 @@ export async function aplicarProtecao(
     return false;
   }
   const antes = posicaoDe(await deps.ordens.execucoes(robo.id)).quantidade;
+  const avisos: (() => Promise<void>)[] = [];
   for (const perna of r.pernas)
-    if (perna.ordem.execucoes.length > 0) await gravarPerna(deps, porta, robo, viva, perna);
+    if (perna.ordem.execucoes.length > 0) avisos.push(await gravarPerna(deps, porta, robo, viva, perna));
   const depois = posicaoDe(await deps.ordens.execucoes(robo.id)).quantidade;
+  if (!antes.equals(depois)) for (const avisar of avisos) await avisar();
   const mudou = r.estado !== viva.estado || r.idCorretora !== viva.idCorretora;
   if (mudou)
     await porta.atualizar(viva.ids.lista, r.estado, {
@@ -191,6 +196,16 @@ const chaveDe = (d: Desejada): string => chave(d.decisaoId, [d.quantidade, d.sto
 const chaveDaViva = (v: ProtecaoGravada): string =>
   chave(v.decisaoId, [v.quantidade, v.stop, v.limite, v.alvo]);
 
+/** A proteção que já estava no livro, como desejada (para recolocá-la se a troca for recusada). */
+const anterior = (v: ProtecaoGravada): Desejada => ({
+  decisaoId: v.decisaoId,
+  stop: v.stop,
+  alvo: v.alvo ?? v.stop,
+  quantidade: v.quantidade,
+  limite: v.limite,
+  ...(v.alvo ? { alvoNoLivro: v.alvo } : {}),
+});
+
 /**
  * Mantém no livro da corretora a proteção certa para a posição de agora. Guarda só o
  * que evita repetir: o último aviso dado e a última recusa (não insiste a cada minuto).
@@ -225,7 +240,9 @@ export class StopNaCorretora {
       const agora = posicaoDe(await this.deps.ordens.execucoes(this.robo.id));
       if (!agora.quantidade.equals(posicao.quantidade)) return;
     }
-    await this.colocar(porta, desejada);
+    const estado = await this.colocar(porta, desejada);
+    // Troca recusada: a anterior (que a corretora já aceitou) volta, para a posição não ficar descoberta.
+    if (estado === "REJEITADA" && viva) await this.colocar(porta, anterior(viva), true);
   }
 
   private async desejada(
@@ -274,9 +291,11 @@ export class StopNaCorretora {
     return arredondarParaBaixo(livre, f.passoQuantidade);
   }
 
-  private async colocar(porta: PortaProtecoes, d: Desejada): Promise<void> {
+  /** Reserva e envia. Devolve o estado na corretora (null se nem tentou ou ficou incerto). */
+  private async colocar(porta: PortaProtecoes, d: Desejada, reposicao = false): Promise<string | null> {
     const chaveDesejada = chaveDe(d);
-    if (this.recusa?.chave === chaveDesejada && this.deps.relogio.agora() < this.recusa.ate) return;
+    if (!reposicao && this.recusa?.chave === chaveDesejada && this.deps.relogio.agora() < this.recusa.ate)
+      return null;
     const ids = idsProtecaoDe(randomUUID(), d.alvoNoLivro !== undefined);
     const nova = {
       roboId: this.robo.id,
@@ -288,7 +307,7 @@ export class StopNaCorretora {
       limite: d.limite,
       ...(d.alvoNoLivro ? { alvo: d.alvoNoLivro } : {}),
     };
-    if ((await porta.reservar(nova)) === "ja_existe") return;
+    if ((await porta.reservar(nova)) === "ja_existe") return null;
     let r: ResultadoProtecao;
     try {
       r = await this.deps.corretora.colocarProtecao({ ...nova, ids });
@@ -298,7 +317,7 @@ export class StopNaCorretora {
         { erro, roboId: this.robo.id, lista: ids.lista },
         "falha ao colocar a proteção",
       );
-      return;
+      return null;
     }
     const agora = this.deps.relogio.agora();
     await aplicarProtecao(
@@ -308,14 +327,14 @@ export class StopNaCorretora {
       r,
     );
     if (r.estado === "REJEITADA") {
-      this.recusa = { chave: chaveDesejada, ate: agora + RECUSA_ESPERA_MS };
+      if (!reposicao) this.recusa = { chave: chaveDesejada, ate: agora + RECUSA_ESPERA_MS };
       await this.publicarRisco(
         "protecao_recusada",
         `A corretora recusou o stop da posição: ${r.motivo ?? "sem motivo"} O robô segue vigiando o stop e tenta de novo em alguns minutos.`,
       );
-      return;
+      return r.estado;
     }
-    this.recusa = null;
+    if (!reposicao) this.recusa = null;
     this.ultimoAviso = null;
     this.deps.registro.info(
       {
@@ -324,8 +343,11 @@ export class StopNaCorretora {
         stop: paraTexto(d.stop),
         alvo: d.alvoNoLivro && paraTexto(d.alvoNoLivro),
       },
-      "proteção colocada na corretora",
+      reposicao
+        ? "troca recusada: a proteção anterior voltou para a corretora"
+        : "proteção colocada na corretora",
     );
+    return r.estado;
   }
 
   /** Avisa uma vez por problema (não a cada minuto): registro e evento de risco para a tela. */

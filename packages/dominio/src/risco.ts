@@ -34,7 +34,7 @@ export interface EstadoRisco {
  * - "saida": venda pela regra de saída — uma decisão nova da estratégia e do agente.
  *   Pausa, parada total e frequência barram.
  * - "protecao": venda que cumpre o combinado na entrada (stop e alvo, os mesmos que
- *   ficam na corretora) ou o "zerar posição" pedido pela pessoa. Só a quantidade e os
+ *   ficam na corretora) e, quando existir o comando, o "zerar posição" pedido pela pessoa. Só a quantidade e os
  *   filtros da corretora barram: sair reduz risco, e posição sem stop é o pior caso.
  */
 export type FinalidadeOrdem = "entrada" | "saida" | "protecao";
