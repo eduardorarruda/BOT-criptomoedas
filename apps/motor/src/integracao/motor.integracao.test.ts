@@ -6,7 +6,16 @@ import { montarMotor, type FontesMotor } from "../composicao.js";
 import { lerConfig } from "../config.js";
 import { Motor } from "../motor.js";
 import { CHAVE_BATIDA_MOTOR } from "../portas/redis.js";
-import { ate, corretoraDeTeste, montarAmbiente, QUINZE, registro, type AmbienteIntegracao } from "./ajuda.js";
+import { candle } from "../teste/candles.js";
+import {
+  ate,
+  corretoraDeTeste,
+  MIN,
+  montarAmbiente,
+  QUINZE,
+  registro,
+  type AmbienteIntegracao,
+} from "./ajuda.js";
 
 const ALVO = precoAlvo(dec(94), 0.01, 0.001);
 
@@ -146,5 +155,47 @@ describe("motor com as portas do banco e o Redis (papel, ponta a ponta)", () => 
     await a.banco.robos.atualizar(a.usuarioId, a.robo.id, { pausado: false });
     expect(await motor.recarregar()).toMatchObject({ ligados: 1 });
     await motor.parar();
+  });
+
+  it("stop na corretora: gravado no banco, executa com o motor parado e a partida grava a venda uma vez", async () => {
+    // Candles depois de agora: o papel só dispara a proteção em candle que termina depois dela existir.
+    const futuro = Math.ceil(Date.now() / QUINZE) * QUINZE + QUINZE;
+    const t = corretoraDeTeste(futuro);
+    const primeiro = ligar(t.corretora);
+    await primeiro.motor.iniciar();
+    t.fecharIntervalo(94);
+    await primeiro.motor.ocioso();
+    const viva = await a.motorBanco.portas.protecoes.viva(a.robo.id);
+    expect(viva).toMatchObject({ estado: "ATIVA" });
+    expect(viva?.stop.toFixed()).toBe("92.12");
+    expect((await a.banco.robos.posicao(a.usuarioId, a.robo.id))?.protecaoCorretora).toMatchObject({
+      estado: "ATIVA",
+      stop: "92.12",
+      limite: "91.19",
+    });
+    await primeiro.motor.parar();
+
+    // Com o motor fora do ar, a corretora executa o stop (mínima no stop).
+    t.ordens.alimentar("BTCUSDT", "1m", candle(futuro + 30 * MIN, "92.5", MIN, { minima: "92" }));
+    const antes = (await ordens()).length;
+
+    for (let i = 0; i < 2; i++) {
+      const motor = ligar(t.corretora);
+      await motor.motor.iniciar();
+      await motor.motor.ocioso();
+      await motor.motor.parar();
+      expect(motor.erros).toEqual([]);
+    }
+    const depois = await ordens();
+    expect(depois).toHaveLength(antes + 1);
+    expect(depois[0]).toMatchObject({ lado: "VENDA", estado: "PREENCHIDA", idCliente: viva?.ids.stop });
+    expect((await a.banco.robos.posicao(a.usuarioId, a.robo.id))?.quantidade).toBe("0");
+    expect((await a.motorBanco.portas.protecoes.ultima(a.robo.id))?.estado).toBe("EXECUTADA");
+    const lista = await decisoes();
+    expect(
+      lista.filter((d) => d.sinal.acao === "VENDER" && /corretora/.test(d.sinal.explicacao)),
+    ).toHaveLength(1);
+    const compra = lista.find((d) => d.sinal.acao === "COMPRAR");
+    expect(dec(compra?.desfecho?.resultado ?? "0").lt(0)).toBe(true);
   });
 });
