@@ -10,7 +10,7 @@ import {
 } from "./aprovacao.js";
 import { publicarCandle, publicarPosicao, publicarSinal } from "./aovivo.js";
 import { MemoriaBloqueio } from "./bloqueio.js";
-import { ehStop, processarSinal } from "./ciclo.js";
+import { ehProtecao, processarSinal } from "./ciclo.js";
 import { mudarEstado, publicar } from "./diario.js";
 import type { Plano } from "./plano.js";
 import { PosicaoAberta } from "./posicao-aberta.js";
@@ -143,8 +143,8 @@ export class NucleoRobo {
   }
 
   private async seguir(e: Contexto): Promise<ResultadoCiclo | null> {
-    // Com uma aprovação pendente, só o stop passa: o resto espera a resposta da pessoa.
-    if (this.aprovacao && !ehStop(e.sinal)) return null;
+    // Com uma aprovação pendente, só a proteção (stop e alvo) passa: o resto espera a pessoa.
+    if (this.aprovacao && !ehProtecao(e.sinal)) return null;
     const r = await processarSinal(this.deps, this.robo, { ...e, fechamentos: this.buffer.fechamentos() });
     await this.bloqueio.registrar(e.sinal, r, e.posicao);
     if (r.pendente) this.esperarAprovacao(r.pendente);

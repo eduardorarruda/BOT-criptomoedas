@@ -128,15 +128,16 @@ function barreirasDaVenda(p: PropostaOrdem, f: FiltrosAtivo): Barreira[] {
   return resto ? [resto] : barreirasDaQuantidade(p, f);
 }
 
+export const BARREIRA_PAUSADO: Barreira = {
+  codigo: "pausado",
+  mensagem:
+    "O robô está pausado (ou a parada total está ligada): nenhuma entrada nem saída pela regra sai até alguém religar. O stop e o alvo seguem valendo.",
+};
+
 /** Pausa (do robô ou parada total) e frequência: valem para entrada e saída pela regra. */
 function barreirasDeOperacao(e: EstadoRisco, l: LimitesRisco): Barreira[] {
   const b: Barreira[] = [];
-  if (e.pausado)
-    b.push({
-      codigo: "pausado",
-      mensagem:
-        "O robô está pausado (ou a parada total está ligada): nenhuma entrada nem saída pela regra sai até alguém religar. O stop e o alvo seguem valendo.",
-    });
+  if (e.pausado) b.push(BARREIRA_PAUSADO);
   if (e.ordensUltimaHora >= l.ordensPorHoraMax)
     b.push({
       codigo: "frequencia",

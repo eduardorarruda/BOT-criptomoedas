@@ -5,6 +5,7 @@ import {
   type Barreira,
   type EstadoRisco,
   type FiltrosAtivo,
+  type FinalidadeOrdem,
   type Lado,
   type Posicao,
   type Sinal,
@@ -22,6 +23,8 @@ import type { Dependencias } from "./tipos.js";
 
 export interface Plano {
   readonly lado: Lado;
+  /** Decide quais barreiras do risco valem (proteção não é barrada por pausa nem frequência). */
+  readonly finalidade: FinalidadeOrdem;
   readonly quantidade: Valor;
   readonly stop?: Valor;
   readonly alvo?: Valor;
@@ -62,6 +65,7 @@ async function planejarCompra(
   );
   return {
     lado: "COMPRA",
+    finalidade: "entrada",
     quantidade,
     ...protecao,
     confianca: ctx.proposta?.confianca ?? 1,
@@ -85,6 +89,7 @@ export function planejar(
   if (sinal.acao === "COMPRAR") return planejarCompra(deps, robo, sinal, ctx);
   return Promise.resolve({
     lado: "VENDA",
+    finalidade: sinal.motivo === "regra de saída" ? "saida" : "protecao",
     quantidade: quantidadeVenda(ctx.posicao.quantidade, ctx.filtros),
     confianca: ctx.proposta?.confianca ?? 1,
   });
@@ -101,6 +106,7 @@ export function avaliar(
   const r = avaliarRisco(
     {
       lado: plano.lado,
+      finalidade: plano.finalidade,
       quantidade: plano.quantidade,
       precoReferencia: preco,
       confianca: plano.confianca,

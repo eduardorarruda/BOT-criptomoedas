@@ -34,6 +34,7 @@ export interface Relogio {
 }
 
 export interface PortaRobos {
+  /** Os robôs a rodar: os não pausados e os pausados com posição aberta (o stop segue vigiado). */
   ativos(): Promise<RoboConfig[]>;
   /** Parada total, global ou do robô. Lido a cada decisão, nunca em cache. */
   pausado(roboId: string): Promise<boolean>;
