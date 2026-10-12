@@ -51,6 +51,7 @@ function montar(o: {
   armazem?: ArmazemHistorico;
   teto?: number;
   roboDaDecisao?: () => Promise<string | null>;
+  roboConhecido?: (roboId: string) => Promise<boolean>;
 }) {
   let t = 1000;
   const log = { warn: vi.fn(), error: vi.fn() };
@@ -59,6 +60,7 @@ function montar(o: {
     agora: () => t++,
     log,
     roboDaDecisao: o.roboDaDecisao ?? (() => Promise.resolve(null)),
+    ...(o.roboConhecido ? { roboConhecido: o.roboConhecido } : {}),
     ...(o.teto ? { teto: o.teto } : {}),
   });
   return { historico, log };
@@ -116,6 +118,18 @@ describe("histórico de eventos ao vivo", () => {
     soltar!(R1);
     await Promise.all([primeiro, segundo]);
     expect((await historico.recentes(R1)).map((r) => r.evento.tipo)).toEqual(["ordem", "sinal"]);
+  });
+
+  it("robô que não é deste banco não entra (outra API no mesmo canal e no mesmo Redis)", async () => {
+    const roboConhecido = vi.fn((id: string) => Promise.resolve(id === "r1"));
+    const { historico } = montar({ roboConhecido });
+    await historico.guardar(sinal(1, "r1"));
+    await historico.guardar(sinal(2, "r-de-outro"));
+    await historico.guardar(sinal(3, "r1"));
+    expect((await historico.recentes("r1")).map((r) => r.evento.tipo)).toEqual(["sinal", "sinal"]);
+    expect(await historico.recentes("r-de-outro")).toEqual([]);
+    // Robô conhecido fica lembrado: o banco não é consultado a cada evento.
+    expect(roboConhecido.mock.calls.filter(([id]) => id === "r1")).toHaveLength(1);
   });
 
   it("ordem de decisão desconhecida não é guardada (nem em robô errado)", async () => {

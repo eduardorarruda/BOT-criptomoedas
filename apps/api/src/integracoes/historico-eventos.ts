@@ -11,6 +11,8 @@ export const CHAVE_HISTORICO = "zentrade:aovivo:robo:";
 const CHAVE_DECISAO = "zentrade:aovivo:decisao:";
 export const TETO_PADRAO = 400;
 export const VALIDADE_PADRAO_S = 24 * 3600;
+/** Teto da lembrança de robôs já conferidos no banco (zera ao encher). */
+const LIMITE_CONHECIDOS = 10_000;
 
 export const RegistroAoVivoEsquema = z.object({ recebidoEm: Instante, evento: EventoEsquema });
 export type RegistroAoVivo = z.infer<typeof RegistroAoVivoEsquema>;
@@ -59,6 +61,11 @@ interface OpcoesHistorico {
   readonly log: Log;
   /** Para ordens de decisões que o histórico não viu (ex.: a API reiniciou). */
   readonly roboDaDecisao: (decisaoId: string) => Promise<string | null>;
+  /**
+   * O robô é deste banco? Várias APIs podem ouvir o mesmo canal e gravar no mesmo Redis
+   * (réplicas, testes em paralelo): cada uma guarda só os robôs que conhece. Padrão: todos.
+   */
+  readonly roboConhecido?: (roboId: string) => Promise<boolean>;
   readonly teto?: number;
   readonly validadeS?: number;
 }
@@ -67,11 +74,22 @@ export function criarHistoricoEventos(o: OpcoesHistorico): HistoricoEventos {
   const teto = o.teto ?? TETO_PADRAO;
   const validade = o.validadeS ?? VALIDADE_PADRAO_S;
 
+  const conhecidos = new Set<string>();
+  async function conhecido(roboId: string): Promise<boolean> {
+    if (!o.roboConhecido || conhecidos.has(roboId)) return true;
+    if (!(await o.roboConhecido(roboId))) return false;
+    if (conhecidos.size >= LIMITE_CONHECIDOS) conhecidos.clear();
+    conhecidos.add(roboId);
+    return true;
+  }
+
   async function roboDe(e: Evento): Promise<string | null> {
     const direto = roboDoEvento(e);
-    if (direto !== undefined || e.tipo !== "ordem") return direto ?? null;
+    if (direto) return (await conhecido(direto)) ? direto : null;
+    if (direto !== undefined || e.tipo !== "ordem") return null;
     const lembrado = await o.armazem.obter(CHAVE_DECISAO + e.ordem.decisaoId);
-    return lembrado ?? (await o.roboDaDecisao(e.ordem.decisaoId));
+    const roboId = lembrado ?? (await o.roboDaDecisao(e.ordem.decisaoId));
+    return roboId && (await conhecido(roboId)) ? roboId : null;
   }
 
   async function gravar(evento: Evento, recebidoEm: number): Promise<void> {

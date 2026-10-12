@@ -42,6 +42,7 @@ function historicoNoRedis(app: FastifyInstance, deps: Dependencias): HistoricoEv
     agora: deps.agora,
     log: app.log,
     roboDaDecisao: (id) => roboDaDecisao(deps, id),
+    roboConhecido: async (id) => (await deps.banco.sistema.donoDoRobo(id)) !== null,
   });
 }
 
