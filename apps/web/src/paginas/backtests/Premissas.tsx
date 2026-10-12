@@ -21,6 +21,9 @@ function avisoDeTentativas(b: Backtest): AvisoBacktest[] {
   ];
 }
 
+/** 0,1% com uma casa; 0,075% com as três que precisa. */
+const casasDaTaxa = (taxa: number) => (Number.isInteger(Math.round(taxa * 1e6) / 1000) ? 1 : 3);
+
 const bps = (v: number) => `${v.toLocaleString("pt-BR")} ponto${v === 1 ? "" : "s"}-base`;
 
 /** Com que custos, limites e regras o backtest rodou, e os avisos de amostra. */
@@ -33,7 +36,8 @@ export function Premissas({ b }: { readonly b: Backtest }) {
       {c ? (
         <ul className="bt-premissas" role="list">
           <li>
-            <strong>Taxa:</strong> {pct(c.custos.taxaPorLado, 3)} por ponta (compra e venda).
+            <strong>Taxa:</strong> {pct(c.custos.taxaPorLado, casasDaTaxa(c.custos.taxaPorLado))} por ponta
+            (compra e venda).
           </li>
           <li>
             <strong>Deslizamento e spread:</strong> {bps(c.custos.deslizamentoBps)} +{" "}

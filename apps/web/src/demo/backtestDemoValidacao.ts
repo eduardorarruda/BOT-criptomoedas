@@ -134,12 +134,13 @@ function monteCarlo(retornos: readonly number[], v: ValidacaoPedido): MonteCarlo
     let pico = 1;
     let pior = 0;
     let ruiu = false;
+    let k = 0;
     for (let j = 0; j <= n; j++) {
       if (j > 0) p *= 1 + (retornos[Math.floor(sortear() * n)] ?? 0);
       pico = Math.max(pico, p);
       pior = Math.max(pior, 1 - p / pico);
       if (p <= 1 - v.limiteRuina) ruiu = true;
-      pontos.forEach((ponto, k) => (ponto === j ? caminhos[k]?.push(p) : undefined));
+      if (pontos[k] === j) caminhos[k++]?.push(p);
     }
     finais.push(p - 1);
     quedas.push(pior);

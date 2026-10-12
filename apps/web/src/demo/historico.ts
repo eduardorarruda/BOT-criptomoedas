@@ -448,7 +448,20 @@ function validado(
  * antigo, de antes da validação — a tela precisa continuar mostrando os antigos.
  */
 export function backtestsIniciais(agora: number): Backtest[] {
-  const fim = agora - DIA;
+  // Gerar e validar os quatro custa algumas centenas de ms: guarda por hora cheia, para
+  // cada fonte de exemplo (uma por teste) não refazer as mesmas contas.
+  const fim = Math.floor(agora / HORA) * HORA - DIA;
+  const guardado = backtestsGuardados.get(fim);
+  if (guardado) return guardado;
+  const lista = gerarBacktestsIniciais(fim);
+  backtestsGuardados.clear();
+  backtestsGuardados.set(fim, lista);
+  return lista;
+}
+
+const backtestsGuardados = new Map<number, Backtest[]>();
+
+function gerarBacktestsIniciais(fim: number): Backtest[] {
   const rsi = { estrategiaId: "e-rsi", simbolo: "BTCUSDT", intervalo: "1h" as const, fim };
   return [
     validado("b-1", { ...rsi, versao: 3, inicio: fim - 365 * DIA }, fim, {

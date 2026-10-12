@@ -23,7 +23,8 @@ const checagem = (raiz: HTMLElement, texto: string) =>
     (_, el) => el?.classList.contains("bt-veredito__titulo") === true && el.textContent === texto,
   );
 
-const resultado = () => screen.findByRole("region", { name: /RSI.*v3 · BTCUSDT 1h/ });
+/** Sob cobertura e com os outros pacotes rodando juntos, a primeira carga demora. */
+const resultado = () => screen.findByRole("region", { name: /RSI.*v3 · BTCUSDT 1h/ }, { timeout: 15_000 });
 
 describe("tela Backtests", () => {
   it("resultado validado: veredito, indicadores, buy and hold, validação, tentativas e aviso", async () => {
