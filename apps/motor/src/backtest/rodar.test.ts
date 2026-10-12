@@ -1,4 +1,4 @@
-import { dec, type Candle, type Estrategia } from "@zentrade/dominio";
+import { dec, MODELOS, type Candle, type Estrategia } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
 import { candle, serie } from "../teste/candles.js";
 import { ESTRATEGIA } from "../teste/cenario.js";
@@ -149,6 +149,60 @@ describe("stop e alvo dentro do candle", () => {
     );
     expect(r.saidasIntrabar).toEqual({ stop: 0, alvo: 1, ambiguos: 0 });
     expect(r.acertos).toBe(1);
+  });
+});
+
+describe("saídas da estratégia nova: stop por ATR, stop móvel e tempo", () => {
+  const plana = (n: number, preco = 100) =>
+    Array.from({ length: n }, (_, i) => vela(i, preco, preco + 1, preco - 1, preco));
+
+  it("modelo Donchian 20/10 de ponta a ponta: o stop por ATR acertado na compra sai dentro do candle", async () => {
+    const donchian = MODELOS.find((x) => x.id === "donchian-20-10")!.estrategia;
+    // 30 candles entre 99 e 101 (ATR ≈ 2), rompimento a 105 e uma queda que fura o stop
+    // por ATR (≈ 105 − 2 × ATR), mas não o stop fixo de 10% (94,5) nem a saída (Donchian 10).
+    const candles = [
+      ...plana(30),
+      vela(30, 101, 105.5, 101, 105),
+      vela(31, 104.5, 104.5, 100, 103),
+      vela(32, 103, 103, 103, 103),
+    ];
+    const r = await rodarBacktest(entrada([], { candles, estrategia: donchian }));
+    expect(r.operacoes).toBe(1);
+    expect(r.saidasIntrabar).toEqual({ stop: 1, alvo: 0, ambiguos: 0 });
+    // Saiu entre o stop por ATR e a abertura: perdeu menos que os 10% do stop fixo.
+    expect(r.operacoesFechadas[0]!.resultado.lt(0)).toBe(true);
+    expect(r.resultadoLiquido.gt(-10.5)).toBe(true);
+  });
+
+  it("stop móvel: sobe com a máxima no fechamento e só vale a partir do candle seguinte", async () => {
+    const movel: Estrategia = {
+      ...ESTRATEGIA,
+      stop: 0.05,
+      alvoLiquido: 0.5,
+      stopMovel: { tipo: "percentual", distancia: 0.02 },
+    };
+    const candles = [
+      ...serie(T0, [...plano, 94], QUINZE),
+      // máxima 100 e mínima 97,5 no MESMO candle: o stop ainda é o fixo (89,3), não sai.
+      vela(21, 95, 100, 97.5, 99),
+      // agora o stop é 98 (2% abaixo de 100): a mínima 97 o fura e sai em 98, pior caso.
+      vela(22, 99, 99.5, 97, 99.5),
+      vela(23, 99.5, 99.5, 99.5, 99.5),
+    ];
+    const r = await rodarBacktest(entrada([], { candles, estrategia: movel }));
+    expect(r.operacoes).toBe(1);
+    expect(r.saidasIntrabar.stop).toBe(1);
+    expect(r.operacoesFechadas[0]!.fechadaEm).toBe(T0 + 23 * QUINZE - 1);
+    // Comprou a 94 e saiu no stop móvel de 98: lucro, não a perda do stop fixo.
+    expect(r.acertos).toBe(1);
+  });
+
+  it("saída por tempo: vende no fechamento do N-ésimo candle sem resolver", async () => {
+    const tempo: Estrategia = { ...ESTRATEGIA, tempoMaximo: 2 };
+    const r = await rodarBacktest(entrada([...plano, 94, 94.2, 94.4, 96, 96], { estrategia: tempo }));
+    expect(r.operacoes).toBe(1);
+    expect(r.operacoesFechadas[0]!.fechadaEm).toBe(T0 + 23 * QUINZE - 1);
+    expect(r.saidasIntrabar).toEqual({ stop: 0, alvo: 0, ambiguos: 0 });
   });
 });
 

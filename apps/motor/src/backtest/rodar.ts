@@ -1,28 +1,40 @@
 import type { CustosBacktest, Intervalo, RoboConfig } from "@zentrade/contratos";
 import { ativosDoSimbolo, PapelCorretora } from "@zentrade/corretora";
 import {
-  dec,
+  contextoDeCandles,
+  formatarNumero,
   limiteInferior,
   posicaoDe,
   recorte,
   validarEstrategia,
   type Candle,
+  type ContextoMercado,
   type Estrategia,
   type FiltrosAtivo,
   type LimitesRisco,
   type Posicao,
+  type Sinal,
   type Valor,
 } from "@zentrade/dominio";
 import { operacoesFechadas, type OperacaoFechada } from "../historico.js";
+import { processarSinal } from "../nucleo/ciclo.js";
 import { NucleoRobo } from "../nucleo/nucleo-robo.js";
 import { OPCOES_PADRAO, type Dependencias, type Registro } from "../nucleo/tipos.js";
 import { AgenteFixo } from "../portas/agente-fixo.js";
 import { AprovacaoMemoria, DecisoesMemoria, OrdensMemoria, RobosMemoria } from "../portas/memoria.js";
 import { RelogioManual } from "../relogio.js";
 import { USUARIO_LOCAL } from "../usuario-local.js";
+import {
+  aoFecharComPosicao,
+  contextoEntre,
+  iniciar,
+  niveisEfetivos,
+  precisaAcompanhar,
+  type PosicaoAcompanhada,
+} from "./acompanhamento.js";
 import { curvaBuyHold, type ResultadoBuyHold } from "./buy-hold.js";
 import { bpsContra, custoDeslizamento } from "./custos.js";
-import { niveisDaPosicao, saidaNoCaminho, saidaNoCandle, type SaidaIntrabar } from "./intrabar.js";
+import { saidaNoCaminho, saidaNoCandle, type NiveisSaida, type SaidaIntrabar } from "./intrabar.js";
 import { maiorQueda, metricasDasExecucoes, type MetricasOperacoes, type PontoCurva } from "./metricas.js";
 
 export interface EntradaBacktest {
@@ -105,10 +117,11 @@ function montar(e: EntradaBacktest, aquecimento: number) {
     error: (obj, msg) => erros.push(`${msg}: ${String((obj as { erro?: unknown }).erro)}`),
   };
   const ordens = new OrdensMemoria(relogio);
+  const decisoes = new DecisoesMemoria();
   const deps: Dependencias = {
     corretora,
     robos: new RobosMemoria([robo]),
-    decisoes: new DecisoesMemoria(),
+    decisoes,
     ordens,
     agente: new AgenteFixo(e.agente),
     eventos: { publicar: () => Promise.resolve() },
@@ -122,7 +135,7 @@ function montar(e: EntradaBacktest, aquecimento: number) {
       tamanhoHistorico: Math.max(aquecimento, OPCOES_PADRAO.tamanhoHistorico),
     },
   };
-  return { relogio, corretora, ordens, erros, nucleo: new NucleoRobo(robo, deps) };
+  return { relogio, corretora, ordens, decisoes, erros, robo, deps, nucleo: new NucleoRobo(robo, deps) };
 }
 
 type Montagem = ReturnType<typeof montar>;
@@ -136,9 +149,8 @@ function minutosDo(minutos: readonly Candle[] | undefined, c: Candle): readonly 
 function saidaDentroDo(
   e: EntradaBacktest,
   c: Candle,
-  posicao: Posicao,
+  niveis: NiveisSaida,
 ): (SaidaIntrabar & { readonly em: number }) | null {
-  const niveis = niveisDaPosicao(posicao.precoMedio, e.estrategia);
   const minutos = minutosDo(e.minutos, c);
   if (minutos.length > 0) return saidaNoCaminho(minutos, niveis);
   const saida = saidaNoCandle(c, niveis);
@@ -146,34 +158,91 @@ function saidaDentroDo(
 }
 
 /**
- * Leva a saída intrabar ao robô pelo MESMO caminho da vigia de 1 minuto ao vivo: o
- * preço da corretora vai ao nível tocado e o núcleo decide (stop/alvo, risco, ordem).
- * Assim a ordem passa pelo motor de risco e paga taxa e deslizamento como qualquer outra.
+ * Vende a posição inteira pelo MESMO ciclo do robô (processarSinal: plano, motor de
+ * risco, ordem idempotente na corretora, diário), com a corretora no preço da saída.
+ * Assim a saída paga taxa, deslizamento e spread como qualquer ordem a mercado.
  */
-async function sairDentroDoCandle(
+async function vender(
+  m: Montagem,
+  e: EntradaBacktest,
+  s: { readonly preco: Valor; readonly em: number; readonly sinal: Sinal },
+  posicao: Posicao,
+  fechamentos: readonly number[],
+): Promise<boolean> {
+  m.relogio.definir(s.em);
+  m.corretora.definirPreco(e.simbolo, s.preco);
+  await processarSinal(m.deps, m.robo, { sinal: s.sinal, preco: s.preco, fechamentos, posicao, em: s.em });
+  return (await posicaoAtual(m)).quantidade.isZero();
+}
+
+const posicaoAtual = async (m: Montagem): Promise<Posicao> => posicaoDe(await m.ordens.execucoes(ID));
+
+function explicar(s: SaidaIntrabar, c: Candle): string {
+  const extremo =
+    s.motivo === "stop" ? `mínima ${formatarNumero(c.minima)}` : `máxima ${formatarNumero(c.maxima)}`;
+  const ambiguo = s.ambiguo ? "; stop e alvo no mesmo candle, conta o stop (pior caso)" : "";
+  return `${s.motivo} tocado dentro do candle (${extremo}) a ${formatarNumero(s.preco)}${ambiguo}`;
+}
+
+interface Estado {
+  aberta: PosicaoAcompanhada | null;
+  expostas: number;
+  readonly intrabar: { stop: number; alvo: number; ambiguos: number };
+}
+
+/** Antes do fechamento: com posição aberta, stop e alvo dentro do candle. */
+async function vigiarDentroDoCandle(
   m: Montagem,
   e: EntradaBacktest,
   c: Candle,
-  s: { preco: Valor; em: number },
+  st: Estado,
+  ctx: ContextoMercado,
 ) {
-  m.relogio.definir(s.em);
-  m.corretora.definirPreco(e.simbolo, s.preco);
-  await m.nucleo.aoFecharMinuto({
-    abertura: Math.max(c.abertura, s.em - 59_999),
-    fechamento: s.em,
-    abre: s.preco,
-    maxima: s.preco,
-    minima: s.preco,
-    fecha: s.preco,
-    volume: dec(0),
-  });
+  const posicao = await posicaoAtual(m);
+  if (posicao.quantidade.isZero() || !st.aberta) return;
+  st.expostas++;
+  const saida = saidaDentroDo(e, c, niveisEfetivos(posicao, st.aberta));
+  if (!saida) return;
+  const sinal: Sinal = { acao: "VENDER", motivo: saida.motivo, explicacao: explicar(saida, c) };
+  if (!(await vender(m, e, { preco: saida.preco, em: saida.em, sinal }, posicao, ctx.fechamentos))) return;
+  st.aberta = null;
+  st.intrabar[saida.motivo]++;
+  if (saida.ambiguo) st.intrabar.ambiguos++;
+}
+
+/** Depois do fechamento: começa a acompanhar uma compra nova ou atualiza a que segue aberta. */
+async function aposFechamento(m: Montagem, e: EntradaBacktest, c: Candle, st: Estado, ctx: ContextoMercado) {
+  const posicao = await posicaoAtual(m);
+  if (posicao.quantidade.isZero()) {
+    st.aberta = null;
+    return;
+  }
+  if (!st.aberta) {
+    st.aberta = iniciar(e.estrategia, await m.decisoes.ultimaCompraExecutada(ID), posicao);
+    return;
+  }
+  if (!precisaAcompanhar(e.estrategia)) return;
+  const r = aoFecharComPosicao(st.aberta, ctx, c.fecha, posicao);
+  st.aberta = r.posicao;
+  if (
+    r.saidaPorTempo &&
+    (await vender(
+      m,
+      e,
+      { preco: c.fecha, em: c.fechamento, sinal: r.saidaPorTempo },
+      posicao,
+      ctx.fechamentos,
+    ))
+  )
+    st.aberta = null;
 }
 
 /**
  * Backtest com as MESMAS funções do robô ao vivo (NucleoRobo: decidir, agente,
  * risco, execução idempotente) sobre candles históricos, numa corretora de papel e
  * com um agente fixo. Stop e alvo são vigiados DENTRO do candle (mínima e máxima, ou o
- * caminho de 1 minuto). Determinístico: mesma entrada, mesmo resultado; sem rede.
+ * caminho de 1 minuto), com o stop por ATR acertado na compra e o stop móvel, o empate
+ * e a saída por tempo do domínio. Determinístico: mesma entrada, mesmo resultado; sem rede.
  */
 export async function rodarBacktest(e: EntradaBacktest): Promise<ResultadoBacktest> {
   const problemas = validarEstrategia(e.estrategia);
@@ -191,25 +260,18 @@ export async function rodarBacktest(e: EntradaBacktest): Promise<ResultadoBackte
   const anteriores = e.candles.slice(Math.max(0, corte - aquecimento), corte);
   anteriores.forEach((c) => m.corretora.alimentar(e.simbolo, e.intervalo, c));
   await m.nucleo.completarHistorico(anteriores);
+  // O mesmo tamanho de histórico que o robô guarda: indicadores e ATR veem o que ele veria.
+  const todos = contextoDeCandles(e.candles);
+  const historico = m.deps.opcoes.tamanhoHistorico;
+  const ate = (i: number) => contextoEntre(todos, Math.max(0, i + 1 - historico), i + 1);
   const curva: PontoCurva[] = [];
-  const intrabar = { stop: 0, alvo: 0, ambiguos: 0 };
-  let expostas = 0;
-  for (const c of janela) {
-    const posicao = posicaoDe(await m.ordens.execucoes(ID));
-    if (posicao.quantidade.gt(0)) {
-      expostas++;
-      const saida = saidaDentroDo(e, c, posicao);
-      if (saida) {
-        await sairDentroDoCandle(m, e, c, saida);
-        if (posicaoDe(await m.ordens.execucoes(ID)).quantidade.isZero()) {
-          intrabar[saida.motivo]++;
-          if (saida.ambiguo) intrabar.ambiguos++;
-        }
-      }
-    }
+  const st: Estado = { aberta: null, expostas: 0, intrabar: { stop: 0, alvo: 0, ambiguos: 0 } };
+  for (const [k, c] of janela.entries()) {
+    await vigiarDentroDoCandle(m, e, c, st, ate(corte + k - 1));
     m.relogio.definir(c.fechamento);
     m.corretora.alimentar(e.simbolo, e.intervalo, c);
     await m.nucleo.aoFecharIntervalo(c);
+    await aposFechamento(m, e, c, st, ate(corte + k));
     curva.push({ em: c.fechamento, patrimonio: await patrimonio(m.corretora, e.simbolo, c.fecha) });
   }
   if (m.erros.length > 0) throw new Error(`O backtest falhou: ${m.erros[0]}`);
@@ -219,8 +281,8 @@ export async function rodarBacktest(e: EntradaBacktest): Promise<ResultadoBackte
     buyHold: curvaBuyHold(janela, e.saldoInicial, custosDe(e)),
     operacoesFechadas: operacoesFechadas(execucoes),
     deslizamentoPago: custoDeslizamento(execucoes, bpsContra(custosDe(e))),
-    barrasExpostas: expostas,
-    saidasIntrabar: intrabar,
+    barrasExpostas: st.expostas,
+    saidasIntrabar: st.intrabar,
     candles: janela,
   };
 }
