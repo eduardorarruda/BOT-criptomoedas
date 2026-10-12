@@ -19,8 +19,10 @@ O ZenTrade guarda chaves de corretora e envia ordens com dinheiro. Este document
 ### Chaves da corretora
 
 - **Ameaça:** alguém obtém a chave (servidor invadido, backup vazado, `.env` no git) e esvazia a conta.
-- **Defesa do sistema:** chaves cifradas no banco; a API nunca as devolve; cadastrar chave exige reautenticação recente; a CI procura segredos em todo push.
-- **Defesa de quem opera (a mais importante):** crie a chave **sem permissão de saque** e **presa ao IP fixo do servidor**. Com isso, mesmo uma chave roubada não tira dinheiro da conta nem funciona de outro lugar.
+- **Defesa do sistema:** chaves cifradas no banco; a API nunca as devolve; cadastrar chave exige reautenticação recente (e 2FA na rede real); a CI procura segredos em todo push.
+- **Chave com saque não entra:** na rede real, a API lê as permissões na Binance (`/sapi/v1/account/apiRestrictions`) **antes de salvar** e recusa chave com saque (**422** `chave_com_saque`); se não conseguir ler, também não salva (**502** `chave_nao_conferida`). O motor confere de novo ao ligar cada robô de dinheiro real (hoje o motor só liga em papel e testnet; a checagem já está lá para quando a rede real for liberada): chave que ganhou saque depois, ou cujas permissões não dá para ler, não opera (o robô não liga e vira [alerta](alertas.md)). A testnet não tem saque nem informa permissões.
+- **Restrição de IP: aviso forte, não bloqueio.** A Binance recomenda prender a chave ao IP do servidor (e exige isso para chaves com saque, que o ZenTrade nem aceita). Muita gente roda o ZenTrade em casa, com IP que muda; recusar a chave sem IP empurraria essas pessoas para uma chave com mais permissões. Por isso a chave sem restrição é aceita, mas o status em **Contas e chaves** mostra o risco em destaque. Se o seu IP é fixo, restrinja.
+- **Defesa de quem opera (a mais importante):** crie a chave **sem permissão de saque**, só com leitura e negociação spot, e **presa ao IP fixo do servidor** quando possível. Com isso, mesmo uma chave roubada não tira dinheiro da conta nem funciona de outro lugar.
 
 ### Sessão e tokens
 
@@ -67,6 +69,9 @@ O ZenTrade guarda chaves de corretora e envia ordens com dinheiro. Este document
 - Sem stop, sem compra. Alvo que não cobre as taxas, sem compra.
 - Parada total lida a cada decisão, sem cache. O n8n pode **ligar**; desligar exige uma pessoa reautenticada.
 - Robô novo nasce em `observar`. `auto` com dinheiro real exige reautenticação.
+- Limites da conta (perda do dia, exposição, posições, queda do pico, sequência de stops) e divergências com a corretora só barram **compras**; afrouxá-los, liberar pausas e aceitar o saldo da corretora pedem reautenticação. A reconciliação nunca opera para corrigir.
+- Chave da Binance com permissão de saque não é salva nem usada para operar.
+- Orçamento de IA por pessoa: no teto, o agente não chama o modelo.
 - Segredos não voltam pela API e não vão para o repositório.
 - Webhooks assinados e com prazo nos dois sentidos.
 
