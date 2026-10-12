@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AlertaEmitidoEsquema } from "./alertas.js";
 import { BarreiraEsquema, DecisaoEsquema, OrdemEsquema, RoboEsquema } from "./dados.js";
 import { Id, Instante, TextoDecimal } from "./comum.js";
 
@@ -67,6 +68,8 @@ export const EventoEsquema = z.discriminatedUnion("tipo", [
     ok: z.boolean(),
     em: Instante,
   }),
+  /** Alerta operacional (robô que não liga, WebSocket fora, orçamento de IA...): a API trata. */
+  z.object({ tipo: z.literal("alerta"), alerta: AlertaEmitidoEsquema }),
 ]);
 export type Evento = z.infer<typeof EventoEsquema>;
 

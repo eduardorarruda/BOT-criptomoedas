@@ -59,6 +59,27 @@ describe("hub de eventos ao vivo", () => {
     expect(ana).toHaveBeenCalledOnce();
   });
 
+  it("alerta chega à dona pelo usuarioId ou pelo robô; sem nenhum, a ninguém", async () => {
+    const hub = criarHubEventos({ donos, log });
+    const ana = vi.fn();
+    const beto = vi.fn();
+    hub.registrar("ana", ana);
+    hub.registrar("beto", beto);
+    const alerta = {
+      tipo: "robo_nao_ligou",
+      gravidade: "critico",
+      titulo: "Robô não ligou",
+      mensagem: "chave recusada",
+      chave: "k",
+      em: 1,
+    };
+    await hub.receber(JSON.stringify({ tipo: "alerta", alerta: { ...alerta, usuarioId: "beto" } }));
+    await hub.receber(JSON.stringify({ tipo: "alerta", alerta: { ...alerta, roboId: "robo-ana" } }));
+    await hub.receber(JSON.stringify({ tipo: "alerta", alerta }));
+    expect(beto).toHaveBeenCalledOnce();
+    expect(ana).toHaveBeenCalledOnce();
+  });
+
   it("guarda a dona em cache: não consulta o banco a cada evento", async () => {
     donos.donoDoRobo.mockClear();
     const hub = criarHubEventos({ donos, log });

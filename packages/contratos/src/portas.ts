@@ -1,6 +1,7 @@
 import type {
   Candle,
   Estrategia,
+  EstadoConta,
   Execucao,
   Lado,
   LimitesRisco,
@@ -157,4 +158,12 @@ export interface PortaEventos {
 /** Pede aprovação humana (modo Sugerir). A resposta chega pela API e muda o estado da decisão. */
 export interface PortaAprovacao {
   solicitar(decisaoId: string, resumo: string, expiraEm: number): Promise<void>;
+}
+
+/**
+ * Estado da conta da dona do robô (todos os robôs dela na mesma rede) para as barreiras
+ * da conta. Lido sob RLS: só enxerga os dados da própria pessoa.
+ */
+export interface PortaRiscoConta {
+  estado(roboId: string, agora: number): Promise<EstadoConta>;
 }

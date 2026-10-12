@@ -57,6 +57,11 @@ export function criarHubEventos(o: { donos: Donos; log: Log }): HubEventos {
         return lembrar(`r:${e.decisao.roboId}`, () => o.donos.donoDoRobo(e.decisao.roboId));
       case "ordem":
         return lembrar(`d:${e.ordem.decisaoId}`, () => o.donos.donoDaDecisao(e.ordem.decisaoId));
+      case "alerta": {
+        const { usuarioId, roboId } = e.alerta;
+        if (usuarioId) return Promise.resolve(usuarioId);
+        return roboId ? lembrar(`r:${roboId}`, () => o.donos.donoDoRobo(roboId)) : Promise.resolve(null);
+      }
     }
   }
 
