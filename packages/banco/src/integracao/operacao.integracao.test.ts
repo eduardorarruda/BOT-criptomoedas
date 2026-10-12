@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { ConfiguracaoBacktestEsquema } from "@zentrade/contratos";
 import { dec } from "@zentrade/dominio";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ErroDados } from "../erros.js";
@@ -263,6 +264,47 @@ describe("repositórios da API: decisões, ordens, mercado, backtests, conhecime
       erro: "sem candles",
     });
     expect(await c.banco.backtests.iniciar("00000000-0000-0000-0000-000000000000")).toBeNull();
+  });
+
+  it("backtest guarda a configuração e a validação; tentativas por estratégia sob RLS", async () => {
+    const configuracao = ConfiguracaoBacktestEsquema.parse({ risco: { modo: "sem_limites" } });
+    const pedido = {
+      estrategiaId: c.ana.estrategia.id,
+      versao: 1,
+      simbolo: "ETHUSDT",
+      intervalo: "4h" as const,
+      inicio: Date.UTC(2026, 0, 1),
+      fim: Date.UTC(2026, 2, 1),
+      configuracao,
+    };
+    const antes = await c.banco.backtests.tentativas(c.ana.id, [c.ana.estrategia.id]);
+    const { id } = await c.banco.backtests.criar(c.ana.id, pedido);
+    expect(await c.banco.backtests.obter(c.ana.id, id)).toMatchObject({ configuracao, validacao: null });
+    expect((await c.banco.backtests.paraRodar(id))?.configuracao).toEqual(configuracao);
+    const metricas = {
+      resultadoLiquido: "12",
+      maiorQueda: "3",
+      maiorQuedaPercentual: 0.003,
+      operacoes: 2,
+      acertos: 1,
+      taxaAcerto: 0.5,
+      taxasPagas: "0.4",
+      sharpe: 1.25,
+    };
+    const validacao = { amostra: null, walkForward: null, monteCarlo: null, avisos: [] };
+    await c.banco.backtests.concluir(id, { metricas, curva: [], validacao });
+    expect(await c.banco.backtests.obter(c.ana.id, id)).toMatchObject({ metricas, validacao, erro: null });
+    const depois = await c.banco.backtests.tentativas(c.ana.id, [c.ana.estrategia.id]);
+    expect(depois).toHaveLength(antes.length + 1);
+    expect(depois.at(-1)).toMatchObject({ id, versao: 1, sharpe: 1.25, estrategiaId: c.ana.estrategia.id });
+    expect(await c.banco.backtests.tentativas(c.beto.id, [c.ana.estrategia.id])).toEqual([]);
+    expect(await c.banco.backtests.tentativas(c.ana.id, [])).toEqual([]);
+    // Validação fora do contrato não sai: o erro explica, como nas métricas.
+    await c.banco.backtests.concluir(id, { metricas, curva: [], validacao: { avisos: "x" } });
+    expect(await c.banco.backtests.obter(c.ana.id, id)).toMatchObject({
+      validacao: null,
+      erro: expect.stringMatching(/fora do contrato/),
+    });
   });
 
   it("conhecimento: grava documento com trechos sob RLS e não duplica conteúdo repetido", async () => {

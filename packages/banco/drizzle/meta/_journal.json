@@ -64,6 +64,13 @@
       "when": 1791800000008,
       "tag": "0008_imobiliario",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791800000009,
+      "tag": "0009_backtest_validacao",
+      "breakpoints": true
     }
   ]
 }

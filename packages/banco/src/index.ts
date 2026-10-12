@@ -20,6 +20,8 @@ export type {
   BacktestParaRodar,
   EstadoBacktest,
   PedidoBacktest,
+  ResultadoBacktestGravado,
+  TentativaBacktest,
 } from "./repositorios/backtests.js";
 export type { Documento, DocumentoParaGravar, Fonte, TrechoParaGravar } from "./repositorios/conhecimento.js";
 export type {

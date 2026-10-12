@@ -232,6 +232,10 @@ export const backtests = pgTable(
       .default("na_fila"),
     metricas: jsonb("metricas"),
     curva: jsonb("curva"),
+    /** ConfiguracaoBacktestEsquema já com os padrões aplicados: o que de fato rodou. */
+    configuracao: jsonb("configuracao"),
+    /** ValidacaoBacktestEsquema: dentro/fora da amostra, walk-forward, Monte Carlo e avisos. */
+    validacao: jsonb("validacao"),
     erro: text("erro"),
     criadoEm: instante("criado_em").notNull().defaultNow(),
     concluidoEm: instante("concluido_em"),
@@ -243,6 +247,8 @@ export const backtests = pgTable(
       foreignColumns: [estrategiaVersoes.estrategiaId, estrategiaVersoes.versao, estrategiaVersoes.usuarioId],
     }),
     index("backtests_usuario").on(t.usuarioId, t.criadoEm.desc()),
+    // Contar as tentativas de uma estratégia (Sharpe deflacionado) sem varrer tudo.
+    index("backtests_estrategia").on(t.usuarioId, t.estrategiaId, t.criadoEm),
     check("backtests_estado", sql`${t.estado} in ('na_fila', 'rodando', 'concluido', 'falhou')`),
     check("backtests_periodo", sql`${t.fim} > ${t.inicio}`),
   ],
