@@ -4,6 +4,8 @@ import { useState, type FormEvent } from "react";
 import { Botao } from "../../componentes/Botao";
 import { CampoSelecao, CampoTexto } from "../../componentes/Campo";
 import type { NovoRobo } from "../../api/fonte";
+import { frasesSaidas } from "../../construtor/descrever";
+import { paraDominio } from "../../lib/estrategia";
 import { REDE } from "../../lib/rotulos";
 import { CamposLimites, useCamposLimites } from "./EditorLimites";
 
@@ -17,6 +19,12 @@ export const LIMITES_INICIAIS = {
   pausaAposPerdaMin: 60,
   confiancaMinima: 0.65,
 };
+
+/** As saídas da estratégia em uma linha, para saber como o robô vai sair antes de criá-lo. */
+function resumoSaidas(e: EstrategiaDTO): string {
+  const frases = frasesSaidas({ ...paraDominio(e), stop: e.stop });
+  return `Sai com ${frases.join("; ")}.`;
+}
 
 /** Criar robô. Ele nasce sempre observando; os limites já vêm prudentes. */
 export function FormRobo({
@@ -37,6 +45,7 @@ export function FormRobo({
   const [estrategiaId, setEstrategiaId] = useState(estrategias[0]?.id ?? "");
   const [erroNome, setErroNome] = useState<string | null>(null);
   const limites = useCamposLimites(LIMITES_INICIAIS);
+  const escolhida = estrategias.find((x) => x.id === estrategiaId);
 
   const enviar = (e: FormEvent): void => {
     e.preventDefault();
@@ -82,6 +91,7 @@ export function FormRobo({
         />
         <CampoSelecao
           rotulo="Estratégia"
+          dica={escolhida ? resumoSaidas(escolhida) : undefined}
           value={estrategiaId}
           onChange={(e) => setEstrategiaId(e.target.value)}
         >

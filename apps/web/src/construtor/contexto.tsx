@@ -1,6 +1,7 @@
 import { createContext, useContext, type Dispatch } from "react";
 import type { NoEditor } from "./arvore";
 import type { Acao, Bloco } from "./estado";
+import { condicaoPronta } from "./prontas";
 
 /** O que está sendo arrastado agora, e como avisar o leitor de tela do que mudou. */
 export type Arrastando =
@@ -25,9 +26,13 @@ export function useConstrutor(): ContextoConstrutor {
 
 export const TIPO_ARRASTE = "application/x-zentrade-bloco";
 
-export const NOME_BLOCO: Record<Bloco, string> = {
+const NOME_BASICO: Readonly<Record<string, string>> = {
   comparar: "Condição",
   e: "Grupo E",
   ou: "Grupo OU",
   nao: "NÃO",
 };
+
+/** Nome do bloco para os avisos de leitor de tela ("Condição adicionada…"). */
+export const nomeDoBloco = (b: Bloco): string =>
+  NOME_BASICO[b] ?? `Condição pronta “${condicaoPronta(b)?.nome ?? b}”`;

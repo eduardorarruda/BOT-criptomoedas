@@ -82,7 +82,7 @@ export class NucleoRobo {
       const posicao = await this.posicao();
       const sinal = decidir(
         await this.aberta.estrategia(posicao),
-        { fechamentos: this.buffer.fechamentos(), preco: candle.fecha },
+        { ...this.buffer.contexto(), preco: candle.fecha },
         posicao,
       );
       await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
@@ -100,11 +100,7 @@ export class NucleoRobo {
       const posicao = await this.posicao();
       if (posicao.quantidade.isZero()) return null;
       const { saida: _ignorada, ...soStopEAlvo } = await this.aberta.estrategia(posicao);
-      const sinal = decidir(
-        soStopEAlvo,
-        { fechamentos: this.buffer.fechamentos(), preco: candle.fecha },
-        posicao,
-      );
+      const sinal = decidir(soStopEAlvo, { ...this.buffer.contexto(), preco: candle.fecha }, posicao);
       if (sinal.acao !== "VENDER" || (await this.bloqueio.repetido(sinal, posicao))) return null;
       await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
       return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });

@@ -1,0 +1,169 @@
+# Fundamentação: o ZenTrade segue a prática real de robôs de investimento?
+
+Este documento junta o que reguladores, estudos e plataformas de mercado dizem sobre robôs de investimento e mostra onde o ZenTrade se encaixa. Serve para responder, com fonte, a pergunta "isso é real ou é invenção?".
+
+> **Aviso.** Pesquisa feita em outubro de 2026. Não é recomendação de investimento nem parecer jurídico. Resultado passado não garante resultado futuro.
+
+## Resumo
+
+- **O desenho do ZenTrade segue o padrão profissional.** Ele tem regras determinísticas, um motor de risco com a palavra final, papel e testnet antes do dinheiro real, aprovação humana, botão de parada geral e trilha de auditoria. A IA só propõe e não afrouxa nenhum limite.
+- **O ZenTrade se valida como software de execução e de disciplina de risco, não como máquina de lucro.** A evidência é dura:
+  - [97% dos day traders persistentes perderam dinheiro](#o-que-se-sabe-sobre-resultados);
+  - a [CVM](https://www.gov.br/investidor/pt-br/investir/como-investir/profissionais-do-mercado/robos-de-investimentos) diz que não há estudo mostrando lucratividade maior com robôs.
+- **Uma estratégia só se valida com custos reais, teste fora da amostra e controle de overfitting.** Um backtest bonito sozinho não prova nada.
+
+## Como robôs são construídos e validados
+
+A sequência que se repete na literatura e nas ferramentas (Freqtrade, Hummingbot, MetaTrader, Profit):
+
+1. **Hipótese antes dos dados.** Diga por que a vantagem existiria e quem paga por ela. Testar combinações sem hipótese é _data snooping_.
+2. **Regras determinísticas.** Codifique entrada, saída, stop, tamanho da posição e horários.
+3. **Backtest com custos.**
+   - Inclua taxa (Binance Spot VIP 0: 0,1% por lado [29]), slippage e spread.
+   - Não use dados do futuro (_look-ahead_) [19].
+   - Atenção à ordem dos eventos dentro do candle [18].
+   - Atenção ao viés de sobrevivência: 39,5% das criptomoedas foram deslistadas [34].
+4. **Controle de overfitting.**
+   - Registre quantas variações foram testadas (N). Sem N não dá para avaliar o resultado [13][14].
+   - Corrija o Sharpe pelo número de tentativas (Deflated Sharpe [15], _haircut_ de Harvey & Liu [16]).
+5. **Fora da amostra e walk-forward.** Otimize numa janela, teste na seguinte e repita [17][25].
+6. **Papel ou testnet com dados ao vivo.** O backtest nunca substitui essa etapa [18][22][24][27].
+7. **Pouco dinheiro real**, com monitoramento e critérios de desligamento.
+
+## Famílias de estratégia e a evidência em cripto
+
+| Família                                               | Evidência                                                                                                                                                                                            |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tendência e momentum (médias, rompimento de Donchian) | A melhor que existe, mas frágil: momentum forte em cripto [32]. Cerca de 15 mil regras técnicas não acharam previsibilidade para o Bitcoin fora da amostra; para outras moedas, acharam alguma [33]. |
+| Reversão à média (RSI, Bollinger)                     | Existe em horizontes curtos [36], justamente onde taxa e slippage consomem a vantagem.                                                                                                               |
+| Grid                                                  | Não há estudo revisado por pares que a sustente. O risco é o rompimento da faixa em tendência.                                                                                                       |
+| DCA                                                   | É disciplina para entrar no mercado, não estratégia de lucro: o aporte único supera o DCA em cerca de 2/3 dos períodos [37].                                                                         |
+| Arbitragem e market making                            | Exigem latência, capital e saque entre exchanges [35][23]. Não servem para um robô de varejo numa exchange só.                                                                                       |
+
+As estratégias de exemplo do ZenTrade servem para estudo e **não são recomendação**.
+
+## Controles de risco tratados como padrão
+
+Os itens abaixo aparecem de forma consistente em B3 [1], Nelogica [4], CM Capital [3], Freqtrade [18][20], Hummingbot [23] e na documentação da Binance [26][28][30].
+
+- Stop em toda posição, de preferência registrado na exchange (STOP_LOSS_LIMIT, OCO) [28].
+- Perda máxima por dia ou por período, com parada automática [1][4].
+- Botão de parada geral que barra **novas entradas**; a venda de proteção continua saindo [23].
+- Proteções de circuito:
+  - queda máxima;
+  - pausa depois de N stops seguidos;
+  - pausa depois de perda [20].
+- Teto de posições abertas e de exposição.
+- Tamanho da posição por fração fixa do capital. Se for usar Kelly, use só uma fração dele [38].
+- Respeito aos limites da API: recuar com HTTP 429, e o HTTP 418 é banimento de IP [26].
+- Chave de API só com permissão de operar (nunca de saque) e lista de IPs permitidos [30]. Um vazamento de chaves em 2022 causou cerca de US$ 20 milhões em perdas [31].
+- Conciliação do estado local com a exchange [1].
+
+## Métricas e sinais de alerta
+
+**Métricas usuais:** retorno líquido de custos, Sharpe, Sortino, queda máxima e sua duração, profit factor, expectativa por operação, payoff, taxa de acerto, número de operações e tempo exposto, além da comparação com comprar e segurar.
+
+**Sinais de alerta:**
+
+- Número de tentativas não informado [13][14].
+- Sharpe alto depois de muitas tentativas [15][16].
+- Resultado fora da amostra muito pior que dentro [17][25].
+- Resultado que depende de custo zero ou de preenchimento perfeito [18].
+- Poucas operações. É heurística: o critério formal é o comprimento mínimo de backtest [14].
+
+## IA no processo
+
+- **Reguladores:**
+  - a IA "não prevê o futuro", e promessa de retorno alto com robô de IA é sinal de fraude (CFTC) [39];
+  - a ESMA pede testes, monitoramento e supervisão humana e alerta para a alucinação [40];
+  - a responsabilidade é de quem presta o serviço, não da máquina (Res. CVM 19, art. 17) [6].
+- **Academia:**
+  - modelos de linguagem extraem sinal de notícias [44];
+  - mas backtests feitos antes da data de corte de treino do modelo são contaminados, porque ele "lembra" o que aconteceu [43];
+  - em 20 anos de dados, as estratégias com LLM perdem a vantagem e sofrem mais nas quedas [45].
+- **Dinheiro real:** num torneio curto e alavancado, 4 de 6 modelos perderam [46].
+
+**Como isso aparece no ZenTrade:** a IA propõe, explica e pode vetar ou reduzir. Execução e limites são determinísticos e ficam fora do alcance do modelo. Há aprovação humana e botão de parada.
+
+## O que se sabe sobre resultados
+
+- Chague, De-Losso e Giovannetti (FGV/USP, dados da CVM) [11]:
+  - 97% dos que fizeram day trade de mini-índice por mais de 300 dias perderam dinheiro;
+  - só 1,1% ganhou mais que um salário mínimo;
+  - não houve sinal de aprendizado com a experiência.
+- As perdas brutas dos day traders chegaram a R$ 9,9 bilhões até dezembro de 2023 [12].
+- Não existe dado auditado de desempenho de robôs de cripto para o varejo; o que circula é material de venda.
+
+## Regulação no Brasil (não é parecer jurídico)
+
+- **Uso próprio, com a própria chave:** não encontramos regra que exija registro.
+- **Código aberto que a própria pessoa configura e roda:** é o caso mais próximo de "sistema que operacionaliza decisões do próprio investidor", que fica fora do credenciamento [5].
+- **Estratégias prontas ou sinais oferecidos a terceiros como serviço:** aproxima-se de análise ou consultoria de valores mobiliários (Res. CVM 19 e 20) [5][6][7].
+  - Criptoativo só é valor mobiliário em certos casos (Parecer CVM 40) [9].
+  - As exchanges passaram a ser reguladas pelo BCB em 2026 [10].
+  - Para estratégias automatizadas, a APIMEC recomenda uma lâmina com metodologia e riscos [48].
+- **Nunca prometer rentabilidade.** No caso do "robô" Atlas Quantum, a CVM aplicou mais de R$ 55,8 milhões em multas [47]. Consulte um advogado antes de oferecer o ZenTrade a terceiros.
+
+## O que o ZenTrade faz em relação a cada prática
+
+O estado de cada item está em [`README.md`](../README.md) e nos documentos [`estrategias.md`](estrategias.md), [`operacao.md`](operacao.md) e [`seguranca.md`](seguranca.md). Em linhas gerais:
+
+| Prática                                                         | Onde está                                                         |
+| --------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Regras determinísticas e explicáveis                            | `packages/dominio/src/regras.ts`                                  |
+| Motor de risco com a palavra final; a IA não afrouxa limite     | `packages/dominio/src/risco.ts`, `apps/motor/src/nucleo/plano.ts` |
+| Papel, testnet e portão de dinheiro real (2FA + reautenticação) | `apps/motor`, `apps/api/src/rotas/robos.ts`                       |
+| Parada geral, vigia de saúde e auditoria encadeada              | `apps/api/src/rotas/parada.ts`, `infra/n8n`, `packages/banco`     |
+| Limites da API da Binance (429/418, disjuntor)                  | `packages/corretora/src/cliente.ts`, `disjuntor.ts`               |
+| Backtest, métricas e validação fora da amostra                  | `apps/motor/src/backtest`                                         |
+
+## Fontes
+
+1. Bora Investir/B3 — [Robô trader: veja como automatizar os investimentos no day trade](https://borainvestir.b3.com.br/noticias/robo-trader-veja-como-automatizar-os-investimentos-no-day-trade/)
+2. Nelogica — [Robôs traders: saiba como automatizar as suas operações](https://blog.nelogica.com.br/robos-traders-saiba-como-automatizar-as-suas-operacoes/)
+3. CM Capital — [Robô Trader](https://cmcapital.com.br/blog/robo-trader/) (lido pela cópia do Wayback Machine)
+4. Nelogica — [Automação de estratégias: o seu primeiro robô trader no Profit](https://blog.nelogica.com.br/automacao-de-estrategias-o-seu-primeiro-robo-trader-no-profit/)
+5. CVM/gov.br — [Robôs de investimentos](https://www.gov.br/investidor/pt-br/investir/como-investir/profissionais-do-mercado/robos-de-investimentos)
+6. [Resolução CVM 19 (consolidada)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/001/resol019consolid.pdf)
+7. CVM — [Esclarecimentos sobre atividade de analista de valores mobiliários](https://www.gov.br/cvm/pt-br/assuntos/noticias/2019-1/esclarecimentos-sobre-atividade-de-analista-de-valores-mobiliarios-26d13f699fff4cef8f1d3e808a6453dd)
+8. ConJur — [Robôs precisam de aprovação específica para atuar na Bolsa?](https://www.conjur.com.br/2024-jan-03/robos-precisam-de-aprovacao-especifica-para-atuar-na-bolsa/)
+9. CVM — [Parecer de Orientação 40 sobre criptoativos](https://www.gov.br/cvm/pt-br/assuntos/noticias/2022/cvm-divulga-parecer-de-orientacao-sobre-criptoativos-e-o-mercado-de-valores-mobiliarios)
+10. Felsberg — [Marco do BACEN para ativos virtuais (Res. 519/520/521)](https://www.felsberg.com.br/marco-bacen-ativos-virtuais-resolucoes-519-520-521/)
+11. Chague, De-Losso & Giovannetti — [Day Trading for a Living?](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3423101)
+12. Chague & Giovannetti — [As pandemias de COVID-19 e de day trade no Brasil (RBFin, 2025)](https://periodicos.fgv.br/rbfin/article/download/94291/87989/218914)
+13. Bailey et al. — [The Probability of Backtest Overfitting](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2326253)
+14. Bailey et al. — [Pseudo-Mathematics and Financial Charlatanism](https://www.ams.org/notices/201405/rnoti-p458.pdf)
+15. Bailey & López de Prado — [The Deflated Sharpe Ratio](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2460551)
+16. Harvey & Liu — [Backtesting](https://www.cmegroup.com/education/files/backtesting.pdf)
+17. Pardo — [Walk-Forward Analysis](https://onlinelibrary.wiley.com/doi/abs/10.1002/9781119196969.ch11)
+18. Freqtrade — [Backtesting](https://www.freqtrade.io/en/stable/backtesting/)
+19. Freqtrade — [Lookahead analysis](https://www.freqtrade.io/en/stable/lookahead-analysis/)
+20. Freqtrade — [Protections](https://www.freqtrade.io/en/stable/plugins/)
+21. Freqtrade — [Hyperopt](https://www.freqtrade.io/en/stable/hyperopt/)
+22. Freqtrade — [Documentação e aviso de risco](https://www.freqtrade.io/en/stable/)
+23. Hummingbot — [Kill Switch](https://hummingbot.org/client/global-configs/kill-switch/)
+24. Hummingbot — [Paper Trade](https://hummingbot.org/client/global-configs/paper-trade/)
+25. MetaTrader 5 — [Strategy Optimization](https://www.metatrader5.com/en/terminal/help/algotrading/strategy_optimization)
+26. Binance Spot API — [Limits](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/limits)
+27. Binance Spot Testnet — [General Info](https://developers.binance.com/docs/binance-spot-api-docs/testnet/general-info)
+28. Binance Spot API — [Trading endpoints](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints)
+29. Binance — [Fee schedule](https://www.binance.com/en/fee/schedule)
+30. Binance — [How to Use an API Key Securely](https://www.binance.com/en/blog/security/how-to-use-an-api-key-securely-5-tips-from-binance-8638066848800196896)
+31. SiliconANGLE — [3Commas confirma vazamento de chaves de API](https://siliconangle.com/2022/12/29/crypto-trading-service-3commas-confirms-massive-api-key-leak-hack/)
+32. Liu & Tsyvinski — [Risks and Returns of Cryptocurrency](https://www.nber.org/papers/w24877)
+33. Hudson & Urquhart — [Technical trading and cryptocurrencies](https://research.birmingham.ac.uk/en/publications/technical-trading-and-cryptocurrencies/)
+34. Ammann, Burdorf, Liebi & Stöckl — [Survivorship and Delisting Bias in Cryptocurrency Markets](https://www.alexandria.unisg.ch/bitstreams/2bc8397d-47dd-4f66-8467-9004b2c9d212/download)
+35. Makarov & Schoar — [Trading and arbitrage in cryptocurrency markets](https://ideas.repec.org/a/eee/jfinec/v135y2020i2p293-319.html)
+36. [Intraday return predictability in the cryptocurrency markets: Momentum, reversal, or both](https://www.sciencedirect.com/science/article/abs/pii/S1062940822000833)
+37. Vanguard — [Cost averaging: Invest now or temporarily hold your cash](https://corporate.vanguard.com/content/dam/corp/research/pdf/cost_averaging_invest_now_or_temporarily_hold_your_cash.pdf)
+38. MacLean, Thorp & Ziemba — [Good and Bad Properties of the Kelly Criterion](https://www.researchgate.net/publication/300558392_Good_and_Bad_Properties_of_the_Kelly_Criterion)
+39. CFTC — [Customer Advisory sobre golpes com IA](https://www.cftc.gov/PressRoom/PressReleases/8854-24)
+40. ESMA — [Public Statement on AI and investment services](https://www.esma.europa.eu/sites/default/files/2024-05/ESMA35-335435667-5924__Public_Statement_on_AI_and_investment_services.pdf)
+41. IOSCO — [Artificial Intelligence in Capital Markets](https://www.iosco.org/library/pubdocs/pdf/IOSCOPD788.pdf)
+42. ANBIMA — [Guia de boas práticas para uso de IA](https://www.anbima.com.br/data/files/63/74/15/39/F12C091039E04909EA2BA2A8/Guia_orientativo_boas_praticas_para_o_uso_de_sistemas_de_inteligencia_artificial.pdf)
+43. Glasserman & Lin — [Assessing Look-Ahead Bias in Stock Return Predictions Generated By GPT Sentiment Analysis](https://arxiv.org/abs/2309.17322)
+44. Lopez-Lira & Tang — [Can ChatGPT Forecast Stock Price Movements?](https://arxiv.org/pdf/2304.07619)
+45. Li et al. — [Can LLM-based Financial Investing Strategies Outperform the Market in Long Run?](https://arxiv.org/abs/2505.07078)
+46. Protos — [LLM crypto trading contest finds LLMs can't trade crypto](https://protos.com/llm-crypto-trading-contest-finds-llms-cant-trade-crypto/)
+47. Correio Braziliense — [CVM multa pirâmide Atlas Quantum](https://www.correiobraziliense.com.br/economia/2024/05/6862309-cvm-aplica-multa-milionaria-em-caso-de-piramide-financeira-de-criptomoedas.html)
+48. APIMEC — [Recomendação CCA nº 06/2023: lâminas de estratégias automatizadas](https://www.apimecbrasil.com.br/noticias_comite/recomendacao-cca-no-06-2023-melhores-praticas-para-a-elaboracao-das-laminas-relativas-as-estrategias-automatizadas/)

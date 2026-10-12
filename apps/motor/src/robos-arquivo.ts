@@ -1,5 +1,6 @@
 import {
   EstrategiaEsquema,
+  estrategiaDoDTO,
   Id,
   Intervalo,
   LimitesRiscoEsquema,
@@ -21,13 +22,7 @@ const RoboArquivo = z.object({
   intervalo: Intervalo,
   modo: ModoRobo,
   rede: Rede,
-  estrategia: EstrategiaEsquema.pick({
-    entrada: true,
-    saida: true,
-    stop: true,
-    alvoLiquido: true,
-    taxa: true,
-  }),
+  estrategia: EstrategiaEsquema.omit({ id: true, nome: true, versao: true }),
   limites: LimitesRiscoEsquema,
   pausado: z.boolean().default(false),
 });
@@ -39,8 +34,7 @@ export interface RobosCarregados {
 }
 
 function paraConfig(r: RoboArquivo): RoboConfig {
-  const { saida, ...resto } = r.estrategia;
-  const estrategia: Estrategia = saida ? { ...resto, saida } : resto;
+  const estrategia: Estrategia = estrategiaDoDTO(r.estrategia);
   const problemas = validarEstrategia(estrategia);
   if (problemas.length > 0)
     throw new Error(`O robô ${r.id} tem estratégia inválida: ${problemas.join("; ")}.`);

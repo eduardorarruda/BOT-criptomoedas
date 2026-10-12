@@ -46,7 +46,10 @@ export const estrategiaVersoes = pgTable(
     versao: integer("versao").notNull(),
     usuarioId: usuarioId(),
     nome: text("nome").notNull(),
-    /** { entrada, saida? }: árvores validadas com RegraEsquema e validarEstrategia antes de gravar. */
+    /**
+     * { entrada, saida?, stopAtr?, stopMovel?, empate?, tempoMaximo?, tamanhoPorVolatilidade? }:
+     * validados com EstrategiaEsquema e validarEstrategia antes de gravar (veja RegraGravada).
+     */
     regra: jsonb("regra").notNull(),
     stop: decimal("stop").notNull(),
     alvoLiquido: decimal("alvo_liquido").notNull(),
