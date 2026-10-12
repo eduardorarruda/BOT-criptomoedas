@@ -20,6 +20,16 @@ describe("configuração do motor (variáveis de ambiente)", () => {
     expect(c.AGENTE_URL).toBeUndefined();
   });
 
+  it("stop na corretora ligado por padrão, com o limite 1% abaixo do gatilho; dá para desligar e ajustar", () => {
+    const padrao = lerConfig({});
+    expect(padrao.MOTOR_STOP_NA_CORRETORA).toBe(true);
+    expect(padrao.MOTOR_STOP_LIMITE_BPS).toBe(100);
+    const ajustada = lerConfig({ MOTOR_STOP_NA_CORRETORA: "false", MOTOR_STOP_LIMITE_BPS: "50" });
+    expect(ajustada.MOTOR_STOP_NA_CORRETORA).toBe(false);
+    expect(ajustada.MOTOR_STOP_LIMITE_BPS).toBe(50);
+    expect(() => lerConfig({ MOTOR_STOP_LIMITE_BPS: "0" })).toThrow(/MOTOR_STOP_LIMITE_BPS/);
+  });
+
   it("variável vazia (como no .env.example) conta como ausente", () => {
     expect(
       lerConfig({ BINANCE_API_KEY: "", MOTOR_AGENTE_OBRIGATORIO: "false" }).BINANCE_API_KEY,

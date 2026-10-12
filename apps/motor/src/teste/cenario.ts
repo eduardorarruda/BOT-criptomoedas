@@ -9,6 +9,7 @@ import {
   DecisoesMemoria,
   EventosMemoria,
   OrdensMemoria,
+  ProtecoesMemoria,
   RobosMemoria,
 } from "../portas/memoria.js";
 import { RelogioManual } from "../relogio.js";
@@ -82,6 +83,10 @@ export interface OpcoesCenario {
   /** Outra estratégia (ex.: com regra de saída). Padrão: ESTRATEGIA. */
   readonly estrategia?: Estrategia;
   readonly limites?: Partial<LimitesRisco>;
+  /** Liga a proteção no livro da corretora (stop-limit/OCO no papel). Padrão: só o robô vigia. */
+  readonly protecaoNaCorretora?: boolean;
+  /** Distância do limite abaixo do stop na corretora. Padrão: o do motor. */
+  readonly stopLimiteBps?: number;
 }
 
 export const USUARIO = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
@@ -113,6 +118,7 @@ export function montarCenario(o: OpcoesCenario = {}) {
     riscoPorOperacao: dec(10),
   };
   const decisoes = new DecisoesMemoria();
+  const ordens = new OrdensMemoria(relogio);
   const agente = new AgenteTrocavel(new AgenteFixo("sempre_concorda"));
   if (o.agente) agente.trocar(o.agente);
   const { registro, erros } = registroDeTeste();
@@ -120,7 +126,8 @@ export function montarCenario(o: OpcoesCenario = {}) {
     corretora: papel,
     robos: new RobosMemoria([robo]),
     decisoes,
-    ordens: new OrdensMemoria(relogio),
+    ordens,
+    ...(o.protecaoNaCorretora ? { protecoes: new ProtecoesMemoria(decisoes, ordens, relogio) } : {}),
     agente,
     eventos: new EventosMemoria(),
     aprovacao: new AprovacaoMemoria((id) => o.aoSolicitar?.(id, decisoes)),
@@ -132,6 +139,7 @@ export function montarCenario(o: OpcoesCenario = {}) {
       ...OPCOES_PADRAO,
       agenteObrigatorio: o.agenteObrigatorio ?? true,
       tamanhoHistorico: o.tamanhoHistorico ?? 100,
+      ...(o.stopLimiteBps ? { stopLimiteBps: o.stopLimiteBps } : {}),
     },
   } satisfies Dependencias;
 

@@ -7,6 +7,7 @@ import type {
   PortaDecisoes,
   PortaEventos,
   PortaOrdens,
+  PortaProtecoes,
   PortaRobos,
   Relogio,
   ResultadoOrdem,
@@ -30,6 +31,12 @@ export interface OpcoesNucleo {
   readonly consultaAprovacaoMs: number;
   /** Candles guardados por robô; indicadores longos precisam de história (o bot antigo tinha memória curta). */
   readonly tamanhoHistorico: number;
+  /**
+   * Distância do preço limite abaixo do gatilho do stop na corretora, em pontos-base.
+   * Larga o bastante para executar num mercado rápido; se o preço passar dela, o robô
+   * cancela e vende a mercado no fechamento do minuto.
+   */
+  readonly stopLimiteBps: number;
 }
 
 export const OPCOES_PADRAO: OpcoesNucleo = {
@@ -37,6 +44,7 @@ export const OPCOES_PADRAO: OpcoesNucleo = {
   expiracaoAprovacaoMs: 5 * 60_000,
   consultaAprovacaoMs: 2_000,
   tamanhoHistorico: 500,
+  stopLimiteBps: 100,
 };
 
 /** O que o ciclo recebe do robô: o sinal da regra e o contexto em que ele saiu. */
@@ -69,6 +77,11 @@ export interface Dependencias {
   readonly robos: PortaRobos;
   readonly decisoes: PortaDecisoes;
   readonly ordens: PortaOrdens;
+  /**
+   * Com ela, o stop e o alvo da posição ficam no livro da corretora (stop-limit/OCO) e o
+   * robô vira a segunda linha de defesa. Sem ela (backtest de hoje), só o robô vigia.
+   */
+  readonly protecoes?: PortaProtecoes;
   readonly agente: PortaAgente;
   readonly eventos: PortaEventos;
   readonly aprovacao: PortaAprovacao;

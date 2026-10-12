@@ -1,4 +1,4 @@
-import type { EventoAnalise, RoboConfig } from "@zentrade/contratos";
+import type { EventoAnalise, ProtecaoCorretoraDTO, ProtecaoGravada, RoboConfig } from "@zentrade/contratos";
 import { paraTexto, posicaoDe, type Candle, type Posicao, type Sinal, type Valor } from "@zentrade/dominio";
 import { randomUUID } from "node:crypto";
 import type { ResultadoAnalise } from "./analise.js";
@@ -47,7 +47,20 @@ export function publicarSinal(
   });
 }
 
-export function eventoPosicao(robo: RoboConfig, p: Posicao, em: number) {
+/** A proteção no livro da corretora como a tela mostra ("Stop na corretora: ativo a X"). */
+export function protecaoCorretoraDTO(p: ProtecaoGravada): ProtecaoCorretoraDTO {
+  return {
+    estado: p.estado,
+    stop: paraTexto(p.stop),
+    limite: paraTexto(p.limite),
+    ...(p.alvo ? { alvo: paraTexto(p.alvo) } : {}),
+    quantidade: paraTexto(p.quantidade),
+    ...(p.motivo ? { motivo: p.motivo } : {}),
+    atualizadaEm: p.atualizadaEm,
+  };
+}
+
+export function eventoPosicao(robo: RoboConfig, p: Posicao, em: number, protecao?: ProtecaoGravada | null) {
   return {
     tipo: "posicao" as const,
     roboId: robo.id,
@@ -56,15 +69,20 @@ export function eventoPosicao(robo: RoboConfig, p: Posicao, em: number) {
     precoMedio: paraTexto(p.precoMedio),
     resultadoRealizado: paraTexto(p.resultadoRealizado),
     taxasPagas: paraTexto(p.taxasPagas),
+    ...(protecao ? { protecaoCorretora: protecaoCorretoraDTO(protecao) } : {}),
     em,
   };
 }
 
-/** Posição derivada das execuções (nunca gravada), publicada depois de cada execução. */
+/**
+ * Posição derivada das execuções (nunca gravada), publicada depois de cada execução e
+ * de cada mudança da proteção na corretora (que vai junto).
+ */
 export async function publicarPosicao(deps: Dependencias, robo: RoboConfig): Promise<void> {
   try {
     const posicao = posicaoDe(await deps.ordens.execucoes(robo.id));
-    await publicar(deps, eventoPosicao(robo, posicao, deps.relogio.agora()));
+    const protecao = await deps.protecoes?.ultima(robo.id);
+    await publicar(deps, eventoPosicao(robo, posicao, deps.relogio.agora(), protecao));
   } catch (erro) {
     deps.registro.error({ erro, roboId: robo.id }, "falha ao ler a posição para publicar");
   }

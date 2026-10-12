@@ -1,3 +1,4 @@
+import type { IdsProtecao } from "@zentrade/contratos";
 import { createHash } from "node:crypto";
 
 /**
@@ -7,3 +8,13 @@ import { createHash } from "node:crypto";
  */
 export const idClienteDe = (decisaoId: string): string =>
   `zt-${createHash("sha256").update(decisaoId).digest("base64url").slice(0, 32)}`;
+
+/**
+ * Ids de uma proteção na corretora a partir de uma chave única por colocação: a
+ * lista (OCO) e cada perna. No stop sozinho, a lista é o próprio stop.
+ */
+export function idsProtecaoDe(chave: string, comAlvo: boolean): IdsProtecao {
+  const stop = idClienteDe(`${chave}:stop`);
+  if (!comAlvo) return { lista: stop, stop };
+  return { lista: idClienteDe(`${chave}:lista`), stop, alvo: idClienteDe(`${chave}:alvo`) };
+}

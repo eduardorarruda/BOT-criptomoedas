@@ -1,18 +1,23 @@
 import type {
   CompraExecutada,
   EstadoDecisao,
+  EstadoProtecaoGravada,
   Evento,
   NovaDecisao,
   NovaOrdem,
+  NovaProtecao,
   OrdemPendente,
   PortaAprovacao,
   PortaDecisoes,
   PortaEventos,
   PortaOrdens,
+  PortaProtecoes,
   PortaRobos,
+  ProtecaoGravada,
   Relogio,
   ResultadoOrdem,
   RoboConfig,
+  SaidaProtecao,
 } from "@zentrade/contratos";
 import type { Execucao, Valor } from "@zentrade/dominio";
 import { randomUUID } from "node:crypto";
@@ -174,6 +179,96 @@ export class OrdensMemoria implements PortaOrdens {
     return this.doRobo(roboId)
       .flatMap((o) => o.resultado?.execucoes ?? [])
       .sort((a, b) => a.em - b.em);
+  }
+}
+
+const VIVAS: readonly EstadoProtecaoGravada[] = ["PENDENTE", "ATIVA"];
+
+/**
+ * Proteções na corretora em memória, com a mesma semântica da porta do banco: uma viva
+ * por robô, e a venda de uma perna vira decisão + ordem + execuções nas memórias de
+ * decisões e ordens (a posição sai das execuções), uma vez só.
+ */
+export class ProtecoesMemoria implements PortaProtecoes {
+  private protecoes: readonly ProtecaoGravada[] = [];
+
+  constructor(
+    private readonly decisoes: PortaDecisoes,
+    private readonly ordens: OrdensMemoria,
+    private readonly relogio: Relogio,
+  ) {}
+
+  reservar(p: NovaProtecao): Promise<"nova" | "ja_existe"> {
+    const repetida = this.protecoes.some(
+      (x) => x.ids.lista === p.ids.lista || (x.roboId === p.roboId && VIVAS.includes(x.estado)),
+    );
+    if (repetida) return Promise.resolve("ja_existe");
+    const agora = this.relogio.agora();
+    const nova: ProtecaoGravada = {
+      ...p,
+      estado: "PENDENTE",
+      idCorretora: null,
+      criadaEm: agora,
+      atualizadaEm: agora,
+    };
+    this.protecoes = [...this.protecoes, nova];
+    return Promise.resolve("nova");
+  }
+
+  viva(roboId: string): Promise<ProtecaoGravada | null> {
+    return Promise.resolve(this.doRobo(roboId).find((p) => VIVAS.includes(p.estado)) ?? null);
+  }
+
+  ultima(roboId: string): Promise<ProtecaoGravada | null> {
+    return Promise.resolve(this.doRobo(roboId).at(-1) ?? null);
+  }
+
+  atualizar(
+    idLista: string,
+    estado: EstadoProtecaoGravada,
+    extra: { readonly idCorretora?: string | null; readonly motivo?: string } = {},
+  ): Promise<void> {
+    if (!this.protecoes.some((p) => p.ids.lista === idLista))
+      return Promise.reject(new Error(`A proteção ${idLista} não existe; não dá para mudar o estado dela.`));
+    this.protecoes = this.protecoes.map((p) =>
+      p.ids.lista !== idLista
+        ? p
+        : {
+            ...p,
+            estado,
+            ...(extra.idCorretora !== undefined ? { idCorretora: extra.idCorretora } : {}),
+            ...(extra.motivo !== undefined ? { motivo: extra.motivo } : {}),
+            atualizadaEm: this.relogio.agora(),
+          },
+    );
+    return Promise.resolve();
+  }
+
+  async registrarSaida(idLista: string, s: SaidaProtecao): Promise<{ decisaoId: string; nova: boolean }> {
+    const p = this.protecoes.find((x) => x.ids.lista === idLista);
+    if (!p) throw new Error(`A proteção ${idLista} não existe; a venda não foi gravada.`);
+    const existente = this.ordens.todas().find((o) => o.ordem.idCliente === s.ordem.idCliente);
+    const decisaoId =
+      existente?.ordem.decisaoId ?? (await this.decisoes.registrar({ ...s.decisao, roboId: p.roboId }));
+    if (!existente)
+      await this.ordens.reservar({
+        decisaoId,
+        roboId: p.roboId,
+        idCliente: s.ordem.idCliente,
+        simbolo: p.simbolo,
+        lado: "VENDA",
+        quantidade: s.quantidade,
+      });
+    await this.ordens.concluir(s.ordem.idCliente, s.ordem);
+    return { decisaoId, nova: !existente };
+  }
+
+  todas(): readonly ProtecaoGravada[] {
+    return this.protecoes;
+  }
+
+  private doRobo(roboId: string): ProtecaoGravada[] {
+    return this.protecoes.filter((p) => p.roboId === roboId);
   }
 }
 

@@ -1,5 +1,5 @@
 import type { ResultadoOrdem, RoboConfig } from "@zentrade/contratos";
-import { decidir, paraTexto, posicaoDe, type Candle, type Posicao } from "@zentrade/dominio";
+import { decidir, paraTexto, posicaoDe, type Candle, type Posicao, type Valor } from "@zentrade/dominio";
 import { BufferCandles } from "../buffer.js";
 import { Trava } from "../trava.js";
 import {
@@ -15,6 +15,7 @@ import { mudarEstado, publicar } from "./diario.js";
 import type { Plano } from "./plano.js";
 import { PosicaoAberta } from "./posicao-aberta.js";
 import { conferirOrdemIncerta, type OrdemIncerta } from "./reconciliacao.js";
+import { conferirProtecao, StopNaCorretora } from "./stop-corretora.js";
 import type { AprovacaoPendente, Dependencias, EntradaCiclo, ResultadoCiclo } from "./tipos.js";
 
 type Contexto = Omit<EntradaCiclo, "fechamentos">;
@@ -29,6 +30,7 @@ export class NucleoRobo {
   private readonly trava = new Trava();
   private readonly aberta: PosicaoAberta;
   private readonly bloqueio: MemoriaBloqueio;
+  private readonly stopNaCorretora: StopNaCorretora;
   private ultimoMinuto = 0;
   private falhas = 0;
   private incertas: readonly OrdemIncerta[] = [];
@@ -43,6 +45,7 @@ export class NucleoRobo {
     this.buffer = new BufferCandles(deps.opcoes.tamanhoHistorico);
     this.aberta = new PosicaoAberta(robo, deps);
     this.bloqueio = new MemoriaBloqueio(() => deps.robos.pausado(robo.id));
+    this.stopNaCorretora = new StopNaCorretora(robo, deps, (p) => this.aberta.protecaoEfetiva(p));
   }
 
   get totalFalhas(): number {
@@ -63,6 +66,16 @@ export class NucleoRobo {
       );
   }
 
+  /**
+   * Na partida: confere contra o banco a proteção que estava no livro da corretora (pode
+   * ter executado com o motor fora do ar) e deixa no livro a proteção certa para a posição.
+   */
+  async reconciliarProtecao(preco: Valor | null): Promise<void> {
+    await this.protegido("reconciliar a proteção na corretora", async () => {
+      await this.acompanharCorretora(preco);
+    });
+  }
+
   /** Backfill (início ou volta da conexão): completa a história sem decidir sobre candles velhos. */
   async completarHistorico(candles: readonly Candle[]): Promise<void> {
     await this.protegido("completar o histórico", async () => {
@@ -77,17 +90,24 @@ export class NucleoRobo {
       if (!this.buffer.adicionar(candle)) return null;
       await publicarCandle(this.deps, this.robo, candle);
       await this.publicarPreco(candle);
-      if (!(await this.semOrdemIncerta())) return null;
-      this.bloqueio.novoIntervalo();
-      const posicao = await this.posicao();
-      const sinal = decidir(
-        await this.aberta.estrategia(posicao),
-        { fechamentos: this.buffer.fechamentos(), preco: candle.fecha },
-        posicao,
-      );
-      await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
-      return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
+      await this.conferirCorretora();
+      const r = await this.decidirNoIntervalo(candle);
+      await this.ajustarCorretora(candle.fecha);
+      return r;
     });
+  }
+
+  private async decidirNoIntervalo(candle: Candle): Promise<ResultadoCiclo | null> {
+    if (!(await this.semOrdemIncerta())) return null;
+    this.bloqueio.novoIntervalo();
+    const posicao = await this.posicao();
+    const sinal = decidir(
+      await this.aberta.estrategia(posicao),
+      { fechamentos: this.buffer.fechamentos(), preco: candle.fecha },
+      posicao,
+    );
+    await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
+    return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
   }
 
   /** Candle de 1 minuto: só vigia stop e alvo da posição aberta, entre um candle do intervalo e outro. */
@@ -96,19 +116,27 @@ export class NucleoRobo {
       if (candle.abertura <= this.ultimoMinuto) return null;
       this.ultimoMinuto = candle.abertura;
       await this.publicarPreco(candle);
-      if (!(await this.semOrdemIncerta())) return null;
-      const posicao = await this.posicao();
-      if (posicao.quantidade.isZero()) return null;
-      const { saida: _ignorada, ...soStopEAlvo } = await this.aberta.estrategia(posicao);
-      const sinal = decidir(
-        soStopEAlvo,
-        { fechamentos: this.buffer.fechamentos(), preco: candle.fecha },
-        posicao,
-      );
-      if (sinal.acao !== "VENDER" || (await this.bloqueio.repetido(sinal, posicao))) return null;
-      await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
-      return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
+      await this.conferirCorretora();
+      const r = await this.vigiarNoMinuto(candle);
+      await this.ajustarCorretora(candle.fecha);
+      return r;
     });
+  }
+
+  /** A segunda linha de defesa: stop e alvo no fechamento do minuto, mesmo com a proteção no livro. */
+  private async vigiarNoMinuto(candle: Candle): Promise<ResultadoCiclo | null> {
+    if (!(await this.semOrdemIncerta())) return null;
+    const posicao = await this.posicao();
+    if (posicao.quantidade.isZero()) return null;
+    const { saida: _ignorada, ...soStopEAlvo } = await this.aberta.estrategia(posicao);
+    const sinal = decidir(
+      soStopEAlvo,
+      { fechamentos: this.buffer.fechamentos(), preco: candle.fecha },
+      posicao,
+    );
+    if (sinal.acao !== "VENDER" || (await this.bloqueio.repetido(sinal, posicao))) return null;
+    await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
+    return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
   }
 
   /** Resolve quando não há decisão nem espera de aprovação em andamento. */
@@ -194,6 +222,8 @@ export class NucleoRobo {
       this.aprovacao = null;
       const r = await concluirAprovacao(this.deps, this.robo, p, fim, await this.posicao());
       if (r.ordem && r.plano && r.decisaoId) await this.aposOrdem(r.ordem, r.plano, r.decisaoId);
+      // Compra aprovada fora do candle: a proteção vai para o livro já, sem esperar o próximo minuto.
+      if (r.ordem) await this.ajustarCorretora(p.entrada.preco);
     });
   }
 
@@ -209,6 +239,51 @@ export class NucleoRobo {
       await publicarPosicao(this.deps, this.robo);
     }
     return true;
+  }
+
+  /** Confere e ajusta a proteção no livro (reconciliação na partida). */
+  private async acompanharCorretora(preco: Valor | null): Promise<void> {
+    await this.conferirCorretora();
+    if (preco) await this.ajustarCorretora(preco);
+  }
+
+  /**
+   * Antes de decidir: a proteção pode ter executado na corretora. Falha aqui não para a
+   * vigia do robô (a segunda linha de defesa): vai para o registro e a saúde.
+   */
+  private async conferirCorretora(): Promise<void> {
+    await this.semDerrubar("conferir a proteção na corretora", async () => {
+      if (!(await conferirProtecao(this.deps, this.robo))) return;
+      this.aberta.esquecer();
+      const p = this.aprovacao;
+      if (p?.plano.lado !== "VENDA" || !(await this.posicao()).quantidade.isZero()) return;
+      this.aprovacao = null;
+      await barrarPorPosicaoZerada(this.deps, p);
+    });
+  }
+
+  /** Depois de decidir: a proteção no livro acompanha a posição e o stop efetivo de agora. */
+  private ajustarCorretora(preco: Valor): Promise<void> {
+    return this.semDerrubar("ajustar a proteção na corretora", () => this.stopNaCorretora.ajustar(preco));
+  }
+
+  private async semDerrubar(tarefa: string, fazer: () => Promise<void>): Promise<void> {
+    try {
+      await fazer();
+    } catch (erro) {
+      await this.registrarFalha(tarefa, erro);
+    }
+  }
+
+  private async registrarFalha(tarefa: string, erro: unknown): Promise<void> {
+    this.falhas++;
+    this.deps.registro.error({ erro, roboId: this.robo.id }, `falha ao ${tarefa}`);
+    await publicar(this.deps, {
+      tipo: "saude",
+      servico: "motor",
+      ok: false,
+      em: this.deps.relogio.agora(),
+    });
   }
 
   private async posicao(): Promise<Posicao> {
@@ -230,14 +305,7 @@ export class NucleoRobo {
       try {
         return await fazer();
       } catch (erro) {
-        this.falhas++;
-        this.deps.registro.error({ erro, roboId: this.robo.id }, `falha ao ${tarefa}`);
-        await publicar(this.deps, {
-          tipo: "saude",
-          servico: "motor",
-          ok: false,
-          em: this.deps.relogio.agora(),
-        });
+        await this.registrarFalha(tarefa, erro);
         return null;
       }
     });

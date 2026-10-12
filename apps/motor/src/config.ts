@@ -19,6 +19,10 @@ export const EsquemaConfig = z
     MOTOR_PAPEL_SALDO: TextoDecimal.default("1000"),
     MOTOR_PAPEL_TAXA: z.coerce.number().min(0).lt(0.01).default(0.001),
     MOTOR_PAPEL_DESLIZAMENTO_BPS: z.coerce.number().min(0).max(1000).default(5),
+    /** Stop e alvo da posição no livro da corretora (stop-limit/OCO), vivos mesmo com o motor fora do ar. */
+    MOTOR_STOP_NA_CORRETORA: Booleano.default(true),
+    /** Limite da venda do stop na corretora, em pontos-base abaixo do gatilho (100 = 1%). */
+    MOTOR_STOP_LIMITE_BPS: z.coerce.number().int().min(1).max(1000).default(100),
     AGENTE_URL: z.url().optional(),
     AGENTE_SEGREDO: z.string().min(32, "precisa ter pelo menos 32 caracteres").optional(),
     /** Só em desenvolvimento: chave de quem não cadastrou a própria na tela. */
