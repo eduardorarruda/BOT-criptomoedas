@@ -121,6 +121,8 @@ O que **ainda não foi testado contra o serviço real** (só com dublês):
 
 O que **falta**: o motor gravar decisões, ordens e eventos no banco e no Redis (hoje roda com portas em memória e robôs de um arquivo), bater em `zentrade:motor:batida` e consumir a fila de backtests; usar a conta da corretora cadastrada na tela em vez das chaves do ambiente.
 
+No **backtest**, falta: um otimizador de parâmetros (hoje o walk-forward avalia a estratégia fixa em cada janela, sem otimizar dentro e testar fora), deslizamento que dependa do tamanho da ordem e do livro, Monte Carlo que preserve sequências de perdas (blocos) e as ordens de stop em repouso da corretora de papel no lugar da vigia intrabar do próprio backtest. Veja [como ler o backtest](docs/estrategias.md#como-ler-o-backtest).
+
 ## Documentação
 
 - [Arquitetura](docs/arquitetura.md) — serviços, fluxo de uma decisão e princípios.

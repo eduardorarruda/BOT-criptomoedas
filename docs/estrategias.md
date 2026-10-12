@@ -231,17 +231,71 @@ Compra quando o RSI de apenas 2 candles cai abaixo de 10 com o preço acima da m
 
 ## Como ler o backtest
 
-O backtest roda a estratégia sobre candles históricos, com as taxas configuradas, e devolve métricas e a curva do patrimônio (`POST /api/v1/backtests` e `GET /api/v1/backtests/:id`). Ao ler:
+O backtest roda a estratégia sobre candles históricos com as **mesmas funções do robô** (decisão, agente fixo que concorda, motor de risco, ordem idempotente) numa corretora de papel, e devolve métricas, a curva do patrimônio contra o buy and hold e uma validação (`POST /api/v1/backtests` e `GET /api/v1/backtests/:id`). Ele quer ser **honesto**, não bonito: na dúvida, assume o pior.
 
-- **Retorno líquido** já desconta as taxas. Compare com simplesmente ter comprado e segurado no mesmo período.
-- **Maior queda** (do pico ao vale) diz quanto você teria visto o saldo cair. Pergunte-se se aguentaria isso sem desligar o robô na pior hora.
-- **Número de operações**: poucas operações tornam qualquer número pouco confiável. Dez trades bons podem ser sorte.
-- **Taxa de acerto** sozinha engana: acertar 80% com ganhos pequenos e errar 20% com perdas grandes dá prejuízo. Olhe junto com o ganho médio e a perda média.
-- **Curva**: prefira uma subida irregular mas constante a um salto único. Um salto único costuma ser um evento que não se repete.
-- **Períodos diferentes**: teste em mercado subindo, caindo e de lado. O fluxo de revalidação semanal compara os últimos 30 dias com os 90 anteriores e avisa quando o recente piora.
-- **Excesso de ajuste**: se você mexeu nos parâmetros até o backtest ficar bonito, ele provavelmente decorou o passado. Separe um período que você não usou para ajustar e confira nele.
+### Premissas (o que é simulado e como)
 
-O que o backtest **não** mostra: deslizamento em mercado com pouca liquidez, falhas de conexão, ordens recusadas e o seu próprio comportamento quando o robô perde. Por isso o caminho é sempre: backtest → `observar` na testnet → `sugerir` → `auto` com valores pequenos.
+| Item             | Padrão                                                                                                                              | Como entra                                                                     |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Taxa por ponta   | 0,1% (Binance VIP 0); opção 0,075% (pagando com BNB)                                                                                | cobrada em toda compra e venda                                                 |
+| Deslizamento     | 5 pontos-base                                                                                                                       | contra você em toda execução; inclui a latência entre decidir e a ordem chegar |
+| Meio spread      | 2 pontos-base                                                                                                                       | ordem a mercado cruza o livro; soma ao deslizamento                            |
+| Limites de risco | os de um robô novo: perda diária 2% do saldo, exposição 30%, risco por operação 0,5%, 4 ordens por hora, pausa de 60 min após perda | o mesmo motor de risco do robô; dá para copiar os limites de um robô seu       |
+| Sem limites      | só se pedir                                                                                                                         | marcado na tela como **menos realista**                                        |
+| Stop e alvo      | dentro do candle                                                                                                                    | veja abaixo                                                                    |
+| Capital          | `MOTOR_BACKTEST_SALDO` (1000) ou o informado                                                                                        | Sharpe sem taxa livre de risco (contra zero)                                   |
+
+**Stop e alvo dentro do candle.** O robô vigia o preço a cada minuto; o backtest usa a mínima e a máxima do candle ([`intrabar.ts`](../apps/motor/src/backtest/intrabar.ts)):
+
+1. abriu abaixo do stop (salto): sai na abertura, que é pior que o stop;
+2. abriu acima do alvo: sai na abertura;
+3. a mínima tocou o stop: sai no stop — **mesmo que a máxima também tenha tocado o alvo**. Sem dado mais fino não dá para saber o que veio primeiro, então conta o **pior caso** (a tela diz em quantos candles isso aconteceu);
+4. a máxima tocou o alvo: sai no alvo.
+
+Com **precisão de 1 minuto** (períodos de até 31 dias), o backtest baixa os candles de 1 minuto e o primeiro minuto que toca um nível decide. A saída passa pelo mesmo ciclo do robô (plano, risco, ordem), então paga taxa, deslizamento e spread.
+
+As saídas da estratégia valem como o domínio define: o **stop por ATR** fica acertado na compra; o **stop móvel** e o **empate** sobem o stop a cada candle fechado (`atualizarStop`), e o stop novo vale a partir da vigia do candle **seguinte**; a **saída por tempo** e um stop que subiu acima do fechamento vendem no fechamento. O tamanho pela volatilidade vem do próprio sinal. Enquanto o motor ao vivo não guardar o acompanhamento (veja "Estado da integração" acima), o backtest mostra o que o robô fará **depois** dessa integração.
+
+### As métricas
+
+Retornos por candle `rₜ = Pₜ/Pₜ₋₁ − 1`, com `P₀` = capital inicial; `A` = candles por ano em um mercado de **365 dias** (8760 para 1h, 35 040 para 15m).
+
+| Métrica                             | Fórmula / leitura                                                                                    |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Resultado líquido e bruto           | líquido = patrimônio final − inicial (já com custos); bruto = líquido + taxas + deslizamento pagos   |
+| CAGR                                | `(final/inicial)^(1/anos) − 1`, só com 1 ano ou mais                                                 |
+| Volatilidade anual                  | desvio amostral dos retornos × √A                                                                    |
+| Sharpe                              | média ÷ desvio × √A                                                                                  |
+| Sortino                             | média ÷ √(Σ min(r, 0)² / n) × √A (desvio para baixo, alvo zero)                                      |
+| Calmar                              | CAGR ÷ maior queda (só com CAGR)                                                                     |
+| Maior queda e duração               | do pico ao vale; duração do pico até recuperar o pico (ou até o fim, e a tela diz que não recuperou) |
+| Fator de lucro, expectativa, payoff | Σ ganhos ÷ \|Σ perdas\|; resultado médio por operação; ganho médio ÷ \|perda média\|                 |
+| Tempo exposto                       | fração dos candles que começaram com posição aberta                                                  |
+| Buy and hold                        | comprar tudo na abertura do primeiro candle e vender no último fechamento, **com os mesmos custos**  |
+
+### A validação
+
+- **Dentro × fora da amostra** (padrão 70/30): os primeiros 70% do período contra os 30% finais. Se você ajustou a estratégia olhando o começo, o fim é a prova. A tela marca "piorou" quando o lucro de dentro vira prejuízo fora, ou quando o Sharpe de fora cai abaixo da metade do de dentro — **regra prática**, não teste estatístico.
+- **Walk-forward** (Pardo): janelas de teste seguidas, cada uma depois de um trecho de referência (rolante, do mesmo tamanho; ou ancorado no início). Sem otimizador de parâmetros, ele avalia a **mesma** estratégia em cada janela e mostra se o resultado se repete: fração de janelas no lucro, média e desvio do retorno e do Sharpe, e a eficiência (retorno por dia no teste ÷ na referência). Com k janelas e fração f dentro: teste = T ÷ (k + f/(1 − f)).
+- **Monte Carlo das operações**: 1000 sequências (semente fixa: mesmo pedido, mesmo resultado) sorteadas **com reposição** entre os retornos das operações; mostra as faixas de 5%, 50% e 95% do retorno final e da maior queda, e a chance de ruína (perder o limite escolhido do capital em **algum momento**). Supõe que as operações são independentes: se as perdas vêm em sequência por causa do mercado, o risco real é maior.
+- **Tentativas e Sharpe deflacionado.** Cada backtest concluído conta como tentativa da estratégia (todas as versões: mudar um parâmetro e rodar de novo é tentar de novo). Com N tentativas, o melhor Sharpe tende a ser sorte. A tela mostra:
+  - **Sharpe probabilístico** (Bailey & López de Prado, 2012): a chance de o Sharpe verdadeiro ser positivo, considerando o tamanho da amostra, a assimetria e a curtose dos retornos;
+  - **Sharpe deflacionado** (Bailey & López de Prado, 2014): a mesma chance contra o Sharpe que o acaso daria escolhendo o melhor de N, `√V × ((1 − γ)·Z⁻¹(1 − 1/N) + γ·Z⁻¹(1 − 1/(N·e)))`, com V a variância dos Sharpes entre as tentativas (ou a do próprio estimador, com menos de duas). Abaixo de 95%, desconfie; abaixo de 50%, provavelmente é sorte;
+  - **Período mínimo** (MinBTL, Bailey, Borwein, López de Prado e Zhu, 2014): quantos anos de dados seriam precisos para esse Sharpe não aparecer por acaso em N tentativas — com 45 tentativas, 5 anos para um Sharpe anual de 1. É o único aviso com base publicada;
+  - **Desconto de Harvey & Liu** (2015, ajuste de Bonferroni): o Sharpe depois de multiplicar o valor-p pelo número de tentativas.
+- **Avisos de amostra** (regras práticas, e a tela diz isso): menos de 30 operações (alerta) ou de 100 (atenção); período abaixo de 90 dias ou de 1 ano; o mercado só subiu (ou só caiu) em todas as janelas — um regime só; rodou sem limites; candles em que stop e alvo couberam juntos.
+
+### O veredito
+
+O painel "Veredito" lista verificações verdes, amarelas e vermelhas em português claro — terminou no lucro depois dos custos, bate o buy and hold, mais de 100 operações, fora da amostra manteve, lucro na maioria das janelas, risco de ruína baixo, o Sharpe resiste às tentativas, período suficiente, com os limites do robô. Ele **descreve o passado simulado**: não recomenda investir nem operar, e verde não quer dizer lucro no futuro.
+
+### O que o backtest ainda não mostra
+
+Falhas de conexão, ordens recusadas pela corretora, liquidez fina (o deslizamento é fixo, não depende do tamanho da ordem), funding e o seu próprio comportamento quando o robô perde. Backtests de antes desta validação continuam aparecendo, marcados como antigos (sem deslizamento, com limites relaxados e stop só no fechamento). O caminho continua: backtest → `observar` na testnet → `sugerir` → `auto` com valores pequenos.
+
+### Ordens de stop na corretora de papel
+
+Hoje o backtest decide a saída intrabar em [`intrabar.ts`](../apps/motor/src/backtest/intrabar.ts) e a envia como ordem a mercado pelo ciclo do robô. Quando a corretora de papel ganhar ordens de stop/OCO em repouso (`packages/corretora/src/papel.ts`), o caminho é: na compra, colocar a OCO (stop + alvo) na corretora de papel; a cada candle, `alimentar` o candle completo para a corretora executar as ordens em repouso pela mínima e pela máxima (com a mesma regra de pior caso); trocar a ordem quando `atualizarStop` devolver `novoStop`; e trocar `vigiarDentroDoCandle` em [`rodar.ts`](../apps/motor/src/backtest/rodar.ts) por conferir as execuções da corretora. Os testes de `intrabar.test.ts` e de `rodar.test.ts` (stop, alvo, ambíguo, 1 minuto, stop móvel) servem de contrato para a troca.
 
 ## Aviso, de novo
 
