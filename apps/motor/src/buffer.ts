@@ -1,4 +1,4 @@
-import type { Candle } from "@zentrade/dominio";
+import { contextoDeCandles, type Candle, type ContextoMercado } from "@zentrade/dominio";
 
 /**
  * Os últimos N candles fechados, num buffer circular: memória fixa por robô, sem
@@ -50,5 +50,10 @@ export class BufferCandles {
   /** Indicadores são number; o preço de decisão continua decimal exato. */
   fechamentos(): number[] {
     return this.lista().map((c) => c.fecha.toNumber());
+  }
+
+  /** Contexto completo (abertura, máxima, mínima, fechamento e volume) para as regras. */
+  contexto(): ContextoMercado {
+    return contextoDeCandles(this.lista());
   }
 }
