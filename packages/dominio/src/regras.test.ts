@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { OperandoIndicador } from "./catalogo.js";
-import { INDICADORES } from "./catalogo.js";
+import { INDICADORES, nomeIndicador } from "./catalogo.js";
 import { contextoDeCandles } from "./contexto.js";
 import { dec } from "./dinheiro.js";
 import { avaliar, rotulo, validarRegra, type Operando, type Regra } from "./regras.js";
@@ -218,6 +218,12 @@ describe("árvore de regras", () => {
       expect(r({ tipo: "indicador", nome: "donchian", periodo: 10, saida: "meio" })).toBe(
         "meio de Donchian(10)",
       );
+      expect(["sma", "estocastico", "volumeRelativo", "adx"].map((n) => nomeIndicador(n as never))).toEqual([
+        "SMA",
+        "estocástico",
+        "volume relativo",
+        "ADX",
+      ]);
     });
   });
 

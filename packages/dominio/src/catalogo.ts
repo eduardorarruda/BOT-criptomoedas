@@ -315,7 +315,7 @@ export function problemasIndicador(op: OperandoIndicador): string[] {
   const definicao = (INDICADORES as Partial<Record<string, DefinicaoIndicador>>)[op.nome];
   if (!definicao) return [`indicador desconhecido: ${String(op.nome)}`];
   const problemas: string[] = [];
-  const nome = rotuloCurto(op);
+  const nome = nomeIndicador(op.nome);
   if (definicao.saidas.length && !definicao.saidas.some((s) => s.valor === (op as { saida?: string }).saida))
     problemas.push(`escolha qual linha de ${nome} comparar`);
   if (op.nome === "macd") {
@@ -338,9 +338,9 @@ export function problemasIndicador(op: OperandoIndicador): string[] {
   return problemas;
 }
 
-/** Nome do indicador sem parâmetros, para as mensagens de validação. */
-function rotuloCurto(op: OperandoIndicador): string {
-  switch (op.nome) {
+/** Nome curto do indicador, sem parâmetros: "Bollinger", "RSI", "volume relativo". */
+export function nomeIndicador(nome: Indicador): string {
+  switch (nome) {
     case "bollinger":
       return "Bollinger";
     case "donchian":
@@ -352,6 +352,6 @@ function rotuloCurto(op: OperandoIndicador): string {
     case "adx":
       return "ADX";
     default:
-      return SIGLA[op.nome];
+      return SIGLA[nome];
   }
 }
