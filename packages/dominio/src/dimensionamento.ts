@@ -10,6 +10,12 @@ export interface EntradaDimensionamento {
   readonly disponivel: Valor;
   readonly filtros: FiltrosAtivo;
   readonly taxa: number;
+  /**
+   * Tamanho pela volatilidade (opcional): distância de preço usada para medir o
+   * risco, como k × ATR. Vale a MAIOR entre ela e a distância até o stop — assim o
+   * risco por operação é respeitado mesmo se o stop estiver mais longe.
+   */
+  readonly distanciaRisco?: Valor;
 }
 
 /**
@@ -25,7 +31,8 @@ export function maiorQuantidade(e: EntradaDimensionamento): Valor | null {
   if (e.stop.gte(e.preco)) throw new RangeError("o stop precisa ficar abaixo do preço de entrada");
   const { passoQuantidade: passo, quantidadeMinima, quantidadeMaxima, valorMinimo } = e.filtros;
   const taxa = dec(e.taxa);
-  const perdaPorUnidade = e.preco.minus(e.stop).plus(e.preco.times(taxa)).plus(e.stop.times(taxa));
+  const saida = precoDeSaida(e);
+  const perdaPorUnidade = e.preco.minus(saida).plus(e.preco.times(taxa)).plus(saida.times(taxa));
   const custoPorUnidade = e.preco.times(dec(1).plus(taxa));
 
   const cabe = (passos: Valor): boolean => {
@@ -48,3 +55,10 @@ export function maiorQuantidade(e: EntradaDimensionamento): Valor | null {
 }
 
 const menor = (a: Valor, b: Valor): Valor => (a.lt(b) ? a : b);
+
+/** Preço de saída pessimista: o stop ou, com distância de risco maior, preço − distância (nunca abaixo de zero). */
+function precoDeSaida(e: EntradaDimensionamento): Valor {
+  if (!e.distanciaRisco) return e.stop;
+  const porDistancia = e.preco.minus(e.distanciaRisco);
+  return menor(e.stop, porDistancia.lt(0) ? dec(0) : porDistancia);
+}

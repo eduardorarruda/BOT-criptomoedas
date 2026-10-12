@@ -91,4 +91,25 @@ describe("dimensionamento por busca binária", () => {
       }),
     ).toThrow(/stop/);
   });
+
+  describe("tamanho pela volatilidade (distância de risco opcional)", () => {
+    const comum = { preco: dec(100), riscoMaximo: dec(10), disponivel: dec(100000), filtros, taxa: 0 };
+
+    it("risco por operação ÷ (k × ATR): com ATR 2,5 e k = 2, 10 / 5 = 2 unidades", () => {
+      const q = maiorQuantidade({ ...comum, stop: dec(99), distanciaRisco: dec(5) });
+      expect(paraTexto(q!)).toBe("2");
+    });
+
+    it("vale a maior distância: stop mais longe que k × ATR continua mandando", () => {
+      const q = maiorQuantidade({ ...comum, stop: dec(90), distanciaRisco: dec(5) });
+      expect(paraTexto(q!)).toBe("1");
+    });
+
+    it("sem a distância, o resultado é o de sempre; distância maior que o preço não fica negativa", () => {
+      expect(maiorQuantidade({ ...comum, stop: dec(99) })).toEqual(
+        maiorQuantidade({ ...comum, stop: dec(99), distanciaRisco: dec(0.5) }),
+      );
+      expect(paraTexto(maiorQuantidade({ ...comum, stop: dec(99), distanciaRisco: dec(500) })!)).toBe("0.1");
+    });
+  });
 });

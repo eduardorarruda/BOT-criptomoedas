@@ -11,6 +11,7 @@ export * from "./momento.js";
 export * from "./posicao.js";
 export * from "./regras.js";
 export * from "./risco.js";
+export * from "./saidas.js";
 export * from "./tipos.js";
 export * from "./volatilidade.js";
 export * from "./volume.js";
