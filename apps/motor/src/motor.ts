@@ -1,4 +1,5 @@
-import type { Corretora, RoboConfig } from "@zentrade/contratos";
+import type { AlertaEmitido, Corretora, RoboConfig } from "@zentrade/contratos";
+import { formatarDuracao } from "@zentrade/dominio";
 import { publicar } from "./nucleo/diario.js";
 import type { Dependencias } from "./nucleo/tipos.js";
 import { RoboAoVivo } from "./robo.js";
@@ -15,7 +16,12 @@ export interface OpcoesMotor {
   readonly preparar?: (robo: RoboConfig) => Promise<void>;
   /** A corretora do robô (a da pessoa dona dele, com a chave dela). Sem isto, a de `deps`. */
   readonly corretoraDe?: (robo: RoboConfig) => Promise<Corretora>;
+  /** WebSocket de candles fora do ar por mais que isto vira alerta. Padrão: 5 min. */
+  readonly alertaWebSocketMs?: number;
 }
+
+const ALERTA_WEBSOCKET_PADRAO_MS = 5 * 60_000;
+const LIMITE_MOTIVO = 600;
 
 export interface ResultadoRecarga {
   readonly ligados: number;
@@ -42,6 +48,8 @@ export class Motor {
   private readonly trava = new Trava();
   private timers: NodeJS.Timeout[] = [];
   private parado = false;
+  /** Quedas de WebSocket já avisadas (robô → início da queda): uma queda, um alerta. */
+  private quedasAvisadas: ReadonlyMap<string, number> = new Map();
 
   constructor(
     private readonly deps: Dependencias,
@@ -71,12 +79,49 @@ export class Motor {
   async publicarSaude(): Promise<void> {
     const em = this.deps.relogio.agora();
     await publicar(this.deps, { tipo: "saude", servico: "motor", ok: this.saudavel(), em });
+    await this.vigiarQuedas(em);
     if (!this.opcoes.bater) return;
     try {
       await this.opcoes.bater(em);
     } catch (erro) {
       this.deps.registro.error({ erro }, "falha ao gravar a batida do motor no Redis");
     }
+  }
+
+  /** Avisa uma vez por queda o robô cujo WebSocket de candles está fora há mais que o limite. */
+  private async vigiarQuedas(agora: number): Promise<void> {
+    const limite = this.opcoes.alertaWebSocketMs ?? ALERTA_WEBSOCKET_PADRAO_MS;
+    const quedas = [...this.robos.values()].flatMap(({ robo }) => {
+      const desde = robo.foraDoArDesde();
+      return desde === null ? [] : [{ config: robo.robo, desde }];
+    });
+    this.quedasAvisadas = new Map(
+      [...this.quedasAvisadas].filter(([id, desde]) =>
+        quedas.some((q) => q.config.id === id && q.desde === desde),
+      ),
+    );
+    for (const { config, desde } of quedas) {
+      if (agora - desde < limite || this.quedasAvisadas.get(config.id) === desde) continue;
+      this.quedasAvisadas = new Map([...this.quedasAvisadas, [config.id, desde]]);
+      await this.alertar(config, {
+        tipo: "websocket_fora",
+        gravidade: "critico",
+        titulo: `Sem preço ao vivo: ${config.simbolo}`,
+        mensagem: `A conexão de candles do robô ${config.simbolo} (${config.rede}) está fora há ${formatarDuracao(agora - desde)}. Sem candles o robô não decide nem vigia o stop pelo preço; o motor segue tentando reconectar. Se demorar, confira a internet do servidor ou ligue a parada total.`,
+        chave: `websocket_fora:${config.id}:${desde}`,
+        em: agora,
+      });
+    }
+  }
+
+  private alertar(
+    config: RoboConfig,
+    a: Pick<AlertaEmitido, "tipo" | "gravidade" | "titulo" | "mensagem" | "chave" | "em">,
+  ): Promise<void> {
+    return publicar(this.deps, {
+      tipo: "alerta",
+      alerta: { ...a, roboId: config.id, usuarioId: config.usuarioId },
+    });
   }
 
   /** Uma recarga por vez. Falha ao ler a lista não mexe nos robôs que estão rodando. */
@@ -139,6 +184,15 @@ export class Motor {
       return { robo, assinatura: assinatura(config) };
     } catch (erro) {
       this.deps.registro.error({ erro, roboId: config.id }, "robô não ligou");
+      const motivo = (erro instanceof Error ? erro.message : String(erro)).slice(0, LIMITE_MOTIVO);
+      await this.alertar(config, {
+        tipo: "robo_nao_ligou",
+        gravidade: "critico",
+        titulo: `Robô ${config.simbolo} não ligou`,
+        mensagem: `O robô ${config.simbolo} (${config.rede}) não ligou: ${motivo} Ele tenta de novo a cada recarga do motor.`,
+        chave: `robo_nao_ligou:${config.id}`,
+        em: this.deps.relogio.agora(),
+      });
       await robo
         ?.parar()
         .catch((e: unknown) =>

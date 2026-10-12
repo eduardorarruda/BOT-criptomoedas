@@ -15,6 +15,11 @@ export interface OpcoesCorretorasPorPessoa {
   /** Só em desenvolvimento: BINANCE_API_KEY/SECRET do ambiente, para quem não cadastrou chave. */
   readonly fallback: CredenciaisCorretora | null;
   readonly criar: (rede: RedeConta, credenciais: CredenciaisCorretora) => Corretora;
+  /**
+   * Confere a chave antes de criar a corretora (ver chave-segura.ts): lança se ela não
+   * pode operar. Só roda quando a chave muda; a corretora em cache já foi conferida.
+   */
+  readonly conferirChave?: (rede: RedeConta, credenciais: CredenciaisCorretora) => Promise<void>;
 }
 
 interface EmCache {
@@ -56,6 +61,7 @@ export class CorretorasPorPessoa {
     const impressao = impressaoDe(credenciais);
     const atual = this.cache.get(chave);
     if (atual?.impressao === impressao) return atual.corretora;
+    await this.opcoes.conferirChave?.(rede, credenciais);
     const corretora = this.opcoes.criar(rede, credenciais);
     this.cache = new Map([...this.cache, [chave, { impressao, corretora }]]);
     return corretora;

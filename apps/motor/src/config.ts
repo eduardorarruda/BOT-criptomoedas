@@ -41,6 +41,8 @@ export const EsquemaConfig = z
     /** O mesmo prazo que a API usa para aceitar a aprovação (minutos). */
     APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(60).default(5),
     MOTOR_RECARGA_SEGUNDOS: z.coerce.number().int().min(5).max(3600).default(30),
+    /** WebSocket de candles fora por mais que isto (minutos) vira alerta. */
+    MOTOR_ALERTA_WEBSOCKET_MIN: z.coerce.number().int().min(1).max(120).default(5),
     MOTOR_BACKTEST_SALDO: TextoDecimal.default("1000"),
     /** Fração do saldo arriscada por operação no backtest (0,01 = 1%). */
     MOTOR_BACKTEST_RISCO: z.coerce.number().gt(0).max(0.1).default(0.01),

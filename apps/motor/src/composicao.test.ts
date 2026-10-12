@@ -100,7 +100,8 @@ describe("composição do motor", () => {
     expect(deps.decisoes).toBeInstanceOf(DecisoesMemoria);
     expect(deps.aprovacao).toBeInstanceOf(AprovacaoMemoria);
     expect(deps.candles).toBeUndefined();
-    expect(opcoesMotor).toEqual({ intervaloSaudeMs: 30_000 });
+    expect(opcoesMotor).toEqual({ intervaloSaudeMs: 30_000, alertaWebSocketMs: 5 * 60_000 });
+    expect(deps.riscoConta).toBeUndefined();
     await deps.aprovacao.solicitar("d1", "x", 1);
   });
 
@@ -114,12 +115,24 @@ describe("composição do motor", () => {
     };
     const ordens = new OrdensMemoria(new RelogioManual(0));
     const mercado = { gravar: async () => undefined };
+    const riscoConta = {
+      estado: async () => {
+        throw new Error("banco fora");
+      },
+    };
     const fontes: FontesMotor = {
-      banco: { portas: { robos, decisoes: c.decisoes, ordens }, mercado },
+      banco: { portas: { robos, decisoes: c.decisoes, ordens }, mercado, riscoConta },
       redis,
     };
     const { registro } = registroDeTeste();
-    const { deps, opcoesMotor } = montarMotor(lerConfig({ MOTOR_RECARGA_SEGUNDOS: "12" }), fontes, registro);
+    const { deps, opcoesMotor } = montarMotor(
+      lerConfig({ MOTOR_RECARGA_SEGUNDOS: "12", MOTOR_ALERTA_WEBSOCKET_MIN: "7" }),
+      fontes,
+      registro,
+    );
+    // a porta da conta vem embrulhada: erro do banco vira "conta indisponível" (só barra compra)
+    expect((await deps.riscoConta?.estado("r1", 1))?.indisponivel).toBe("banco fora");
+    expect(opcoesMotor.alertaWebSocketMs).toBe(7 * 60_000);
     expect((await deps.robos.ativos()).map((r) => r.id)).toEqual(["r1"]);
     expect(deps.decisoes).toBe(c.decisoes);
     expect(deps.ordens).toBe(ordens);

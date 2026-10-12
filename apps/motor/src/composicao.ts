@@ -6,11 +6,19 @@ import type {
   PortaCredenciais,
   PortaDecisoes,
   PortaOrdens,
+  PortaRiscoConta,
   PortaRobos,
   RoboConfig,
 } from "@zentrade/contratos";
-import { ativosDoSimbolo, BinanceCorretora, disjuntorDaRede, PapelCorretora } from "@zentrade/corretora";
+import {
+  ativosDoSimbolo,
+  BinanceCorretora,
+  ContaBinance,
+  disjuntorDaRede,
+  PapelCorretora,
+} from "@zentrade/corretora";
 import { dec } from "@zentrade/dominio";
+import { conferirChaveParaOperar } from "./chave-segura.js";
 import type { Config } from "./config.js";
 import { CorretorasPorPessoa } from "./corretoras-por-pessoa.js";
 import type { OpcoesMotor } from "./motor.js";
@@ -21,6 +29,7 @@ import { AgenteHttp } from "./portas/agente-http.js";
 import { EventosNoRegistro } from "./portas/eventos-registro.js";
 import { AprovacaoMemoria, DecisoesMemoria, OrdensMemoria, RobosMemoria } from "./portas/memoria.js";
 import { BatidaRedis, EventosRedis, type ClienteRedis } from "./portas/redis.js";
+import { riscoContaSeguro } from "./portas/risco-conta.js";
 import { RobosDaRede } from "./portas/robos-da-rede.js";
 import type { RobosCarregados } from "./robos-arquivo.js";
 import { dormirReal, RelogioSistema } from "./relogio.js";
@@ -73,6 +82,8 @@ export interface FontesMotor {
     readonly mercado: PortaCandles;
     /** As chaves de corretora de cada pessoa (null sem ZENTRADE_CHAVE_MESTRA). */
     readonly credenciais?: PortaCredenciais | null;
+    /** Limites da conta (todos os robôs da pessoa na rede), lidos sob RLS. */
+    readonly riscoConta?: PortaRiscoConta | null;
   };
   readonly redis?: ClienteRedis;
   readonly arquivo?: RobosCarregados;
@@ -146,6 +157,10 @@ function corretorasDasPessoas(
         aoErroWebSocket,
         disjuntor: disjuntorDaRede(rede),
       }),
+    // Chave com saque não opera; só a rede real informa permissões (/sapi).
+    conferirChave: conferirChaveParaOperar((rede, c) =>
+      new ContaBinance({ rede, ...c, disjuntor: disjuntorDaRede(rede) }).restricoes(),
+    ),
   });
   return (robo) => porPessoa.para(robo);
 }
@@ -163,6 +178,7 @@ function opcoesDoMotor(
   return {
     ...(corretoraDe ? { corretoraDe } : {}),
     intervaloSaudeMs: SAUDE_MS,
+    alertaWebSocketMs: config.MOTOR_ALERTA_WEBSOCKET_MIN * 60_000,
     ...(f.banco ? { intervaloRecargaMs: config.MOTOR_RECARGA_SEGUNDOS * 1000 } : {}),
     ...(batida ? { bater: (em: number) => batida.bater(em) } : {}),
     ...(preparar ? { preparar } : {}),
@@ -189,6 +205,7 @@ export function montarMotor(config: Config, f: FontesMotor, registro: Registro) 
     eventos: f.redis ? new EventosRedis(f.redis) : new EventosNoRegistro(registro),
     aprovacao: portas.aprovacao,
     ...(f.banco ? { candles: f.banco.mercado } : {}),
+    ...(f.banco?.riscoConta ? { riscoConta: riscoContaSeguro(f.banco.riscoConta, registro) } : {}),
     relogio,
     registro,
     dormir: dormirReal,

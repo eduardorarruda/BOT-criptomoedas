@@ -1,4 +1,4 @@
-import type { PortaAgente, PortaCandles, RoboConfig } from "@zentrade/contratos";
+import type { PortaAgente, PortaCandles, PortaRiscoConta, RoboConfig } from "@zentrade/contratos";
 import { PapelCorretora } from "@zentrade/corretora";
 import { dec, type Estrategia } from "@zentrade/dominio";
 import type { Dependencias, Registro } from "../nucleo/tipos.js";
@@ -65,6 +65,7 @@ export interface OpcoesCenario {
   /** Troca o "dormir" da consulta de aprovação (padrão: avança o relógio na hora). */
   readonly dormir?: (ms: number) => Promise<void>;
   readonly candles?: PortaCandles;
+  readonly riscoConta?: PortaRiscoConta;
 }
 
 export const USUARIO = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
@@ -107,6 +108,7 @@ export function montarCenario(o: OpcoesCenario = {}) {
     eventos: new EventosMemoria(),
     aprovacao: new AprovacaoMemoria((id) => o.aoSolicitar?.(id, decisoes)),
     ...(o.candles ? { candles: o.candles } : {}),
+    ...(o.riscoConta ? { riscoConta: o.riscoConta } : {}),
     relogio,
     registro,
     dormir: o.dormir ?? relogio.dormir,
