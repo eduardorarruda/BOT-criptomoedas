@@ -1,4 +1,5 @@
 import type {
+  ConfiguracaoBacktestEntrada,
   DecisaoDTO,
   EstadoDecisao,
   EstrategiaDTO,
@@ -65,6 +66,8 @@ export interface PedidoBacktest {
   readonly intervalo: Intervalo;
   readonly inicio: number;
   readonly fim: number;
+  /** Sem ela, a API aplica os padrões (custos realistas, limites de um robô novo, 70/30). */
+  readonly configuracao?: ConfiguracaoBacktestEntrada;
 }
 export interface NovaConta {
   readonly corretora: "binance";

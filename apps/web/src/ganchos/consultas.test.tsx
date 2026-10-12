@@ -45,7 +45,7 @@ describe("consultas", () => {
     expect(r.candles.data).toHaveLength(240);
     expect(r.contas.data).toHaveLength(1);
     expect(r.tokens.data).toHaveLength(2);
-    expect(r.backtests.data).toHaveLength(2);
+    expect(r.backtests.data).toHaveLength(4);
     expect(r.documentos.data).toHaveLength(8);
   });
 });

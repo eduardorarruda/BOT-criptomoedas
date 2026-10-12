@@ -1,163 +1,19 @@
-import type { Intervalo } from "@zentrade/contratos/esquemas";
-import { FlaskConical, History, Play } from "lucide-react";
-import { useState, type FormEvent } from "react";
-import type { Backtest } from "../api/esquemas";
-import { mensagemDe } from "../api/erros";
-import { useAvisos } from "../componentes/Avisos";
-import { Botao } from "../componentes/Botao";
+import { History } from "lucide-react";
+import { useState } from "react";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
-import { CampoSelecao } from "../componentes/Campo";
 import { Dinheiro } from "../componentes/Dinheiro";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
-import { GraficoLinha } from "../componentes/graficos/GraficoLinha";
-import { Segmentado } from "../componentes/Segmentado";
 import { Selo } from "../componentes/Selo";
 import { useBacktests, useEstrategias } from "../ganchos/consultas";
-import { useCriarBacktest } from "../ganchos/mutacoes";
-import { formatarDinheiro, formatarPercentual } from "../lib/formatar";
-import { capitalInicial, curvaParaGrafico, fracaoSobre } from "../lib/metricas";
-import { formatarData } from "../lib/tempo";
+import { FormBacktest } from "./backtests/FormBacktest";
+import { ResultadoBacktest } from "./backtests/ResultadoBacktest";
 
-const DIA = 86_400_000;
-const PERIODOS = [
-  { valor: "30", rotulo: "30 dias" },
-  { valor: "90", rotulo: "90 dias" },
-  { valor: "180", rotulo: "180 dias" },
-] as const;
 const ESTADO = {
   na_fila: { texto: "Na fila", tom: "neutro" },
   rodando: { texto: "Rodando…", tom: "atencao" },
   concluido: { texto: "Concluído", tom: "marca" },
   falhou: { texto: "Falhou", tom: "perda" },
 } as const;
-
-function FormBacktest() {
-  const estrategias = useEstrategias().data ?? [];
-  const criar = useCriarBacktest();
-  const avisar = useAvisos();
-  const [estrategiaId, setEstrategiaId] = useState("");
-  const [simbolo, setSimbolo] = useState("BTCUSDT");
-  const [intervalo, setIntervalo] = useState<Intervalo>("1h");
-  const [dias, setDias] = useState<(typeof PERIODOS)[number]["valor"]>("90");
-  const escolhida = estrategias.find((e) => e.id === estrategiaId) ?? estrategias[0];
-
-  const enviar = (e: FormEvent): void => {
-    e.preventDefault();
-    if (!escolhida) return;
-    const fim = Date.now();
-    criar.mutate(
-      {
-        estrategiaId: escolhida.id,
-        versao: escolhida.versao,
-        simbolo,
-        intervalo,
-        inicio: fim - Number(dias) * DIA,
-        fim,
-      },
-      {
-        onSuccess: () => avisar("info", "Backtest na fila. O resultado aparece aqui quando terminar."),
-        onError: (er) => avisar("erro", mensagemDe(er)),
-      },
-    );
-  };
-
-  return (
-    <form className="formulario formulario--linha" onSubmit={enviar}>
-      <CampoSelecao
-        rotulo="Estratégia"
-        value={escolhida?.id ?? ""}
-        onChange={(e) => setEstrategiaId(e.target.value)}
-      >
-        {estrategias.map((x) => (
-          <option key={x.id} value={x.id}>
-            {x.nome} (v{x.versao})
-          </option>
-        ))}
-      </CampoSelecao>
-      <CampoSelecao rotulo="Par" value={simbolo} onChange={(e) => setSimbolo(e.target.value)}>
-        {["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"].map((p) => (
-          <option key={p}>{p}</option>
-        ))}
-      </CampoSelecao>
-      <CampoSelecao
-        rotulo="Intervalo"
-        value={intervalo}
-        onChange={(e) => setIntervalo(e.target.value as Intervalo)}
-      >
-        {(["15m", "1h", "4h", "1d"] as const).map((i) => (
-          <option key={i}>{i}</option>
-        ))}
-      </CampoSelecao>
-      <Segmentado rotulo="Período" opcoes={PERIODOS} valor={dias} aoMudar={setDias} />
-      <Botao
-        type="submit"
-        variante="primario"
-        icone={Play}
-        carregando={criar.isPending}
-        disabled={!escolhida}
-      >
-        Rodar backtest
-      </Botao>
-    </form>
-  );
-}
-
-function Resultado({ b, nome }: { readonly b: Backtest; readonly nome: string }) {
-  const m = b.metricas;
-  if (!m || !b.curva) return null;
-  const capital = capitalInicial(m, b.curva);
-  return (
-    <section className="simulacao" aria-labelledby={`sim-${b.id}`}>
-      <p className="simulacao__selo">
-        <FlaskConical size={14} aria-hidden="true" /> Simulação com dados passados · não é dinheiro real
-      </p>
-      <h2 id={`sim-${b.id}`} className="simulacao__titulo">
-        {nome} v{b.versao} · {b.simbolo} {b.intervalo} · {formatarData(b.inicio)} a {formatarData(b.fim)}
-      </h2>
-      <dl className="metricas metricas--simulacao">
-        <div className="metrica">
-          <dt>Resultado simulado</dt>
-          <dd>
-            <Dinheiro valor={m.resultadoLiquido} sinal colorir />
-          </dd>
-          {capital ? (
-            <dd className="metrica__nota num">
-              {formatarPercentual(fracaoSobre(m.resultadoLiquido, capital), { sinal: true })} sobre{" "}
-              {formatarDinheiro(capital)}
-            </dd>
-          ) : null}
-        </div>
-        <div className="metrica">
-          <dt>Maior queda</dt>
-          <dd>
-            <Dinheiro valor={`-${m.maiorQueda}`} colorir />
-          </dd>
-          <dd className="metrica__nota num">{formatarPercentual(m.maiorQuedaPercentual)} do pico</dd>
-        </div>
-        <div className="metrica">
-          <dt>Taxas simuladas</dt>
-          <dd className="num perda">{formatarDinheiro(m.taxasPagas)}</dd>
-        </div>
-        <div className="metrica">
-          <dt>Operações</dt>
-          <dd className="num">{m.operacoes}</dd>
-          <dd className="metrica__nota">
-            <span className="num">{formatarPercentual(m.taxaAcerto, { casas: 0 })}</span> terminaram no lucro
-          </dd>
-        </div>
-      </dl>
-      <GraficoLinha
-        pontos={curvaParaGrafico(b.curva)}
-        tipo="backtest"
-        rotulo={`Curva simulada do backtest de ${nome}: resultado ${formatarDinheiro(m.resultadoLiquido, { sinal: true })}, maior queda ${formatarDinheiro(m.maiorQueda)}.`}
-      />
-      <p className="simulacao__aviso">
-        Resultado passado, mesmo simulado com taxas, não garante resultado futuro. O mercado real tem atrasos
-        e escorregões que o backtest não captura por inteiro.
-      </p>
-    </section>
-  );
-}
 
 export function Backtests() {
   const consulta = useBacktests();
@@ -170,7 +26,8 @@ export function Backtests() {
   return (
     <>
       <Cabecalho titulo="Backtests">
-        Teste uma estratégia em dados passados, com taxas. É simulação: sempre marcada como tal.
+        Teste uma estratégia em dados passados, com taxas, deslizamento e os limites do robô, e veja se o
+        resultado resiste fora da amostra. É simulação: sempre marcada como tal.
       </Cabecalho>
       <Painel titulo="Novo backtest" id="titulo-novo-backtest">
         <FormBacktest />
@@ -181,7 +38,8 @@ export function Backtests() {
       ) : null}
       {consulta.isSuccess && lista.length === 0 ? (
         <EstadoVazio icone={History} titulo="Nenhum backtest ainda">
-          Escolha uma estratégia acima e rode o primeiro. Ele usa candles passados e desconta as taxas.
+          Escolha uma estratégia acima e rode o primeiro. Ele usa candles passados e desconta taxas e
+          deslizamento.
         </EstadoVazio>
       ) : null}
       {lista.length ? (
@@ -204,12 +62,20 @@ export function Backtests() {
                   </span>
                   <Selo tom={ESTADO[b.estado].tom}>{ESTADO[b.estado].texto}</Selo>
                   {b.metricas ? <Dinheiro valor={b.metricas.resultadoLiquido} sinal colorir /> : null}
+                  {b.estado === "concluido" && !b.configuracao ? (
+                    <span className="apagado backtests__antigo">antigo, sem validação</span>
+                  ) : null}
+                  {b.tentativas ? (
+                    <span className="apagado backtests__antigo">
+                      {b.tentativas.total} {b.tentativas.total === 1 ? "tentativa" : "tentativas"}
+                    </span>
+                  ) : null}
                   {b.estado === "falhou" && b.erro ? <span className="perda">{b.erro}</span> : null}
                 </button>
               </li>
             ))}
           </ul>
-          {selecionado ? <Resultado b={selecionado} nome={nome(selecionado.estrategiaId)} /> : null}
+          {selecionado ? <ResultadoBacktest b={selecionado} nome={nome(selecionado.estrategiaId)} /> : null}
         </div>
       ) : null}
     </>

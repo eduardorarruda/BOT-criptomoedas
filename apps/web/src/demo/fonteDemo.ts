@@ -1,4 +1,4 @@
-import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
+import { ConfiguracaoBacktestEsquema, type DecisaoDTO, type RoboDTO } from "@zentrade/contratos/esquemas";
 import { validarEstrategia } from "@zentrade/dominio";
 import { ErroApi } from "../api/erros";
 import type { Backtest } from "../api/esquemas";
@@ -8,7 +8,7 @@ import { ehSimboloDemo, criarMercado } from "./mercado";
 import { estadoInicialDemo, posicaoDTO, resumoDemo, type EstadoDemo } from "./estado";
 import { criarSimulacao } from "./simulacao";
 import { USUARIO_DEMO } from "./dados";
-import { simularBacktest } from "./backtestDemo";
+import { comTentativasDemo, simularBacktest } from "./backtestDemo";
 import { paraDominio } from "../lib/estrategia";
 import { gerarVelas } from "./velas";
 
@@ -251,12 +251,15 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
       mudar((e) => ({ ...e, tokens: e.tokens.filter((t) => t.id !== id) }));
     }),
 
-    backtests: comAtraso(() => [...estado.backtests]),
+    backtests: comAtraso(() => comTentativasDemo(estado.backtests)),
     criarBacktest: comAtraso((p) => {
       const b: Backtest = {
         id: novoId("b"),
         estado: "na_fila",
         ...p,
+        configuracao: ConfiguracaoBacktestEsquema.parse(p.configuracao ?? {}),
+        validacao: null,
+        tentativas: null,
         metricas: null,
         curva: null,
         erro: null,
@@ -283,7 +286,7 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
       return b;
     }),
     backtest: comAtraso((id) => {
-      const b = estado.backtests.find((x) => x.id === id);
+      const b = comTentativasDemo(estado.backtests).find((x) => x.id === id);
       if (!b) throw new ErroApi("nao_encontrado", "Esse backtest não existe mais.", 404);
       return b;
     }),

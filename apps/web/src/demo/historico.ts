@@ -1,8 +1,10 @@
 import type { DecisaoDTO, OrdemDTO, PropostaAgente } from "@zentrade/contratos/esquemas";
 import { dec, precoAlvo, precoStop } from "@zentrade/dominio";
+import { ConfiguracaoBacktestEsquema, type ConfiguracaoBacktestEntrada } from "@zentrade/contratos/esquemas";
 import type { Backtest, PontoCurvaBacktest, PontoPatrimonio } from "../api/esquemas";
 import { metricasDaCurva } from "../lib/metricas";
 import { criarAleatorio, escolher, normal, type Aleatorio } from "./aleatorio";
+import { resultadoDemo, type PerfilDemo } from "./backtestDemo";
 import { PROPOSTAS } from "./propostas";
 
 const MIN = 60_000;
@@ -405,45 +407,89 @@ function curvaBacktest(semente: number, inicio: number, fim: number, deriva: num
 
 type PedidoDemo = Pick<Backtest, "estrategiaId" | "versao" | "simbolo" | "intervalo" | "inicio" | "fim">;
 
-function concluido(
-  id: string,
-  pedido: PedidoDemo,
-  curva: PontoCurvaBacktest[],
-  taxas: string,
-  operacoes: number,
-  acertos: number,
-): Backtest {
+/** Backtest de antes da validação: só as métricas da primeira versão, sem configuração. */
+function antigo(id: string, pedido: PedidoDemo, criadoEm: number): Backtest {
+  const curva = curvaBacktest(7, pedido.inicio, pedido.fim, 0.9);
   return {
     id,
     estado: "concluido",
     ...pedido,
     curva,
-    metricas: metricasDaCurva(curva, taxas, operacoes, acertos),
+    metricas: metricasDaCurva(curva, "18.42", 37, 21),
     erro: null,
-    criadoEm: pedido.fim,
-    concluidoEm: pedido.fim,
+    criadoEm,
+    concluidoEm: criadoEm,
   };
 }
 
+function validado(
+  id: string,
+  pedido: PedidoDemo,
+  criadoEm: number,
+  perfil: PerfilDemo,
+  configuracao: ConfiguracaoBacktestEntrada = {},
+): Backtest {
+  const config = ConfiguracaoBacktestEsquema.parse(configuracao);
+  return {
+    id,
+    estado: "concluido",
+    ...pedido,
+    configuracao: config,
+    ...resultadoDemo(pedido, perfil, config),
+    erro: null,
+    criadoEm,
+    concluidoEm: criadoEm,
+  };
+}
+
+/**
+ * Quatro backtests: um robusto (BTC, 1 ano, limites do robô), um frágil que decorou o
+ * começo do período (SOL, sem limites), uma versão anterior da estratégia do RSI e um
+ * antigo, de antes da validação — a tela precisa continuar mostrando os antigos.
+ */
 export function backtestsIniciais(agora: number): Backtest[] {
   const fim = agora - DIA;
-  const inicio = fim - 90 * DIA;
+  const rsi = { estrategiaId: "e-rsi", simbolo: "BTCUSDT", intervalo: "1h" as const, fim };
   return [
-    concluido(
-      "b-1",
-      { estrategiaId: "e-rsi", versao: 3, simbolo: "BTCUSDT", intervalo: "1h", inicio, fim },
-      curvaBacktest(7, inicio, fim, 0.9),
-      "18.42",
-      37,
-      21,
-    ),
-    concluido(
+    validado("b-1", { ...rsi, versao: 3, inicio: fim - 365 * DIA }, fim, {
+      semente: 21,
+      deriva: 0.0002,
+      volatilidade: 0.009,
+      vantagem: 0.0011,
+      chanceEntrada: 0.12,
+      barras: 1500,
+    }),
+    validado(
       "b-2",
-      { estrategiaId: "e-rompimento", versao: 2, simbolo: "SOLUSDT", intervalo: "4h", inicio, fim },
-      curvaBacktest(11, inicio, fim, -0.7),
-      "26.10",
-      52,
-      22,
+      {
+        estrategiaId: "e-rompimento",
+        versao: 2,
+        simbolo: "SOLUSDT",
+        intervalo: "4h",
+        inicio: fim - 180 * DIA,
+        fim,
+      },
+      fim - HORA,
+      {
+        semente: 11,
+        deriva: 0.0009,
+        volatilidade: 0.016,
+        vantagem: 0.003,
+        vantagemDepois: -0.004,
+        ateFracao: 0.7,
+        chanceEntrada: 0.1,
+        barras: 1080,
+      },
+      { risco: { modo: "sem_limites" }, custos: { taxaPorLado: 0.00075 } },
     ),
+    validado("b-3", { ...rsi, versao: 2, inicio: fim - 365 * DIA }, fim - 2 * DIA, {
+      semente: 5,
+      deriva: 0.0002,
+      volatilidade: 0.009,
+      vantagem: 0.0007,
+      chanceEntrada: 0.1,
+      barras: 1500,
+    }),
+    antigo("b-0", { ...rsi, versao: 1, simbolo: "ETHUSDT", inicio: fim - 90 * DIA }, fim - 10 * DIA),
   ];
 }

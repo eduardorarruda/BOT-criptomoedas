@@ -1,0 +1,118 @@
+/* ---------- backtest: formulário, veredito, tabelas e premissas ---------- */
+.bt-form {
+  display: grid;
+  gap: var(--espaco-3);
+}
+.bt-avancado summary {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: var(--t-ui);
+  font-weight: 560;
+}
+.bt-avancado[open] summary {
+  margin-bottom: var(--espaco-3);
+}
+.bt-avancado__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--espaco-4);
+}
+.bt-avancado__grupo {
+  display: grid;
+  gap: var(--espaco-3);
+  align-content: start;
+  margin: 0;
+  padding: var(--espaco-3);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+}
+.bt-avancado__grupo legend {
+  padding: 0 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.bt-resultado {
+  gap: var(--espaco-5);
+}
+.bt-veredito {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--espaco-2) var(--espaco-4);
+}
+.bt-veredito__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: var(--raio);
+  border-left: 3px solid var(--linha-forte);
+  background: var(--fundo);
+}
+.bt-veredito__item--verde {
+  border-left-color: var(--ganho);
+}
+.bt-veredito__item--verde > svg {
+  color: var(--ganho);
+}
+.bt-veredito__item--amarelo {
+  border-left-color: var(--atencao);
+}
+.bt-veredito__item--amarelo > svg {
+  color: var(--atencao);
+}
+.bt-veredito__item--vermelho {
+  border-left-color: var(--perda);
+}
+.bt-veredito__item--vermelho > svg {
+  color: var(--perda);
+}
+.bt-veredito__titulo {
+  font-weight: 600;
+}
+.bt-veredito__detalhe,
+.bt-veredito__nota,
+.bt-nota {
+  font-size: 13px;
+  color: var(--apagado);
+}
+.bt-veredito__nota {
+  margin-top: var(--espaco-3);
+}
+.bt-graficos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--espaco-4);
+}
+.bt-tabela th[scope="row"] .apagado {
+  margin-left: 6px;
+  font-size: 12px;
+}
+.bt-premissas {
+  display: grid;
+  gap: 6px;
+  padding-left: 1.1em;
+  list-style: disc;
+  font-size: 14px;
+}
+.bt-avisos {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--espaco-3);
+}
+.bt-avisos li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: baseline;
+  font-size: 14px;
+}
+.bt-avisos .apagado {
+  font-size: 12px;
+}
+.backtests__antigo {
+  font-size: 12px;
+}

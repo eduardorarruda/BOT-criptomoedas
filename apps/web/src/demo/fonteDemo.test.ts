@@ -258,7 +258,13 @@ describe("fonte demo: backtests", () => {
     const pronto = await fonte.backtest(b.id);
     expect(pronto.estado).toBe("concluido");
     expect(pronto.metricas?.taxasPagas).toBeDefined();
-    expect((await fonte.backtests()).length).toBe(3);
+    // O pedido sem configuração ganha os padrões; o resultado vem validado e conta como tentativa.
+    expect(pronto.configuracao?.custos).toEqual({ taxaPorLado: 0.001, deslizamentoBps: 5, meioSpreadBps: 2 });
+    expect(pronto.validacao?.walkForward?.janelas).toHaveLength(5);
+    expect(pronto.curva?.[0]?.buyHold).toBeDefined();
+    // Mais duas rodadas da e-rsi concluídas antes desta (a antiga não tem Sharpe, mas conta).
+    expect(pronto.tentativas).toMatchObject({ total: 4, daVersao: 2 });
+    expect((await fonte.backtests()).length).toBe(5);
     await expect(fonte.backtest("x")).rejects.toMatchObject({ codigo: "nao_encontrado" });
   });
 });
