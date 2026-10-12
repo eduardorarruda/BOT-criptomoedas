@@ -23,6 +23,26 @@ export function repositorioSistema(db: Db) {
       return o?.u ?? null;
     },
 
+    /** Nome, par e dona do robô: para o título dos alertas. */
+    async descreverRobo(
+      roboId: string,
+    ): Promise<{ nome: string; simbolo: string; usuarioId: string } | null> {
+      const [r] = await db
+        .select({ nome: robos.nome, simbolo: robos.simbolo, usuarioId: robos.usuarioId })
+        .from(robos)
+        .where(eq(robos.id, roboId));
+      return r ?? null;
+    },
+
+    /** Motivo gravado no sinal de venda ("stop", "alvo", "regra de saída", "ajuste"). */
+    async motivoDaDecisao(decisaoId: string): Promise<string | null> {
+      const [d] = await db
+        .select({ motivo: sql<string | null>`${decisoes.sinal}->>'motivo'` })
+        .from(decisoes)
+        .where(eq(decisoes.id, decisaoId));
+      return d?.motivo ?? null;
+    },
+
     /** Lança se o banco não responder; quem chama decide como registrar. */
     async ping(): Promise<void> {
       await db.execute(sql`select 1`);

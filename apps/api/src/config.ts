@@ -38,6 +38,8 @@ const EsquemaApi = z.object({
   APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(1440).default(15),
   // De quantos em quantos minutos a API importa a carteira da Binance de cada pessoa (0 = só sob demanda).
   CARTEIRA_SINCRONIZAR_MIN: z.coerce.number().int().min(0).max(1440).default(30),
+  // De quantos em quantos minutos a API confere a posição dos robôs com o saldo da Binance (0 = só pelo botão).
+  RECONCILIACAO_MIN: z.coerce.number().int().min(0).max(1440).default(10),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
 

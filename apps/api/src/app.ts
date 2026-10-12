@@ -34,6 +34,7 @@ import { rotasParada } from "./rotas/parada.js";
 import { rotasPatrimonio } from "./rotas/patrimonio.js";
 import { rotasPluggy } from "./rotas/pluggy.js";
 import { rotasRendaFixa } from "./rotas/renda-fixa.js";
+import { rotasRisco } from "./rotas/risco.js";
 import { rotasRobos } from "./rotas/robos.js";
 import { rotasSaude } from "./rotas/saude.js";
 import { rotasSegundoFator } from "./rotas/segundo-fator.js";
@@ -107,6 +108,7 @@ export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger):
         rotasDecisoes,
         rotasMercado,
         rotasParada,
+        rotasRisco,
         rotasContas,
         rotasTokens,
         rotasBacktests,

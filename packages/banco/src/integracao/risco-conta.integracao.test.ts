@@ -222,6 +222,25 @@ describe("limites da conta, divergências, avisos e gasto de IA", () => {
     });
   });
 
+  it("consultas de sistema dos alertas: motivo da venda e o robô", async () => {
+    const id = await c.banco.portas.decisoes.registrar({
+      roboId: c.ana.robo.id,
+      em: Date.now(),
+      sinal: { acao: "VENDER", motivo: "stop", explicacao: "stop" },
+      preco: dec(1),
+      risco: { aprovada: true, barreiras: [] },
+      estado: "executada",
+    });
+    expect(await c.banco.sistema.motivoDaDecisao(id)).toBe("stop");
+    expect(await c.banco.sistema.motivoDaDecisao(randomUUID())).toBeNull();
+    expect(await c.banco.sistema.descreverRobo(c.ana.robo.id)).toEqual({
+      nome: "BTC devagar",
+      simbolo: "BTCUSDT",
+      usuarioId: c.ana.id,
+    });
+    expect(await c.banco.sistema.descreverRobo(randomUUID())).toBeNull();
+  });
+
   describe("avisos e gasto de IA", () => {
     it("avisos: grava, lista, conta os enviados e marca como lidos", async () => {
       const agora = Date.now();

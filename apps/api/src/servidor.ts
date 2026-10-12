@@ -4,7 +4,9 @@ import type { Redis } from "ioredis";
 import { construirApp } from "./app.js";
 import { lerConfig, semVazias, type Config } from "./config.js";
 import type { Dependencias } from "./dependencias.js";
-import { antiReplayRedis } from "./integracoes/anti-replay.js";
+import { criarCentralAlertas } from "./integracoes/alertas.js";
+import { criarTradutorAlertas } from "./integracoes/alertas-eventos.js";
+import { antiReplayRedis, PREFIXO_ALERTA_ENVIADO } from "./integracoes/anti-replay.js";
 import { armazemRedis, criarRegistroAutomacoes } from "./integracoes/automacoes.js";
 import { configAssistenteDoAmbiente, criarClienteAssistente } from "./integracoes/assistente.js";
 import { criarServicoConhecimento, prepararEmbeddings, repositorioRag } from "./integracoes/conhecimento.js";
@@ -80,6 +82,16 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
   );
   const hub = criarHubEventos({ donos: banco.sistema, log });
   hub.aoEvento(criarRetransmissorN8n({ decisoes: banco.decisoes, n8n, log }));
+  // Alertas: stop, perda do dia, pausas, ordens, robô que não liga, WebSocket, orçamento de IA.
+  const alertas = criarCentralAlertas({
+    avisos: banco.avisos,
+    n8n,
+    dedup: antiReplayRedis(redis, PREFIXO_ALERTA_ENVIADO),
+    donoDoRobo: (id) => banco.sistema.donoDoRobo(id),
+    log,
+    agora,
+  });
+  hub.aoEvento(criarTradutorAlertas({ central: alertas, consultas: banco.sistema, log }));
   await assinarEventos(assinante, hub);
   const saude = verificadorSaude({
     redis,
@@ -101,6 +113,7 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
     agora,
     rendaFixa: rendaFixaDe(banco, log, agora),
     cotacoesB3: criarClienteCotacoesB3({ token: config.BRAPI_TOKEN }),
+    alertas,
   };
   return { deps, fila };
 }
