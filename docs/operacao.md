@@ -112,7 +112,7 @@ Para voltar atrás, mude o modo de novo ou pause o robô (`{ "pausado": true }`)
 
 ## Parada total
 
-A parada total barra **todas** as ordens de todos os robôs. O motor a lê a cada decisão.
+A parada total barra **toda entrada nova** de todos os robôs: nenhuma compra, nenhuma venda pela regra de saída ou por tempo, e o agente não é consultado. O motor a lê a cada decisão. A **proteção continua**: o stop e o alvo combinados na compra seguem no livro da corretora e o robô segue vendendo no stop e no alvo ([ADR 007](adr/007-protecao-sai-sempre.md)). Pausar um robô faz o mesmo só com ele; robô pausado com posição aberta continua ligado até a posição fechar.
 
 - **Ligar:** botão na tela, ou
   ```bash
@@ -123,7 +123,18 @@ A parada total barra **todas** as ordens de todos os robôs. O motor a lê a cad
 - **Automática:** o fluxo `zentrade-vigia-saude` liga sozinho se o motor ficar mais de 3 minutos sem dar sinal, e avisa no Telegram.
 - **Desligar:** só pela tela, com reautenticação. De propósito: quem desliga precisa ser uma pessoa olhando o que aconteceu.
 
-Ligue sem medo quando tiver dúvida. O custo é perder oportunidades; posições abertas continuam na corretora e você pode encerrá-las pela própria Binance.
+Ligue sem medo quando tiver dúvida. O custo é perder oportunidades; posições abertas continuam protegidas pelo stop e pelo alvo no livro da corretora, e você pode encerrá-las pela própria Binance (cancele a ordem de proteção do robô antes de vender, senão a base está travada nela).
+
+## Stop na corretora
+
+Depois de cada compra executada, o motor deixa no livro da corretora a proteção da posição: um **OCO** (alvo `LIMIT_MAKER` + `STOP_LOSS_LIMIT`) ou só o stop-limit, se o preço já passou do alvo. Ela vale mesmo com o motor fora do ar. Na tela, a posição mostra "Stop na corretora: ativo a X".
+
+- `MOTOR_STOP_NA_CORRETORA` (padrão `true`) liga e desliga. Desligado, só o robô vigia o stop, no fechamento de cada minuto.
+- `MOTOR_STOP_LIMITE_BPS` (padrão `100` = 1%): quanto abaixo do gatilho fica o preço limite da venda. Maior = executa em quedas mais rápidas, com pior preço. Se o preço passar do limite sem executar, o robô cancela e vende a mercado no fechamento do minuto seguinte (com o motor no ar).
+- O motor confere a proteção a cada candle: o que ela executou vira a venda que fecha a posição (uma vez só) e, se o stop efetivo mudar (stop móvel, empate), a ordem é trocada. Antes de o robô vender por conta própria, ela sai do livro.
+- Na partida, a proteção do banco é conferida contra a corretora: se o stop executou com o motor parado, a venda é gravada; se a ordem sumiu (cancelada por fora), outra é colocada.
+- Recusa da corretora (ex.: filtro de preço), poeira (posição abaixo do mínimo da corretora) e saldo menor que a posição aparecem como aviso de risco na tela, uma vez. Poeira não tem ordem que a venda: recolha na Binance em "Converter saldos pequenos em BNB".
+- **Vender na mão:** a proteção trava a base; se você cancelá-la na Binance com o robô ligado (mesmo pausado), o motor coloca outra no candle seguinte. Para fechar a posição na mão, desligue antes a proteção na corretora (`MOTOR_STOP_NA_CORRETORA=false`) ou deixe o robô sair pelo stop, pelo alvo ou pela regra. Um comando "zerar posição" na tela ainda não existe; quando existir, ele sai como proteção (nada o barra).
 
 ## Assistente e o Claude Code (o seu plano)
 
@@ -191,18 +202,20 @@ O Redis não precisa de backup: eventos e fila se refazem.
 
 Primeiro passo, sempre: **na dúvida, ligue a parada total**. Depois investigue.
 
-| Sintoma                                | O que fazer                                                                                                                                                              |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Aviso "motor sem sinal" no Telegram    | A parada total já foi ligada. Veja os logs do motor e `GET /api/v1/saude`. Com o motor de volta, confira posições e decisões e só então desligue a parada pela tela.     |
-| Aviso "API não respondeu"              | O vigia não consegue ligar a parada por ela. Entre no servidor; se precisar, pare o motor (`docker stop`) — sem motor, nenhuma ordem sai.                                |
-| Decisões sem proposta da IA            | O agente caiu, demorou mais de 60 s ou respondeu fora do esquema. O robô não opera nesses casos. Veja os logs do agente e o custo de IA no relatório.                    |
-| Ordem rejeitada pela corretora         | O motivo fica na ordem (`GET /api/v1/ordens`). Comum: filtros de lote ou valor mínimo mudaram, saldo insuficiente, chave sem permissão de negociar.                      |
-| Posição na tela diferente da corretora | A posição é calculada das execuções confirmadas. Procure ordem pendente ou parcial; o motor reconcilia pelo `idCliente`. Não "corrija" a posição na mão.                 |
-| Perda diária atingida                  | Compras param até o dia seguinte; vendas que encerram posição continuam. Use a pausa para revisar a estratégia antes de mexer nos limites.                               |
-| Webhook do n8n devolvendo 401          | O segredo da credencial do n8n não é o mesmo de `N8N_WEBHOOK_SEGREDO`, ou o relógio de um dos servidores está errado (a assinatura vale 5 min).                          |
-| Webhook do n8n devolvendo 409          | `webhook_repetido`: a mesma requisição assinada chegou duas vezes (retentativa do n8n). Assine de novo a cada envio. `n8n_usuario_obrigatorio`: defina `N8N_USUARIO_ID`. |
-| Telegram não recebe nada               | Confira a credencial do bot, `TELEGRAM_CHAT_ID` e se você mandou mensagem ao bot antes. Veja as execuções com erro no n8n.                                               |
-| O n8n caiu                             | O núcleo segue. Propostas em `sugerir` expiram sem resposta; alertas e relatório atrasam. Suba o n8n de novo.                                                            |
-| Suspeita de chave vazada               | Ligue a parada total, **apague a chave na Binance**, remova a conta-corretora na tela, gere uma nova (sem saque, com IP) e troque os segredos do `.env`.                 |
-| Assistente: "faça o login de novo"     | O login do Claude Code daquela conta expirou. Refaça como em [Assistente e o Claude Code](#fazer-o-login-uma-vez-docker), ou troque para a API nas configurações.        |
-| Suspeita de token vazado               | Revogue na tela (Tokens) e crie outro. Se for o do n8n, atualize a credencial.                                                                                           |
+| Sintoma                                | O que fazer                                                                                                                                                                                                               |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Aviso "motor sem sinal" no Telegram    | A parada total já foi ligada; as posições seguem com o stop no livro da corretora. Veja os logs do motor e `GET /api/v1/saude`. Com o motor de volta, confira posições e decisões e só então desligue a parada pela tela. |
+| Aviso "API não respondeu"              | O vigia não consegue ligar a parada por ela. Entre no servidor; se precisar, pare o motor (`docker stop`) — sem motor, nenhuma ordem nova sai; o stop e o alvo que já estão no livro da corretora continuam valendo.      |
+| Decisões sem proposta da IA            | O agente caiu, demorou mais de 60 s ou respondeu fora do esquema. O robô não opera nesses casos. Veja os logs do agente e o custo de IA no relatório.                                                                     |
+| Ordem rejeitada pela corretora         | O motivo fica na ordem (`GET /api/v1/ordens`). Comum: filtros de lote ou valor mínimo mudaram, saldo insuficiente, chave sem permissão de negociar.                                                                       |
+| Posição na tela diferente da corretora | A posição é calculada das execuções confirmadas. Procure ordem pendente ou parcial; o motor reconcilia pelo `idCliente`. Não "corrija" a posição na mão.                                                                  |
+| Aviso "a corretora recusou o stop"     | A proteção não entrou no livro (o motivo vem da Binance). O robô segue vigiando o stop no fechamento de cada minuto e tenta de novo em 5 min. Confira filtros do par e saldo livre.                                       |
+| Aviso "poeira"                         | A posição ficou abaixo do mínimo da corretora: nenhuma ordem a vende, nem o stop. Recolha na Binance ("Converter saldos pequenos em BNB").                                                                                |
+| Perda diária atingida                  | Compras param até o dia seguinte; vendas que encerram posição continuam. Use a pausa para revisar a estratégia antes de mexer nos limites.                                                                                |
+| Webhook do n8n devolvendo 401          | O segredo da credencial do n8n não é o mesmo de `N8N_WEBHOOK_SEGREDO`, ou o relógio de um dos servidores está errado (a assinatura vale 5 min).                                                                           |
+| Webhook do n8n devolvendo 409          | `webhook_repetido`: a mesma requisição assinada chegou duas vezes (retentativa do n8n). Assine de novo a cada envio. `n8n_usuario_obrigatorio`: defina `N8N_USUARIO_ID`.                                                  |
+| Telegram não recebe nada               | Confira a credencial do bot, `TELEGRAM_CHAT_ID` e se você mandou mensagem ao bot antes. Veja as execuções com erro no n8n.                                                                                                |
+| O n8n caiu                             | O núcleo segue. Propostas em `sugerir` expiram sem resposta; alertas e relatório atrasam. Suba o n8n de novo.                                                                                                             |
+| Suspeita de chave vazada               | Ligue a parada total, **apague a chave na Binance**, remova a conta-corretora na tela, gere uma nova (sem saque, com IP) e troque os segredos do `.env`.                                                                  |
+| Assistente: "faça o login de novo"     | O login do Claude Code daquela conta expirou. Refaça como em [Assistente e o Claude Code](#fazer-o-login-uma-vez-docker), ou troque para a API nas configurações.                                                         |
+| Suspeita de token vazado               | Revogue na tela (Tokens) e crie outro. Se for o do n8n, atualize a credencial.                                                                                                                                            |

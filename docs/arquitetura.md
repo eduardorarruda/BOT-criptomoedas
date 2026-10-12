@@ -97,7 +97,8 @@ sequenceDiagram
 
 Pontos que valem em todos os caminhos:
 
-- **O risco roda depois da IA e antes de qualquer ordem.** Ele lê a parada total a cada decisão, sem cache.
+- **O risco roda depois da IA e antes de qualquer ordem.** Ele lê a parada total a cada decisão, sem cache. A parada total barra entradas e saídas pela regra; stop e alvo saem sempre.
+- **O stop e o alvo ficam no livro da corretora** depois da compra (`protecoes_corretora`); o motor confere a cada candle, troca quando o stop efetivo muda e tira antes de vender por conta própria.
 - **A ordem é reservada no banco antes de sair** (`PortaOrdens.reservar`). Se o processo cair no meio, o `idCliente` impede ordem duplicada.
 - **A posição nunca é gravada**: é recalculada a partir das execuções confirmadas pela corretora.
 - **Toda decisão guarda o porquê**: a explicação da regra, a proposta da IA com as fontes, as barreiras do risco e, depois, o desfecho.
@@ -108,9 +109,10 @@ Pontos que valem em todos os caminhos:
 2. **Dinheiro em decimal exato** ([ADR 002](adr/002-dinheiro-decimal-exato.md)). Indicadores podem usar `number`; preço de ordem, quantidade e resultado, nunca.
 3. **Posição derivada das execuções** ([ADR 003](adr/003-posicao-derivada-das-execucoes.md)). Uma fonte da verdade, nada gravado em dobro.
 4. **Toda compra tem stop e o alvo cobre as duas taxas.** O motor de risco barra o que não cumpre.
-5. **Dinheiro real por último.** Robô novo nasce em `observar`; a rede padrão é a testnet.
-6. **Automação fora do núcleo** ([ADR 006](adr/006-n8n-fora-do-nucleo.md)). O n8n avisa e pede aprovação; não decide nem envia ordem.
-7. **Código aberto com proteção** ([ADR 004](adr/004-agpl-com-cla.md)) e **um banco só** para dados, séries temporais e busca vetorial ([ADR 005](adr/005-postgresql-timescale-pgvector.md)).
+5. **A proteção sai sempre e fica na corretora** ([ADR 007](adr/007-protecao-sai-sempre.md)). Pausa, parada total e frequência barram entradas, nunca o stop; o stop e o alvo ficam no livro da corretora (OCO) e o robô vigia como segunda linha.
+6. **Dinheiro real por último.** Robô novo nasce em `observar`; a rede padrão é a testnet.
+7. **Automação fora do núcleo** ([ADR 006](adr/006-n8n-fora-do-nucleo.md)). O n8n avisa e pede aprovação; não decide nem envia ordem.
+8. **Código aberto com proteção** ([ADR 004](adr/004-agpl-com-cla.md)) e **um banco só** para dados, séries temporais e busca vetorial ([ADR 005](adr/005-postgresql-timescale-pgvector.md)).
 
 ## Onde está cada coisa
 
