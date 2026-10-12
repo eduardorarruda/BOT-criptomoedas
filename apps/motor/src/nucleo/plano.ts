@@ -90,7 +90,8 @@ export function planejar(
   if (sinal.acao === "COMPRAR") return planejarCompra(deps, robo, sinal, ctx);
   return Promise.resolve({
     lado: "VENDA",
-    finalidade: sinal.motivo === "regra de saída" ? "saida" : "protecao",
+    // Stop e alvo cumprem o combinado na entrada; regra de saída e tempo são decisões novas.
+    finalidade: sinal.motivo === "stop" || sinal.motivo === "alvo" ? "protecao" : "saida",
     quantidade: quantidadeVenda(ctx.posicao.quantidade, ctx.filtros),
     confianca: ctx.proposta?.confianca ?? 1,
   });

@@ -115,5 +115,19 @@ export function portaDecisoes(db: Db, opcoes: OpcoesPortaDecisoes = {}): PortaDe
     },
 
     ultimaCompraExecutada: (roboId: string) => ultimaCompraExecutada(db, roboId),
+
+    /** greatest: duas atualizações fora de ordem nunca descem o stop. */
+    async subirStop(id: string, stop: Valor): Promise<void> {
+      const mudadas = await db
+        .update(decisoes)
+        .set({
+          stopEfetivo: sql`greatest(${decisoes.stopEfetivo}, ${paraTexto(stop)}::numeric)`,
+          atualizadaEm: new Date(),
+        })
+        .where(eq(decisoes.id, id))
+        .returning({ id: decisoes.id });
+      if (mudadas.length === 0)
+        throw new ErroDados("nao_encontrado", `a decisão ${id} não existe; o stop não foi gravado`);
+    },
   };
 }

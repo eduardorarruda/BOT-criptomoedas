@@ -106,6 +106,15 @@ export class DecisoesMemoria implements PortaDecisoes {
     });
   }
 
+  subirStop(id: string, stop: Valor): Promise<void> {
+    const atual = this.decisoes.get(id);
+    if (!atual) return Promise.reject(new Error(`A decisão ${id} não existe; o stop não foi gravado.`));
+    const protecao = atual.protecao;
+    if (protecao && stop.gt(protecao.stop))
+      this.decisoes.set(id, { ...atual, protecao: { ...protecao, stop } });
+    return Promise.resolve();
+  }
+
   todas(): DecisaoGuardada[] {
     return [...this.decisoes.values()];
   }

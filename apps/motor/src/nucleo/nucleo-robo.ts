@@ -1,6 +1,15 @@
 import type { ResultadoOrdem, RoboConfig } from "@zentrade/contratos";
-import { decidir, paraTexto, posicaoDe, type Candle, type Posicao, type Valor } from "@zentrade/dominio";
+import {
+  decidir,
+  paraTexto,
+  posicaoDe,
+  type Acompanhamento,
+  type Candle,
+  type Posicao,
+  type Valor,
+} from "@zentrade/dominio";
 import { BufferCandles } from "../buffer.js";
+import { AcompanhamentoPosicao } from "./acompanhamento.js";
 import { Trava } from "../trava.js";
 import {
   barrarPorPosicaoZerada,
@@ -13,7 +22,7 @@ import { MemoriaBloqueio } from "./bloqueio.js";
 import { ehProtecao, processarSinal } from "./ciclo.js";
 import { mudarEstado, publicar } from "./diario.js";
 import type { Plano } from "./plano.js";
-import { PosicaoAberta } from "./posicao-aberta.js";
+import { PosicaoAberta, type ProtecaoEfetiva } from "./posicao-aberta.js";
 import { conferirOrdemIncerta, type OrdemIncerta } from "./reconciliacao.js";
 import { conferirProtecao, StopNaCorretora } from "./stop-corretora.js";
 import type { AprovacaoPendente, Dependencias, EntradaCiclo, ResultadoCiclo } from "./tipos.js";
@@ -31,6 +40,7 @@ export class NucleoRobo {
   private readonly aberta: PosicaoAberta;
   private readonly bloqueio: MemoriaBloqueio;
   private readonly stopNaCorretora: StopNaCorretora;
+  private readonly acompanhamento: AcompanhamentoPosicao;
   private ultimoMinuto = 0;
   private falhas = 0;
   private incertas: readonly OrdemIncerta[] = [];
@@ -45,7 +55,13 @@ export class NucleoRobo {
     this.buffer = new BufferCandles(deps.opcoes.tamanhoHistorico);
     this.aberta = new PosicaoAberta(robo, deps);
     this.bloqueio = new MemoriaBloqueio(() => deps.robos.pausado(robo.id));
-    this.stopNaCorretora = new StopNaCorretora(robo, deps, (p) => this.aberta.protecaoEfetiva(p));
+    this.acompanhamento = new AcompanhamentoPosicao(
+      robo,
+      deps,
+      () => this.buffer.lista(),
+      () => this.buffer.contexto(),
+    );
+    this.stopNaCorretora = new StopNaCorretora(robo, deps, (p) => this.protecaoEfetiva(p));
   }
 
   get totalFalhas(): number {
@@ -101,11 +117,10 @@ export class NucleoRobo {
     if (!(await this.semOrdemIncerta())) return null;
     this.bloqueio.novoIntervalo();
     const posicao = await this.posicao();
-    const sinal = decidir(
-      await this.aberta.estrategia(posicao),
-      { ...this.buffer.contexto(), preco: candle.fecha },
-      posicao,
-    );
+    const estrategia = await this.aberta.estrategia(posicao);
+    const decisaoId = (await this.aberta.protecaoEfetiva(posicao))?.decisaoId ?? null;
+    const acompanhamento = await this.acompanhamento.noIntervalo(estrategia, posicao, decisaoId);
+    const sinal = decidir(estrategia, this.contextoDecisao(candle.fecha, acompanhamento), posicao);
     await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
     return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
   }
@@ -128,8 +143,10 @@ export class NucleoRobo {
     if (!(await this.semOrdemIncerta())) return null;
     const posicao = await this.posicao();
     if (posicao.quantidade.isZero()) return null;
-    const { saida: _ignorada, ...soStopEAlvo } = await this.aberta.estrategia(posicao);
-    const sinal = decidir(soStopEAlvo, { ...this.buffer.contexto(), preco: candle.fecha }, posicao);
+    // Só stop (o efetivo) e alvo: a regra de saída e o tempo são do candle do intervalo.
+    const { saida: _saida, tempoMaximo: _tempo, ...soStopEAlvo } = await this.aberta.estrategia(posicao);
+    const acompanhamento = await this.acompanhamento.vigente(soStopEAlvo, posicao);
+    const sinal = decidir(soStopEAlvo, this.contextoDecisao(candle.fecha, acompanhamento), posicao);
     if (sinal.acao !== "VENDER" || (await this.bloqueio.repetido(sinal, posicao))) return null;
     await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
     return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
@@ -188,9 +205,16 @@ export class NucleoRobo {
       return;
     }
     if (ordem.execucoes.length === 0) return;
-    if (plano.lado === "COMPRA") this.aberta.aoComprar(decisaoId, plano.ajuste);
+    if (plano.lado === "COMPRA") await this.aposCompra(decisaoId, plano);
     else await this.aposVenda();
     await publicarPosicao(this.deps, this.robo);
+  }
+
+  /** Compra executada: a posição nasce com o stop efetivo da compra e o acompanhamento começa dele. */
+  private async aposCompra(decisaoId: string, plano: Plano): Promise<void> {
+    this.aberta.aoComprar(decisaoId, plano.ajuste);
+    const posicao = await this.posicao();
+    this.acompanhamento.aoComprar(await this.aberta.estrategia(posicao), posicao);
   }
 
   /** Venda executada: grava o desfecho e, se a posição zerou, encerra a venda que esperava aprovação. */
@@ -230,11 +254,21 @@ export class NucleoRobo {
       if (!resultado) return false;
       this.incertas = this.incertas.filter((o) => o !== incerta);
       if (resultado.execucoes.length === 0) continue;
+      this.acompanhamento.esquecer();
       if (incerta.lado === "COMPRA") this.aberta.esquecer();
       else await this.aposVenda();
       await publicarPosicao(this.deps, this.robo);
     }
     return true;
+  }
+
+  private contextoDecisao(preco: Valor, acompanhamento: Acompanhamento | null) {
+    return { ...this.buffer.contexto(), preco, ...(acompanhamento ? { acompanhamento } : {}) };
+  }
+
+  /** O stop efetivo da posição: o da compra ou o que o acompanhamento subiu (o maior). */
+  private async protecaoEfetiva(posicao: Posicao): Promise<ProtecaoEfetiva | null> {
+    return this.acompanhamento.aplicar(await this.aberta.protecaoEfetiva(posicao));
   }
 
   /** Confere e ajusta a proteção no livro (reconciliação na partida). */
@@ -251,6 +285,7 @@ export class NucleoRobo {
     await this.semDerrubar("conferir a proteção na corretora", async () => {
       if (!(await conferirProtecao(this.deps, this.robo))) return;
       this.aberta.esquecer();
+      this.acompanhamento.esquecer();
       const p = this.aprovacao;
       if (p?.plano.lado !== "VENDA" || !(await this.posicao()).quantidade.isZero()) return;
       this.aprovacao = null;

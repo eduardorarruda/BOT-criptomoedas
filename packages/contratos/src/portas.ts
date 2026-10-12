@@ -81,6 +81,11 @@ export interface PortaDecisoes {
   /** Resultado realizado (líquido das duas taxas) da ida e volta, gravado na compra que a abriu. */
   registrarDesfecho(decisaoId: string, resultado: Valor, em: number): Promise<void>;
   ultimaCompraExecutada(roboId: string): Promise<CompraExecutada | null>;
+  /**
+   * Sobe o stop efetivo gravado na compra (stop móvel, empate); nunca desce. A posição
+   * aberta segue com ele depois de um reinício.
+   */
+  subirStop(decisaoId: string, stop: Valor): Promise<void>;
 }
 
 export interface NovaOrdem {
