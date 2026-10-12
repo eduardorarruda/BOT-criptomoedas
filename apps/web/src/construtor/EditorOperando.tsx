@@ -1,36 +1,61 @@
-import type { Operando } from "@zentrade/dominio";
+import {
+  INDICADORES,
+  nomeIndicador,
+  type CampoCandle,
+  type GrupoIndicador,
+  type Indicador,
+  type Operando,
+  type OperandoIndicador,
+  type ParametroIndicador,
+} from "@zentrade/dominio";
 import { useState } from "react";
 import { lerDecimalDigitado, paraCampo } from "../lib/entrada";
 
-/** Edita um lado da comparação: preço, número, indicador (com período) ou múltiplo de outro. */
-type TipoEscolha = "preco" | "numero" | "sma" | "ema" | "rsi" | "multiplicar";
+/**
+ * Edita um lado da comparação: preço, campo do candle, número, indicador (com os
+ * parâmetros e a linha escolhida) ou múltiplo de outro. Os indicadores vêm do
+ * catálogo do domínio: indicador novo lá aparece aqui sem mexer na tela.
+ */
+type TipoEscolha = "preco" | "numero" | "multiplicar" | CampoCandle | Indicador;
 
 const BASICOS: readonly { valor: TipoEscolha; rotulo: string }[] = [
-  { valor: "preco", rotulo: "Preço" },
+  { valor: "preco", rotulo: "Preço (fechamento)" },
   { valor: "numero", rotulo: "Número" },
   { valor: "multiplicar", rotulo: "Múltiplo de…" },
 ];
-const INDICADORES: readonly { valor: TipoEscolha; rotulo: string; titulo: string }[] = [
-  { valor: "sma", rotulo: "SMA", titulo: "Média móvel simples" },
-  { valor: "ema", rotulo: "EMA", titulo: "Média móvel exponencial" },
-  { valor: "rsi", rotulo: "RSI", titulo: "Índice de força relativa (0 a 100)" },
+const CANDLE: readonly { valor: CampoCandle; rotulo: string }[] = [
+  { valor: "abertura", rotulo: "Abertura" },
+  { valor: "maxima", rotulo: "Máxima" },
+  { valor: "minima", rotulo: "Mínima" },
+  { valor: "volume", rotulo: "Volume" },
 ];
+const GRUPOS: readonly { grupo: GrupoIndicador; rotulo: string }[] = [
+  { grupo: "tendencia", rotulo: "Tendência" },
+  { grupo: "momento", rotulo: "Momento" },
+  { grupo: "volatilidade", rotulo: "Volatilidade" },
+  { grupo: "volume", rotulo: "Volume" },
+];
+const POR_GRUPO = GRUPOS.map(({ grupo, rotulo }) => ({
+  rotulo,
+  indicadores: (Object.keys(INDICADORES) as Indicador[]).filter((n) => INDICADORES[n].grupo === grupo),
+}));
 
 const escolhaDe = (op: Operando): TipoEscolha => (op.tipo === "indicador" ? op.nome : op.tipo);
 
 export function padraoPara(t: TipoEscolha): Operando {
   switch (t) {
     case "preco":
-      return { tipo: "preco" };
+    case "abertura":
+    case "maxima":
+    case "minima":
+    case "volume":
+      return { tipo: t };
     case "numero":
       return { tipo: "numero", valor: 30 };
-    case "rsi":
-      return { tipo: "indicador", nome: "rsi", periodo: 14 };
-    case "sma":
-    case "ema":
-      return { tipo: "indicador", nome: t, periodo: 20 };
     case "multiplicar":
       return { tipo: "multiplicar", fator: 1.02, operando: { tipo: "indicador", nome: "sma", periodo: 50 } };
+    default:
+      return INDICADORES[t].padrao;
   }
 }
 
@@ -65,6 +90,60 @@ function NumeroLivre({
   );
 }
 
+/** Parâmetros e linha do indicador: "Bollinger ( 20 ; 2 ) [banda inferior]". */
+function ParametrosIndicador({
+  operando,
+  rotulo,
+  aoMudar,
+}: {
+  readonly operando: OperandoIndicador;
+  readonly rotulo: string;
+  readonly aoMudar: (o: Operando) => void;
+}) {
+  const definicao = INDICADORES[operando.nome];
+  const nome = nomeIndicador(operando.nome);
+  const valores = operando as unknown as Record<ParametroIndicador, number> & { saida?: string };
+  return (
+    <>
+      <span className="operando__sep" aria-hidden="true">
+        (
+      </span>
+      {definicao.parametros.map((p, i) => (
+        <span key={`${operando.nome}-${p.campo}`} className="operando__parametro">
+          {i > 0 ? (
+            <span className="operando__sep" aria-hidden="true">
+              ;
+            </span>
+          ) : null}
+          <NumeroLivre
+            inteiro={p.campo !== "desvios"}
+            valor={valores[p.campo]}
+            rotulo={`${rotulo}: ${p.rotulo} de ${nome}`}
+            aoMudar={(n) => aoMudar({ ...operando, [p.campo]: n } as Operando)}
+          />
+        </span>
+      ))}
+      <span className="operando__sep" aria-hidden="true">
+        )
+      </span>
+      {definicao.saidas.length ? (
+        <select
+          className="operando__saida"
+          aria-label={`${rotulo}: linha de ${nome}`}
+          value={valores.saida}
+          onChange={(e) => aoMudar({ ...operando, saida: e.target.value } as Operando)}
+        >
+          {definicao.saidas.map((s) => (
+            <option key={s.valor} value={s.valor}>
+              {s.rotulo}
+            </option>
+          ))}
+        </select>
+      ) : null}
+    </>
+  );
+}
+
 export function EditorOperando({
   operando,
   rotulo,
@@ -75,11 +154,13 @@ export function EditorOperando({
   readonly aoMudar: (o: Operando) => void;
 }) {
   const escolha = escolhaDe(operando);
+  const titulo = operando.tipo === "indicador" ? INDICADORES[operando.nome].descricao : undefined;
   return (
     <span className="operando">
       <select
         className="operando__tipo"
         aria-label={`${rotulo}: tipo`}
+        title={titulo}
         value={escolha}
         onChange={(e) => aoMudar(padraoPara(e.target.value as TipoEscolha))}
       >
@@ -88,13 +169,22 @@ export function EditorOperando({
             {o.rotulo}
           </option>
         ))}
-        <optgroup label="Indicadores">
-          {INDICADORES.map((o) => (
-            <option key={o.valor} value={o.valor} title={o.titulo}>
+        <optgroup label="Último candle">
+          {CANDLE.map((o) => (
+            <option key={o.valor} value={o.valor}>
               {o.rotulo}
             </option>
           ))}
         </optgroup>
+        {POR_GRUPO.map((g) => (
+          <optgroup key={g.rotulo} label={g.rotulo}>
+            {g.indicadores.map((n) => (
+              <option key={n} value={n} title={INDICADORES[n].descricao}>
+                {INDICADORES[n].titulo}
+              </option>
+            ))}
+          </optgroup>
+        ))}
       </select>
       {operando.tipo === "numero" ? (
         <NumeroLivre
@@ -104,20 +194,7 @@ export function EditorOperando({
         />
       ) : null}
       {operando.tipo === "indicador" ? (
-        <>
-          <span className="operando__sep" aria-hidden="true">
-            (
-          </span>
-          <NumeroLivre
-            inteiro
-            valor={operando.periodo}
-            rotulo={`${rotulo}: período de ${operando.nome.toUpperCase()}`}
-            aoMudar={(periodo) => aoMudar({ ...operando, periodo })}
-          />
-          <span className="operando__sep" aria-hidden="true">
-            )
-          </span>
-        </>
+        <ParametrosIndicador operando={operando} rotulo={rotulo} aoMudar={aoMudar} />
       ) : null}
       {operando.tipo === "multiplicar" ? (
         <>

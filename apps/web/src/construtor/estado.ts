@@ -1,8 +1,7 @@
-import type { EstrategiaDTO } from "@zentrade/contratos/esquemas";
-import { validarEstrategia, validarRegra } from "@zentrade/dominio";
+import type { CamposEstrategia, EstrategiaDTO } from "@zentrade/contratos/esquemas";
+import { validarEstrategia, validarRegra, type ModeloEstrategia } from "@zentrade/dominio";
 import type { NovaEstrategia } from "../api/fonte";
 import { paraDominio } from "../lib/estrategia";
-import { lerDecimalDigitado, paraCampo } from "../lib/entrada";
 import {
   alternarGrupo,
   deRegra,
@@ -14,18 +13,24 @@ import {
   moverEntreIrmaos,
   novoComparar,
   novoGrupo,
+  novoId,
   novoNao,
   paraRegra,
   remover,
   atualizar,
+  type NoComparar,
   type NoEditor,
 } from "./arvore";
+import { condicaoPronta, type CondicaoPronta } from "./prontas";
+import { fracaoDe, lerSaidas, percentual, SAIDAS_PADRAO, saidasDe, type EstadoSaidas } from "./saidas";
+
+export { fracaoDe } from "./saidas";
 
 /**
- * Estado do construtor (nome, árvores de entrada e saída, stop/alvo/taxa como
- * digitados) e o redutor que o muda. Puro: a tela só despacha ações.
+ * Estado do construtor (nome, árvores de entrada e saída, stop/alvo/taxa e as
+ * saídas como digitados) e o redutor que o muda. Puro: a tela só despacha ações.
  */
-export type Bloco = "comparar" | "e" | "ou" | "nao";
+export type Bloco = "comparar" | "e" | "ou" | "nao" | CondicaoPronta["id"];
 export type Arvore = "entrada" | "saida";
 
 export interface EstadoConstrutor {
@@ -38,11 +43,13 @@ export interface EstadoConstrutor {
   readonly stop: string;
   readonly alvo: string;
   readonly taxa: string;
+  readonly saidas: EstadoSaidas;
 }
 
 export type Acao =
   | { readonly tipo: "nome"; readonly nome: string }
   | { readonly tipo: "parametro"; readonly campo: "stop" | "alvo" | "taxa"; readonly valor: string }
+  | { readonly tipo: "saidas"; readonly mudanca: Partial<EstadoSaidas> }
   | { readonly tipo: "editar"; readonly arvore: Arvore }
   | { readonly tipo: "ligarSaida"; readonly ligada: boolean }
   | { readonly tipo: "adicionar"; readonly destinoId: string; readonly indice: number; readonly bloco: Bloco }
@@ -53,8 +60,6 @@ export type Acao =
   | { readonly tipo: "alternarGrupo"; readonly id: string }
   | { readonly tipo: "trocarNo"; readonly no: NoEditor }
   | { readonly tipo: "carregar"; readonly estado: EstadoConstrutor };
-
-const percentual = (fracao: number): string => paraCampo(String(Math.round(fracao * 10_000) / 100));
 
 export function estadoVazio(): EstadoConstrutor {
   return {
@@ -67,27 +72,48 @@ export function estadoVazio(): EstadoConstrutor {
     stop: "2,5",
     alvo: "3",
     taxa: "0,1",
+    saidas: SAIDAS_PADRAO,
   };
 }
 
-export function deEstrategia(e: EstrategiaDTO): EstadoConstrutor {
+interface Identidade {
+  readonly id: string | null;
+  readonly versao: number;
+  readonly nome: string;
+}
+
+function deCampos(e: CamposEstrategia, identidade: Identidade): EstadoConstrutor {
   return {
-    id: e.id,
-    versao: e.versao,
-    nome: e.nome,
+    ...identidade,
     entrada: deRegra(e.entrada),
     saida: e.saida ? deRegra(e.saida) : null,
     editando: "entrada",
     stop: percentual(e.stop),
     alvo: percentual(e.alvoLiquido),
     taxa: percentual(e.taxa),
+    saidas: saidasDe(e),
   };
+}
+
+export const deEstrategia = (e: EstrategiaDTO): EstadoConstrutor =>
+  deCampos(e, { id: e.id, versao: e.versao, nome: e.nome });
+
+/** Começar de um modelo: uma estratégia NOVA (sem id), já montada, com o nome do modelo. */
+export const deModelo = (m: ModeloEstrategia): EstadoConstrutor =>
+  deCampos(m.estrategia, { id: null, versao: 0, nome: m.nome });
+
+function deCondicaoPronta(id: string): NoComparar | null {
+  const pronta = condicaoPronta(id);
+  if (!pronta) return null;
+  const { esquerda, comparador, direita } = pronta;
+  return { id: novoId(), tipo: "comparar", esquerda, comparador, direita };
 }
 
 export function criarBloco(b: Bloco): NoEditor {
   if (b === "comparar") return novoComparar();
   if (b === "nao") return novoNao();
-  return novoGrupo(b);
+  if (b === "e" || b === "ou") return novoGrupo(b);
+  return deCondicaoPronta(b) ?? novoComparar();
 }
 
 function naArvore(e: EstadoConstrutor, f: (raiz: NoEditor) => NoEditor): EstadoConstrutor {
@@ -101,6 +127,8 @@ export function redutor(e: EstadoConstrutor, a: Acao): EstadoConstrutor {
       return { ...e, nome: a.nome };
     case "parametro":
       return { ...e, [a.campo]: a.valor };
+    case "saidas":
+      return { ...e, saidas: { ...e.saidas, ...a.mudanca } };
     case "editar":
       return { ...e, editando: a.arvore };
     case "ligarSaida":
@@ -129,18 +157,12 @@ export function redutor(e: EstadoConstrutor, a: Acao): EstadoConstrutor {
   }
 }
 
-/** Percentual digitado ("2,5") → fração (0.025). Só para os parâmetros, não é dinheiro. */
-export function fracaoDe(texto: string): number | null {
-  const v = lerDecimalDigitado(texto);
-  return v === null ? null : Number(v) / 100;
-}
-
 export interface Montagem {
   readonly estrategia: NovaEstrategia | null;
   readonly problemas: readonly string[];
 }
 
-/** Junta tudo e valida com o domínio (validarRegra e validarEstrategia). */
+/** Junta tudo e valida com o domínio (validarRegra e validarEstrategia), saídas incluídas. */
 export function montar(e: EstadoConstrutor): Montagem {
   const problemas: string[] = [];
   if (!e.nome.trim()) problemas.push("dê um nome à estratégia");
@@ -157,7 +179,16 @@ export function montar(e: EstadoConstrutor): Montagem {
   if (stop === null) problemas.push("o stop precisa ser um número, como 2,5");
   if (alvo === null) problemas.push("o alvo precisa ser um número, como 3");
   if (taxa === null) problemas.push("a taxa precisa ser um número, como 0,1");
-  if (!entrada.regra || (saida && !saida.regra) || stop === null || alvo === null || taxa === null) {
+  const saidas = lerSaidas(e.saidas);
+  problemas.push(...saidas.problemas);
+  if (
+    !entrada.regra ||
+    (saida && !saida.regra) ||
+    stop === null ||
+    alvo === null ||
+    taxa === null ||
+    saidas.problemas.length > 0
+  ) {
     return { estrategia: null, problemas: [...new Set(problemas)] };
   }
   const estrategia: NovaEstrategia = {
@@ -167,6 +198,7 @@ export function montar(e: EstadoConstrutor): Montagem {
     stop,
     alvoLiquido: alvo,
     taxa,
+    ...saidas.campos,
   };
   const daEntrada = validarRegra(estrategia.entrada);
   const daSaida = estrategia.saida ? validarRegra(estrategia.saida) : [];

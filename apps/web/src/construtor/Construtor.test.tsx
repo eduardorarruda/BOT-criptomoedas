@@ -1,4 +1,4 @@
-import { validarRegra } from "@zentrade/dominio";
+import { MODELOS, validarEstrategia, validarRegra } from "@zentrade/dominio";
 import { createEvent, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -121,5 +121,90 @@ describe("Construtor de estratégias", () => {
     disparar(zona, createEvent.dragOver, dataTransfer);
     disparar(zona, createEvent.drop, dataTransfer);
     expect(within(ou).getByLabelText("Comparação")).toBeInTheDocument();
+  });
+
+  it("começa de um modelo: preenche nome, regras e saídas, e salva como estratégia nova", async () => {
+    const { aoSalvar } = montar();
+    const usuario = userEvent.setup();
+    await usuario.click(screen.getByText("Começar de um modelo"));
+    expect(screen.getAllByText(/não é recomendação/i).length).toBeGreaterThan(0);
+    const modelo = MODELOS[0]!;
+    await usuario.click(screen.getByRole("button", { name: `Usar este modelo: ${modelo.nome}` }));
+    expect(screen.getByLabelText("Nome da estratégia")).toHaveValue(modelo.nome);
+    expect(screen.getByText(/stop a 2 × ATR\(20\) abaixo da entrada, no máximo 10%/)).toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "Criar estratégia" }));
+    const [id, estrategia] = aoSalvar.mock.calls[0]!;
+    expect(id).toBeNull();
+    expect(estrategia).toEqual({ nome: modelo.nome, ...modelo.estrategia });
+  });
+
+  it("escolhe um indicador novo, a linha dele e os parâmetros", async () => {
+    montar();
+    const usuario = userEvent.setup();
+    await usuario.selectOptions(screen.getByLabelText("Lado direito: tipo"), "bollinger");
+    expect(
+      screen.getByText(/RSI\(14\) abaixo de banda inferior de Bollinger\(20, 2\)\./),
+    ).toBeInTheDocument();
+    await usuario.selectOptions(screen.getByLabelText("Lado direito: linha de Bollinger"), "percentualB");
+    const desvios = screen.getByLabelText("Lado direito: desvios-padrão de Bollinger");
+    await usuario.clear(desvios);
+    await usuario.type(desvios, "2,5");
+    expect(screen.getByText(/abaixo de %B de Bollinger\(20; 2,5\)\./)).toBeInTheDocument();
+    await usuario.selectOptions(screen.getByLabelText("Lado esquerdo: tipo"), "maxima");
+    expect(screen.getByText(/Compra quando/).parentElement).toHaveTextContent(
+      /^Compra quando máxima abaixo de/,
+    );
+  });
+
+  it("adiciona uma condição pronta pelo teclado e pela paleta", async () => {
+    montar();
+    const usuario = userEvent.setup();
+    await usuario.selectOptions(
+      screen.getByLabelText("Adicionar condição pronta ao grupo E"),
+      "pronta:rompimento",
+    );
+    expect(screen.getAllByText(/preço acima de topo de Donchian\(20\)/).length).toBeGreaterThan(0);
+    const dataTransfer = transferencia();
+    const bloco = screen.getByText("Volume alto", { selector: "strong" }).closest("li")!;
+    disparar(bloco, createEvent.dragStart, dataTransfer);
+    const [zona] = screen.getAllByText("Soltar aqui");
+    disparar(zona!, createEvent.dragOver, dataTransfer);
+    disparar(zona!, createEvent.drop, dataTransfer);
+    expect(screen.getAllByText(/volume relativo\(20\) acima de 1,5/).length).toBeGreaterThan(0);
+  });
+
+  it("configura as saídas: stop por ATR, stop móvel, empate e tempo", async () => {
+    const { aoSalvar } = montar();
+    const usuario = userEvent.setup();
+    await usuario.type(screen.getByLabelText("Nome da estratégia"), "Com saídas");
+    await usuario.click(screen.getByRole("radio", { name: "Pela volatilidade (ATR)" }));
+    expect(screen.getByLabelText("Stop máximo (%)")).toHaveValue("2,5");
+    await usuario.click(screen.getByRole("radio", { name: "Por %" }));
+    await usuario.click(screen.getByRole("checkbox", { name: /empate/ }));
+    await usuario.click(screen.getByRole("checkbox", { name: "Sair por tempo" }));
+    const candles = screen.getByLabelText("Depois de quantos candles");
+    await usuario.clear(candles);
+    await usuario.type(candles, "12");
+    expect(screen.getByText("sai depois de 12 candles, se nada disso vier antes")).toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "Criar estratégia" }));
+    const [, estrategia] = aoSalvar.mock.calls[0]!;
+    expect(estrategia).toMatchObject({
+      stopAtr: { periodo: 14, multiplo: 2 },
+      stopMovel: { tipo: "percentual", distancia: 0.03 },
+      empate: { gatilho: 0.02 },
+      tempoMaximo: 12,
+    });
+    const { nome: _nome, ...campos } = estrategia;
+    expect(validarEstrategia({ ...campos, saida: undefined } as never)).toEqual([]);
+  });
+
+  it("valor de saída inválido bloqueia o salvar e diz o motivo", async () => {
+    montar();
+    const usuario = userEvent.setup();
+    await usuario.type(screen.getByLabelText("Nome da estratégia"), "x");
+    await usuario.click(screen.getByRole("checkbox", { name: /Tamanho pela volatilidade/ }));
+    await usuario.clear(screen.getByLabelText("Quantos ATR de risco"));
+    expect(screen.getByText(/O múltiplo do ATR do tamanho precisa ser um número/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Criar estratégia" })).toBeDisabled();
   });
 });

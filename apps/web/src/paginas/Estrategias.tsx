@@ -32,8 +32,9 @@ export function Estrategias() {
           </Botao>
         }
       >
-        Monte as regras com blocos E, OU e NÃO. A prévia mostra em palavras o que a regra faz e o que ela
-        diria agora.
+        Monte as regras com blocos E, OU e NÃO, ou comece de um modelo. Escolha como sair: stop fixo ou por
+        ATR, stop móvel, empate e tempo. A prévia mostra em palavras o que a regra faz e o que ela diria
+        agora.
       </Cabecalho>
       {consulta.isPending ? <Esqueleto altura={480} rotulo="Carregando estratégias" /> : null}
       {consulta.error ? (

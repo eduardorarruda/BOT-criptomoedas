@@ -1,22 +1,36 @@
-import { avaliar, dec, NOS_MAXIMOS, precoAlvo, precoStop } from "@zentrade/dominio";
+import {
+  avaliar,
+  dec,
+  NOS_MAXIMOS,
+  precoAlvo,
+  precoStop,
+  stopDeEntrada,
+  validarRegra,
+} from "@zentrade/dominio";
 import { CircleCheck, CircleDashed, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { Segmentado } from "../componentes/Segmentado";
 import { Selo } from "../componentes/Selo";
 import { useCandles } from "../ganchos/consultas";
+import { contextoDeVelas, paraDominio } from "../lib/estrategia";
 import { formatarPercentual, formatarPreco } from "../lib/formatar";
 import { contarNos, paraRegra } from "./arvore";
-import { frase, linhas } from "./descrever";
+import { frase, frasesSaidas, linhas } from "./descrever";
 import { fracaoDe, type EstadoConstrutor, type Montagem } from "./estado";
+import { lerSaidas } from "./saidas";
 
 /**
- * Prévia ao vivo: a regra em palavras (com os mesmos rótulos do domínio), o que
- * ela diria agora no mercado (avaliar do domínio, com a explicação) e o que falta
- * para salvar (validarRegra e validarEstrategia).
+ * Prévia ao vivo: a regra e as saídas em palavras (com os mesmos rótulos do
+ * domínio), o que ela diria agora no mercado (avaliar do domínio sobre os candles
+ * completos, com a explicação) e o que falta para salvar (validarRegra e
+ * validarEstrategia).
  */
 const PARES = ["BTCUSDT", "ETHUSDT", "SOLUSDT"] as const;
 
+const primeiraMaiuscula = (t: string): string => `${t[0]?.toUpperCase() ?? ""}${t.slice(1)}`;
+
 function EmPalavras({ estado }: { readonly estado: EstadoConstrutor }) {
+  const protecao = frasesSaidas({ stop: fracaoDe(estado.stop), ...lerSaidas(estado.saidas).campos });
   return (
     <section className="previa__bloco" aria-labelledby="previa-palavras">
       <h2 id="previa-palavras" className="previa__titulo">
@@ -37,20 +51,41 @@ function EmPalavras({ estado }: { readonly estado: EstadoConstrutor }) {
         {estado.saida ? `${frase(estado.saida)}, ou no stop ou no alvo` : "o preço chegar ao stop ou ao alvo"}
         .
       </p>
+      {protecao.length ? (
+        <ul role="list" className="previa__linhas previa__saidas" aria-label="Proteção e saídas">
+          {protecao.map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+      ) : null}
     </section>
   );
 }
 
-function SeFosseAgora({ estado }: { readonly estado: EstadoConstrutor }) {
+function SeFosseAgora({
+  estado,
+  montagem,
+}: {
+  readonly estado: EstadoConstrutor;
+  readonly montagem: Montagem;
+}) {
   const [par, setPar] = useState<(typeof PARES)[number]>("BTCUSDT");
   const velas = useCandles(par, "1h");
-  const regra = paraRegra(estado.entrada).regra;
-  const fechamentos = velas.data?.map((v) => Number(v.fecha)) ?? [];
-  const resultado = regra && fechamentos.length ? avaliar(regra, { fechamentos }) : null;
+  const convertida = paraRegra(estado.entrada).regra;
+  // Parâmetro fora da faixa (período 0, por exemplo) não avalia: a validação já aponta.
+  const regra = convertida && validarRegra(convertida).length === 0 ? convertida : null;
+  const ctx = contextoDeVelas(velas.data ?? []);
+  const resultado = regra && ctx.fechamentos.length ? avaliar(regra, ctx) : null;
   const ultimo = velas.data?.at(-1)?.fecha;
   const stop = fracaoDe(estado.stop);
   const alvo = fracaoDe(estado.alvo);
   const taxa = fracaoDe(estado.taxa);
+  const stopAgora =
+    ultimo && stop !== null && stop > 0
+      ? montagem.estrategia
+        ? stopDeEntrada(paraDominio(montagem.estrategia), dec(ultimo), ctx)
+        : { stop: precoStop(dec(ultimo), stop), explicacao: null }
+      : null;
   return (
     <section className="previa__bloco" aria-labelledby="previa-agora">
       <h2 id="previa-agora" className="previa__titulo">
@@ -79,13 +114,16 @@ function SeFosseAgora({ estado }: { readonly estado: EstadoConstrutor }) {
         </div>
       ) : null}
       {!regra ? <p className="apagado">Complete a regra para ver o resultado.</p> : null}
-      {ultimo && stop !== null && alvo !== null && taxa !== null && stop > 0 && alvo > 0 ? (
+      {ultimo && stopAgora && alvo !== null && taxa !== null && alvo > 0 ? (
         <p className="previa__alvo">
           Entrando a <span className="num">{formatarPreco(ultimo)}</span>: stop em{" "}
-          <span className="num perda">{formatarPreco(precoStop(dec(ultimo), stop).toFixed())}</span> e alvo em{" "}
+          <span className="num perda">{formatarPreco(stopAgora.stop.toFixed())}</span> e alvo em{" "}
           <span className="num ganho">{formatarPreco(precoAlvo(dec(ultimo), alvo, taxa).toFixed())}</span> —{" "}
           {formatarPercentual(alvo)} líquido depois das duas taxas de {formatarPercentual(taxa, { casas: 2 })}
           .
+          {stopAgora.explicacao ? (
+            <span className="apagado"> {primeiraMaiuscula(stopAgora.explicacao)}.</span>
+          ) : null}
         </p>
       ) : null}
     </section>
@@ -130,7 +168,7 @@ export function Previa({
   return (
     <aside className="previa" aria-label="Prévia da estratégia">
       <EmPalavras estado={estado} />
-      <SeFosseAgora estado={estado} />
+      <SeFosseAgora estado={estado} montagem={montagem} />
       <Validacao estado={estado} montagem={montagem} />
     </aside>
   );

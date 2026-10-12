@@ -5,10 +5,12 @@ import { CampoTexto } from "../componentes/Campo";
 import { Segmentado } from "../componentes/Segmentado";
 import type { NovaEstrategia } from "../api/fonte";
 import { EditorRegras } from "./EditorRegras";
-import { montar, redutor, type EstadoConstrutor } from "./estado";
+import { EditorSaidas } from "./EditorSaidas";
+import { deModelo, montar, redutor, type EstadoConstrutor } from "./estado";
+import { Modelos } from "./Modelos";
 import { Previa } from "./Previa";
 
-/** O construtor completo de uma estratégia: regras, parâmetros, prévia e salvar. */
+/** O construtor completo de uma estratégia: modelos, regras, saídas, prévia e salvar. */
 export function Construtor({
   inicial,
   salvando,
@@ -26,6 +28,9 @@ export function Construtor({
   return (
     <div className="construtor">
       <div className="construtor__principal">
+        {estado.id === null ? (
+          <Modelos aoUsar={(m) => despachar({ tipo: "carregar", estado: deModelo(m) })} />
+        ) : null}
         <CampoTexto
           rotulo="Nome da estratégia"
           value={estado.nome}
@@ -52,33 +57,7 @@ export function Construtor({
           </label>
         </div>
         <EditorRegras key={raiz.id} raiz={raiz} despachar={despachar} />
-        <fieldset className="construtor__parametros">
-          <legend>Proteção e alvo</legend>
-          <CampoTexto
-            rotulo="Stop (%)"
-            dica="Queda máxima a partir da entrada. Toda compra tem stop."
-            inputMode="decimal"
-            value={estado.stop}
-            onChange={(e) => despachar({ tipo: "parametro", campo: "stop", valor: e.target.value })}
-            className="campo--num"
-          />
-          <CampoTexto
-            rotulo="Alvo líquido (%)"
-            dica="Lucro que sobra depois das duas taxas."
-            inputMode="decimal"
-            value={estado.alvo}
-            onChange={(e) => despachar({ tipo: "parametro", campo: "alvo", valor: e.target.value })}
-            className="campo--num"
-          />
-          <CampoTexto
-            rotulo="Taxa por ponta (%)"
-            dica="Taxa da corretora em cada ordem (Binance: 0,1%)."
-            inputMode="decimal"
-            value={estado.taxa}
-            onChange={(e) => despachar({ tipo: "parametro", campo: "taxa", valor: e.target.value })}
-            className="campo--num"
-          />
-        </fieldset>
+        <EditorSaidas estado={estado} despachar={despachar} />
         <div className="construtor__salvar">
           <Botao
             variante="primario"
