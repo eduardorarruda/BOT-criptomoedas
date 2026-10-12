@@ -1,3 +1,4 @@
+import { ConfiguracaoBacktestEsquema } from "@zentrade/contratos";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { subirApiFalsa, TOKEN_TESTE, type ApiFalsa } from "../teste/api-falsa.js";
 import { executarCli } from "./cli.js";
@@ -114,6 +115,8 @@ describe("CLI zentrade", () => {
       intervalo: "1h",
       inicio: Date.UTC(2026, 0, 1),
       fim: Date.UTC(2026, 5, 1),
+      // O contrato aplica os padrões: custos realistas, limites do robô e validação 70/30.
+      configuracao: ConfiguracaoBacktestEsquema.parse({}),
     });
     expect(criar.saida).toMatch(/zentrade backtest bt-1/);
     const ver = await rodar(["backtest", "bt-1"]);
