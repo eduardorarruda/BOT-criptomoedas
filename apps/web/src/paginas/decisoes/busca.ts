@@ -18,9 +18,9 @@ export const ESTADOS: readonly EstadoDecisao[] = [
 ];
 export const DESFECHOS = ["ganho", "perda", "sem"] as const;
 export type Desfecho = (typeof DESFECHOS)[number];
-export const ORDENS = ["data", "valor", "resultado", "custo"] as const;
-export const AGRUPAMENTOS = ["dia", "robo", "nenhum"] as const;
-export const VISOES = ["cartoes", "tabela"] as const;
+const ORDENS = ["data", "valor", "resultado", "custo"] as const;
+const AGRUPAMENTOS = ["dia", "robo", "nenhum"] as const;
+const VISOES = ["cartoes", "tabela"] as const;
 
 export const ID = /^[\w.:-]{1,64}$/;
 export const SIMBOLO = /^[A-Z0-9]{2,20}$/;

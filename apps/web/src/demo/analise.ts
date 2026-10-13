@@ -51,7 +51,7 @@ function propostaPara(simbolo: string) {
 }
 
 /** Estado que a decisão nasce, conforme o modo do robô e o risco. */
-export function estadoInicial(robo: RoboDTO, aprovada: boolean): DecisaoDTO["estado"] {
+function estadoInicial(robo: RoboDTO, aprovada: boolean): DecisaoDTO["estado"] {
   if (!aprovada) return "barrada";
   if (robo.modo === "observar") return "registrada";
   if (robo.modo === "sugerir") return "aguardando_aprovacao";

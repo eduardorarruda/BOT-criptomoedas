@@ -16,8 +16,8 @@ export interface Checagem {
   readonly detalhe: string;
 }
 
-export const OPERACOES_FIRMES = 100;
-export const OPERACOES_MINIMAS = 30;
+const OPERACOES_FIRMES = 100;
+const OPERACOES_MINIMAS = 30;
 const EMPATE_BUY_HOLD = 0.01;
 const RUINA_BAIXA = 0.05;
 const RUINA_ALTA = 0.2;

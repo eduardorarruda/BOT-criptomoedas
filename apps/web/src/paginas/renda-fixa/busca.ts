@@ -5,12 +5,12 @@ import { campo, type BuscaDe } from "../../componentes/filtros/esquemas";
  * O que a URL da renda fixa aceita. Fica separado dos filtros para a rota validar a
  * busca sem carregar o resto da tela (Decimal, componentes).
  */
-export const ABAS = ["visao", "titulos", "conectar", "cadastrar", "simuladores"] as const;
+const ABAS = ["visao", "titulos", "conectar", "cadastrar", "simuladores"] as const;
 export type Aba = (typeof ABAS)[number];
 export const JANELAS = ["30", "90", "365"] as const;
-export const SITUACOES = ["ativo", "encerrado"] as const;
-export const ORDENS = ["vencimento", "valor", "rendimento", "aplicacao", "nome"] as const;
-export const VISOES = ["cartoes", "tabela", "escada", "alocacao"] as const;
+const SITUACOES = ["ativo", "encerrado"] as const;
+const ORDENS = ["vencimento", "valor", "rendimento", "aplicacao", "nome"] as const;
+const VISOES = ["cartoes", "tabela", "escada", "alocacao"] as const;
 
 export const buscaRendaFixa = {
   aba: campo.opcao(ABAS),

@@ -20,7 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type RotaApp =
+type RotaApp =
   | "/"
   | "/aovivo"
   | "/assistente"
@@ -40,7 +40,7 @@ export type RotaApp =
   | "/contas"
   | "/tokens";
 
-export interface ItemNavegacao {
+interface ItemNavegacao {
   readonly para: RotaApp;
   readonly rotulo: string;
   readonly icone: LucideIcon;

@@ -39,7 +39,7 @@ async function sessaoAtual(ctx: ContextoRotas) {
 }
 
 /** Só aceita voltar para um caminho interno ("/x"), nunca para outro site. */
-export function destinoSeguro(valor: unknown): string | undefined {
+function destinoSeguro(valor: unknown): string | undefined {
   return typeof valor === "string" && valor.startsWith("/") && !valor.startsWith("//") ? valor : undefined;
 }
 

@@ -26,7 +26,7 @@ const VARIAVEIS: Record<keyof CoresGrafico, string> = {
   superficie: "--superficie",
 };
 
-export function lerCores(): CoresGrafico {
+function lerCores(): CoresGrafico {
   const estilo = getComputedStyle(document.documentElement);
   return Object.fromEntries(
     Object.entries(VARIAVEIS).map(([chave, variavel]) => [

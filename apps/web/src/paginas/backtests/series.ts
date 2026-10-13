@@ -1,7 +1,7 @@
 import type { PontoCurvaBacktest } from "../../api/esquemas";
 
 /** Pontos de um gráfico SVG: bastam ~150 para a forma da curva (a tabela some com mais). */
-export const PONTOS_GRAFICO = 150;
+const PONTOS_GRAFICO = 150;
 
 export function reduzir<T>(itens: readonly T[], maximo = PONTOS_GRAFICO): T[] {
   if (itens.length <= maximo) return [...itens];

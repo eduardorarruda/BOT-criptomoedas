@@ -14,8 +14,8 @@ export const ESTADOS_ORDEM: readonly EstadoOrdem[] = [
   "REJEITADA",
   "CANCELADA",
 ];
-export const ORDENS = ["data", "valor", "taxa"] as const;
-export const AGRUPAMENTOS = ["nenhum", "dia", "robo"] as const;
+const ORDENS = ["data", "valor", "taxa"] as const;
+const AGRUPAMENTOS = ["nenhum", "dia", "robo"] as const;
 
 export const buscaOrdens = {
   q: campo.busca(),

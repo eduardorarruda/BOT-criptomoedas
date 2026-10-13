@@ -29,7 +29,7 @@ interface Pendente {
   readonly rejeitar: (e: unknown) => void;
 }
 
-export const erroCancelado = (): ErroApi =>
+const erroCancelado = (): ErroApi =>
   new ErroApi("cancelado", "Ação cancelada: sua identidade não foi confirmada. Nada foi alterado.");
 
 export function ProvedorReautenticacao({ children }: { readonly children: ReactNode }) {

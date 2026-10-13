@@ -9,7 +9,7 @@ import { lerPercentualDigitado, lerReaisDigitado } from "../formato";
  * Base dos simuladores: campos de texto (como a pessoa digita), leitura sem float e
  * a conta refeita a cada mudança — adiada, para digitar não travar.
  */
-export class ErroCampo extends Error {
+class ErroCampo extends Error {
   constructor(
     readonly campo: string,
     mensagem: string,

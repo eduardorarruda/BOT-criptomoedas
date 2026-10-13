@@ -39,8 +39,6 @@ const F = {
   },
 } satisfies Record<string, FonteProposta>;
 
-export const FONTES_DEMO = F;
-
 type Modelo = Omit<PropostaAgente, "stop" | "alvo">;
 
 export const PROPOSTAS = {

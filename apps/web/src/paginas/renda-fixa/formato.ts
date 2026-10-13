@@ -5,7 +5,7 @@ import { dec, type Valor } from "@zentrade/dominio";
  * Formatação da renda fixa em pt-BR, sempre a partir de texto decimal (nada de
  * ponto flutuante no caminho do dinheiro).
  */
-export const TRACO = "—";
+const TRACO = "—";
 const MENOS = "−";
 
 function ler(texto: string | null | undefined): Valor | null {

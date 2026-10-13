@@ -3,7 +3,7 @@ import type { EstadoAssistente, MudancaConfigAssistente, ProvedorIa } from "@zen
 import { ChevronDown, Settings2 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
-export const NOME_PROVEDOR: Record<ProvedorIa, string> = {
+const NOME_PROVEDOR: Record<ProvedorIa, string> = {
   api: "Claude pela API",
   cli: "Claude Code (o seu plano)",
 };

@@ -100,13 +100,11 @@ export const COLUNAS: readonly DefinicaoColuna[] = [
   },
 ];
 
-export type Direcao = "asc" | "desc";
+type Direcao = "asc" | "desc";
 export interface Ordem {
   readonly coluna: Coluna;
   readonly direcao: Direcao;
 }
-
-export const ORDEM_PADRAO: Ordem = { coluna: "alocacao", direcao: "desc" };
 
 const DA_PARCELA: Partial<Record<Coluna, (p: ParcelaCarteira) => string | null>> = {
   quantidade: (p) => p.quantidade,

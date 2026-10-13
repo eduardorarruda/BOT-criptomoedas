@@ -5,7 +5,7 @@ import type { Coluna } from "./tabela";
  * O que a URL da carteira aceita. Fica separado dos filtros para a rota validar a
  * busca sem carregar o resto da tela (Decimal, componentes).
  */
-export const COLUNAS_ORDEM = [
+const COLUNAS_ORDEM = [
   "ativo",
   "quantidade",
   "precoMedio",
@@ -21,7 +21,7 @@ export const COLUNAS_ORDEM = [
   "comprado",
   "vendido",
 ] as const satisfies readonly Coluna[];
-export const VISOES = ["tabela", "cartoes", "alocacao"] as const;
+const VISOES = ["tabela", "cartoes", "alocacao"] as const;
 
 export const buscaCarteira = {
   rede: campo.opcao(["real", "testnet"] as const),

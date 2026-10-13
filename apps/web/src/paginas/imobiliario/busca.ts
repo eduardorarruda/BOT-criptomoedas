@@ -7,7 +7,7 @@ import { campo, type BuscaDe } from "../../componentes/filtros/esquemas";
  */
 export const MOEDAS = ["BRL", "USD"] as const;
 export const ORDENS = ["valor", "resultado", "tir", "dy", "renda", "nome"] as const;
-export const VISOES = ["cartoes", "tabela", "alocacao"] as const;
+const VISOES = ["cartoes", "tabela", "alocacao"] as const;
 
 export const buscaImobiliario = {
   q: campo.busca(),

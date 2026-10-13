@@ -6,7 +6,7 @@ import { criarFontePatrimonio, criarFontePatrimonioDemo, type FontePatrimonio } 
 /** Os testes trocam a fonte do patrimônio por este contexto; na aplicação ele fica vazio. */
 export const ContextoFontePatrimonio = createContext<FontePatrimonio | null>(null);
 
-export function useFontePatrimonio(): FontePatrimonio {
+function useFontePatrimonio(): FontePatrimonio {
   const injetada = useContext(ContextoFontePatrimonio);
   const { demo } = useFonte();
   return useMemo(
@@ -15,7 +15,7 @@ export function useFontePatrimonio(): FontePatrimonio {
   );
 }
 
-export const chavePatrimonio = ["patrimonio", "consolidado"] as const;
+const chavePatrimonio = ["patrimonio", "consolidado"] as const;
 
 /** A cripto muda com o preço: o patrimônio se atualiza a cada minuto enquanto a tela está aberta. */
 const ATUALIZAR_MS = 60_000;

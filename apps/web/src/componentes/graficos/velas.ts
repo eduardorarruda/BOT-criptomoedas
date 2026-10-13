@@ -8,7 +8,7 @@ import type { CoresGrafico } from "./cores";
  * Conversões para o gráfico de candles. O gráfico precisa de número: a conversão
  * acontece só aqui, para desenhar — nenhuma conta de dinheiro sai daqui.
  */
-export const segundos = (ms: number): UTCTimestamp => Math.floor(ms / 1000) as UTCTimestamp;
+const segundos = (ms: number): UTCTimestamp => Math.floor(ms / 1000) as UTCTimestamp;
 
 export function paraVela(c: CandleApi): CandlestickData<UTCTimestamp> {
   return {
@@ -95,7 +95,7 @@ function textoDoGrupo(grupo: readonly Marca[], principal: EstiloMarcador): strin
  * se sobrepunham. A marca mais importante (execução > aguarda > falhou > barrada >
  * registro) dá a forma e a cor.
  */
-export function agruparPorVela(
+function agruparPorVela(
   marcas: readonly Marca[],
   cores: CoresGrafico,
   compacto = false,

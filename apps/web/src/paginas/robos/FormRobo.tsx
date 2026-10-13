@@ -11,7 +11,7 @@ import { CamposLimites, useCamposLimites } from "./EditorLimites";
 
 const PARES = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const INTERVALOS: readonly Intervalo[] = ["5m", "15m", "1h", "4h", "1d"];
-export const LIMITES_INICIAIS = {
+const LIMITES_INICIAIS = {
   perdaDiariaMaxima: "20",
   exposicaoMaxima: "300",
   riscoPorOperacao: "5",

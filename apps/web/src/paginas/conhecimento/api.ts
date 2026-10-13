@@ -18,7 +18,7 @@ import { ErroRespostaEsquema } from "../../api/esquemas";
 export const EXTENSOES_ACEITAS = [".pdf", ".docx", ".md", ".markdown", ".txt", ".html", ".htm"] as const;
 export const LIMITE_ENVIO_BYTES = 15 * 1024 * 1024;
 
-export interface NovoLinkTela {
+interface NovoLinkTela {
   readonly url: string;
   readonly titulo?: string;
   readonly fonte: FonteDocumento;
