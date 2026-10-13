@@ -123,12 +123,13 @@ function RodapeLateral({ menu }: { readonly menu?: ControleMenu }) {
 function TransicaoPagina() {
   const { pathname } = useLocation();
   const menos = useMenosMovimento();
-  const primeira = useRef(true);
+  // Compara com a tela anterior (e não com "primeira vez"): o StrictMode roda o efeito
+  // duas vezes, e o foco pulava para o conteúdo já na abertura, passando por cima do
+  // link "Pular para o conteúdo".
+  const anterior = useRef(pathname);
   useEffect(() => {
-    if (primeira.current) {
-      primeira.current = false;
-      return;
-    }
+    if (anterior.current === pathname) return;
+    anterior.current = pathname;
     document.getElementById("conteudo")?.focus({ preventScroll: true });
     window.scrollTo({ top: 0 });
   }, [pathname]);

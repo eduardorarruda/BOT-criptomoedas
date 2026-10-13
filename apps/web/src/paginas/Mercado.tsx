@@ -16,6 +16,7 @@ import { formatarPreco } from "../lib/formatar";
 import { useLoja } from "../lib/loja";
 import { ACAO, ESTADO_DECISAO } from "../lib/rotulos";
 import { formatarDataHora } from "../lib/tempo";
+import { TabelaRolagem } from "../componentes/TabelaRolagem";
 
 const SIMBOLOS_PADRAO = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const INTERVALOS: readonly { valor: Intervalo; rotulo: string }[] = [
@@ -120,7 +121,7 @@ export function Mercado() {
         {decisoes.length === 0 ? (
           <p className="apagado">Nenhum robô decidiu nada em {simbolo} ainda.</p>
         ) : (
-          <div className="tabela-rolagem">
+          <TabelaRolagem rotulo={`Decisões em ${simbolo} (role para os lados)`}>
             <table className="tabela">
               <thead>
                 <tr>
@@ -154,7 +155,7 @@ export function Mercado() {
                 })}
               </tbody>
             </table>
-          </div>
+          </TabelaRolagem>
         )}
       </Painel>
     </>

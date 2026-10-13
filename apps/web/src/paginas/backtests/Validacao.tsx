@@ -7,6 +7,7 @@ import { Selo } from "../../componentes/Selo";
 import { GraficoBarras } from "../imobiliario/graficos/Barras";
 import { GraficoLinhas } from "../imobiliario/graficos/Linhas";
 import { dataDoEixo, pct, pctSinal, razao } from "./formato";
+import { TabelaRolagem } from "../../componentes/TabelaRolagem";
 
 const LINHAS_TRECHO: readonly { rotulo: string; valor: (t: ResumoTrecho) => string }[] = [
   { rotulo: "Retorno", valor: (t) => pctSinal(t.retorno) },
@@ -37,7 +38,7 @@ function Amostra({ a, id }: { readonly a: AmostraValidacao; readonly id: string 
         )
       }
     >
-      <div className="tabela-rolagem">
+      <TabelaRolagem rotulo="Dentro e fora da amostra (role para os lados)">
         <table className="tabela tabela--zebra bt-tabela">
           <caption className="so-leitor">Comparação dentro e fora da amostra</caption>
           <thead>
@@ -61,7 +62,7 @@ function Amostra({ a, id }: { readonly a: AmostraValidacao; readonly id: string 
             ))}
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
       {a.motivo ? <p className="bt-nota">Por quê: {a.motivo}.</p> : null}
     </Painel>
   );
@@ -110,7 +111,7 @@ function JanelasWf({ w, id }: { readonly w: WalkForward; readonly id: string }) 
         formatarEixo={(v) => pct(v, 0)}
         altura={200}
       />
-      <div className="tabela-rolagem">
+      <TabelaRolagem rotulo="Janelas do walk-forward (role para os lados)">
         <table className="tabela tabela--zebra bt-tabela">
           <caption className="so-leitor">Janelas do walk-forward</caption>
           <thead>
@@ -154,7 +155,7 @@ function JanelasWf({ w, id }: { readonly w: WalkForward; readonly id: string }) 
             ))}
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
     </Painel>
   );
 }

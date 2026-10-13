@@ -19,6 +19,7 @@ import { PainelConta } from "./risco/PainelConta";
 import { PainelDivergencias } from "./risco/PainelDivergencias";
 import { PainelOrcamentoIa } from "./risco/PainelOrcamentoIa";
 import { PainelPausas } from "./risco/PainelPausas";
+import { TabelaRolagem } from "../componentes/TabelaRolagem";
 
 function ParadaTotal() {
   const resumo = useResumo();
@@ -95,7 +96,7 @@ function Limites() {
   if (robos.error)
     return <ErroCarregar erro={robos.error} tentarDeNovo={() => void robos.refetch()} compacto />;
   return (
-    <div className="tabela-rolagem">
+    <TabelaRolagem rotulo="Limites de cada robô (role para os lados)">
       <table className="tabela">
         <thead>
           <tr>
@@ -136,7 +137,7 @@ function Limites() {
           ))}
         </tbody>
       </table>
-    </div>
+    </TabelaRolagem>
   );
 }
 

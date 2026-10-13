@@ -130,7 +130,7 @@ function Cartao({ t, abrir }: { readonly t: TituloRendaFixa; readonly abrir: (id
       type="button"
       className="rf-cartao"
       onClick={() => abrir(t.id)}
-      aria-label={`Ver detalhes de ${t.nome}`}
+      aria-label={`${t.nome}: ver detalhes`}
     >
       <div className="rf-cartao__topo">
         <span className="rf-cartao__nome">{t.nome}</span>

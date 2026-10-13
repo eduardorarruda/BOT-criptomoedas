@@ -21,6 +21,7 @@ import {
   ROTULO_LANCAMENTO,
 } from "../formato";
 import { hojeLocal, useAdicionarLancamento, useRemoverLancamento } from "../ganchos";
+import { TabelaRolagem } from "../../../componentes/TabelaRolagem";
 
 /** Lançamentos: o que aconteceu no tempo (compra, aluguel, despesa, venda). */
 const TIPOS: readonly TipoLancamentoImobiliario[] = ["aporte", "receita", "despesa", "resgate", "imposto"];
@@ -266,7 +267,7 @@ function Tabela({
       onError: (erro) => avisar("erro", mensagemDe(erro)),
     });
   return (
-    <div className="tabela-rolagem imob-lancamentos">
+    <TabelaRolagem className="imob-lancamentos" rotulo="Lançamentos (role para os lados)">
       <table className="tabela">
         <caption className="so-leitor">Lançamentos, do mais recente ao mais antigo</caption>
         <thead>
@@ -294,7 +295,7 @@ function Tabela({
           ))}
         </tbody>
       </table>
-    </div>
+    </TabelaRolagem>
   );
 }
 

@@ -28,7 +28,7 @@ function Cartao({
         type="button"
         className="carteira-cartao"
         onClick={() => aoAbrir(m.ativo)}
-        aria-label={`Ver detalhes de ${m.ativo}`}
+        aria-label={`${m.ativo}: ver detalhes`}
       >
         <span className="carteira-cartao__topo">
           <span className="carteira-cartao__ativo">{m.ativo}</span>

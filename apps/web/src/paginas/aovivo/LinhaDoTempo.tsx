@@ -144,7 +144,13 @@ export function LinhaDoTempo(p: Props) {
             : "Quando o robô fechar o próximo candle, ele aparece aqui — com o sinal da regra, a análise da IA, o risco e a ordem, se houver."}
         </EstadoVazio>
       ) : null}
-      <ol role="list" className="eventos" aria-labelledby="titulo-linha-tempo">
+      <ol
+        role="list"
+        className="eventos"
+        aria-labelledby="titulo-linha-tempo"
+        // eslint-disable-next-line jsx-a11y-x/no-noninteractive-tabindex -- lista rolável: o foco é o que permite rolar pelo teclado (WCAG 2.1.1)
+        tabIndex={0}
+      >
         <AnimatePresence initial={false}>
           {visiveis.slice(0, limite).map((r) => {
             const roboId = p.mostrarRobo ? p.roboDe(r) : undefined;

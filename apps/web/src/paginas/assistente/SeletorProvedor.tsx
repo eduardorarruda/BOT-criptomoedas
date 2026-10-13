@@ -83,11 +83,10 @@ export function SeletorProvedor({
         className="seletor__botao"
         aria-expanded={aberto}
         aria-controls={id}
-        aria-label={`Quem responde: ${NOME_PROVEDOR[provedor]}, ${nomeModelo(estado)}. Trocar`}
+        aria-label={`${CURTO[provedor]} ${nomeModelo(estado)}. Quem responde: ${NOME_PROVEDOR[provedor]}. Trocar`}
         onClick={() => setAberto(!aberto)}
       >
-        <span>{CURTO[provedor]}</span>
-        <span className="seletor__modelo">{nomeModelo(estado)}</span>
+        <span>{CURTO[provedor]}</span> <span className="seletor__modelo">{nomeModelo(estado)}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
       <div

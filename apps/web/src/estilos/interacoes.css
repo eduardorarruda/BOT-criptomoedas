@@ -3,6 +3,11 @@
  * sem pulo de layout, e todas caem para 0,01 ms com prefers-reduced-motion (base.css).
  */
 
+/* alvo mínimo de 24 px (WCAG 2.5.8) para os resumos que abrem e fecham */
+summary {
+  min-height: 24px;
+}
+
 /* botões: todos afundam um pouco ao apertar (o brilho do hover está em componentes.css) */
 .botao:active:not(:disabled) {
   transform: translateY(1px) scale(0.985);
