@@ -12,3 +12,5 @@
 **Tipografia:** Instrument Serif itálica para “Zen” e títulos; Geist para interface e texto; Geist Mono para todo número.
 
 **Não fazer:** moedas, Bitcoin, setas, escudo, neon, 3D ou brilho no símbolo. O verde é chapado.
+
+**Imagem social:** `imagem-social.html` desenha a imagem de Open Graph (1200×630) só com o símbolo, as cores e as fontes acima. O comando para gerar `apps/web/public/og.png` e `og.webp` está no próprio arquivo.

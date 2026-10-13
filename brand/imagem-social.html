@@ -1,0 +1,127 @@
+<!doctype html>
+<!--
+  Imagem social (Open Graph) do ZenTrade, 1200×630. Feita só com o símbolo, as cores
+  e as fontes da marca; sem foto nem imagem gerada. Para refazer, da raiz do repositório
+  (com as dependências instaladas):
+
+    google-chrome-stable --headless=new --hide-scrollbars --force-device-scale-factor=1 \
+      --window-size=1200,630 --screenshot=/tmp/og.png "file://$PWD/brand/imagem-social.html"
+    magick /tmp/og.png -strip -define webp:method=6 -quality 86 apps/web/public/og.webp
+    magick /tmp/og.png -strip -colors 64 -define png:compression-level=9 apps/web/public/og.png
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ZenTrade · imagem social</title>
+    <style>
+      @font-face {
+        font-family: "Instrument Serif";
+        font-style: italic;
+        font-weight: 400;
+        src: url("../apps/web/node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "Instrument Serif";
+        font-style: normal;
+        font-weight: 400;
+        src: url("../apps/web/node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "Geist";
+        font-weight: 100 900;
+        src: url("../apps/web/node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "Geist Mono";
+        font-weight: 100 900;
+        src: url("../apps/web/node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2")
+          format("woff2");
+      }
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+      body {
+        background:
+          radial-gradient(760px 520px at 18% 50%, rgb(61 220 142 / 0.07), transparent 65%),
+          radial-gradient(700px 420px at 100% 0%, rgb(106 168 255 / 0.035), transparent 60%), #070c0a;
+        color: #e6eee8;
+        font-family: "Geist", sans-serif;
+        display: grid;
+        grid-template-columns: 420px 1fr;
+        align-items: center;
+        padding: 0 88px 0 72px;
+        position: relative;
+      }
+      .simbolo {
+        width: 340px;
+        height: 340px;
+      }
+      .texto {
+        display: grid;
+        gap: 30px;
+      }
+      .marca {
+        font-size: 92px;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+      .zen {
+        font-family: "Instrument Serif", serif;
+        font-style: italic;
+        font-size: 1.12em;
+        color: #3ddc8e;
+        letter-spacing: -0.01em;
+      }
+      .trade {
+        font-weight: 600;
+      }
+      .lema {
+        font-family: "Instrument Serif", serif;
+        font-size: 44px;
+        line-height: 1.12;
+        color: #e6eee8;
+      }
+      .lema em {
+        color: #3ddc8e;
+      }
+      .rodape {
+        position: absolute;
+        left: 72px;
+        right: 88px;
+        bottom: 44px;
+        display: flex;
+        justify-content: space-between;
+        font-family: "Geist Mono", monospace;
+        font-size: 20px;
+        color: #8ea198;
+        border-top: 1px solid #1c2923;
+        padding-top: 22px;
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="simbolo" viewBox="0 0 120 120" aria-hidden="true">
+      <path d="M98.64 49.65 A40 40 0 1 1 70.35 21.36" fill="none" stroke="#E6EEE8" stroke-width="9" />
+      <line x1="84.5" y1="11" x2="84.5" y2="58" stroke="#3DDC8E" stroke-width="3" stroke-linecap="round" />
+      <rect x="79" y="22" width="11" height="26" rx="1.5" fill="#3DDC8E" />
+    </svg>
+    <div class="texto">
+      <p class="marca"><span class="zen">Zen</span><span class="trade">Trade</span></p>
+      <p class="lema">Regras decidem. A IA argumenta.<br />O risco tem a <em>palavra final.</em></p>
+    </div>
+    <p class="rodape">
+      <span>Cripto e investimentos · auto-hospedado</span>
+      <span>Código aberto · AGPL-3.0</span>
+    </p>
+  </body>
+</html>

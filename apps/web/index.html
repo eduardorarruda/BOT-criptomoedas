@@ -6,12 +6,35 @@
     <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#070C0A" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#EEF2EC" media="(prefers-color-scheme: light)" />
+    <title>ZenTrade</title>
     <meta
       name="description"
-      content="ZenTrade: regras decidem, a IA argumenta, o risco tem a palavra final."
+      content="Software livre e auto-hospedado para operar cripto com robôs e acompanhar seus investimentos. Regras decidem, a IA argumenta, o risco tem a palavra final."
+    />
+    <meta http-equiv="content-language" content="pt-BR" />
+    <meta name="geo.region" content="BR" />
+    <meta name="application-name" content="ZenTrade" />
+    <meta name="apple-mobile-web-app-title" content="ZenTrade" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ZenTrade" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content="ZenTrade" />
+    <meta
+      property="og:description"
+      content="Software livre e auto-hospedado para operar cripto com robôs e acompanhar seus investimentos. Regras decidem, a IA argumenta, o risco tem a palavra final."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ZenTrade" />
+    <meta
+      name="twitter:description"
+      content="Software livre e auto-hospedado para operar cripto com robôs e acompanhar seus investimentos. Regras decidem, a IA argumenta, o risco tem a palavra final."
     />
     <link rel="icon" type="image/svg+xml" href="/simbolo.svg" />
-    <title>ZenTrade</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="license" href="https://www.gnu.org/licenses/agpl-3.0.html" />
+    <!-- robots, endereço público, imagem social e JSON-LD: o Vite injeta conforme o build (vite.config.ts). -->
     <script>
       // Aplica o tema salvo antes do primeiro desenho, para não piscar.
       try {
@@ -22,6 +45,15 @@
   </head>
   <body>
     <div id="raiz"></div>
+    <noscript>
+      <p>
+        O ZenTrade precisa de JavaScript. É um software livre e auto-hospedado para operar cripto com robôs e
+        acompanhar investimentos; o código está em
+        <a href="https://github.com/eduardorarruda/BOT-criptomoedas"
+          >github.com/eduardorarruda/BOT-criptomoedas</a
+        >.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -133,6 +133,11 @@ services:
       OLLAMA_MODELO: ${OLLAMA_MODELO:-bge-m3}
       PLUGGY_CLIENT_ID: ${PLUGGY_CLIENT_ID:-}
       PLUGGY_CLIENT_SECRET: ${PLUGGY_CLIENT_SECRET:-}
+      # LGPD: quem responde pelos dados desta instância (aparece na política de privacidade).
+      ZENTRADE_CONTROLADOR_NOME: ${ZENTRADE_CONTROLADOR_NOME:-}
+      ZENTRADE_CONTROLADOR_EMAIL: ${ZENTRADE_CONTROLADOR_EMAIL:-}
+      ZENTRADE_ENCARREGADO_NOME: ${ZENTRADE_ENCARREGADO_NOME:-}
+      ZENTRADE_ENCARREGADO_EMAIL: ${ZENTRADE_ENCARREGADO_EMAIL:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -213,7 +218,14 @@ services:
 
   web:
     profiles: ["app"]
-    build: { context: .., dockerfile: infra/docker/web.Dockerfile }
+    build:
+      context: ..
+      dockerfile: infra/docker/web.Dockerfile
+      # Privada por padrão (noindex). Demonstração pública: VITE_PUBLICO=1 e VITE_URL_PUBLICA (docs/operacao.md).
+      args:
+        VITE_PUBLICO: ${VITE_PUBLICO:-}
+        VITE_URL_PUBLICA: ${VITE_URL_PUBLICA:-}
+        VITE_DEMO: ${VITE_DEMO:-}
     image: ${ZENTRADE_IMAGEM:-zentrade}-web:local
     restart: unless-stopped
     ports:

@@ -1,0 +1,18 @@
+{
+  "name": "ZenTrade",
+  "short_name": "ZenTrade",
+  "description": "Software livre e auto-hospedado para operar cripto com robôs e acompanhar seus investimentos. Regras decidem, a IA argumenta, o risco tem a palavra final.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070C0A",
+  "theme_color": "#070C0A",
+  "categories": ["finance"],
+  "icons": [
+    { "src": "/simbolo.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/icone-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icone-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}

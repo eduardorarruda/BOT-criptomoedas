@@ -1,12 +1,49 @@
+import { readFileSync } from "node:fs";
 import react from "@vitejs/plugin-react";
+import { loadEnv, type Plugin } from "vite";
 import { defineConfig } from "vitest/config";
+import { lerOpcoesSeo, robotsTxt, sitemapXml, tagsDoBuild, type OpcoesSeo } from "./src/lib/cabeca";
+
+const VERSAO = (
+  JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string }
+).version;
+
+/**
+ * Cabeça para buscadores: robôs, endereço, imagem social e JSON-LD no index.html;
+ * robots.txt e sitemap.xml no build (e no servidor de desenvolvimento). Privado por
+ * padrão; VITE_PUBLICO=1 + VITE_URL_PUBLICA liga a indexação (docs/operacao.md).
+ */
+function cabecaSeo(opcoes: OpcoesSeo): Plugin {
+  const robots = robotsTxt(opcoes);
+  const sitemap = sitemapXml(opcoes, new Date().toISOString().slice(0, 10));
+  return {
+    name: "zentrade-cabeca-seo",
+    transformIndexHtml: () => tagsDoBuild(opcoes).map((t) => ({ ...t, injectTo: "head" as const })),
+    configureServer(servidor) {
+      servidor.middlewares.use((req, res, seguir) => {
+        const corpo = req.url === "/robots.txt" ? robots : req.url === "/sitemap.xml" ? sitemap : undefined;
+        if (corpo === undefined || corpo === null) return seguir();
+        res.setHeader(
+          "Content-Type",
+          req.url === "/robots.txt" ? "text/plain; charset=utf-8" : "application/xml",
+        );
+        res.end(corpo);
+      });
+    },
+    generateBundle() {
+      this.emitFile({ type: "asset", fileName: "robots.txt", source: robots });
+      if (sitemap) this.emitFile({ type: "asset", fileName: "sitemap.xml", source: sitemap });
+    },
+  };
+}
 
 /**
  * A tela importa só `@zentrade/contratos/esquemas`, que não tem código de servidor
  * (node:crypto fica na assinatura dos webhooks, fora desse subcaminho).
  */
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), cabecaSeo(lerOpcoesSeo(loadEnv(mode, process.cwd(), "VITE_"), VERSAO))],
+  define: { __ZENTRADE_VERSAO__: JSON.stringify(VERSAO) },
   server: {
     port: 5173,
     proxy: {
@@ -45,4 +82,4 @@ export default defineConfig({
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
   },
-});
+}));

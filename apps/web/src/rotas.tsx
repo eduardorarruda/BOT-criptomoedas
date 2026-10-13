@@ -11,6 +11,7 @@ import type { ComponentType } from "react";
 import type { Fonte } from "./api/fonte";
 import { validarBusca } from "./componentes/filtros/esquemas";
 import { chaves } from "./ganchos/chaves";
+import { CabecaDaRota } from "./layout/CabecaDaRota";
 import { Casca } from "./layout/Casca";
 import { buscaCarteira } from "./paginas/carteira/filtros";
 import { buscaDecisoes } from "./paginas/decisoes/filtros";
@@ -29,8 +30,18 @@ export interface ContextoRotas {
   readonly fonte: Fonte;
 }
 
+/** A raiz só acrescenta a cabeça da página (título, descrição, robôs) a cada rota. */
+function Raiz() {
+  return (
+    <>
+      <CabecaDaRota />
+      <Outlet />
+    </>
+  );
+}
+
 const raiz = createRootRouteWithContext<ContextoRotas>()({
-  component: Outlet,
+  component: Raiz,
   notFoundComponent: NaoEncontrada,
 });
 
