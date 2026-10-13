@@ -55,4 +55,24 @@ describe("configuração da API", () => {
     expect(c.AGENTE_URL).toBeUndefined();
     expect(c.LOG_LEVEL).toBe("info");
   });
+
+  it("contatos da LGPD são opcionais e andam em par (nome + e-mail)", () => {
+    const sem = lerConfig(valido);
+    expect(sem.ZENTRADE_CONTROLADOR_NOME).toBeUndefined();
+    const com = lerConfig({
+      ...valido,
+      ZENTRADE_CONTROLADOR_NOME: " Ana Exemplo ",
+      ZENTRADE_CONTROLADOR_EMAIL: "privacidade@exemplo.com",
+    });
+    expect(com.ZENTRADE_CONTROLADOR_NOME).toBe("Ana Exemplo");
+    expect(() => lerConfig({ ...valido, ZENTRADE_CONTROLADOR_NOME: "Ana" })).toThrow(
+      /ZENTRADE_CONTROLADOR_EMAIL: defina ZENTRADE_CONTROLADOR_NOME e ZENTRADE_CONTROLADOR_EMAIL juntos/,
+    );
+    expect(() => lerConfig({ ...valido, ZENTRADE_ENCARREGADO_EMAIL: "dpo@exemplo.com" })).toThrow(
+      /ZENTRADE_ENCARREGADO_NOME: defina/,
+    );
+    expect(() =>
+      lerConfig({ ...valido, ZENTRADE_CONTROLADOR_NOME: "Ana", ZENTRADE_CONTROLADOR_EMAIL: "nao-e-email" }),
+    ).toThrow(/precisa ser um e-mail/);
+  });
 });

@@ -9,6 +9,25 @@ const booleano = z
 const url = (nome: string, exemplo: string) =>
   z.url({ error: `${nome} precisa ser uma URL (ex.: ${exemplo})` });
 
+const nomeContato = (nome: string) =>
+  z
+    .string()
+    .trim()
+    .min(2, `${nome} precisa de um nome`)
+    .max(200, `${nome} passa de 200 caracteres`)
+    .optional();
+const emailContato = (nome: string) =>
+  z
+    .email({ error: `${nome} precisa ser um e-mail (ex.: privacidade@exemplo.com)` })
+    .max(254)
+    .optional();
+
+/** Nome e e-mail de um contato da LGPD andam juntos: um sem o outro é configuração pela metade. */
+const PARES_LGPD = [
+  ["ZENTRADE_CONTROLADOR_NOME", "ZENTRADE_CONTROLADOR_EMAIL"],
+  ["ZENTRADE_ENCARREGADO_NOME", "ZENTRADE_ENCARREGADO_EMAIL"],
+] as const;
+
 /** Variáveis de ambiente da API, validadas no início: configuração errada derruba cedo, com explicação. */
 const EsquemaApi = z.object({
   API_HOST: z.string().default("127.0.0.1"),
@@ -41,6 +60,12 @@ const EsquemaApi = z.object({
   // De quantos em quantos minutos a API confere a posição dos robôs com o saldo da Binance (0 = só pelo botão).
   RECONCILIACAO_MIN: z.coerce.number().int().min(0).max(1440).default(10),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  // LGPD: quem opera a instância (controlador) e o encarregado. Aparecem na política de
+  // privacidade, sem login (GET /api/v1/publico/config). Veja docs/privacidade.md.
+  ZENTRADE_CONTROLADOR_NOME: nomeContato("ZENTRADE_CONTROLADOR_NOME"),
+  ZENTRADE_CONTROLADOR_EMAIL: emailContato("ZENTRADE_CONTROLADOR_EMAIL"),
+  ZENTRADE_ENCARREGADO_NOME: nomeContato("ZENTRADE_ENCARREGADO_NOME"),
+  ZENTRADE_ENCARREGADO_EMAIL: emailContato("ZENTRADE_ENCARREGADO_EMAIL"),
 });
 
 const Esquema = ConfigBancoEsquema.extend(EsquemaApi.shape);
@@ -55,7 +80,17 @@ export function semVazias(env: Readonly<Record<string, string | undefined>>): Re
 }
 
 export function lerConfig(env: NodeJS.ProcessEnv): Config {
-  const lido = Esquema.safeParse(semVazias(env));
+  const lido = Esquema.superRefine((c, ctx) => {
+    for (const [nome, email] of PARES_LGPD) {
+      if ((c[nome] === undefined) !== (c[email] === undefined)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [c[nome] ? email : nome],
+          message: `defina ${nome} e ${email} juntos`,
+        });
+      }
+    }
+  }).safeParse(semVazias(env));
   if (!lido.success) {
     const problemas = lido.error.issues.map((i) => `- ${i.path.join(".")}: ${i.message}`);
     throw new Error(`configuração da API inválida (veja .env.example):\n${problemas.join("\n")}`);
