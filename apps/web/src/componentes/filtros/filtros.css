@@ -513,6 +513,15 @@ dialog:has(.filtros-folha) {
   .filtros__ferramentas {
     margin-left: 0;
   }
+  /* o painel das visões salvas entra no fluxo: flutuando, ele saía da tela pela direita */
+  .visoes[open] {
+    flex-basis: 100%;
+  }
+  .visoes__painel {
+    position: static;
+    width: 100%;
+    margin-top: 6px;
+  }
   .ferramenta-visao__texto,
   .ferramenta-ordem__rotulo {
     position: absolute;

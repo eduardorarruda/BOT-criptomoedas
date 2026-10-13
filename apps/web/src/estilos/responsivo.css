@@ -67,6 +67,9 @@
     font-size: 20px;
     white-space: nowrap;
   }
+  .metrica dd.metrica__nota {
+    white-space: normal;
+  }
   .metrica--destaque dd {
     font-size: 32px;
   }
