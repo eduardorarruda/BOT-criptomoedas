@@ -43,6 +43,7 @@ import { rotasSessao } from "./rotas/sessao.js";
 import { rotasTempoReal } from "./rotas/tempo-real.js";
 import { rotasTokens } from "./rotas/tokens.js";
 import { rotasWebhooks } from "./rotas/webhooks.js";
+import { confiancaNoProxy } from "./proxy.js";
 
 z.config(z.locales.pt());
 
@@ -82,7 +83,11 @@ async function registrarPlugins(app: FastifyInstance, deps: Dependencias): Promi
 
 /** Monta a API com as dependências recebidas. Não abre porta: quem chama decide (servidor ou teste). */
 export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger): Promise<FastifyInstance> {
-  const app = Fastify({ loggerInstance: log ?? criarLog(deps.config.LOG_LEVEL), bodyLimit: 1024 * 1024 });
+  const app = Fastify({
+    loggerInstance: log ?? criarLog(deps.config.LOG_LEVEL),
+    bodyLimit: 1024 * 1024,
+    trustProxy: confiancaNoProxy(deps.config.API_PROXY_CONFIAVEL),
+  });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.setErrorHandler((erro: FastifyError, req, reply) => {

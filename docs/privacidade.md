@@ -109,6 +109,6 @@ Pontos a acompanhar, conferidos em outubro de 2026:
   - em `decisoes.decidida_por` e `divergencias_saldo.resolvida_por`;
   - no texto da explicação da divergência.
 - O agente de IA, quando o Claude Code falha, registra no log a última linha da saída do CLI. Ela pode ser um trecho da resposta do modelo.
-- A API não tem `trustProxy`. O IP no log e na chave do limite de tentativas é o do proxy, e não o do visitante.
+- O IP de quem acessa fica no log da API (interesse legítimo: segurança e limite de tentativas). Atrás do nginx do Docker, é o IP real: o nginx sobrescreve o `X-Forwarded-For` e a API só confia em proxy da rede privada (`API_PROXY_CONFIAVEL`).
 - Não há exclusão de conta nem exportação de dados pela tela.
 - Não há expurgo automático de conversas, decisões, ordens, avisos, custos de IA nem da base de conhecimento. Eles ficam enquanto a conta existir.

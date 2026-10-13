@@ -32,6 +32,8 @@ const PARES_LGPD = [
 const EsquemaApi = z.object({
   API_HOST: z.string().default("127.0.0.1"),
   API_PORTA: z.coerce.number().int().min(1).max(65_535).default(8080),
+  /** Em quem confiar como proxy reverso (proxy-addr). Docker: "loopback,uniquelocal". */
+  API_PROXY_CONFIAVEL: z.string().default(""),
   REDIS_URL: url("REDIS_URL", "redis://:senha@127.0.0.1:56379").refine((v) => /^rediss?:\/\//.test(v), {
     error: "REDIS_URL precisa começar com redis:// ou rediss://",
   }),
