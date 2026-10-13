@@ -1,28 +1,15 @@
 import { TIPOS_IMOBILIARIO, type ItemImobiliario, type TipoImobiliario } from "@zentrade/contratos/esquemas";
 import { dec } from "@zentrade/dominio";
-import { z } from "zod";
-import { campo, contemTexto, lerLista, ordenarPor } from "../../componentes/filtros";
+import { contemTexto, lerLista, ordenarPor } from "../../componentes/filtros";
+import { MOEDAS, ORDENS, type BuscaImobiliario } from "./busca";
+
+export * from "./busca";
 
 /**
  * Filtros da visão do imobiliário: tipo, moeda, financiamento, situação e texto;
  * ordem e as visões. Os totais e a alocação do recorte usam as mesmas contas da
  * API (só patrimônio positivo entra na alocação).
  */
-export const MOEDAS = ["BRL", "USD"] as const;
-export const ORDENS = ["valor", "resultado", "tir", "dy", "renda", "nome"] as const;
-export const VISOES = ["cartoes", "tabela", "alocacao"] as const;
-
-export const buscaImobiliario = z.object({
-  q: campo.busca(),
-  tipo: campo.lista(TIPOS_IMOBILIARIO),
-  moeda: campo.lista(MOEDAS),
-  financiamento: campo.opcao(["com", "sem"] as const),
-  situacao: campo.opcao(["ativo", "encerrado"] as const),
-  ordem: campo.opcao(ORDENS),
-  dir: campo.opcao(["asc", "desc"] as const),
-  visao: campo.opcao(VISOES),
-});
-export type BuscaImobiliario = Partial<z.output<typeof buscaImobiliario>>;
 
 export function predicadosImobiliario(b: BuscaImobiliario): Record<string, (i: ItemImobiliario) => boolean> {
   const p: Record<string, (i: ItemImobiliario) => boolean> = {};

@@ -8,7 +8,7 @@ import { useMenosMovimento } from "../../ganchos/movimento";
  * prefers-reduced-motion. Cada gráfico tem um rótulo e os números ficam ao lado,
  * em texto, para quem não enxerga o desenho.
  */
-export const CORES = [
+const CORES = [
   "var(--cat-1)",
   "var(--cat-2)",
   "var(--cat-3)",

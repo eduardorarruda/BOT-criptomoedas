@@ -19,7 +19,7 @@ export type NoComparar = {
   readonly direita: Operando;
 };
 export type NoEditor = NoGrupo | NoNao | NoComparar;
-export type NoContainer = NoGrupo | NoNao;
+type NoContainer = NoGrupo | NoNao;
 
 let sequencia = 0;
 export const novoId = (): string => `no-${++sequencia}`;
@@ -38,7 +38,7 @@ export const novoGrupo = (tipo: "e" | "ou", filhos: readonly NoEditor[] = []): N
 });
 export const novoNao = (filho: NoEditor | null = null): NoNao => ({ id: novoId(), tipo: "nao", filho });
 
-export const ehContainer = (no: NoEditor): no is NoContainer => no.tipo !== "comparar";
+const ehContainer = (no: NoEditor): no is NoContainer => no.tipo !== "comparar";
 
 export function deRegra(r: Regra): NoEditor {
   switch (r.tipo) {
@@ -114,7 +114,7 @@ export function localizar(raiz: NoEditor, id: string): Local | null {
   return visitar(raiz, null, 0, 0);
 }
 
-export function contem(no: NoEditor, id: string): boolean {
+function contem(no: NoEditor, id: string): boolean {
   return localizar(no, id) !== null;
 }
 

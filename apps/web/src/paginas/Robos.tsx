@@ -127,7 +127,7 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
         aberto={confirmarAuto}
         aoFechar={() => setConfirmarAuto(false)}
         titulo="Ligar o modo automático?"
-        descricao={`No automático, ${robo.nome} envia ordens sozinho sempre que o motor de risco aprovar — sem pedir sua confirmação. Rede: ${REDE[robo.rede].texto}.`}
+        descricao={`No automático, ${robo.nome} envia ordens sozinho sempre que o motor de risco aprovar, sem pedir sua confirmação. Rede: ${REDE[robo.rede].texto}.`}
       >
         <div className="formulario__acoes">
           <Botao variante="fantasma" onClick={() => setConfirmarAuto(false)}>

@@ -16,7 +16,7 @@ export function Modelos({ aoUsar }: { readonly aoUsar: (m: ModeloEstrategia) => 
     <details className="modelos" open={aberto} onToggle={(e) => setAberto(e.currentTarget.open)}>
       <summary className="modelos__resumo">
         <BookOpen size={16} aria-hidden="true" /> Começar de um modelo
-        <span className="apagado"> — {MODELOS.length} exemplos para estudar e adaptar</span>
+        <span className="apagado"> · {MODELOS.length} exemplos para estudar e adaptar</span>
       </summary>
       {aberto ? <ListaModelos aoUsar={aoUsar} /> : null}
     </details>

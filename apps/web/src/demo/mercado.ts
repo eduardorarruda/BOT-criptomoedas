@@ -7,7 +7,7 @@ import { textoPreco } from "./velas";
  * Preços ao vivo do exemplo: a cada tique, cada símbolo anda um passo aleatório.
  * O mercado só gera preços; quem decide o que fazer com eles é a fonte demo.
  */
-export interface Tique {
+interface Tique {
   readonly simbolo: SimboloDemo;
   readonly preco: string;
   readonly em: number;

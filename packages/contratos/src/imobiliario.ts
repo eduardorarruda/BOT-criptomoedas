@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { Id, Instante, TextoDecimal } from "./comum.js";
+import { TIPOS_IMOBILIARIO } from "./valores.js";
+
+export { TIPOS_IMOBILIARIO };
 
 /**
  * Investimentos imobiliários (`/api/v1/imobiliario`): cadastro por pessoa, lançamentos,
@@ -7,17 +10,6 @@ import { Id, Instante, TextoDecimal } from "./comum.js";
  * e percentuais em fração (0,1 = 10%); datas de calendário em AAAA-MM-DD.
  * CRI e LCI ficam na renda fixa.
  */
-export const TIPOS_IMOBILIARIO = [
-  "aluguel",
-  "temporada",
-  "flip",
-  "terreno",
-  "planta",
-  "fii",
-  "reit",
-  "crowdfunding",
-  "consorcio",
-] as const;
 export const TipoImobiliario = z.enum(TIPOS_IMOBILIARIO);
 export type TipoImobiliario = z.infer<typeof TipoImobiliario>;
 /** Tipos que são um imóvel físico (aceitam financiamento e valorização estimada). */

@@ -4,10 +4,10 @@ import type { Conversa, EventoChat, FonteCitada, MensagemAssistente } from "@zen
  * A resposta enquanto ela chega, como um redutor puro: cada evento do fluxo (SSE) ou
  * ação da pessoa (parar) gera um estado novo. A tela só desenha o que está aqui.
  */
-export type SituacaoResposta = "pensando" | "escrevendo" | "concluida" | "erro" | "interrompida";
+type SituacaoResposta = "pensando" | "escrevendo" | "concluida" | "erro" | "interrompida";
 
 /** Uma consulta do assistente aos dados. `inicioTexto` diz quanto texto já tinha chegado. */
-export interface Etapa {
+interface Etapa {
   readonly nome: string;
   readonly descricao: string;
   readonly inicioTexto: number;

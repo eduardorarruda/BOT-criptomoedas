@@ -8,7 +8,7 @@ import { PRECO_BASE, VOLATILIDADE, type SimboloDemo } from "./dados";
  * atual do mercado simulado. Os números são sintéticos; viram texto decimal aqui e
  * daí em diante só são tratados como texto/Decimal.
  */
-export const casasDoSimbolo = (preco: number): number => (preco >= 100 ? 2 : 4);
+const casasDoSimbolo = (preco: number): number => (preco >= 100 ? 2 : 4);
 export const textoPreco = (preco: number): string => preco.toFixed(casasDoSimbolo(preco));
 
 interface VelaBruta {
@@ -65,4 +65,3 @@ export function gerarVelas(
 }
 
 /** Fechamentos em número, para a prévia do construtor (o domínio avalia em número). */
-export const fechamentosDe = (velas: readonly CandleApi[]): number[] => velas.map((v) => Number(v.fecha));

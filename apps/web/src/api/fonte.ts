@@ -43,7 +43,7 @@ export interface Credenciais {
   readonly senha: string;
   readonly codigo2fa?: string;
 }
-export type Confirmacao = { readonly senha: string } | { readonly codigo2fa: string };
+type Confirmacao = { readonly senha: string } | { readonly codigo2fa: string };
 
 export interface FiltroDecisoes {
   readonly roboId?: string;

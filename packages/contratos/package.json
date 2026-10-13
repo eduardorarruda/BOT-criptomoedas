@@ -13,6 +13,10 @@
     "./esquemas": {
       "types": "./dist/esquemas.d.ts",
       "default": "./dist/esquemas.js"
+    },
+    "./valores": {
+      "types": "./dist/valores.d.ts",
+      "default": "./dist/valores.js"
     }
   },
   "files": [

@@ -7,7 +7,7 @@ import { criarFonteCarteira, criarFonteCarteiraDemo, type FonteCarteira } from "
 /** Os testes trocam a fonte da carteira por este contexto; na aplicação ele fica vazio. */
 export const ContextoFonteCarteira = createContext<FonteCarteira | null>(null);
 
-export function useFonteCarteira(): FonteCarteira {
+function useFonteCarteira(): FonteCarteira {
   const injetada = useContext(ContextoFonteCarteira);
   const { demo } = useFonte();
   return useMemo(
@@ -16,7 +16,7 @@ export function useFonteCarteira(): FonteCarteira {
   );
 }
 
-export const chavesCarteira = {
+const chavesCarteira = {
   todas: ["carteira"] as const,
   carteira: (rede?: RedeConta) => ["carteira", "resumo", rede ?? "padrao"] as const,
   ativo: (ativo: string, rede?: RedeConta) => ["carteira", "ativo", ativo, rede ?? "padrao"] as const,

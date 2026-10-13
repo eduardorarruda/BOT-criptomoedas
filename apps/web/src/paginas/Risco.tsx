@@ -19,6 +19,7 @@ import { PainelConta } from "./risco/PainelConta";
 import { PainelDivergencias } from "./risco/PainelDivergencias";
 import { PainelOrcamentoIa } from "./risco/PainelOrcamentoIa";
 import { PainelPausas } from "./risco/PainelPausas";
+import { TabelaRolagem } from "../componentes/TabelaRolagem";
 
 function ParadaTotal() {
   const resumo = useResumo();
@@ -78,7 +79,7 @@ function ParadaTotal() {
         </h2>
         <p>
           Para todos os robôs na hora: nenhuma compra nova e nenhuma venda pela regra de saída. O stop e o
-          alvo das posições abertas continuam valendo, na corretora. Use quando algo parecer errado — é melhor
+          alvo das posições abertas continuam valendo, na corretora. Use quando algo parecer errado: é melhor
           parar e olhar.
         </p>
       </div>
@@ -95,7 +96,7 @@ function Limites() {
   if (robos.error)
     return <ErroCarregar erro={robos.error} tentarDeNovo={() => void robos.refetch()} compacto />;
   return (
-    <div className="tabela-rolagem">
+    <TabelaRolagem rotulo="Limites de cada robô (role para os lados)">
       <table className="tabela">
         <thead>
           <tr>
@@ -136,7 +137,7 @@ function Limites() {
           ))}
         </tbody>
       </table>
-    </div>
+    </TabelaRolagem>
   );
 }
 

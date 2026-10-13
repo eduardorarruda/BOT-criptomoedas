@@ -45,6 +45,7 @@ import {
   roboDaOrdem,
   type BuscaOrdens,
 } from "./ordens/filtros";
+import { TabelaRolagem } from "../componentes/TabelaRolagem";
 
 function LinhaPosicao({
   posicao: p,
@@ -108,7 +109,7 @@ function Posicoes({
       </EstadoVazio>
     );
   return (
-    <div className="tabela-rolagem">
+    <TabelaRolagem rotulo="Posições por robô (role para os lados)">
       <table className="tabela">
         <caption className="so-leitor">Posição de cada robô, derivada das execuções</caption>
         <thead>
@@ -142,7 +143,7 @@ function Posicoes({
           ))}
         </tbody>
       </table>
-    </div>
+    </TabelaRolagem>
   );
 }
 

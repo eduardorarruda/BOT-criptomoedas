@@ -185,6 +185,16 @@ export function DetalheInvestimento() {
   const { data, error, isPending, refetch } = useDetalheImobiliario(id, cdi);
   return (
     <div className="pilha">
+      {data ? null : (
+        <Cabecalho
+          titulo="Investimento imobiliário"
+          acoes={
+            <Link to="/imobiliario" className="botao botao--fantasma">
+              <ArrowLeft size={16} aria-hidden="true" /> Imobiliário
+            </Link>
+          }
+        />
+      )}
       {isPending ? <Esqueleto altura={320} rotulo="Carregando o investimento" /> : null}
       {error ? <ErroCarregar erro={error} tentarDeNovo={() => void refetch()} /> : null}
       {data ? <Conteudo d={data} cdi={cdi} setCdi={setCdi} /> : null}

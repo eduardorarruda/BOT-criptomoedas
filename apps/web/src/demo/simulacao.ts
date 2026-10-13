@@ -13,7 +13,7 @@ import { gerarVelas } from "./velas";
  * posição — a mesma sequência de eventos do motor de verdade. Também guarda o
  * histórico curto que a tela "Ao vivo" pede ao abrir.
  */
-export interface OpcoesSimulacao {
+interface OpcoesSimulacao {
   readonly tiqueMs?: number;
   readonly analiseCadaMs?: number;
   readonly primeiraAnaliseMs?: number;

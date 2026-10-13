@@ -59,6 +59,7 @@ export function Simuladores() {
         valor={aba}
         aoMudar={setAba}
       />
+      <h2 className="so-leitor">{ABAS[aba].rotulo}</h2>
       <p className="apagado">{descricao}</p>
       <AnimatePresence mode="wait" initial={false}>
         <m.div

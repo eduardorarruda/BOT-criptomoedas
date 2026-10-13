@@ -3,7 +3,7 @@
  * "Conectar banco" (o script tem ~900 KB). O navegador recebe apenas o connect
  * token de 30 minutos; o client secret nunca sai da API.
  */
-export const SCRIPT_PLUGGY = "https://cdn.pluggy.ai/pluggy-connect/v2.11.0/pluggy-connect.js";
+const SCRIPT_PLUGGY = "https://cdn.pluggy.ai/pluggy-connect/v2.11.0/pluggy-connect.js";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface OpcoesWidget {
@@ -30,7 +30,7 @@ declare global {
 
 let carregando: Promise<PluggyConnectGlobal> | null = null;
 
-export function carregarWidget(documento: Document = document): Promise<PluggyConnectGlobal> {
+function carregarWidget(documento: Document = document): Promise<PluggyConnectGlobal> {
   if (window.PluggyConnect) return Promise.resolve(window.PluggyConnect);
   carregando ??= new Promise((resolver, rejeitar) => {
     const s = documento.createElement("script");

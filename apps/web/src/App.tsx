@@ -1,6 +1,6 @@
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
-import { domAnimation, LazyMotion, MotionConfig } from "motion/react";
+import { LazyMotion, MotionConfig } from "motion/react";
 import { useState } from "react";
 import { ProvedorFonte } from "./api/contexto";
 import { ehErroApi } from "./api/erros";
@@ -10,6 +10,9 @@ import { chaves } from "./ganchos/chaves";
 import { Abertura } from "./layout/Abertura";
 import { criarRoteador } from "./rotas";
 import { ProvedorReautenticacao } from "./sessao/Reautenticacao";
+
+/** Os recursos de animação do Motion chegam depois do primeiro desenho (pacote à parte). */
+const recursosMovimento = () => import("./lib/recursosMovimento").then((m) => m.default);
 
 /** Sessão expirada em qualquer pedido: esquece o usuário e volta para o login. */
 function criarCliente(aoExpirar: () => void): QueryClient {
@@ -44,7 +47,7 @@ export function App({ fonte }: { readonly fonte: Fonte }) {
   return (
     <ProvedorFonte fonte={fonte}>
       <QueryClientProvider client={queryClient}>
-        <LazyMotion features={domAnimation} strict>
+        <LazyMotion features={recursosMovimento} strict>
           <MotionConfig reducedMotion="user">
             <ProvedorAvisos>
               <ProvedorReautenticacao>

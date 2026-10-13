@@ -67,6 +67,9 @@
     font-size: 20px;
     white-space: nowrap;
   }
+  .metrica dd.metrica__nota {
+    white-space: normal;
+  }
   .metrica--destaque dd {
     font-size: 32px;
   }
@@ -192,4 +195,14 @@
   display: flex;
   align-items: baseline;
   font-size: 34px;
+}
+
+/* 320 px (WCAG 1.4.10, ou 1280 px com zoom de 400%): os valores quebram em vez de vazar */
+@media (max-width: 380px) {
+  .kpi__valor,
+  .metrica:not(.metrica--destaque) dd:not(.metrica__nota) {
+    font-size: 16px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }

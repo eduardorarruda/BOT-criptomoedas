@@ -1,7 +1,6 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
-import type { z } from "zod";
-import { semVazios, validarBusca } from "./esquemas";
+import { semVazios, validarBusca, type BuscaDe, type EsquemaBusca } from "./esquemas";
 import { contarAtivos } from "./logica";
 
 export interface OpcoesMudanca {
@@ -17,11 +16,11 @@ export const CHAVES_DE_VISAO = ["visao", "ordem", "dir", "densidade", "agrupar",
  * voltar/avançar. Lê pela validação da página e escreve só o que mudou; qualquer
  * mudança que não seja de página volta para a página 1.
  */
-export function useFiltrosUrl<S extends z.ZodObject>(
+export function useFiltrosUrl<S extends EsquemaBusca>(
   esquema: S,
   naoContam: readonly string[] = CHAVES_DE_VISAO,
 ) {
-  type Busca = Partial<z.output<S>>;
+  type Busca = BuscaDe<S>;
   const validar = useMemo(() => validarBusca(esquema), [esquema]);
   const bruto = useRouterState({ select: (s) => s.location.search });
   const busca: Busca = useMemo(() => validar(bruto as Record<string, unknown>), [validar, bruto]);
@@ -45,7 +44,7 @@ export function useFiltrosUrl<S extends z.ZodObject>(
     [ir],
   );
 
-  const chaves = useMemo(() => Object.keys(esquema.shape), [esquema]);
+  const chaves = useMemo(() => Object.keys(esquema), [esquema]);
   const limpar = useCallback(
     () =>
       ir((anterior) => ({

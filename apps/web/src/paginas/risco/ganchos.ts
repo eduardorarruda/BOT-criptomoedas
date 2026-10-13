@@ -11,7 +11,7 @@ export const ContextoFonteRisco = createContext<FonteRisco | null>(null);
 
 const demos = new WeakMap<object, FonteRisco>();
 
-export function useFonteRisco(): FonteRisco {
+function useFonteRisco(): FonteRisco {
   const injetada = useContext(ContextoFonteRisco);
   const fonte = useFonte();
   return useMemo(() => {
@@ -24,7 +24,7 @@ export function useFonteRisco(): FonteRisco {
   }, [injetada, fonte]);
 }
 
-export const chavesRisco = {
+const chavesRisco = {
   todas: chaves.risco,
   situacao: [...chaves.risco, "situacao"] as const,
   divergencias: [...chaves.risco, "divergencias"] as const,

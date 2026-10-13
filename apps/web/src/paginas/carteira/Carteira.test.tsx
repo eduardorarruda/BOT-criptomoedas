@@ -189,6 +189,6 @@ describe("tela Carteira", () => {
     montar({}, "/?visao=cartoes&q=btc");
     const cartoes = await screen.findByRole("list", { name: "Moedas da carteira" });
     expect(within(cartoes).getAllByRole("listitem")).toHaveLength(1);
-    expect(within(cartoes).getByRole("button", { name: "Ver detalhes de BTC" })).toBeInTheDocument();
+    expect(within(cartoes).getByRole("button", { name: "BTC: ver detalhes" })).toBeInTheDocument();
   });
 });

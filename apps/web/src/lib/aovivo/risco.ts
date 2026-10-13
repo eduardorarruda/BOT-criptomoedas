@@ -14,7 +14,7 @@ export const LIMIAR_ATENCAO = 0.7;
 export const inicioDoDiaUtc = (agora: number): number => agora - (agora % DIA_MS);
 
 /** As execuções confirmadas das ordens, na ordem em que aconteceram. */
-export function execucoesDe(ordens: readonly OrdemDTO[]): Execucao[] {
+function execucoesDe(ordens: readonly OrdemDTO[]): Execucao[] {
   return ordens
     .flatMap((o) =>
       o.execucoes.map((x) => ({

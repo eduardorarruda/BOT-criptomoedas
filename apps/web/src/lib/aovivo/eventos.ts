@@ -17,7 +17,7 @@ export const CATEGORIAS: readonly { readonly valor: Categoria; readonly rotulo: 
   { valor: "posicao", rotulo: "Posição" },
 ];
 
-export const TETO_AO_VIVO = 500;
+const TETO_AO_VIVO = 500;
 
 /** `null` para o que não é de um robô (preço, saúde, configuração) e para alertas (vão para Avisos). */
 export function categoriaDe(e: Evento): Categoria | null {

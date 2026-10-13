@@ -151,8 +151,9 @@ export function SimGanhoCapital() {
         {r ? <Resultado r={r} /> : null}
         <Explicacao>
           Tabela progressiva usada: 15% até R$ 5 milhões de ganho, 17,5% até R$ 10 milhões, 20% até R$ 30
-          milhões e 22,5% acima — {t.fonte}; vigente desde {t.vigenteDesde.split("-").reverse().join("/")},
-          conferida em {t.consultadaEm.split("-").reverse().join("/")}.
+          milhões e 22,5% acima. Fonte: {t.fonte}; vigente desde{" "}
+          {t.vigenteDesde.split("-").reverse().join("/")}, conferida em{" "}
+          {t.consultadaEm.split("-").reverse().join("/")}.
         </Explicacao>
         <Premissas
           titulo="Premissas e isenções conhecidas"

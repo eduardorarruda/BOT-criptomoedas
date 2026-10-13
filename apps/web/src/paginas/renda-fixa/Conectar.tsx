@@ -210,7 +210,7 @@ export function Conectar({ demo }: { readonly demo: boolean }) {
         </p>
         <p className="nota">
           MeuPluggy: só dá para conectar bancos nos 15 dias de teste da conta de desenvolvedor. Depois disso a
-          conexão segue funcionando, mas não entra banco novo — e apagar a conexão na Pluggy faz perder o
+          conexão segue funcionando, mas não entra banco novo, e apagar a conexão na Pluggy faz perder o
           acesso.
         </p>
         <div className="rf-acoes">

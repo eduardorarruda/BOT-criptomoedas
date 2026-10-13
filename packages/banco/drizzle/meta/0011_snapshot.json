@@ -85,12 +85,8 @@
           "name": "auditoria_usuario_id_usuarios_id_fk",
           "tableFrom": "auditoria",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -100,10 +96,7 @@
         "auditoria_sequencia_unica": {
           "name": "auditoria_sequencia_unica",
           "nullsNotDistinct": true,
-          "columns": [
-            "usuario_id",
-            "sequencia"
-          ]
+          "columns": ["usuario_id", "sequencia"]
         }
       },
       "policies": {},
@@ -141,12 +134,8 @@
           "name": "configuracao_global_usuario_id_usuarios_id_fk",
           "tableFrom": "configuracao_global",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -218,12 +207,8 @@
           "name": "contas_corretora_usuario_id_usuarios_id_fk",
           "tableFrom": "contas_corretora",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -233,11 +218,7 @@
         "contas_corretora_unica": {
           "name": "contas_corretora_unica",
           "nullsNotDistinct": false,
-          "columns": [
-            "usuario_id",
-            "corretora",
-            "rede"
-          ]
+          "columns": ["usuario_id", "corretora", "rede"]
         }
       },
       "policies": {},
@@ -318,12 +299,8 @@
           "name": "sessoes_usuario_id_usuarios_id_fk",
           "tableFrom": "sessoes",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -405,12 +382,8 @@
           "name": "tokens_api_usuario_id_usuarios_id_fk",
           "tableFrom": "tokens_api",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -420,9 +393,7 @@
         "tokens_api_hash_unico": {
           "name": "tokens_api_hash_unico",
           "nullsNotDistinct": false,
-          "columns": [
-            "hash"
-          ]
+          "columns": ["hash"]
         }
       },
       "policies": {},
@@ -491,9 +462,7 @@
         "usuarios_email_unico": {
           "name": "usuarios_email_unico",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -693,12 +662,8 @@
           "name": "carteira_negociacoes_usuario_id_usuarios_id_fk",
           "tableFrom": "carteira_negociacoes",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -708,12 +673,7 @@
         "carteira_negociacoes_unica": {
           "name": "carteira_negociacoes_unica",
           "nullsNotDistinct": false,
-          "columns": [
-            "usuario_id",
-            "rede",
-            "simbolo",
-            "id_negociacao"
-          ]
+          "columns": ["usuario_id", "rede", "simbolo", "id_negociacao"]
         }
       },
       "policies": {},
@@ -785,12 +745,8 @@
           "name": "carteira_saldos_usuario_id_usuarios_id_fk",
           "tableFrom": "carteira_saldos",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -798,11 +754,7 @@
       "compositePrimaryKeys": {
         "carteira_saldos_pk": {
           "name": "carteira_saldos_pk",
-          "columns": [
-            "usuario_id",
-            "rede",
-            "ativo"
-          ]
+          "columns": ["usuario_id", "rede", "ativo"]
         }
       },
       "uniqueConstraints": {},
@@ -870,12 +822,8 @@
           "name": "carteira_sincronizacoes_usuario_id_usuarios_id_fk",
           "tableFrom": "carteira_sincronizacoes",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -883,10 +831,7 @@
       "compositePrimaryKeys": {
         "carteira_sincronizacoes_pk": {
           "name": "carteira_sincronizacoes_pk",
-          "columns": [
-            "usuario_id",
-            "rede"
-          ]
+          "columns": ["usuario_id", "rede"]
         }
       },
       "uniqueConstraints": {},
@@ -942,12 +887,8 @@
           "name": "assistente_config_usuario_id_usuarios_id_fk",
           "tableFrom": "assistente_config",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1029,12 +970,8 @@
           "name": "assistente_conversas_usuario_id_usuarios_id_fk",
           "tableFrom": "assistente_conversas",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1044,10 +981,7 @@
         "assistente_conversas_id_usuario": {
           "name": "assistente_conversas_id_usuario",
           "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "usuario_id"
-          ]
+          "columns": ["id", "usuario_id"]
         }
       },
       "policies": {},
@@ -1164,12 +1098,8 @@
           "name": "assistente_mensagens_usuario_id_usuarios_id_fk",
           "tableFrom": "assistente_mensagens",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1177,14 +1107,8 @@
           "name": "assistente_mensagens_conversa_fk",
           "tableFrom": "assistente_mensagens",
           "tableTo": "assistente_conversas",
-          "columnsFrom": [
-            "conversa_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["conversa_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1258,12 +1182,8 @@
           "name": "documentos_origem_usuario_id_usuarios_id_fk",
           "tableFrom": "documentos_origem",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1271,14 +1191,8 @@
           "name": "documentos_origem_documento_fk",
           "tableFrom": "documentos_origem",
           "tableTo": "documentos",
-          "columnsFrom": [
-            "documento_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["documento_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1359,12 +1273,8 @@
           "name": "documentos_usuario_id_usuarios_id_fk",
           "tableFrom": "documentos",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1374,18 +1284,12 @@
         "documentos_usuario_hash": {
           "name": "documentos_usuario_hash",
           "nullsNotDistinct": false,
-          "columns": [
-            "usuario_id",
-            "hash_conteudo"
-          ]
+          "columns": ["usuario_id", "hash_conteudo"]
         },
         "documentos_id_usuario": {
           "name": "documentos_id_usuario",
           "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "usuario_id"
-          ]
+          "columns": ["id", "usuario_id"]
         }
       },
       "policies": {},
@@ -1484,12 +1388,8 @@
           "name": "trechos_usuario_id_usuarios_id_fk",
           "tableFrom": "trechos",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1497,14 +1397,8 @@
           "name": "trechos_documento_fk",
           "tableFrom": "trechos",
           "tableTo": "documentos",
-          "columnsFrom": [
-            "documento_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["documento_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1579,11 +1473,7 @@
       "compositePrimaryKeys": {
         "candles_pk": {
           "name": "candles_pk",
-          "columns": [
-            "simbolo",
-            "intervalo",
-            "abertura"
-          ]
+          "columns": ["simbolo", "intervalo", "abertura"]
         }
       },
       "uniqueConstraints": {},
@@ -1750,12 +1640,8 @@
           "name": "backtests_usuario_id_usuarios_id_fk",
           "tableFrom": "backtests",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1763,16 +1649,8 @@
           "name": "backtests_estrategia_versao_fk",
           "tableFrom": "backtests",
           "tableTo": "estrategia_versoes",
-          "columnsFrom": [
-            "estrategia_id",
-            "estrategia_versao",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "estrategia_id",
-            "versao",
-            "usuario_id"
-          ],
+          "columnsFrom": ["estrategia_id", "estrategia_versao", "usuario_id"],
+          "columnsTo": ["estrategia_id", "versao", "usuario_id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1956,12 +1834,8 @@
           "name": "decisoes_usuario_id_usuarios_id_fk",
           "tableFrom": "decisoes",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1969,14 +1843,8 @@
           "name": "decisoes_robo_fk",
           "tableFrom": "decisoes",
           "tableTo": "robos",
-          "columnsFrom": [
-            "robo_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["robo_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1986,10 +1854,7 @@
         "decisoes_id_usuario": {
           "name": "decisoes_id_usuario",
           "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "usuario_id"
-          ]
+          "columns": ["id", "usuario_id"]
         }
       },
       "policies": {},
@@ -2067,12 +1932,8 @@
           "name": "estrategia_versoes_usuario_id_usuarios_id_fk",
           "tableFrom": "estrategia_versoes",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2080,14 +1941,8 @@
           "name": "estrategia_versoes_estrategia_fk",
           "tableFrom": "estrategia_versoes",
           "tableTo": "estrategias",
-          "columnsFrom": [
-            "estrategia_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["estrategia_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2095,21 +1950,14 @@
       "compositePrimaryKeys": {
         "estrategia_versoes_pk": {
           "name": "estrategia_versoes_pk",
-          "columns": [
-            "estrategia_id",
-            "versao"
-          ]
+          "columns": ["estrategia_id", "versao"]
         }
       },
       "uniqueConstraints": {
         "estrategia_versoes_id_usuario": {
           "name": "estrategia_versoes_id_usuario",
           "nullsNotDistinct": false,
-          "columns": [
-            "estrategia_id",
-            "versao",
-            "usuario_id"
-          ]
+          "columns": ["estrategia_id", "versao", "usuario_id"]
         }
       },
       "policies": {},
@@ -2160,12 +2008,8 @@
           "name": "estrategias_usuario_id_usuarios_id_fk",
           "tableFrom": "estrategias",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2175,10 +2019,7 @@
         "estrategias_id_usuario": {
           "name": "estrategias_id_usuario",
           "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "usuario_id"
-          ]
+          "columns": ["id", "usuario_id"]
         }
       },
       "policies": {},
@@ -2255,12 +2096,8 @@
           "name": "execucoes_usuario_id_usuarios_id_fk",
           "tableFrom": "execucoes",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2268,14 +2105,8 @@
           "name": "execucoes_ordem_fk",
           "tableFrom": "execucoes",
           "tableTo": "ordens",
-          "columnsFrom": [
-            "ordem_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["ordem_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2285,10 +2116,7 @@
         "execucoes_ordem_sequencia": {
           "name": "execucoes_ordem_sequencia",
           "nullsNotDistinct": false,
-          "columns": [
-            "ordem_id",
-            "sequencia"
-          ]
+          "columns": ["ordem_id", "sequencia"]
         }
       },
       "policies": {},
@@ -2415,12 +2243,8 @@
           "name": "ordens_usuario_id_usuarios_id_fk",
           "tableFrom": "ordens",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2428,14 +2252,8 @@
           "name": "ordens_robo_fk",
           "tableFrom": "ordens",
           "tableTo": "robos",
-          "columnsFrom": [
-            "robo_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["robo_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2443,14 +2261,8 @@
           "name": "ordens_decisao_fk",
           "tableFrom": "ordens",
           "tableTo": "decisoes",
-          "columnsFrom": [
-            "decisao_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["decisao_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2460,17 +2272,12 @@
         "ordens_id_usuario": {
           "name": "ordens_id_usuario",
           "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "usuario_id"
-          ]
+          "columns": ["id", "usuario_id"]
         },
         "ordens_id_cliente_unico": {
           "name": "ordens_id_cliente_unico",
           "nullsNotDistinct": false,
-          "columns": [
-            "id_cliente"
-          ]
+          "columns": ["id_cliente"]
         }
       },
       "policies": {},
@@ -2641,12 +2448,8 @@
           "name": "protecoes_corretora_usuario_id_usuarios_id_fk",
           "tableFrom": "protecoes_corretora",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2654,14 +2457,8 @@
           "name": "protecoes_corretora_robo_fk",
           "tableFrom": "protecoes_corretora",
           "tableTo": "robos",
-          "columnsFrom": [
-            "robo_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["robo_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2669,14 +2466,8 @@
           "name": "protecoes_corretora_decisao_fk",
           "tableFrom": "protecoes_corretora",
           "tableTo": "decisoes",
-          "columnsFrom": [
-            "decisao_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["decisao_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2686,9 +2477,7 @@
         "protecoes_corretora_id_lista": {
           "name": "protecoes_corretora_id_lista",
           "nullsNotDistinct": false,
-          "columns": [
-            "id_lista"
-          ]
+          "columns": ["id_lista"]
         }
       },
       "policies": {},
@@ -2845,12 +2634,8 @@
           "name": "robos_usuario_id_usuarios_id_fk",
           "tableFrom": "robos",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2858,16 +2643,8 @@
           "name": "robos_estrategia_versao_fk",
           "tableFrom": "robos",
           "tableTo": "estrategia_versoes",
-          "columnsFrom": [
-            "estrategia_id",
-            "estrategia_versao",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "estrategia_id",
-            "versao",
-            "usuario_id"
-          ],
+          "columnsFrom": ["estrategia_id", "estrategia_versao", "usuario_id"],
+          "columnsTo": ["estrategia_id", "versao", "usuario_id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2877,10 +2654,7 @@
         "robos_id_usuario": {
           "name": "robos_id_usuario",
           "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "usuario_id"
-          ]
+          "columns": ["id", "usuario_id"]
         }
       },
       "policies": {},
@@ -2934,10 +2708,7 @@
       "compositePrimaryKeys": {
         "indicadores_pk": {
           "name": "indicadores_pk",
-          "columns": [
-            "serie",
-            "dia"
-          ]
+          "columns": ["serie", "dia"]
         }
       },
       "uniqueConstraints": {},
@@ -3087,12 +2858,8 @@
           "name": "pluggy_itens_usuario_id_usuarios_id_fk",
           "tableFrom": "pluggy_itens",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3102,10 +2869,7 @@
         "pluggy_itens_id_usuario": {
           "name": "pluggy_itens_id_usuario",
           "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "usuario_id"
-          ]
+          "columns": ["id", "usuario_id"]
         }
       },
       "policies": {},
@@ -3305,12 +3069,8 @@
           "name": "titulos_renda_fixa_usuario_id_usuarios_id_fk",
           "tableFrom": "titulos_renda_fixa",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3318,14 +3078,8 @@
           "name": "titulos_renda_fixa_item_fk",
           "tableFrom": "titulos_renda_fixa",
           "tableTo": "pluggy_itens",
-          "columnsFrom": [
-            "item_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["item_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3335,10 +3089,7 @@
         "titulos_renda_fixa_externo": {
           "name": "titulos_renda_fixa_externo",
           "nullsNotDistinct": false,
-          "columns": [
-            "usuario_id",
-            "externo_id"
-          ]
+          "columns": ["usuario_id", "externo_id"]
         }
       },
       "policies": {},
@@ -3447,14 +3198,8 @@
           "name": "financiamentos_imobiliarios_investimento_fk",
           "tableFrom": "financiamentos_imobiliarios",
           "tableTo": "investimentos_imobiliarios",
-          "columnsFrom": [
-            "investimento_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["investimento_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3659,12 +3404,8 @@
           "name": "investimentos_imobiliarios_usuario_id_usuarios_id_fk",
           "tableFrom": "investimentos_imobiliarios",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3674,10 +3415,7 @@
         "investimentos_imobiliarios_id_usuario": {
           "name": "investimentos_imobiliarios_id_usuario",
           "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "usuario_id"
-          ]
+          "columns": ["id", "usuario_id"]
         }
       },
       "policies": {},
@@ -3798,14 +3536,8 @@
           "name": "lancamentos_imobiliarios_investimento_fk",
           "tableFrom": "lancamentos_imobiliarios",
           "tableTo": "investimentos_imobiliarios",
-          "columnsFrom": [
-            "investimento_id",
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id",
-            "usuario_id"
-          ],
+          "columnsFrom": ["investimento_id", "usuario_id"],
+          "columnsTo": ["id", "usuario_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3935,12 +3667,8 @@
           "name": "avisos_usuario_id_usuarios_id_fk",
           "tableFrom": "avisos",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4097,12 +3825,8 @@
           "name": "divergencias_saldo_usuario_id_usuarios_id_fk",
           "tableFrom": "divergencias_saldo",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4201,12 +3925,8 @@
           "name": "gastos_ia_usuario_id_usuarios_id_fk",
           "tableFrom": "gastos_ia",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4326,12 +4046,8 @@
           "name": "limites_conta_usuario_id_usuarios_id_fk",
           "tableFrom": "limites_conta",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

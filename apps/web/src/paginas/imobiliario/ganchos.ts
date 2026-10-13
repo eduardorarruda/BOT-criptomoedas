@@ -37,7 +37,7 @@ function fonteDoModo(demo: boolean): FonteImobiliario {
   return (fontes.api ??= criarFonteImobiliarioApi());
 }
 
-export function useFonteImobiliario(): FonteImobiliario {
+function useFonteImobiliario(): FonteImobiliario {
   const injetada = useContext(ContextoImobiliario);
   const { demo } = useFonte();
   return injetada ?? fonteDoModo(demo);
@@ -69,7 +69,7 @@ export function useCdiPremissa(): [number | null, (v: number | null) => void] {
   return [cdi, definir];
 }
 
-export const chavesImobiliario = {
+const chavesImobiliario = {
   todas: ["imobiliario"] as const,
   visao: (cdi: number | null) => ["imobiliario", "visao", cdi] as const,
   detalhe: (id: string, cdi: number | null) => ["imobiliario", "detalhe", id, cdi] as const,

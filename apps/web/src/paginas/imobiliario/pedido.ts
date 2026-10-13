@@ -12,7 +12,7 @@ import { lerPercentualDigitado, lerReaisDigitado, TIPOS } from "./formato";
  * seus campos; a compra e os custos viram lançamentos iniciais, e o financiamento,
  * quando há, entra junto. Erros saem por campo, com a frase para a pessoa.
  */
-export type TipoCampo = "texto" | "reais" | "pct" | "data" | "inteiro";
+type TipoCampo = "texto" | "reais" | "pct" | "data" | "inteiro";
 
 export interface DefinicaoCampo {
   readonly chave: string;

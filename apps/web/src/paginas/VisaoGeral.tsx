@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 import {
   ArrowRight,
   Bot,
@@ -15,7 +16,6 @@ import { AnalisesAoVivo } from "../componentes/decisao/AnalisesAoVivo";
 import { CartaoDecisao } from "../componentes/decisao/CartaoDecisao";
 import { Dinheiro } from "../componentes/Dinheiro";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
-import { GraficoLinha } from "../componentes/graficos/GraficoLinha";
 import { CartaoKpi, GradeKpi } from "../componentes/Kpi";
 import { Minigrafico } from "../componentes/Minigrafico";
 import { NumeroAnimado } from "../componentes/NumeroAnimado";
@@ -25,6 +25,11 @@ import { useDecisoes, usePatrimonio, useResumo, useRobos } from "../ganchos/cons
 import { formatarCustoIa, formatarDinheiro, sinalDe } from "../lib/formatar";
 import { variacao } from "../lib/metricas";
 import { MODO_ROBO, REDE } from "../lib/rotulos";
+
+/** O lightweight-charts (~57 kB) chega depois dos números: a curva não segura a primeira tela. */
+const GraficoLinha = lazy(() =>
+  import("../componentes/graficos/GraficoLinha").then((m) => ({ default: m.GraficoLinha })),
+);
 
 function Metricas() {
   const { data: r, error, refetch, isPending } = useResumo();
@@ -119,11 +124,13 @@ function Curva() {
         <span className="legenda-linha legenda-linha--real" aria-hidden="true" /> Resultado real, das
         execuções confirmadas · <Dinheiro valor={v.absoluta} sinal colorir /> em 30 dias
       </p>
-      <GraficoLinha
-        pontos={data}
-        tipo="real"
-        rotulo={`Curva de patrimônio real dos últimos 30 dias: variação de ${formatarDinheiro(v.absoluta, { sinal: true })}.`}
-      />
+      <Suspense fallback={<Esqueleto forma="grafico" altura={240} rotulo="Carregando o gráfico" />}>
+        <GraficoLinha
+          pontos={data}
+          tipo="real"
+          rotulo={`Curva de patrimônio real dos últimos 30 dias: variação de ${formatarDinheiro(v.absoluta, { sinal: true })}.`}
+        />
+      </Suspense>
     </>
   );
 }
@@ -224,7 +231,7 @@ export function VisaoGeral() {
   return (
     <>
       <Cabecalho titulo="Visão geral">
-        Como estão seus robôs hoje — com perdas, taxas e custo de IA à vista.
+        Como estão seus robôs hoje, com perdas, taxas e custo de IA à vista.
       </Cabecalho>
       <Metricas />
       <div className="grade-visao">

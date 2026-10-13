@@ -6,43 +6,16 @@ import {
   type TituloRendaFixa,
 } from "@zentrade/contratos/esquemas";
 import { dec } from "@zentrade/dominio";
-import { z } from "zod";
-import {
-  agruparPor,
-  CHAVES_DE_VISAO,
-  campo,
-  contemTexto,
-  lerLista,
-  ordenarPor,
-} from "../../componentes/filtros";
+import { agruparPor, CHAVES_DE_VISAO, contemTexto, lerLista, ordenarPor } from "../../componentes/filtros";
+import { type BuscaRendaFixa } from "./busca";
+
+export * from "./busca";
 
 /**
  * Filtros da lista de títulos: tipo, indexador, origem, liquidez, janela de
  * vencimento e situação; ordem e as visões (cartões, tabela, escada de
  * vencimentos, alocação). Tudo puro e testado sem tela.
  */
-export const ABAS = ["visao", "titulos", "conectar", "cadastrar", "simuladores"] as const;
-export type Aba = (typeof ABAS)[number];
-export const JANELAS = ["30", "90", "365"] as const;
-export const SITUACOES = ["ativo", "encerrado"] as const;
-export const ORDENS = ["vencimento", "valor", "rendimento", "aplicacao", "nome"] as const;
-export const VISOES = ["cartoes", "tabela", "escada", "alocacao"] as const;
-
-export const buscaRendaFixa = z.object({
-  aba: campo.opcao(ABAS),
-  q: campo.busca(),
-  tipo: campo.lista(TIPOS_TITULO),
-  indexador: campo.lista(INDEXADORES),
-  origem: campo.lista(ORIGENS_TITULO),
-  liquidez: campo.lista(LIQUIDEZES),
-  vence: campo.opcao(JANELAS),
-  situacao: campo.opcao(SITUACOES),
-  ordem: campo.opcao(ORDENS),
-  dir: campo.opcao(["asc", "desc"] as const),
-  visao: campo.opcao(VISOES),
-  densidade: campo.opcao(["compacta"] as const),
-});
-export type BuscaRendaFixa = Partial<z.output<typeof buscaRendaFixa>>;
 
 /** A aba também mora na URL, mas trocar de aba não é filtro. */
 export const NAO_CONTAM: readonly string[] = [...CHAVES_DE_VISAO, "aba"];

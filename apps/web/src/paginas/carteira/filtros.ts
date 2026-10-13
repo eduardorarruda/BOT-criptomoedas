@@ -1,44 +1,16 @@
 import type { MoedaCarteira, ResumoParcela } from "@zentrade/contratos/esquemas";
 import { dec, paraTexto } from "@zentrade/dominio";
-import { z } from "zod";
-import { campo, contemTexto } from "../../componentes/filtros";
-import type { Coluna, Ordem, Parcela } from "./tabela";
+import { contemTexto } from "../../componentes/filtros";
+import type { Ordem, Parcela } from "./tabela";
+import { type BuscaCarteira } from "./busca";
+
+export * from "./busca";
 
 /**
  * Filtros da carteira cripto: conta (rede), parcela (robô/manual), moeda, só com
  * saldo, com resultado realizado; ordem pela coluna; visão em tabela, cartões ou
  * alocação. E os totais recalculados para as moedas que passaram no filtro.
  */
-export const COLUNAS_ORDEM = [
-  "ativo",
-  "quantidade",
-  "precoMedio",
-  "custoPosicao",
-  "preco",
-  "valorAtual",
-  "naoRealizado",
-  "realizadoBruto",
-  "realizadoLiquido",
-  "taxas",
-  "retorno",
-  "alocacao",
-  "comprado",
-  "vendido",
-] as const satisfies readonly Coluna[];
-export const VISOES = ["tabela", "cartoes", "alocacao"] as const;
-
-export const buscaCarteira = z.object({
-  rede: campo.opcao(["real", "testnet"] as const),
-  parcela: campo.opcao(["robo", "manual"] as const),
-  q: campo.busca(),
-  saldo: campo.ligado(),
-  realizado: campo.ligado(),
-  avisos: campo.ligado(),
-  ordem: campo.opcao(COLUNAS_ORDEM),
-  dir: campo.opcao(["asc", "desc"] as const),
-  visao: campo.opcao(VISOES),
-});
-export type BuscaCarteira = Partial<z.output<typeof buscaCarteira>>;
 
 /** A parcela é uma lente (não esconde moedas): não conta como filtro. */
 export const NAO_CONTAM: readonly string[] = ["ordem", "dir", "visao", "parcela"];

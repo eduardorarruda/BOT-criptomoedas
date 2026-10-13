@@ -22,7 +22,7 @@ export function PainelPensando({
         <div className="aovivo-pensando__quieto">
           <Enso tamanho={28} />
           <p>
-            A IA não está analisando agora. Ela só é chamada quando a regra dá sinal de compra ou venda — e
+            A IA não está analisando agora. Ela só é chamada quando a regra dá sinal de compra ou venda, e
             cada ferramenta que ela consultar aparece aqui, na hora.
           </p>
         </div>

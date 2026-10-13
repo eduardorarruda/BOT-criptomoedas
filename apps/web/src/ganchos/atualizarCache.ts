@@ -16,7 +16,7 @@ export function substituirOuIncluir<T extends { id: string }>(
   return noInicio ? [item, ...lista] : [...lista, item];
 }
 
-export function atendeFiltro(d: DecisaoDTO, f: FiltroDecisoes = {}): boolean {
+function atendeFiltro(d: DecisaoDTO, f: FiltroDecisoes = {}): boolean {
   return (!f.roboId || d.roboId === f.roboId) && (!f.estado || d.estado === f.estado);
 }
 
@@ -38,7 +38,7 @@ export const aplicarRobo = (lista: readonly RoboDTO[], r: RoboDTO): RoboDTO[] =>
 
 /* ---------- análises em andamento (cartão "pensando") ---------- */
 
-export interface EtapaAnalise {
+interface EtapaAnalise {
   readonly ferramenta: string;
   readonly descricao: string;
   readonly em: number;

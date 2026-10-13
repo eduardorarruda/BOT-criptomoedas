@@ -64,7 +64,7 @@ export function Entrar() {
           <br />O risco tem a <span className="entrar__lema-destaque">palavra final.</span>
         </p>
       </section>
-      <section className="entrar__formulario" aria-labelledby="titulo-entrar">
+      <section className="entrar__formulario" role="main" aria-labelledby="titulo-entrar">
         <h1 id="titulo-entrar" className="entrar__titulo">
           <span className="marca__zen">Zen</span>
           <span className="marca__trade">Trade</span>

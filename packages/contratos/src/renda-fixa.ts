@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { Id, Instante, TextoDecimal } from "./comum.js";
+import { INDEXADORES, LIQUIDEZES, ORIGENS_TITULO, TIPOS_TITULO } from "./valores.js";
+
+export { INDEXADORES, LIQUIDEZES, ORIGENS_TITULO, TIPOS_TITULO };
 
 /**
  * Renda fixa e investimento passivo (`/api/v1/renda-fixa/*` e `/api/v1/pluggy/*`).
@@ -7,34 +10,15 @@ import { Id, Instante, TextoDecimal } from "./comum.js";
  * ao ano); datas de calendário em "AAAA-MM-DD"; instantes em ms UTC.
  */
 
-export const TIPOS_TITULO = [
-  "CDB",
-  "LC",
-  "LCI",
-  "LCA",
-  "CRI",
-  "CRA",
-  "DEBENTURE",
-  "DEBENTURE_INCENTIVADA",
-  "TESOURO_SELIC",
-  "TESOURO_PREFIXADO",
-  "TESOURO_IPCA",
-  "POUPANCA",
-  "CAIXINHA",
-  "OUTRO",
-] as const;
 export const TipoTitulo = z.enum(TIPOS_TITULO);
 export type TipoTitulo = z.infer<typeof TipoTitulo>;
 
-export const INDEXADORES = ["CDI", "SELIC", "IPCA", "PREFIXADO", "POUPANCA"] as const;
 export const Indexador = z.enum(INDEXADORES);
 export type Indexador = z.infer<typeof Indexador>;
 
-export const LIQUIDEZES = ["diaria", "vencimento", "carencia"] as const;
 export const Liquidez = z.enum(LIQUIDEZES);
 export type Liquidez = z.infer<typeof Liquidez>;
 
-export const ORIGENS_TITULO = ["manual", "pluggy"] as const;
 export const SERIES_INDICADOR = ["CDI", "SELIC", "SELIC_META", "IPCA", "POUPANCA", "TR"] as const;
 export const SerieIndicador = z.enum(SERIES_INDICADOR);
 export type SerieIndicador = z.infer<typeof SerieIndicador>;

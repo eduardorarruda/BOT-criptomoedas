@@ -1,4 +1,4 @@
-import type { MudancaTitulo, NovoTitulo } from "@zentrade/contratos/esquemas";
+import type { NovoTitulo } from "@zentrade/contratos/esquemas";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFonte } from "../../api/contexto";
 import { criarFonteRendaFixaDemo } from "./demo";
@@ -14,7 +14,7 @@ export function useFonteRendaFixa(): FonteRendaFixa {
   return (fonteApi ??= criarFonteRendaFixaApi());
 }
 
-export const chavesRF = {
+const chavesRF = {
   tudo: ["renda-fixa"] as const,
   resumo: ["renda-fixa", "resumo"] as const,
   titulos: ["renda-fixa", "titulos"] as const,
@@ -63,8 +63,6 @@ function useMutacaoRF<E, R>(fazer: (f: FonteRendaFixa, e: E) => Promise<R>) {
 }
 
 export const useCriarTitulo = () => useMutacaoRF((f, t: NovoTitulo) => f.criarTitulo(t));
-export const useAlterarTitulo = () =>
-  useMutacaoRF((f, e: { id: string; mudanca: MudancaTitulo }) => f.alterarTitulo(e.id, e.mudanca));
 export const useRemoverTitulo = () => useMutacaoRF((f, id: string) => f.removerTitulo(id));
 export const useAtualizarIndicadores = () => useMutacaoRF((f, _: undefined) => f.atualizarIndicadores());
 export const useConectarItem = () => useMutacaoRF((f, itemId: string) => f.conectarItem(itemId));

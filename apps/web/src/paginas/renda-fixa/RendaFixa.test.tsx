@@ -33,7 +33,7 @@ describe("tela de renda fixa (demonstração)", () => {
     );
     expect(buscaAtual(roteador).aba).toBe("titulos");
     expect(await screen.findByText("2 lotes", {}, ESPERA)).toBeInTheDocument();
-    await usuario.click(screen.getByRole("button", { name: /Ver detalhes de CDB Banco Exemplo/ }));
+    await usuario.click(screen.getByRole("button", { name: /^CDB Banco Exemplo.*: ver detalhes$/ }));
     const dialogo = await screen.findByRole("dialog", {}, ESPERA);
     expect(await within(dialogo).findByText(/Projeção até o vencimento/, {}, ESPERA)).toBeInTheDocument();
     expect(within(dialogo).getAllByText(/não é promessa de rentabilidade/).length).toBeGreaterThan(0);

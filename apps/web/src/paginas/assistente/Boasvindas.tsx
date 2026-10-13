@@ -4,14 +4,14 @@ import type { Usuario } from "../../api/esquemas";
 import { Enso } from "../../componentes/Enso";
 import { chaves } from "../../ganchos/chaves";
 
-export const SUGESTOES: readonly { readonly texto: string; readonly icone: LucideIcon }[] = [
+const SUGESTOES: readonly { readonly texto: string; readonly icone: LucideIcon }[] = [
   { texto: "Como estão meus robôs hoje?", icone: Bot },
   { texto: "Resumo da minha carteira cripto", icone: Coins },
   { texto: "Quando vencem meus títulos de renda fixa?", icone: CalendarClock },
   { texto: "Explique a última decisão do robô", icone: Scale },
 ];
 
-export function saudacao(hora: number): string {
+function saudacao(hora: number): string {
   if (hora >= 5 && hora < 12) return "Bom dia";
   if (hora >= 12 && hora < 18) return "Boa tarde";
   return "Boa noite";
@@ -33,7 +33,7 @@ export function Saudacao() {
       </h2>
       <p className="saudacao__texto">
         Pergunte sobre os seus robôs, a carteira, a renda fixa e as decisões. Eu só leio os seus dados e
-        mostro de onde tirei cada coisa — quem decide continua sendo você.
+        mostro de onde tirei cada coisa. Quem decide continua sendo você.
       </p>
     </div>
   );

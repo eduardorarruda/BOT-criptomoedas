@@ -12,18 +12,18 @@ import type { Fonte } from "./api/fonte";
 import { validarBusca } from "./componentes/filtros/esquemas";
 import { chaves } from "./ganchos/chaves";
 import { CabecaDaRota } from "./layout/CabecaDaRota";
-import { Casca } from "./layout/Casca";
-import { buscaCarteira } from "./paginas/carteira/filtros";
-import { buscaDecisoes } from "./paginas/decisoes/filtros";
-import { buscaImobiliario } from "./paginas/imobiliario/filtros";
+import { buscaCarteira } from "./paginas/carteira/busca";
+import { buscaDecisoes } from "./paginas/decisoes/busca";
+import { buscaImobiliario } from "./paginas/imobiliario/busca";
 import { NaoEncontrada } from "./paginas/NaoEncontrada";
-import { buscaOrdens } from "./paginas/ordens/filtros";
-import { buscaPatrimonio } from "./paginas/patrimonio/filtros";
-import { buscaRendaFixa } from "./paginas/renda-fixa/filtros";
+import { buscaOrdens } from "./paginas/ordens/busca";
+import { buscaPatrimonio } from "./paginas/patrimonio/busca";
+import { buscaRendaFixa } from "./paginas/renda-fixa/busca";
 
 /**
- * Rotas (código, sem gerador). Fora /entrar e /privacidade, tudo exige sessão; as telas com
- * gráfico carregam sob demanda para a primeira tela abrir rápido.
+ * Rotas (código, sem gerador). Fora /entrar e /privacidade, tudo exige sessão. Cada tela
+ * e a moldura do app (Casca) carregam sob demanda: o login não baixa o painel, e o
+ * painel não baixa as outras telas.
  */
 export interface ContextoRotas {
   readonly queryClient: QueryClient;
@@ -50,7 +50,7 @@ async function sessaoAtual(ctx: ContextoRotas) {
 }
 
 /** Só aceita voltar para um caminho interno ("/x"), nunca para outro site. */
-export function destinoSeguro(valor: unknown): string | undefined {
+function destinoSeguro(valor: unknown): string | undefined {
   return typeof valor === "string" && valor.startsWith("/") && !valor.startsWith("//") ? valor : undefined;
 }
 
@@ -80,7 +80,7 @@ const app = createRoute({
   beforeLoad: async ({ context, location }) => {
     if (!(await sessaoAtual(context))) throw redirect({ to: "/entrar", search: { voltar: location.href } });
   },
-  component: Casca,
+  component: lazyRouteComponent(() => import("./layout/Casca"), "Casca"),
 });
 
 const pagina = <P extends string, M extends Record<string, ComponentType>>(

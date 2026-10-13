@@ -28,7 +28,7 @@ function Item({
     <div>
       <dt>{rotulo}</dt>
       <dd className={`num ${cor ? classeDoSinal(valor) : ""}`}>{formatarReais(valor, { sinal: cor })}</dd>
-      <p className="metrica__nota apagado">{nota}</p>
+      <dd className="metrica__nota apagado">{nota}</dd>
     </div>
   );
 }
@@ -48,11 +48,11 @@ function Destaque({ m }: { readonly m: MetricasImobiliario }) {
           <NumeroAnimado valor={m.patrimonioLiquido} formatar={reais} />
         )}
       </dd>
-      <p className="metrica__nota apagado">
+      <dd className="metrica__nota apagado">
         {m.encerrado
           ? "o investimento foi vendido"
           : `valor atual ${FONTE_VALOR[m.fonteValorAtual]}, menos dívidas`}
-      </p>
+      </dd>
     </div>
   );
 }
@@ -63,11 +63,11 @@ function Retorno({ m }: { readonly m: MetricasImobiliario }) {
       <div>
         <dt>TIR realizada</dt>
         <dd className="num">{m.tirAnual === null ? "—" : `${formatarTaxa(m.tirAnual)} a.a.`}</dd>
-        <p className="metrica__nota apagado">
+        <dd className="metrica__nota apagado">
           {m.tirAnual === null
             ? "precisa de saídas e entradas em datas diferentes"
             : "pelas datas de cada lançamento"}
-        </p>
+        </dd>
       </div>
       {m.cdi ? (
         <Item

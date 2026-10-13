@@ -31,7 +31,7 @@ export { fracaoDe } from "./saidas";
  * saídas como digitados) e o redutor que o muda. Puro: a tela só despacha ações.
  */
 export type Bloco = "comparar" | "e" | "ou" | "nao" | CondicaoPronta["id"];
-export type Arvore = "entrada" | "saida";
+type Arvore = "entrada" | "saida";
 
 export interface EstadoConstrutor {
   readonly id: string | null;

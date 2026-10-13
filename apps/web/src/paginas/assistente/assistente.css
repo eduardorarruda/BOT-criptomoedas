@@ -415,6 +415,7 @@
 }
 .barra__busca:focus-within {
   border-color: var(--foco);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--foco) 20%, transparent);
 }
 .barra__busca input {
   flex: 1;

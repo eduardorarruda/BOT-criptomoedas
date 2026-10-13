@@ -11,7 +11,7 @@ import { useMenosMovimento } from "../ganchos/movimento";
  * `tom="auto"` pinta de ganho se a série terminou acima do começo, de perda se
  * abaixo, e neutro se igual.
  */
-export type TomMinigrafico = "marca" | "ganho" | "perda" | "atencao" | "neutro" | "auto";
+type TomMinigrafico = "marca" | "ganho" | "perda" | "atencao" | "neutro" | "auto";
 
 interface Props {
   readonly valores: readonly number[];

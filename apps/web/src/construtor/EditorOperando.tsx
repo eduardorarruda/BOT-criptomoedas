@@ -42,7 +42,7 @@ const POR_GRUPO = GRUPOS.map(({ grupo, rotulo }) => ({
 
 const escolhaDe = (op: Operando): TipoEscolha => (op.tipo === "indicador" ? op.nome : op.tipo);
 
-export function padraoPara(t: TipoEscolha): Operando {
+function padraoPara(t: TipoEscolha): Operando {
   switch (t) {
     case "preco":
     case "abertura":

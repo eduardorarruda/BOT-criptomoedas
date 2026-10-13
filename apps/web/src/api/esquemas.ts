@@ -22,7 +22,6 @@ export {
   SessaoEsquema,
   TokenApiEsquema,
   TokenCriadoEsquema,
-  UsuarioEsquema,
 } from "@zentrade/contratos/esquemas";
 export type {
   Automacao,
@@ -31,7 +30,6 @@ export type {
   ContaCorretora,
   Documento,
   DocumentoIngerido,
-  MetricasBacktest,
   PontoCurvaBacktest,
   PontoPatrimonio,
   Resumo,
@@ -41,12 +39,10 @@ export type {
   Usuario,
 } from "@zentrade/contratos/esquemas";
 
-export type { EventoAnalise } from "@zentrade/contratos/esquemas";
-
 /**
  * Histórico curto do que os robôs fizeram (GET /aovivo/.../recentes). Proposta de
  * contrato: por enquanto só a API e a tela conhecem este formato.
  */
-export const RegistroAoVivoEsquema = z.object({ recebidoEm: Instante, evento: EventoEsquema });
+const RegistroAoVivoEsquema = z.object({ recebidoEm: Instante, evento: EventoEsquema });
 export type RegistroAoVivo = z.infer<typeof RegistroAoVivoEsquema>;
 export const RespostaAoVivoEsquema = z.object({ eventos: z.array(RegistroAoVivoEsquema) });
