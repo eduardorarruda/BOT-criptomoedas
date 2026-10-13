@@ -7,6 +7,13 @@
 summary {
   min-height: 24px;
 }
+/* links dentro das tabelas (nome do item na primeira coluna) também */
+.tabela th a,
+.tabela td a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
 
 /* botões: todos afundam um pouco ao apertar (o brilho do hover está em componentes.css) */
 .botao:active:not(:disabled) {
