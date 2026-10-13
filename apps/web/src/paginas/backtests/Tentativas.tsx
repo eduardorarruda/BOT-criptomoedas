@@ -19,7 +19,7 @@ export function Tentativas({ b }: { readonly b: Backtest }) {
       titulo={`${t.total} ${t.total === 1 ? "tentativa" : "tentativas"} desta estratégia`}
       id={`tentativas-${b.id}`}
       icone={History}
-      descricao={`${t.daVersao} nesta versão, ${t.versoes} ${t.versoes === 1 ? "versão" : "versões"} testadas. Quanto mais tentativas, maior a chance de um bom resultado sair por acaso — o ZenTrade conta todas.`}
+      descricao={`${t.daVersao} nesta versão, ${t.versoes} ${t.versoes === 1 ? "versão" : "versões"} testadas. Quanto mais tentativas, maior a chance de um bom resultado sair por acaso. O ZenTrade conta todas.`}
     >
       {t.sharpeDeflacionado === null ? (
         <p className="bt-nota">

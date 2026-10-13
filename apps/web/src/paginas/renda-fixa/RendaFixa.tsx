@@ -83,7 +83,7 @@ export function RendaFixa() {
     <>
       <Cabecalho titulo="Renda fixa" abas={<Abas ativa={aba} aoMudar={(a) => setAba(a)} />}>
         CDB, Tesouro, LCI/LCA, debêntures, poupança e caixinhas: quanto vale hoje, quanto de imposto sai e
-        quanto sobra. Fatos e contas com fonte e data — nada aqui é recomendação.
+        quanto sobra. Fatos e contas com fonte e data. Nada aqui é recomendação.
       </Cabecalho>
       <AnimatePresence mode="wait" initial={false}>
         <m.div

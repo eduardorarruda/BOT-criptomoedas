@@ -101,7 +101,7 @@ export function Automacoes() {
                     {a.falhas24h > 0 ? (
                       <span className="perda">
                         <span className="num">{a.falhas24h}</span> {a.falhas24h === 1 ? "falha" : "falhas"} em
-                        24 h — abra o fluxo no n8n para ver o erro
+                        24 h. Abra o fluxo no n8n para ver o erro.
                       </span>
                     ) : null}
                   </div>

@@ -49,14 +49,14 @@ export function Premissas({ b }: { readonly b: Backtest }) {
             {c.risco.modo === "sem_limites"
               ? "nenhum (menos realista: o robô de verdade operaria menos)."
               : c.risco.limites
-                ? `os de um robô seu — perda diária ${formatarDinheiro(c.risco.limites.perdaDiariaMaxima)}, exposição ${formatarDinheiro(c.risco.limites.exposicaoMaxima)}, ${c.risco.limites.ordensPorHoraMax} ordens por hora, pausa de ${c.risco.limites.pausaAposPerdaMin} min após perda.`
+                ? `os de um robô seu: perda diária ${formatarDinheiro(c.risco.limites.perdaDiariaMaxima)}, exposição ${formatarDinheiro(c.risco.limites.exposicaoMaxima)}, ${c.risco.limites.ordensPorHoraMax} ordens por hora, pausa de ${c.risco.limites.pausaAposPerdaMin} min após perda.`
                 : "os de um robô novo (perda diária 2%, exposição 30%, risco 0,5% do saldo por operação, 4 ordens por hora, pausa de 60 min após perda)."}
           </li>
           <li>
             <strong>Stop e alvo:</strong> vigiados dentro do candle pela mínima e pela máxima
             {m?.precisaoMinuto ? ", no caminho dos candles de 1 minuto" : ""}. Se os dois cabem no mesmo
             candle, conta o stop (pior caso)
-            {m?.candlesAmbiguos ? ` — aconteceu em ${m.candlesAmbiguos} candle(s)` : ""}.
+            {m?.candlesAmbiguos ? ` (aconteceu em ${m.candlesAmbiguos} candle(s))` : ""}.
           </li>
           {m?.saldoInicial ? (
             <li>

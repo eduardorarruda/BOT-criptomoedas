@@ -231,7 +231,7 @@ export function VisaoGeral() {
   return (
     <>
       <Cabecalho titulo="Visão geral">
-        Como estão seus robôs hoje — com perdas, taxas e custo de IA à vista.
+        Como estão seus robôs hoje, com perdas, taxas e custo de IA à vista.
       </Cabecalho>
       <Metricas />
       <div className="grade-visao">

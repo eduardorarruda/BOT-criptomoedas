@@ -446,8 +446,8 @@ export function VisaoImobiliario() {
           </>
         }
       >
-        Imóveis, fundos, consórcio e afins: quanto você pôs, quanto rendeu e quanto vale hoje — com as contas
-        à vista.
+        Imóveis, fundos, consórcio e afins: quanto você pôs, quanto rendeu e quanto vale hoje, com as contas à
+        vista.
       </Cabecalho>
       {isPending ? <Esqueleto forma="kpis" quantidade={3} rotulo="Carregando o imobiliário" /> : null}
       {error ? <ErroCarregar erro={error} tentarDeNovo={() => void refetch()} /> : null}

@@ -141,7 +141,7 @@ export function LinhaDoTempo(p: Props) {
         >
           {p.registros.length
             ? "Ligue mais tipos de evento acima para ver o resto."
-            : "Quando o robô fechar o próximo candle, ele aparece aqui — com o sinal da regra, a análise da IA, o risco e a ordem, se houver."}
+            : "Quando o robô fechar o próximo candle, ele aparece aqui, com o sinal da regra, a análise da IA, o risco e a ordem, se houver."}
         </EstadoVazio>
       ) : null}
       <ol

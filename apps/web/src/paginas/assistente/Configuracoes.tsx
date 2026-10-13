@@ -262,7 +262,7 @@ export function Configuracoes({ api: apiInjetada }: { readonly api?: ApiAssisten
         ) : null}
         <p className="config__termos apagado">
           Usar o Claude Code pelo seu plano segue os termos de uso da Anthropic: o plano é pessoal, para você
-          mesmo. O analista continua só propondo — o motor de risco decide e nada aqui envia ordem.
+          mesmo. O analista continua só propondo: o motor de risco decide, e nada aqui envia ordem.
         </p>
       </Painel>
     </>

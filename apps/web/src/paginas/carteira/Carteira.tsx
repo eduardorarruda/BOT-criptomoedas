@@ -367,7 +367,7 @@ export function Carteira() {
         acoes={c?.conectada ? <BotaoSincronizar rede={redeAtual ?? undefined} /> : null}
       >
         Tudo o que você tem na Binance: quanto investiu, quanto vale hoje, quanto rendeu e quanto pagou de
-        taxa — do robô e o que você negociou à mão.
+        taxa, somando o robô e o que você negociou à mão.
       </Cabecalho>
       {status.data?.contas.map((conta) => (
         <StatusChave key={conta.id} conta={conta} />

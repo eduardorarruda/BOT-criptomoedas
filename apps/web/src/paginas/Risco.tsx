@@ -79,7 +79,7 @@ function ParadaTotal() {
         </h2>
         <p>
           Para todos os robôs na hora: nenhuma compra nova e nenhuma venda pela regra de saída. O stop e o
-          alvo das posições abertas continuam valendo, na corretora. Use quando algo parecer errado — é melhor
+          alvo das posições abertas continuam valendo, na corretora. Use quando algo parecer errado: é melhor
           parar e olhar.
         </p>
       </div>
