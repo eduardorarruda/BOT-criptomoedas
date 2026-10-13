@@ -229,6 +229,35 @@ Instale o Claude Code na máquina do agente (`curl -fsSL https://claude.ai/insta
 - Com `REDIS_URL` no agente, cada ferramenta consultada numa análise aparece ao vivo na tela (evento `analise` em `zentrade:eventos`, ligado ao `analiseId` do pedido do motor), nos dois provedores.
 - A API precisa de `AGENTE_URL` e `AGENTE_SEGREDO` para o assistente; sem elas, as rotas do assistente respondem 503 e o resto segue normal.
 
+## Privacidade e buscadores
+
+**Política de privacidade.** Fica em `/privacidade`, sem login, e num diálogo no rodapé do login e da casca. Preencha o controlador antes de abrir a instância para outras pessoas: `ZENTRADE_CONTROLADOR_NOME` e `ZENTRADE_CONTROLADOR_EMAIL` (e, se houver, `ZENTRADE_ENCARREGADO_*`) no ambiente da API. Sem isso, a política mostra um aviso para quem opera. O passo a passo, o que a política promete e o que ainda falta estão em [privacidade.md](privacidade.md).
+
+**Indexação: privada por padrão.** Cada instância é de alguém, e a página de login de uma instância privada não deve aparecer no Google. Por isso o build padrão:
+
+- manda `<meta name="robots" content="noindex, nofollow">` em todas as rotas;
+- serve um `robots.txt` com `Disallow: /`;
+- faz o nginx mandar `X-Robots-Tag: noindex, nofollow` em toda resposta.
+
+**Demonstração ou apresentação pública.** Para um endereço que deve aparecer em buscador, construa a tela com:
+
+```bash
+VITE_PUBLICO=1 VITE_URL_PUBLICA=https://demo.exemplo.org VITE_DEMO=1 \
+  docker compose --env-file .env -f infra/docker-compose.yml --profile app build web
+# sem Docker: VITE_PUBLICO=1 VITE_URL_PUBLICA=https://demo.exemplo.org corepack pnpm --filter @zentrade/web build
+```
+
+Com `VITE_PUBLICO=1`:
+
+- só as páginas públicas (`/entrar` e `/privacidade`) recebem `index, follow`, URL canônica e `hreflang` pt-BR; as telas de quem entrou continuam `noindex`;
+- o `robots.txt` libera essas páginas, fecha `/api/` e aponta o `sitemap.xml`, que lista só elas;
+- a imagem social (`og.png` e `og.webp`, 1200×630) e o JSON-LD (`SoftwareApplication`, `SoftwareSourceCode` e `WebSite`) usam o endereço absoluto;
+- o `web.Dockerfile` tira o `X-Robots-Tag` do nginx.
+
+`VITE_PUBLICO=1` sem `VITE_URL_PUBLICA` faz o build falhar de propósito: sem endereço não há canônico nem sitemap. `VITE_DEMO=1` é opcional; com ele, o login vira a porta da demonstração, com dados fictícios e sem API.
+
+O `llms.txt` (em `apps/web/public/` e na raiz do repositório) resume o projeto para buscadores com IA. Os dois são iguais, e um teste confere isso.
+
 ## Backups
 
 O que guardar, e onde:

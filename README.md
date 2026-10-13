@@ -22,9 +22,25 @@ Regras decidem. A IA argumenta. O risco tem a palavra final.</p>
 
 ## O que é
 
-O ZenTrade observa o mercado de cripto, segue as estratégias que você monta e, quando uma delas dá sinal, chama um agente de IA para analisar o momento: casos parecidos no histórico, notícias recentes, regras da corretora. O agente devolve uma proposta com raciocínio e fontes. Um **motor de risco determinístico** — código simples, testado, sem IA — aprova ou barra. Só então a ordem sai.
+O ZenTrade é um software livre (AGPL-3.0), em português do Brasil, para operar criptomoedas com robôs de regras e acompanhar investimentos pessoais. Você o instala e roda na sua máquina ou no seu servidor, com Docker. Não há serviço central nem conta no ZenTrade: os dados ficam no seu banco.
 
-Se a IA errar, alucinar ou sair do ar, o pior que acontece é **não operar**. A IA nunca envia ordem.
+**Para quem:** quem opera cripto na Binance e quer disciplina (regras escritas, stop sempre, limites de perda) em vez de impulso. Serve também para quem quer ver num lugar só a carteira de cripto, a renda fixa e os imóveis. Pede alguma familiaridade com Docker.
+
+**Como funciona:**
+
+1. O ZenTrade observa o mercado e segue as estratégias que você monta.
+2. Quando uma estratégia dá sinal, um agente de IA analisa o momento: casos parecidos no histórico, notícias recentes e regras da corretora. Ele devolve uma proposta com raciocínio e fontes.
+3. Um **motor de risco determinístico** aprova ou barra a proposta. É código simples e testado, sem IA.
+4. Só então a ordem sai, já com o stop no livro da corretora.
+
+Se a IA errar, alucinar ou sair do ar, o pior que acontece é **não operar**. A IA nunca envia ordem. Ao lado dos robôs ficam o patrimônio, a carteira da Binance, a renda fixa (inclusive pelo Open Finance) e os imóveis, além de um assistente que só lê os seus dados.
+
+**O que não é:**
+
+- **Não é promessa de lucro.** A maioria de quem opera de forma ativa perde dinheiro (veja a [fundamentação](docs/fundamentacao.md)).
+- **Não é recomendação de investimento** nem gestão de carteira.
+- **Não é corretora nem serviço hospedado.** Não guarda dinheiro de ninguém.
+- **Não opera dinheiro real**, por enquanto.
 
 ## Princípios
 
@@ -126,6 +142,7 @@ O que **falta**:
 - **Dinheiro real:** o motor ainda só aceita papel e testnet. A checagem da chave sem saque e os portões de 2FA já estão prontos para a rede real.
 - **Stops:** o comando "zerar posição" na tela (o risco já o trata como proteção); ouvir o user data stream da Binance para saber da execução do stop na hora (hoje o motor confere a cada candle); varrer ordens abertas na corretora sem registro no banco; e o papel simular execução parcial do stop-limit.
 - **Risco:** um destino de alerta por pessoa (hoje o Telegram é um só por instalação) e o pico da queda acompanhar também o não realizado ao longo do tempo (hoje vem do realizado).
+- **Privacidade (LGPD):** um comando para excluir a conta inteira, anonimizando o que a auditoria imutável prende, e exportar os dados de uma pessoa (portabilidade). Hoje a exclusão é pedida ao controlador e feita à mão ([privacidade.md](docs/privacidade.md#pedidos-de-titulares)).
 - **Backtest:** um otimizador de parâmetros (hoje o walk-forward avalia a estratégia fixa em cada janela), deslizamento que dependa do tamanho da ordem e do livro, Monte Carlo em blocos (que preserve sequências de perdas) e usar as ordens de stop em repouso da corretora de papel no lugar da vigia intrabar do próprio backtest. Veja [como ler o backtest](docs/estrategias.md#como-ler-o-backtest).
 
 ## Documentação
@@ -136,6 +153,7 @@ O que **falta**:
 - [Alertas](docs/alertas.md) — o que avisa (stop, perda do dia, pausas, ordens, robô, WebSocket, divergência, orçamento de IA), como deduplica e onde chega.
 - [Estratégias](docs/estrategias.md) — como montar e ler um backtest.
 - [Fundamentação](docs/fundamentacao.md) — o que reguladores, estudos e plataformas dizem sobre robôs de investimento, com 48 fontes, e onde o ZenTrade se encaixa.
+- [Privacidade e LGPD](docs/privacidade.md) — o que a política de privacidade promete, como configurar o controlador e o que ainda falta.
 - [Segurança](docs/seguranca.md) e [ADRs](docs/adr/) — as decisões de fundo.
 
 ## Aviso

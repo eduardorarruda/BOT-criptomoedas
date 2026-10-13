@@ -1,0 +1,47 @@
+# ZenTrade
+
+> ZenTrade é um software livre (AGPL-3.0) e auto-hospedado, em português do Brasil, para operar criptomoedas com robôs de regras e acompanhar investimentos pessoais. Regras decidem, a IA argumenta, o risco tem a palavra final. Não é promessa de lucro nem recomendação de investimento.
+
+ZenTrade é um projeto de código aberto que cada pessoa instala e roda na própria máquina ou no próprio servidor (Docker). Não existe um serviço central: os dados ficam no banco PostgreSQL de quem opera a instância. O projeto está em construção: hoje o motor opera só em papel (simulado) ou na testnet da Binance, nunca com dinheiro real.
+
+O que é:
+
+- Robôs de cripto (Binance spot) que seguem estratégias montadas em uma árvore de regras com indicadores técnicos, com backtest, validação fora da amostra e modos observar, sugerir e auto.
+- Um analista de IA que só propõe: quando uma regra dá sinal, ele lê o histórico, notícias e a base de conhecimento e devolve uma proposta com raciocínio e fontes. A IA nunca envia ordem.
+- Um motor de risco determinístico (código simples e testado, sem IA) que aprova ou barra cada proposta e tem a palavra final.
+- Acompanhamento de investimentos pessoais: patrimônio, carteira da Binance, renda fixa (inclusive por Open Finance via Pluggy, com consentimento) e imóveis, com índices públicos do Banco Central e da B3.
+- Um assistente que conversa só lendo os dados da própria pessoa, com as fontes consultadas.
+
+O que não é:
+
+- Não é promessa de lucro. Operar cripto envolve risco de perda, inclusive total; a maioria de quem opera de forma ativa perde dinheiro.
+- Não é recomendação nem consultoria de investimento, nem gestão de carteira de terceiros.
+- Não é um serviço hospedado nem uma corretora: não guarda dinheiro de ninguém e não tem conta central.
+
+Modelo de segurança:
+
+- Regras decidem, a IA argumenta, o risco tem a palavra final. Se a IA errar ou sair do ar, o pior que acontece é não operar.
+- Toda compra tem stop, e o stop e o alvo ficam no livro da corretora, então a proteção continua mesmo se o ZenTrade parar.
+- Parada total (kill switch): barra toda entrada nova de todos os robôs; liga pela tela, pela API ou sozinha se o motor sumir; só uma pessoa, com reautenticação, desliga.
+- Limites da conta (perda do dia, exposição, queda do pico, sequência de stops), reconciliação com o saldo da corretora, chave de API com saque recusada.
+- Login com 2FA, reautenticação para ações sensíveis, chaves das corretoras cifradas (AES-256-GCM), isolamento por pessoa no banco (RLS) e trilha de auditoria encadeada por hash.
+
+## Documentação
+
+- [README](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/README.md): o que é, como rodar, status honesto e o que falta.
+- [Fundamentação](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/docs/fundamentacao.md): o que reguladores, estudos e plataformas dizem sobre robôs de investimento, com fontes, e onde o ZenTrade se encaixa.
+- [Arquitetura](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/docs/arquitetura.md): serviços, fluxo de uma decisão e princípios.
+- [Operação](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/docs/operacao.md): subir o ambiente, parada total, limites, orçamento de IA, backups.
+- [Estratégias](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/docs/estrategias.md): árvore de regras, stop e alvo com taxas, como ler o backtest.
+- [Segurança](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/docs/seguranca.md): modelo de ameaças e defesas.
+- [Privacidade e LGPD](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/docs/privacidade.md): quais dados pessoais uma instância trata e como configurar o controlador.
+
+## Licença
+
+- [AGPL-3.0](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/LICENSE): uso, estudo e modificação livres; quem oferece uma versão modificada pela rede precisa publicar o código.
+
+## Optional
+
+- [Contrato da API](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/docs/contrato-api.md): rotas, webhooks e filas.
+- [Alertas](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/docs/alertas.md): o que avisa e onde chega.
+- [Carteira da Binance](https://github.com/eduardorarruda/BOT-criptomoedas/blob/main/docs/carteira.md): de onde vêm os números e o método de custo.
