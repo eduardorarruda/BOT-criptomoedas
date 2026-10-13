@@ -5,22 +5,17 @@ import {
   type Patrimonio,
 } from "@zentrade/contratos/esquemas";
 import { dec, paraTexto } from "@zentrade/dominio";
-import { z } from "zod";
-import { campo, lerLista } from "../../componentes/filtros";
+import { lerLista } from "../../componentes/filtros";
 import { ROTULO_CLASSE, type FatiaClasse } from "./composicao";
+import { type BuscaPatrimonio } from "./busca";
+
+export * from "./busca";
 
 /**
  * Quais classes entram na soma (todas, por padrão) e a visão (cartões ou tabela).
  * Nada de histórico nem bruto/líquido aqui: a API do patrimônio não traz esses
  * dados, e a tela não inventa.
  */
-export const VISOES = ["cartoes", "tabela"] as const;
-
-export const buscaPatrimonio = z.object({
-  classes: campo.lista(CLASSES_PATRIMONIO),
-  visao: campo.opcao(VISOES),
-});
-export type BuscaPatrimonio = Partial<z.output<typeof buscaPatrimonio>>;
 
 /** As classes escolhidas; nada escolhido = todas. */
 export function classesEscolhidas(b: BuscaPatrimonio): readonly ClassePatrimonio[] {

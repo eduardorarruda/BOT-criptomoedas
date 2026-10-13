@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { z } from "zod";
 import { campo, validarBusca } from "./esquemas";
 
-const esquema = z.object({
+const esquema = {
   q: campo.busca(),
   tipo: campo.lista(["CDB", "LCI", "LCA"] as const),
   visao: campo.opcao(["cartoes", "tabela"] as const),
   saldo: campo.ligado(),
   de: campo.dia(),
   pagina: campo.pagina(),
-});
+};
 const validar = validarBusca(esquema);
 
 describe("parâmetros da URL", () => {
@@ -46,7 +45,7 @@ describe("parâmetros da URL", () => {
 });
 
 describe("lista livre (ids e símbolos que vêm da API)", () => {
-  const validarIds = validarBusca(z.object({ robo: campo.listaLivre(/^[a-z0-9-]{1,64}$/) }));
+  const validarIds = validarBusca({ robo: campo.listaLivre(/^[a-z0-9-]{1,64}$/) });
 
   it("mantém o que tem o formato, sem repetir, e descarta o resto", () => {
     expect(validarIds({ robo: "r-btc,R SOL,r-btc,r-eth" }).robo).toBe("r-btc,r-eth");

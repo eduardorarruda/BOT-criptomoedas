@@ -1,9 +1,7 @@
-import type { DecisaoDTO, EstadoDecisao, RoboDTO } from "@zentrade/contratos/esquemas";
+import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { dec } from "@zentrade/dominio";
-import { z } from "zod";
 import {
   agruparPor,
-  campo,
   contemTexto,
   dentroDoPeriodo,
   intervaloDoPeriodo,
@@ -12,49 +10,14 @@ import {
   type Grupo,
 } from "../../componentes/filtros";
 import { agruparPorDia } from "../../lib/agrupar";
+import { ACOES, ESTADOS, DESFECHOS, type Desfecho, type BuscaDecisoes } from "./busca";
+
+export * from "./busca";
 
 /**
  * Filtros do diário de decisões: o que a URL guarda, como cada filtro decide e
  * como a lista é ordenada e agrupada. Tudo puro, testado sem tela.
  */
-export const ACOES = ["COMPRAR", "VENDER", "AGUARDAR"] as const;
-export const ESTADOS: readonly EstadoDecisao[] = [
-  "aguardando_aprovacao",
-  "executada",
-  "barrada",
-  "registrada",
-  "aprovada",
-  "recusada",
-  "expirada",
-  "falhou",
-];
-export const DESFECHOS = ["ganho", "perda", "sem"] as const;
-export type Desfecho = (typeof DESFECHOS)[number];
-export const ORDENS = ["data", "valor", "resultado", "custo"] as const;
-export const AGRUPAMENTOS = ["dia", "robo", "nenhum"] as const;
-export const VISOES = ["cartoes", "tabela"] as const;
-
-export const ID = /^[\w.:-]{1,64}$/;
-export const SIMBOLO = /^[A-Z0-9]{2,20}$/;
-
-export const buscaDecisoes = z.object({
-  q: campo.busca(),
-  robo: campo.listaLivre(ID),
-  simbolo: campo.listaLivre(SIMBOLO),
-  acao: campo.lista(ACOES),
-  estado: campo.lista(ESTADOS),
-  desfecho: campo.lista(DESFECHOS),
-  periodo: campo.periodo(),
-  de: campo.dia(),
-  ate: campo.dia(),
-  ordem: campo.opcao(ORDENS),
-  dir: campo.opcao(["asc", "desc"] as const),
-  agrupar: campo.opcao(AGRUPAMENTOS),
-  visao: campo.opcao(VISOES),
-  densidade: campo.opcao(["compacta"] as const),
-  pagina: campo.pagina(),
-});
-export type BuscaDecisoes = Partial<z.output<typeof buscaDecisoes>>;
 
 const livre = (v: string | undefined): string[] => (v ? v.split(",") : []);
 

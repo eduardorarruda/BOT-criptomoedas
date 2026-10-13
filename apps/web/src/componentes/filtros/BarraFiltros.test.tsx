@@ -2,7 +2,6 @@ import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LayoutGrid, Table } from "lucide-react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
 import { buscaAtual, renderizarNaRota } from "../../teste/rota";
 import { BarraFiltros } from "./BarraFiltros";
 import { FiltroChips, Interruptor } from "./Chips";
@@ -15,7 +14,7 @@ import { useFiltrosUrl } from "./useFiltrosUrl";
 import { VisoesSalvas } from "./VisoesSalvas";
 
 const CORES = ["verde", "azul", "roxo"] as const;
-const esquema = z.object({
+const esquema = {
   q: campo.busca(),
   cor: campo.lista(CORES),
   grande: campo.ligado(),
@@ -26,7 +25,7 @@ const esquema = z.object({
   dir: campo.opcao(["asc", "desc"] as const),
   visao: campo.opcao(["cartoes", "tabela"] as const),
   densidade: campo.opcao(["compacta"] as const),
-});
+};
 const ITENS = [
   { nome: "Folha", cor: "verde", tamanho: 2 },
   { nome: "Céu", cor: "azul", tamanho: 9 },

@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { Instante, TextoDecimal } from "./comum.js";
+import { CLASSES_PATRIMONIO } from "./valores.js";
+
+export { CLASSES_PATRIMONIO };
 
 /**
  * Patrimônio consolidado (`GET /api/v1/patrimonio/consolidado`; `GET /patrimonio` já é a
@@ -9,8 +12,6 @@ import { Instante, TextoDecimal } from "./comum.js";
  * fora do total, dito em `situacao` e `avisos`.
  */
 
-/** Na ordem em que a tela mostra. */
-export const CLASSES_PATRIMONIO = ["cripto", "renda_fixa", "imobiliario"] as const;
 export const ClassePatrimonioEsquema = z.enum(CLASSES_PATRIMONIO);
 export type ClassePatrimonio = z.infer<typeof ClassePatrimonioEsquema>;
 
