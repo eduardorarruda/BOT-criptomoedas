@@ -16,6 +16,19 @@ const meta = (seletor: string): string | null => html.querySelector(seletor)?.ge
 const LIMITE_IMAGEM_SOCIAL = 300 * 1024;
 
 describe("index.html", () => {
+  it("nenhum script inline executável: a CSP (script-src 'self') bloquearia", () => {
+    const inline = [...html.querySelectorAll("script")].filter(
+      (s) => !s.getAttribute("src") && s.getAttribute("type") !== "application/ld+json",
+    );
+    expect(inline).toHaveLength(0);
+    // O tema salvo é aplicado antes do primeiro desenho por um arquivo da própria origem.
+    const tema = html.querySelector('head script[src="/tema.js"]');
+    expect(tema?.hasAttribute("type") || tema?.hasAttribute("defer") || tema?.hasAttribute("async")).toBe(
+      false,
+    );
+    expect(ler(new URL("tema.js", publico))).toContain("zentrade:tema");
+  });
+
   it("idioma, título único e descrição", () => {
     expect(html.documentElement.lang).toBe("pt-BR");
     expect(html.querySelectorAll("title")).toHaveLength(1);
