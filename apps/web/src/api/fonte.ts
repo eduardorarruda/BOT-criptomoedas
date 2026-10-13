@@ -1,4 +1,5 @@
 import type {
+  ConfigPublica,
   ConfiguracaoBacktestEntrada,
   DecisaoDTO,
   EstadoDecisao,
@@ -97,6 +98,8 @@ export interface Fonte {
   resumo(): Promise<Resumo>;
   patrimonio(): Promise<PontoPatrimonio[]>;
   saude(): Promise<Saude>;
+  /** Sem login: contato do controlador (LGPD) e versão, para a política de privacidade. */
+  configPublica(): Promise<ConfigPublica>;
 
   estrategias(): Promise<EstrategiaDTO[]>;
   criarEstrategia(e: NovaEstrategia): Promise<EstrategiaDTO>;

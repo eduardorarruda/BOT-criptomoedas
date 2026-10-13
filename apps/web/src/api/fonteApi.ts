@@ -24,7 +24,7 @@ import {
   TokenApiEsquema,
   TokenCriadoEsquema,
 } from "./esquemas";
-import type { Sessao, Usuario } from "@zentrade/contratos/esquemas";
+import { ConfigPublicaEsquema, type Sessao, type Usuario } from "@zentrade/contratos/esquemas";
 import type { Fonte } from "./fonte";
 import { conectarTempoReal } from "./tempoReal";
 
@@ -63,6 +63,7 @@ export function criarFonteApi(cliente: ClienteApi = criarCliente()): Fonte {
     resumo: () => pedir("GET", "/resumo", ResumoEsquema),
     patrimonio: () => pedir("GET", "/patrimonio", lista(PontoPatrimonioEsquema)),
     saude: () => pedir("GET", "/saude", SaudeEsquema),
+    configPublica: () => pedir("GET", "/publico/config", ConfigPublicaEsquema),
 
     estrategias: () => pedir("GET", "/estrategias", lista(EstrategiaEsquema)),
     criarEstrategia: (e) => pedir("POST", "/estrategias", EstrategiaEsquema, e),

@@ -18,6 +18,7 @@ import { AvisoDemo } from "./AvisoDemo";
 import { BarraTopo } from "./BarraTopo";
 import { Navegacao } from "./Navegacao";
 import { grupoDe } from "./navegacao";
+import { RodapeLegal } from "./RodapeLegal";
 
 /** A moldura de todas as telas depois de entrar: menu, barra de status e a página. */
 export function Casca() {
@@ -51,6 +52,7 @@ export function Casca() {
               <TransicaoPagina />
             </ContextoSecao.Provider>
           </main>
+          <RodapeLegal className="casca__rodape-legal" />
         </div>
       </div>
       <MenuMovel aberto={menuAberto} aoFechar={() => setMenuAberto(false)} />

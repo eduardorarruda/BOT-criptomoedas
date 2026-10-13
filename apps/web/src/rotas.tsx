@@ -22,7 +22,7 @@ import { buscaPatrimonio } from "./paginas/patrimonio/filtros";
 import { buscaRendaFixa } from "./paginas/renda-fixa/filtros";
 
 /**
- * Rotas (código, sem gerador). Tudo depois de /entrar exige sessão; as telas com
+ * Rotas (código, sem gerador). Fora /entrar e /privacidade, tudo exige sessão; as telas com
  * gráfico carregam sob demanda para a primeira tela abrir rápido.
  */
 export interface ContextoRotas {
@@ -65,6 +65,13 @@ const entrar = createRoute({
     if (await sessaoAtual(context)) throw redirect({ to: "/" });
   },
   component: lazyRouteComponent(() => import("./paginas/Entrar"), "Entrar"),
+});
+
+/** Política de privacidade: pública, abre com ou sem sessão. */
+const privacidade = createRoute({
+  getParentRoute: () => raiz,
+  path: "/privacidade",
+  component: lazyRouteComponent(() => import("./paginas/Privacidade"), "Privacidade"),
 });
 
 const app = createRoute({
@@ -150,6 +157,7 @@ const patrimonio = createRoute({
 
 const arvore = raiz.addChildren([
   entrar,
+  privacidade,
   app.addChildren([
     pagina("/", () => import("./paginas/VisaoGeral"), "VisaoGeral"),
     aoVivo,

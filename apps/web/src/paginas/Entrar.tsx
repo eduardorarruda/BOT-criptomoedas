@@ -7,6 +7,7 @@ import { Botao } from "../componentes/Botao";
 import { CampoTexto } from "../componentes/Campo";
 import { Enso } from "../componentes/Enso";
 import { useEntrar } from "../ganchos/mutacoes";
+import { RodapeLegal } from "../layout/RodapeLegal";
 
 /** Login em dois passos: e-mail e senha; depois, o código do autenticador (2FA). */
 export function Entrar() {
@@ -154,6 +155,7 @@ export function Entrar() {
           Software de apoio à decisão. Operar cripto envolve risco de perda, inclusive total. Nada aqui é
           promessa de lucro.
         </p>
+        <RodapeLegal className="entrar__rodape-legal" />
       </section>
     </div>
   );

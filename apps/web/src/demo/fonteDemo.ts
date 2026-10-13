@@ -157,6 +157,8 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
     resumo: comAtraso(() => resumoDemo(estado, agora(), mercado.preco)),
     patrimonio: comAtraso(() => [...estado.patrimonio]),
     saude: comAtraso(() => ({ ok: true, servicos: { banco: true, redis: true, motor: true, agente: true } })),
+    // No exemplo não há quem opere: nada sai do navegador, então não há controlador a mostrar.
+    configPublica: comAtraso(() => ({ controlador: null, encarregado: null, versao: __ZENTRADE_VERSAO__ })),
 
     estrategias: comAtraso(() => [...estado.estrategias]),
     criarEstrategia: comAtraso((nova) => {
