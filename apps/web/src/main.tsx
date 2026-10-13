@@ -18,18 +18,20 @@ import "./estilos/responsivo.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import type { Fonte } from "./api/fonte";
+import { criarFonteApi } from "./api/fonteApi";
 import { App } from "./App";
 
 /**
  * VITE_DEMO=1 liga o modo de demonstração: dados fictícios e mercado simulado no
- * navegador, sem API. O código do exemplo só entra no pacote quando é usado.
+ * navegador, sem API. O código do exemplo só entra no pacote quando é usado. A fonte
+ * da API é importação estática: ela (e os esquemas Zod) vem junto com a entrada, em
+ * paralelo, em vez de esperar a entrada rodar para só então ser pedida.
  */
 async function escolherFonte(): Promise<Fonte> {
   if (import.meta.env.VITE_DEMO === "1") {
     const { criarFonteDemo } = await import("./demo/fonteDemo");
     return criarFonteDemo();
   }
-  const { criarFonteApi } = await import("./api/fonteApi");
   return criarFonteApi();
 }
 
