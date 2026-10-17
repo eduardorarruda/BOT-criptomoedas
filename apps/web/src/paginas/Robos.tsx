@@ -17,6 +17,8 @@ import { useAtualizarRobo, useCriarRobo } from "../ganchos/mutacoes";
 import { formatarDinheiro, formatarPercentual } from "../lib/formatar";
 import { MODO_ROBO, REDE } from "../lib/rotulos";
 import { formatarData } from "../lib/tempo";
+import { desfazerDe } from "../lib/mudancaRobo";
+import type { MudancaRobo } from "../api/fonte";
 import { EditorLimites } from "./robos/EditorLimites";
 import { FormRobo } from "./robos/FormRobo";
 
@@ -26,11 +28,34 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
   const atualizar = useAtualizarRobo();
   const avisar = useAvisos();
   const [confirmarAuto, setConfirmarAuto] = useState(false);
-  const mudar = (mudanca: Parameters<typeof atualizar.mutate>[0]["mudanca"], texto: string): void =>
+  const mudar = (mudanca: MudancaRobo, texto: string): void => {
+    // O "antes" é o robô de agora: o Desfazer volta exatamente a ele (nunca ao automático).
+    const desfazer = desfazerDe(robo, mudanca);
     atualizar.mutate(
       { id: robo.id, mudanca },
-      { onSuccess: () => avisar("sucesso", texto), onError: (e) => avisar("erro", mensagemDe(e)) },
+      {
+        onSuccess: () =>
+          avisar(
+            "sucesso",
+            texto,
+            desfazer
+              ? {
+                  rotulo: "Desfazer",
+                  executar: () =>
+                    atualizar.mutate(
+                      { id: robo.id, mudanca: desfazer },
+                      {
+                        onSuccess: () => avisar("info", `Desfeito: ${robo.nome} voltou como estava.`),
+                        onError: (e) => avisar("erro", mensagemDe(e)),
+                      },
+                    ),
+                }
+              : undefined,
+          ),
+        onError: (e) => avisar("erro", mensagemDe(e)),
+      },
     );
+  };
   const l = robo.limites;
 
   return (
