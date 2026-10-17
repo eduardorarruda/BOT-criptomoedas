@@ -16,8 +16,10 @@ async function logada(): Promise<Fonte> {
 
 /** A API demora para responder: dá para ver o que a tela mostra enquanto espera. */
 function lenta(fonte: Fonte): Fonte & { soltar: () => void } {
-  let soltar = () => undefined as void;
-  const espera = new Promise<void>((r) => (soltar = r));
+  let soltar: () => void = () => undefined;
+  const espera = new Promise<void>((r) => {
+    soltar = r;
+  });
   return {
     ...fonte,
     atualizarRobo: async (id, m) => {
