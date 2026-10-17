@@ -1,4 +1,4 @@
-import { dec } from "@zentrade/dominio";
+import { dec, MODELOS_WIN } from "@zentrade/dominio";
 import { Queue } from "bullmq";
 import { Redis } from "ioredis";
 import { generate } from "otplib";
@@ -371,6 +371,75 @@ describe("rotas de recursos contra banco e Redis reais", () => {
     const lista = (await chamar(ana, "GET", "/backtests")).json<{ id: string; tentativas: unknown }[]>();
     expect(lista.find((x) => x.id === id)?.tentativas).toMatchObject({ total: 2 });
     expect((await chamar(beto, "GET", `/backtests/${id2}`)).statusCode).toBe(404);
+  });
+
+  it("mini índice: estratégia nos dois sentidos roda no backtest do WIN, não vira robô", async () => {
+    const [modelo] = MODELOS_WIN;
+    const criada = await chamar(ana, "POST", "/estrategias", { nome: modelo!.nome, ...modelo!.estrategia });
+    expect(criada.statusCode).toBe(201);
+    expect(criada.json()).toMatchObject({
+      direcao: "ambos",
+      entradaVendida: modelo!.estrategia.entradaVendida,
+    });
+    const id = criada.json<{ id: string }>().id;
+
+    const robo = await chamar(ana, "POST", "/robos", {
+      nome: "WIN",
+      simbolo: "BTCUSDT",
+      intervalo: "5m",
+      modo: "observar",
+      rede: "papel",
+      estrategiaId: id,
+      estrategiaVersao: 1,
+      limites: LIMITES,
+    });
+    expect(robo.statusCode).toBe(400);
+    expect(JSON.stringify(robo.json())).toMatch(/só compra/);
+
+    const pedido = {
+      estrategiaId: id,
+      versao: 1,
+      simbolo: "WIN-IBOV",
+      intervalo: "5m",
+      inicio: 0,
+      fim: 86_400_000,
+      configuracao: { mercado: "win" },
+    };
+    const r = await chamar(ana, "POST", "/backtests", pedido);
+    expect(r.statusCode).toBe(202);
+    // a API grava o modelo do WIN com os padrões: o resultado diz com o que rodou
+    expect(r.json()).toMatchObject({
+      simbolo: "WIN-IBOV",
+      configuracao: {
+        mercado: "win",
+        win: {
+          tarifaB3PorContrato: "0.25",
+          deslizamentoTicks: 1,
+          zeragem: "18:15",
+          margemPorContrato: "155",
+        },
+      },
+    });
+    expect((await chamar(ana, "POST", "/backtests", { ...pedido, simbolo: "BTCUSDT" })).statusCode).toBe(400);
+    expect((await chamar(ana, "POST", "/backtests", { ...pedido, configuracao: {} })).statusCode).toBe(400);
+    expect((await chamar(ana, "POST", "/backtests", { ...pedido, intervalo: "4h" })).statusCode).toBe(400);
+
+    expect((await chamar(ana, "GET", "/backtests/dados-win")).json()).toEqual([]);
+    const em = Date.UTC(2026, 6, 1, 13);
+    const vela = (i: number) => ({
+      abertura: em + i * 300_000,
+      fechamento: em + (i + 1) * 300_000 - 1,
+      abre: dec(128_000),
+      maxima: dec(128_010),
+      minima: dec(127_990),
+      fecha: dec(128_005),
+      volume: dec(0),
+    });
+    await api.banco.mercado.gravar("WIN-IBOV", "5m", [vela(0), vela(1), vela(2)]);
+    await api.banco.mercado.gravar("BTCUSDT", "5m", [vela(0)]);
+    expect((await chamar(beto, "GET", "/backtests/dados-win")).json()).toEqual([
+      { simbolo: "WIN-IBOV", intervalo: "5m", primeiro: em, ultimo: em + 600_000, candles: 3 },
+    ]);
   });
 
   it("conhecimento: nota vira documento com trechos; repetida não duplica", async () => {

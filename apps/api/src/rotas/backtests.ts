@@ -1,4 +1,12 @@
-import { BacktestEsquema, PedidoBacktestEsquema } from "@zentrade/contratos";
+import {
+  BacktestEsquema,
+  CoberturaWinEsquema,
+  comPadroesDoMercado,
+  INTERVALOS_WIN,
+  PedidoBacktestEsquema,
+  SIMBOLOS_WIN,
+  type CoberturaWin,
+} from "@zentrade/contratos";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { usuarioIdDe } from "../autenticacao/plugin.js";
@@ -26,6 +34,26 @@ export const rotasBacktests: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
     },
   );
 
+  // Que candles do mini índice existem no banco (importados por comando): a tela só
+  // oferece o WIN e o WIN-IBOV quando há o que testar. Dado de mercado, igual para todos.
+  app.get(
+    "/backtests/dados-win",
+    { config: { acesso: "leitura" }, schema: { response: { 200: z.array(CoberturaWinEsquema) } } },
+    async (): Promise<CoberturaWin[]> =>
+      (await deps.banco.mercado.cobertura(SIMBOLOS_WIN)).flatMap((c) =>
+        (SIMBOLOS_WIN as readonly string[]).includes(c.simbolo) &&
+        (INTERVALOS_WIN as readonly string[]).includes(c.intervalo)
+          ? [
+              {
+                ...c,
+                simbolo: c.simbolo as CoberturaWin["simbolo"],
+                intervalo: c.intervalo as CoberturaWin["intervalo"],
+              },
+            ]
+          : [],
+      ),
+  );
+
   // Escopo "operar": backtest não envia ordem, mas consome CPU do motor e dados da corretora.
   // A configuração chega com os padrões aplicados (custos realistas, limites do robô) e é
   // gravada assim: o resultado sempre diz com que custos e limites rodou.
@@ -37,7 +65,9 @@ export const rotasBacktests: FastifyPluginAsyncZod<{ deps: Dependencias }> = asy
     },
     async (req, reply) => {
       const usuarioId = usuarioIdDe(req);
-      const criado = await backtests.criar(usuarioId, req.body);
+      // No mini índice, grava a configuração do WIN com os padrões aplicados.
+      const pedido = { ...req.body, configuracao: comPadroesDoMercado(req.body.configuracao) };
+      const criado = await backtests.criar(usuarioId, pedido);
       try {
         await deps.fila.adicionar(criado.id);
       } catch (erro) {

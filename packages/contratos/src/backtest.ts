@@ -173,6 +173,19 @@ export function comPadroesDoMercado(c: ConfiguracaoBacktest): ConfiguracaoBackte
 
 const SIMBOLO_CRIPTO = /^[A-Z0-9]{5,20}$/;
 
+/**
+ * Que candles do mini índice estão gravados, por símbolo e intervalo: a tela oferece
+ * "WIN (dados reais importados)" e "WIN-IBOV" só quando há candles para testar.
+ */
+export const CoberturaWinEsquema = z.object({
+  simbolo: z.enum(SIMBOLOS_WIN),
+  intervalo: z.enum(INTERVALOS_WIN),
+  primeiro: Instante,
+  ultimo: Instante,
+  candles: z.number().int().nonnegative(),
+});
+export type CoberturaWin = z.infer<typeof CoberturaWinEsquema>;
+
 export const PedidoBacktestEsquema = z
   .object({
     estrategiaId: z.uuid("estrategiaId precisa ser o id de uma estratégia"),
