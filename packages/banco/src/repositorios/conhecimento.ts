@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
 import { comoUsuario, type Db, type Tx } from "../cliente.js";
 import { ms } from "../conversao.js";
 import { ErroDados } from "../erros.js";
@@ -34,18 +34,30 @@ export interface TrechoParaGravar {
   readonly id: string;
   readonly ordem: number;
   readonly texto: string;
-  readonly embedding: readonly number[];
+  /** `null` sem provedor de embeddings (EMBEDDINGS_PROVEDOR=nenhum); a reindexação preenche depois. */
+  readonly embedding: readonly number[] | null;
+}
+
+/** Trecho que ainda não tem vetor, com o título do documento (entra no texto do embedding). */
+export interface TrechoSemVetor {
+  readonly id: string;
+  readonly titulo: string;
+  readonly texto: string;
+}
+
+function validarVetores(vetores: readonly (readonly number[] | null)[]): void {
+  const errado = vetores.find((v) => v !== null && v.length !== DIMENSOES_EMBEDDING);
+  if (errado) {
+    throw new ErroDados(
+      "invalido",
+      `cada embedding precisa de ${DIMENSOES_EMBEDDING} dimensões (veio um com ${errado.length}); confira o modelo de embeddings`,
+    );
+  }
 }
 
 function validarTrechos(lista: readonly TrechoParaGravar[]): void {
   if (lista.length === 0) throw new ErroDados("invalido", "o documento precisa de pelo menos um trecho");
-  const errado = lista.find((t) => t.embedding.length !== DIMENSOES_EMBEDDING);
-  if (errado) {
-    throw new ErroDados(
-      "invalido",
-      `cada embedding precisa de ${DIMENSOES_EMBEDDING} dimensões (veio um com ${errado.embedding.length}); confira o modelo de embeddings`,
-    );
-  }
+  validarVetores(lista.map((t) => t.embedding));
 }
 
 const paraDocumento = (d: typeof documentos.$inferSelect): Documento => ({
@@ -114,10 +126,68 @@ export function repositorioConhecimento(db: Db) {
             usuarioId: doc.usuarioId,
             ordem: t.ordem,
             texto: t.texto,
-            embedding: [...t.embedding],
+            embedding: t.embedding ? [...t.embedding] : null,
           })),
         );
         return { documentoId: criado.id, novo: true };
+      });
+    },
+
+    ...reindexacao(db),
+  };
+}
+
+/**
+ * A porta `RepositorioReindexacao` de @zentrade/conhecimento: achar os trechos sem
+ * vetor e gravar os vetores depois. Cada pessoa sob RLS; só a lista de pessoas
+ * pendentes é acesso de sistema (o comando roda no servidor, para todas).
+ */
+function reindexacao(db: Db) {
+  return {
+    async pessoasComTrechosSemVetor(): Promise<string[]> {
+      const linhas = await db
+        .selectDistinct({ usuarioId: trechos.usuarioId })
+        .from(trechos)
+        .where(isNull(trechos.embedding));
+      return linhas.map((l) => l.usuarioId);
+    },
+
+    contarTrechosSemVetor: (usuarioId: string): Promise<number> =>
+      comoUsuario(db, usuarioId, async (tx) => {
+        const [linha] = await tx.select({ n: count() }).from(trechos).where(isNull(trechos.embedding));
+        return linha?.n ?? 0;
+      }),
+
+    /** Sempre na mesma ordem (id): rodar de novo pega os que sobraram. */
+    trechosSemVetor: (usuarioId: string, limite: number): Promise<TrechoSemVetor[]> =>
+      comoUsuario(db, usuarioId, (tx) =>
+        tx
+          .select({ id: trechos.id, titulo: documentos.titulo, texto: trechos.texto })
+          .from(trechos)
+          .innerJoin(documentos, eq(documentos.id, trechos.documentoId))
+          .where(isNull(trechos.embedding))
+          .orderBy(asc(trechos.id))
+          .limit(limite),
+      ),
+
+    /** Um lote numa transação; só onde o vetor ainda falta (idempotente). Devolve quantos gravou. */
+    async gravarVetores(
+      usuarioId: string,
+      vetores: readonly { readonly id: string; readonly embedding: readonly number[] }[],
+    ): Promise<number> {
+      validarVetores(vetores.map((v) => v.embedding));
+      if (vetores.length === 0) return 0;
+      return comoUsuario(db, usuarioId, async (tx) => {
+        let gravados = 0;
+        for (const v of vetores) {
+          const linhas = await tx
+            .update(trechos)
+            .set({ embedding: [...v.embedding] })
+            .where(and(eq(trechos.id, v.id), isNull(trechos.embedding)))
+            .returning({ id: trechos.id });
+          gravados += linhas.length;
+        }
+        return gravados;
       });
     },
   };
