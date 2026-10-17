@@ -23,7 +23,8 @@ export interface TrechoParaGravar {
   readonly id: string;
   readonly ordem: number;
   readonly texto: string;
-  readonly embedding: readonly number[];
+  /** `null` quando não há provedor de embeddings (EMBEDDINGS_PROVEDOR=nenhum). */
+  readonly embedding: readonly number[] | null;
 }
 
 export interface FiltroBusca {
@@ -54,8 +55,9 @@ export interface RepositorioConhecimento {
     documento: DocumentoParaGravar,
     trechos: readonly TrechoParaGravar[],
   ): Promise<{ documentoId: string; novo: boolean }>;
+  /** Só entre os trechos que têm vetor: os gravados sem embeddings ficam para a busca textual. */
   buscarVetorial(filtro: FiltroBusca, vetor: readonly number[]): Promise<TrechoEncontradoBruto[]>;
-  /** `termos` já vem pronto para to_tsquery('simple', …): palavras unidas por " | ". */
+  /** `termos` já vem pronto para to_tsquery: só letras e números, unidos por " | ". */
   buscarTextual(filtro: FiltroBusca, termos: string): Promise<TrechoEncontradoBruto[]>;
 }
 

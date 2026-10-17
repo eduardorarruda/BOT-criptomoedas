@@ -11,6 +11,16 @@ export const URL_BANCO_TESTE =
 export async function criarTabelasRag(sql: Sql): Promise<void> {
   await sql.unsafe(`
     create extension if not exists vector;
+    create extension if not exists unaccent;
+    do $$
+    begin
+      if not exists (select 1 from pg_ts_config where cfgname = 'zentrade_pt') then
+        create text search configuration zentrade_pt (copy = portuguese);
+        alter text search configuration zentrade_pt
+          alter mapping for hword, hword_part, word with unaccent, portuguese_stem;
+      end if;
+    end
+    $$;
     drop table if exists trechos;
     drop table if exists documentos;
     create table documentos (
@@ -22,6 +32,8 @@ export async function criarTabelasRag(sql: Sql): Promise<void> {
       publicado_em timestamptz not null,
       hash_conteudo text not null,
       criado_em timestamptz not null default now(),
+      busca tsvector generated always as
+        (to_tsvector('portuguese', titulo) || to_tsvector('zentrade_pt', titulo)) stored,
       unique (usuario_id, hash_conteudo)
     );
     create table trechos (
@@ -30,12 +42,14 @@ export async function criarTabelasRag(sql: Sql): Promise<void> {
       usuario_id uuid not null,
       ordem int not null,
       texto text not null,
-      embedding vector(1024) not null,
-      busca tsvector generated always as (to_tsvector('simple', texto)) stored,
+      embedding vector(1024),
+      busca tsvector generated always as
+        (to_tsvector('portuguese', texto) || to_tsvector('zentrade_pt', texto)) stored,
       criado_em timestamptz not null default now()
     );
     create index on trechos using hnsw (embedding vector_cosine_ops);
     create index on trechos using gin (busca);
+    create index on documentos using gin (busca);
     create index on trechos (usuario_id, documento_id);
   `);
 }

@@ -40,4 +40,15 @@ describe("termosDeBusca", () => {
     expect(termosDeBusca("é a o ?")).toBeNull();
     expect(termosDeBusca("como para que")).toBeNull();
   });
+
+  it("acrescenta o singular ou o plural de -ção/-ções e -ão/-ões, com e sem acento", () => {
+    expect(termosDeBusca("ações")).toBe("ações | ação");
+    expect(termosDeBusca("operacao")).toBe("operacao | operacoes");
+    expect(termosDeBusca("opções de compra")).toBe("opções | compra | opção");
+  });
+
+  it("não passa de 64 termos, mesmo com as variações", () => {
+    const muitas = Array.from({ length: 50 }, (_, i) => `posicao${"x".repeat(i)}ao`).join(" ");
+    expect(termosDeBusca(muitas)!.split(" | ").length).toBeLessThanOrEqual(64);
+  });
 });

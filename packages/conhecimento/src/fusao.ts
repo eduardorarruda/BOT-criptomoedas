@@ -27,15 +27,22 @@ function decaimento(item: Classificavel, o: OpcoesFusao): number {
  * Reciprocal Rank Fusion: soma 1/(k + posição) de cada lista em que o item aparece.
  * Usa só a posição, não a nota de cada busca — cosseno e ts_rank não são comparáveis.
  * Depois pesa pela fonte e pela idade.
+ *
+ * Lista ausente (`null`/`undefined`, ex.: a vetorial sem embeddings configurados) é
+ * ignorada; com uma lista só, o resultado segue a ordem dela. Item repetido dentro da
+ * mesma lista conta uma vez, pela melhor posição.
  */
 export function fundirResultados<T extends Classificavel>(
-  listas: readonly (readonly T[])[],
+  listas: readonly (readonly T[] | null | undefined)[],
   o: OpcoesFusao,
 ): (T & { readonly pontuacao: number })[] {
   const k = o.k ?? 60;
   const acumulado = new Map<string, { item: T; rrf: number }>();
   for (const lista of listas) {
-    lista.forEach((item, i) => {
+    const vistos = new Set<string>();
+    (lista ?? []).forEach((item, i) => {
+      if (vistos.has(item.id)) return;
+      vistos.add(item.id);
       const atual = acumulado.get(item.id);
       acumulado.set(item.id, { item: atual?.item ?? item, rrf: (atual?.rrf ?? 0) + 1 / (k + i + 1) });
     });

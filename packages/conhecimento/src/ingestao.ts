@@ -25,7 +25,8 @@ export type NovoDocumento = z.input<typeof NovoDocumentoEsquema>;
 
 export interface DependenciasIngestao {
   readonly repositorio: RepositorioConhecimento;
-  readonly embeddings: Embeddings;
+  /** `null` (EMBEDDINGS_PROVEDOR=nenhum): grava os trechos sem vetor, só para a busca por palavras. */
+  readonly embeddings: Embeddings | null;
   readonly divisor?: OpcoesDivisor;
   readonly gerarId?: () => string;
 }
@@ -37,9 +38,14 @@ export interface ResultadoIngestao {
 }
 
 /**
- * Normaliza, deduplica pelo hash do conteúdo, divide, gera embeddings e grava. O
- * título entra no texto do embedding (não no trecho gravado) para o trecho "saber"
- * de que documento veio.
+ * O texto que vira vetor: o título entra (não no trecho gravado) para o trecho "saber"
+ * de que documento veio. A reindexação usa a mesma forma.
+ */
+export const textoParaEmbedding = (titulo: string, trecho: string): string => `${titulo}\n${trecho}`;
+
+/**
+ * Normaliza, deduplica pelo hash do conteúdo, divide, gera embeddings (se houver
+ * provedor) e grava.
  */
 export async function ingerir(
   entrada: NovoDocumento,
@@ -56,15 +62,17 @@ export async function ingerir(
 
   const gerarId = deps.gerarId ?? randomUUID;
   const pedacos = dividirTexto(texto, deps.divisor ?? OPCOES_DIVISOR_PADRAO);
-  const vetores = await deps.embeddings.gerar(
-    pedacos.map((p) => `${doc.titulo}\n${p}`),
-    "documento",
-  );
+  const vetores = deps.embeddings
+    ? await deps.embeddings.gerar(
+        pedacos.map((p) => textoParaEmbedding(doc.titulo, p)),
+        "documento",
+      )
+    : null;
   const trechos: TrechoParaGravar[] = pedacos.map((p, ordem) => ({
     id: gerarId(),
     ordem,
     texto: p,
-    embedding: vetores[ordem] ?? [],
+    embedding: vetores ? (vetores[ordem] ?? []) : null,
   }));
   const gravado = await deps.repositorio.gravarDocumento(
     {

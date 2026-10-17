@@ -165,3 +165,6 @@ export const PERGUNTAS_AVALIACAO: readonly CasoAvaliacao[] = [
 
 /** Abaixo disso a busca piorou: o teste falha. */
 export const RECALL_MINIMO = 0.85;
+
+/** O mesmo, sem embeddings (EMBEDDINGS_PROVEDOR=nenhum): só o full-text em português. */
+export const RECALL_MINIMO_PALAVRAS = 0.9;

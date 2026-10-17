@@ -24,8 +24,11 @@ export interface ServicoConhecimento {
   ingerir(usuarioId: string, doc: DocumentoNovo): Promise<DocumentoIngerido>;
 }
 
-/** Embeddings prontos, ou o motivo de o RAG estar desligado (ex.: falta VOYAGE_API_KEY). */
-export type FonteEmbeddings = { readonly embeddings: Embeddings } | { readonly indisponivel: string };
+/**
+ * Embeddings prontos (`null` com EMBEDDINGS_PROVEDOR=nenhum: só busca por palavras),
+ * ou o motivo de o RAG estar desligado (ex.: falta VOYAGE_API_KEY).
+ */
+export type FonteEmbeddings = { readonly embeddings: Embeddings | null } | { readonly indisponivel: string };
 
 type Ambiente = Readonly<Record<string, string | undefined>>;
 
