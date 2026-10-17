@@ -248,18 +248,40 @@ Em **Risco → Orçamento de IA**, cada pessoa define um teto mensal (e, se quis
 
 O analista dos robôs e o **Assistente** (o chat em Acompanhar → Assistente) podem responder por dois "cérebros", escolhidos por pessoa em **Assistente → Configurações**:
 
-| Provedor                  | Como funciona                                                                    | Precisa de                                        |
-| ------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Claude pela API           | O SDK da Anthropic, pago por uso. O custo de cada análise fica na decisão.       | `ANTHROPIC_API_KEY` no agente                     |
-| Claude Code (o seu plano) | O agente roda `claude -p` com o login da pessoa, dentro do limite do plano dela. | O CLI instalado no agente e o login feito uma vez |
+| Provedor                  | Como funciona                                                                     | Precisa de                                                                                |
+| ------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Claude pela API           | O SDK da Anthropic, pago por uso. O custo de cada análise fica na decisão.        | `ANTHROPIC_API_KEY` no agente                                                             |
+| Claude Code (o seu plano) | O agente roda `claude -p` com o Claude da pessoa, dentro do limite do plano dela. | O CLI no agente e, de cada pessoa, o Claude conectado pela tela (ou um login no servidor) |
 
-Nos dois casos o analista **só propõe** (a saída é a `PropostaAgente`, validada; fora do esquema vira "aguardar") e as ferramentas são **só de leitura**. No Claude Code, as ferramentas nativas ficam desligadas (`--tools ""`, `--restricted`, nada de Bash, Edit, Write ou WebFetch), as configurações do usuário são ignoradas e só a ponte MCP do ZenTrade é liberada; o ambiente do processo não leva `ANTHROPIC_API_KEY` nem os segredos do ZenTrade. Quem nunca escolheu fica com a API, se o agente tiver a chave, senão com o Claude Code.
+Nos dois casos o analista **só propõe** (a saída é a `PropostaAgente`, validada; fora do esquema vira "aguardar") e as ferramentas são **só de leitura**. No Claude Code, as ferramentas nativas ficam desligadas (`--tools ""`, `--restricted`, nada de Bash, Edit, Write ou WebFetch), as configurações do usuário são ignoradas e só a ponte MCP do ZenTrade é liberada; o ambiente do processo não leva `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` nem os segredos do ZenTrade. Quem nunca escolheu fica com a API, se o agente tiver a chave, senão com o Claude Code.
 
-> **Termos de uso.** Usar o Claude Code pelo plano (Pro, Max, Team…) segue os termos da Anthropic: o plano é **pessoal**, para a própria pessoa usar. Não compartilhe a conta de uma pessoa com outras, nem use o plano de alguém para atender terceiros. Para uso por várias pessoas ou automatizado em escala, use a API.
+> **Termos de uso.** Usar o Claude Code pelo plano (Pro, Max, Team…) segue os termos da Anthropic: o plano é **pessoal**, para a própria pessoa usar. Cada pessoa conecta a **própria** conta; não use o plano de alguém para atender outras pessoas. Para uso por várias pessoas ou automatizado em escala, use a API.
 
-### Fazer o login uma vez (Docker)
+### Conectar o Claude pela tela (o jeito recomendado)
 
-A imagem do agente já traz o `claude` (repositório apk assinado da Anthropic, canal stable). O login fica no volume `claude-contas`, montado em `/dados/claude`, e sobrevive à troca do container. Cada conta é uma pasta (`CLAUDE_CONFIG_DIR`):
+Ninguém precisa abrir terminal. Cada pessoa, em **Assistente → Configurações** (ou **Contas e chaves**, ou o passo "Conectar a IA" do **Comece aqui**), no painel **Claude Code (seu plano)**:
+
+1. **Conectar:** clica em **Conectar meu Claude** (pede 2FA ligado e a confirmação de identidade, como cadastrar chave de dinheiro real). O agente roda o `claude setup-token` oficial num pseudo-terminal e devolve o link de autorização.
+2. **Autorizar no Claude:** **Abrir autorização no Claude** abre a página da Anthropic numa aba nova; a pessoa entra com a conta dela (Pro ou Max) e autoriza.
+3. **Colar o código:** o Claude mostra um código; a pessoa cola na tela e conclui. O agente pega o token que o CLI imprime (vale 1 ano, só faz chamadas ao modelo) e o grava **cifrado** em `credenciais_claude`; a tela mostra só o final (`…abcd`), a validade e o último teste.
+
+Depois disso, o provedor passa a ser "Claude Code (seu token)", e **Testar** faz uma chamada mínima para conferir. A conexão vale 10 minutos e cada pessoa pode começar 5 por hora. Quem preferir pode rodar `claude setup-token` no próprio computador e colar o token em **Avançado: já tenho um token**.
+
+**O que o servidor precisa** (a imagem Docker já traz tudo):
+
+- O Claude Code e o `script` do util-linux no agente (`util-linux-misc` no Alpine; o `script` é o pseudo-terminal, sem módulo nativo).
+- **`ZENTRADE_CHAVE_MESTRA` também no agente**, a mesma da API: é com ela que o agente cifra o token na conexão e o decifra ao rodar o CLI. O `infra/docker-compose.yml` já passa a variável; sem ela, o agente sobe, mas o painel diz que o servidor não usa o Claude de cada pessoa.
+
+**Ordem de precedência no agente**, a cada análise ou resposta da pessoa:
+
+1. O token que **ela** conectou: o CLI roda com `CLAUDE_CODE_OAUTH_TOKEN` e um `CLAUDE_CONFIG_DIR` novo e vazio, só daquela execução (apagado no fim). `ANTHROPIC_API_KEY` e `ANTHROPIC_AUTH_TOKEN` saem do ambiente: elas passariam na frente do token. Não usamos `--bare` (ele não lê o token).
+2. Sem token, a pasta de login da conta escolhida (`AGENTE_CLAUDE_CONTAS`), como antes (veja abaixo).
+
+Se o token expirar ou for revogado, o analista falha com uma mensagem clara (o robô não opera naquele sinal), o assistente diz "reconecte o seu Claude" e o painel mostra o erro com **Reconectar**. Se a chave mestra mudar, os tokens não abrem: cada pessoa reconecta (o agente não cai para a conta do servidor sem avisar).
+
+### Alternativa: login feito no servidor (Docker)
+
+Para quem opera sozinho e prefere o login do Claude Code no próprio servidor. A imagem do agente já traz o `claude` (repositório apk assinado da Anthropic, canal stable). O login fica no volume `claude-contas`, montado em `/dados/claude`, e sobrevive à troca do container. Cada conta é uma pasta (`CLAUDE_CONFIG_DIR`). Vale só para quem **não** conectou o próprio Claude pela tela:
 
 ```bash
 # entre no agente e abra o Claude Code com a pasta da conta "principal"
@@ -284,7 +306,7 @@ Cada pessoa escolhe a **sua** conta em Assistente → Configurações. As pastas
 
 ### Sem Docker
 
-Instale o Claude Code na máquina do agente (`curl -fsSL https://claude.ai/install.sh | bash`), faça o login com `claude` e deixe `AGENTE_CLAUDE_CONTAS` vazio para usar o login padrão (`~/.claude`) do usuário que roda o agente — ou aponte contas para outras pastas, como acima. `AGENTE_CLAUDE_CAMINHO` diz onde está o executável (padrão: `claude` no `PATH`).
+Instale o Claude Code na máquina do agente (`curl -fsSL https://claude.ai/install.sh | bash`), confira que o `script` (util-linux) existe e dê ao agente a mesma `ZENTRADE_CHAVE_MESTRA` da API: cada pessoa conecta o Claude pela tela. Para o login no servidor, faça o login com `claude` e deixe `AGENTE_CLAUDE_CONTAS` vazio para usar o login padrão (`~/.claude`) do usuário que roda o agente — ou aponte contas para outras pastas, como acima. `AGENTE_CLAUDE_CAMINHO` diz onde está o executável (padrão: `claude` no `PATH`).
 
 ### Tetos e passos ao vivo
 

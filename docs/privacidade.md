@@ -42,6 +42,7 @@ Cada item foi conferido no código. Ao mudar um fluxo de dados, atualize [`apps/
   - registros técnicos da API;
   - trilha de auditoria;
   - chaves da Binance cifradas;
+  - o token do Claude Code de cada pessoa (o plano dela), cifrado, com o final, quando foi conectado e o último teste;
   - tokens de API, guardados só como hash;
   - operações e carteira;
   - renda fixa;
@@ -60,7 +61,7 @@ Cada item foi conferido no código. Ao mudar um fluxo de dados, atualize [`apps/
 - **Compartilhamento:**
   - Binance;
   - Pluggy;
-  - Anthropic, pela API ou pelo Claude Code da conta de plano;
+  - Anthropic, pela API ou pelo Claude Code da conta de plano (com o token que a própria pessoa conectou);
   - Voyage AI, ou Ollama local;
   - Telegram e e-mail pelo n8n;
   - Banco Central e brapi.dev, sem dado pessoal;
@@ -108,7 +109,8 @@ Pontos a acompanhar, conferidos em outubro de 2026:
   - na auditoria, que é imutável;
   - em `decisoes.decidida_por` e `divergencias_saldo.resolvida_por`;
   - no texto da explicação da divergência.
-- O agente de IA, quando o Claude Code falha, registra no log a última linha da saída do CLI. Ela pode ser um trecho da resposta do modelo.
+- O agente de IA, quando o Claude Code falha, registra no log a última linha da saída do CLI. Ela pode ser um trecho da resposta do modelo (qualquer `sk-ant-…` sai oculto).
+- O token do Claude de cada pessoa fica até ela remover ou a conta ser apagada (o banco apaga em cascata). O token em si vale 1 ano na Anthropic: remover aqui não o revoga lá; a tela lembra a pessoa de revogar também na conta do Claude.
 - O IP de quem acessa fica no log da API (interesse legítimo: segurança e limite de tentativas). Atrás do nginx do Docker, é o IP real: o nginx sobrescreve o `X-Forwarded-For` e a API só confia em proxy da rede privada (`API_PROXY_CONFIAVEL`).
 - Não há exclusão de conta nem exportação de dados pela tela.
 - Não há expurgo automático de conversas, decisões, ordens, avisos, custos de IA nem da base de conhecimento. Eles ficam enquanto a conta existir.

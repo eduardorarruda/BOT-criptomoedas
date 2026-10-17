@@ -4,15 +4,16 @@ O ZenTrade guarda chaves de corretora e envia ordens com dinheiro. Este document
 
 ## O que proteger
 
-| Ativo                         | Onde fica                                                   |
-| ----------------------------- | ----------------------------------------------------------- |
-| Chaves da corretora           | banco, cifradas; a API nunca devolve o segredo (só `…a1b2`) |
-| Sessão de quem opera          | cookie `httpOnly` + `SameSite=Strict`                       |
-| Tokens de API (CLI, MCP, n8n) | banco; o token em claro aparece uma vez, na criação         |
-| Segredo dos webhooks          | `.env` da API (`N8N_WEBHOOK_SEGREDO`) e credencial do n8n   |
-| Token do bot do Telegram      | credencial do n8n                                           |
-| Histórico de decisões e o RAG | PostgreSQL                                                  |
-| O dinheiro na corretora       | na corretora — o ZenTrade só tem permissão de negociar      |
+| Ativo                          | Onde fica                                                   |
+| ------------------------------ | ----------------------------------------------------------- |
+| Chaves da corretora            | banco, cifradas; a API nunca devolve o segredo (só `…a1b2`) |
+| Token do Claude de cada pessoa | banco, cifrado; a API nunca devolve o token (só `…abcd`)    |
+| Sessão de quem opera           | cookie `httpOnly` + `SameSite=Strict`                       |
+| Tokens de API (CLI, MCP, n8n)  | banco; o token em claro aparece uma vez, na criação         |
+| Segredo dos webhooks           | `.env` da API (`N8N_WEBHOOK_SEGREDO`) e credencial do n8n   |
+| Token do bot do Telegram       | credencial do n8n                                           |
+| Histórico de decisões e o RAG  | PostgreSQL                                                  |
+| O dinheiro na corretora        | na corretora — o ZenTrade só tem permissão de negociar      |
 
 ## Modelo de ameaças (resumo)
 
@@ -23,6 +24,18 @@ O ZenTrade guarda chaves de corretora e envia ordens com dinheiro. Este document
 - **Chave com saque não entra:** na rede real, a API lê as permissões na Binance (`/sapi/v1/account/apiRestrictions`) **antes de salvar** e recusa chave com saque (**422** `chave_com_saque`); se não conseguir ler, também não salva (**502** `chave_nao_conferida`). O motor confere de novo ao ligar cada robô de dinheiro real (hoje o motor só liga em papel e testnet; a checagem já está lá para quando a rede real for liberada): chave que ganhou saque depois, ou cujas permissões não dá para ler, não opera (o robô não liga e vira [alerta](alertas.md)). A testnet não tem saque nem informa permissões.
 - **Restrição de IP: aviso forte, não bloqueio.** A Binance recomenda prender a chave ao IP do servidor (e exige isso para chaves com saque, que o ZenTrade nem aceita). Muita gente roda o ZenTrade em casa, com IP que muda; recusar a chave sem IP empurraria essas pessoas para uma chave com mais permissões. Por isso a chave sem restrição é aceita, mas o status em **Contas e chaves** mostra o risco em destaque. Se o seu IP é fixo, restrinja.
 - **Defesa de quem opera (a mais importante):** crie a chave **sem permissão de saque**, só com leitura e negociação spot, e **presa ao IP fixo do servidor** quando possível. Com isso, mesmo uma chave roubada não tira dinheiro da conta nem funciona de outro lugar.
+
+### O Claude de cada pessoa (token do plano)
+
+- **Ameaça:** alguém obtém o token do Claude Code de uma pessoa (o `sk-ant-oat…` do `claude setup-token`, que vale 1 ano) e usa o plano dela; ou a conexão pelo botão é desviada para outra pessoa ou para um site falso.
+- **Defesa do sistema:**
+  - O token fica em `credenciais_claude`, cifrado em envelope (AES-256-GCM, `ZENTRADE_CHAVE_MESTRA`, contexto com o id da pessoa), sob RLS por `usuario_id`. Nenhuma rota devolve o token: a tela vê só `…abcd`. A trilha de auditoria registra salvar, testar e remover, nunca o token.
+  - Colar ou conectar exige sessão (token de API não serve), **2FA ligado** e **reautenticação nos últimos 5 minutos**, como cadastrar chave de dinheiro real. Chave da API (`sk-ant-api…`) é recusada.
+  - **Conectar pelo botão** ([ADR 008](adr/008-claude-pelo-cli-oficial.md)): o agente roda o `claude setup-token` **oficial** num pseudo-terminal, com um `CLAUDE_CONFIG_DIR` novo e vazio e sem `ANTHROPIC_*` no ambiente. O ZenTrade não reimplementa o OAuth da Anthropic. O link só vai para a tela se for `https` num domínio da Anthropic (claude.ai, claude.com, anthropic.com); senão, a conexão é abortada. O código colado só aceita letras, números e `# - _ . ~` (nada de Enter ou Esc chega ao terminal). Uma conexão por pessoa, guardada na memória do agente e conferida pelo `usuarioId` da sessão a cada passo; vence em 10 minutos; 5 começos por hora por pessoa. O token que o CLI imprime vai direto para a cifra, no agente: não passa pela API nem pela tela.
+  - **Logs:** a saída do CLI nunca é registrada; a API e o agente ocultam `token`/`codigo` e trocam qualquer `sk-ant-…` da linha inteira por `sk-ant-[oculto]` antes de gravar.
+  - **Ao usar:** o token vai só no ambiente do processo filho (`CLAUDE_CODE_OAUTH_TOKEN`), nunca na linha de comando; `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` e `ANTHROPIC_BASE_URL` saem do ambiente (elas passariam na frente do token). Cada execução usa uma pasta de configuração nova, apagada no fim. Se o token não abre (chave mestra trocada), o CLI **não** cai para a conta do servidor: falha com a mensagem de reconectar.
+- **Defesa de quem opera:** a mesma `ZENTRADE_CHAVE_MESTRA` na API e no agente, fora do git, com cópia segura (sem ela, os tokens viram lixo e cada pessoa reconecta). Cada pessoa conecta **a própria** conta: o plano é pessoal (termos da Anthropic).
+- **Defesa de cada pessoa:** se suspeitar de vazamento, **Remover** na tela e revogar o token na conta do Claude.
 
 ### Sessão e tokens
 
@@ -71,6 +84,7 @@ O ZenTrade guarda chaves de corretora e envia ordens com dinheiro. Este document
 - Robô novo nasce em `observar`. `auto` com dinheiro real exige reautenticação.
 - Limites da conta (perda do dia, exposição, posições, queda do pico, sequência de stops) e divergências com a corretora só barram **compras**; afrouxá-los, liberar pausas e aceitar o saldo da corretora pedem reautenticação. A reconciliação nunca opera para corrigir.
 - Chave da Binance com permissão de saque não é salva nem usada para operar.
+- O token do Claude de cada pessoa fica cifrado, nunca volta pela API nem aparece em log, e só entra no ambiente do Claude Code dela.
 - Orçamento de IA por pessoa: no teto, o agente não chama o modelo.
 - Segredos não voltam pela API e não vão para o repositório.
 - Webhooks assinados e com prazo nos dois sentidos.
@@ -80,6 +94,7 @@ O ZenTrade guarda chaves de corretora e envia ordens com dinheiro. Este document
 - [ ] Chave da corretora **sem permissão de saque**.
 - [ ] Chave **restrita ao IP fixo** do servidor.
 - [ ] **2FA** na corretora, no ZenTrade e no e-mail ligado a eles.
+- [ ] `ZENTRADE_CHAVE_MESTRA` igual na API, no motor e no agente, com cópia num gerenciador de senhas (sem ela, chaves e tokens guardados não abrem).
 - [ ] Segredos aleatórios e longos (`openssl rand -hex 32`) em `.env`, fora do git, com cópia num gerenciador de senhas.
 - [ ] Banco, Redis e agente **sem porta exposta** para a internet; só a tela/API (e o n8n, se usar aprovação no chat) atrás de HTTPS.
 - [ ] Relógio sincronizado (NTP).
