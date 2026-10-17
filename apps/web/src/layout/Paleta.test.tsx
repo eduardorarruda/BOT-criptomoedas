@@ -59,6 +59,17 @@ describe("Paleta de comandos", () => {
     expect(feito).toHaveBeenCalledWith("robos");
   });
 
+  it("a opção ativa rola para dentro da vista (lista longa)", async () => {
+    const usuario = userEvent.setup();
+    const rolar = vi.fn();
+    Element.prototype.scrollIntoView = rolar;
+    montar();
+    await usuario.keyboard("{ArrowDown}{ArrowDown}");
+    const ultima = rolar.mock.contexts.at(-1) as Element | undefined;
+    expect(ultima).toHaveTextContent("Risco");
+    expect(rolar).toHaveBeenLastCalledWith({ block: "nearest" });
+  });
+
   it("clicar numa opção executa", async () => {
     const usuario = userEvent.setup();
     const { feito } = montar();

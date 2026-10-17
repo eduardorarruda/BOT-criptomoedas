@@ -37,6 +37,12 @@ export function Paleta({ aberta, comandos, aoFechar }: Props) {
 
   const achados = filtrarComandos(comandos, termo);
   const atual = Math.min(ativo, Math.max(0, achados.length - 1));
+  const idAtivo = achados.length ? idOpcao(atual) : undefined;
+
+  // Com a lista maior que a janela, a opção escolhida pelas setas fica sempre à vista.
+  useEffect(() => {
+    if (idAtivo) document.getElementById(idAtivo)?.scrollIntoView?.({ block: "nearest" });
+  }, [idAtivo]);
   const executar = (c: Comando | undefined): void => {
     if (!c) return;
     aoFechar();
@@ -87,7 +93,7 @@ export function Paleta({ aberta, comandos, aoFechar }: Props) {
               aria-expanded="true"
               aria-controls={idLista}
               aria-autocomplete="list"
-              aria-activedescendant={achados.length ? idOpcao(atual) : undefined}
+              aria-activedescendant={idAtivo}
               placeholder="Ir para uma tela ou fazer uma ação…"
               value={termo}
               onChange={(e) => {
