@@ -1,4 +1,5 @@
 import type { Estrategia } from "./estrategia.js";
+import type { Mercado } from "./mercados/mercado.js";
 import type { Operando, Regra } from "./regras.js";
 
 /**
@@ -6,6 +7,11 @@ import type { Operando, Regra } from "./regras.js";
  * para começar a montar e a testar (backtest, papel, modo observar). As famílias
  * escolhidas — tendência/momento e rompimento — são as que têm a evidência menos
  * fraca em cripto, e mesmo assim frágil. Nenhum modelo é recomendação.
+ *
+ * Os modelos do mini índice (WIN) são adaptações para day trade em candles de 5
+ * minutos, nos dois sentidos. A taxa deles é zero porque, no WIN, os custos (tarifa
+ * da B3, corretagem e deslizamento em ticks) vêm do modelo do mercado no backtest;
+ * os percentuais de stop e alvo são sobre o índice (0,5% de 130.000 = 650 pontos).
  */
 export interface ModeloEstrategia {
   readonly id: string;
@@ -13,6 +19,10 @@ export interface ModeloEstrategia {
   /** Um parágrafo: a ideia, onde tende a funcionar e onde tende a falhar. */
   readonly descricao: string;
   readonly estrategia: Estrategia;
+  /** Para que mercado o modelo foi pensado. Sem ele, cripto. */
+  readonly mercado?: Mercado;
+  /** O intervalo de candles para o qual os parâmetros foram pensados. */
+  readonly intervalo?: "5m" | "15m" | "1h";
 }
 
 export const AVISO_MODELOS =
@@ -159,3 +169,124 @@ export const MODELOS: readonly ModeloEstrategia[] = [
     },
   },
 ];
+
+/* ---------- Mini índice (WIN), day trade em 5 minutos, nos dois sentidos ---------- */
+
+const ema = (periodo: number): Operando => ({ tipo: "indicador", nome: "ema", periodo });
+const adx14: Operando = { tipo: "indicador", nome: "adx", periodo: 14, saida: "adx" };
+const faixa = (saida: "superior" | "inferior" | "meio"): Operando => ({
+  tipo: "indicador",
+  nome: "faixaAbertura",
+  periodo: 30,
+  saida,
+});
+const bollinger = (saida: "superior" | "inferior" | "media"): Operando => ({
+  tipo: "indicador",
+  nome: "bollinger",
+  periodo: 20,
+  desvios: 2,
+  saida,
+});
+const donchian = (periodo: number, saida: "superior" | "inferior"): Operando => ({
+  tipo: "indicador",
+  nome: "donchian",
+  periodo,
+  saida,
+});
+/** No WIN, os custos vêm do modelo do mercado (tarifa B3, corretagem, ticks). */
+const SEM_TAXA = 0;
+
+export const MODELOS_WIN: readonly ModeloEstrategia[] = [
+  {
+    id: "win-faixa-abertura-30",
+    nome: "Mini índice: rompimento da faixa de abertura (30 min)",
+    mercado: "win",
+    intervalo: "5m",
+    descricao:
+      "Marca a maior máxima e a menor mínima dos primeiros 30 minutos do pregão e opera o rompimento: compra quando o preço fecha acima do topo da faixa e vende quando fecha abaixo do fundo. Sai se o preço voltar ao meio da faixa, no stop (2 ATR, no máximo 0,5% do índice) ou na zeragem do fim do dia. A ideia, estudada desde os anos 1990 em futuros de índice, é que o começo do pregão concentra a informação da noite e o rompimento da faixa pode marcar a direção do dia. Tende a funcionar em dias de tendência; sofre em dias laterais, com rompimentos falsos para os dois lados, e é sensível ao deslizamento logo depois da abertura.",
+    estrategia: {
+      direcao: "ambos",
+      entrada: comparar(preco, "cruzouAcima", faixa("superior")),
+      entradaVendida: comparar(preco, "cruzouAbaixo", faixa("inferior")),
+      saida: comparar(preco, "<", faixa("meio")),
+      saidaVendida: comparar(preco, ">", faixa("meio")),
+      stop: 0.005,
+      stopAtr: { periodo: 14, multiplo: 2 },
+      alvoLiquido: 0.01,
+      taxa: SEM_TAXA,
+    },
+  },
+  {
+    id: "win-ema-9-21-adx",
+    nome: "Mini índice: tendência EMA 9/21 com ADX",
+    mercado: "win",
+    intervalo: "5m",
+    descricao:
+      "Compra quando a EMA de 9 cruza para cima a de 21 e vende quando cruza para baixo, nos dois casos só se o ADX(14) estiver acima de 20 (alguma força de tendência). Sai no cruzamento contrário, com um stop móvel a 3 ATR do melhor preço desde a entrada, e zera no fim do dia. É a versão de day trade da tendência por médias: tende a funcionar em pregões que engatam uma direção; em pregões de lado, as médias se cruzam várias vezes e cada entrada paga tarifa e deslizamento. Como as médias olham para trás, entra e sai com atraso.",
+    estrategia: {
+      direcao: "ambos",
+      entrada: {
+        tipo: "e",
+        regras: [comparar(ema(9), "cruzouAcima", ema(21)), comparar(adx14, ">", numero(20))],
+      },
+      entradaVendida: {
+        tipo: "e",
+        regras: [comparar(ema(9), "cruzouAbaixo", ema(21)), comparar(adx14, ">", numero(20))],
+      },
+      saida: comparar(ema(9), "cruzouAbaixo", ema(21)),
+      saidaVendida: comparar(ema(9), "cruzouAcima", ema(21)),
+      stop: 0.006,
+      stopMovel: { tipo: "atr", periodo: 14, multiplo: 3 },
+      alvoLiquido: 0.012,
+      taxa: SEM_TAXA,
+    },
+  },
+  {
+    id: "win-bollinger-volta-media",
+    nome: "Mini índice: volta à média com Bollinger no pregão",
+    mercado: "win",
+    intervalo: "5m",
+    descricao:
+      "Aposta que, sem tendência forte, os exageros do pregão voltam para a média: compra quando o preço fecha abaixo da banda inferior de Bollinger(20, 2) e vende quando fecha acima da superior, só com o ADX(14) abaixo de 20. Sai quando o preço volta à média das bandas, depois de 12 candles (1 hora) sem resolver, no stop (1,5 ATR, no máximo 0,4%) ou na zeragem. Tende a funcionar em pregões laterais; falha quando o movimento vira tendência (a banda anda junto e o stop encerra) e em dias de notícia. Os ganhos por operação são pequenos, então os custos pesam muito.",
+    estrategia: {
+      direcao: "ambos",
+      entrada: {
+        tipo: "e",
+        regras: [comparar(preco, "<", bollinger("inferior")), comparar(adx14, "<", numero(20))],
+      },
+      entradaVendida: {
+        tipo: "e",
+        regras: [comparar(preco, ">", bollinger("superior")), comparar(adx14, "<", numero(20))],
+      },
+      saida: comparar(preco, ">", bollinger("media")),
+      saidaVendida: comparar(preco, "<", bollinger("media")),
+      stop: 0.004,
+      stopAtr: { periodo: 14, multiplo: 1.5 },
+      tempoMaximo: 12,
+      alvoLiquido: 0.006,
+      taxa: SEM_TAXA,
+    },
+  },
+  {
+    id: "win-donchian-atr",
+    nome: "Mini índice: rompimento de Donchian 20/10 com stop por ATR",
+    mercado: "win",
+    intervalo: "5m",
+    descricao:
+      "A regra dos Turtle Traders encolhida para o dia: compra quando o preço fecha acima da maior máxima dos 20 candles anteriores e vende quando fecha abaixo da menor mínima deles. A compra sai quando o preço fecha abaixo da menor mínima dos 10 anteriores (e a venda, acima da maior máxima dos 10), com stop a 2 ATR (no máximo 0,6%) e zeragem no fim do dia. Tende a funcionar em pregões com tendência longa; em pregões laterais, rompimentos falsos se repetem e cada um paga custo. Em 5 minutos, 20 candles são só 100 minutos de história.",
+    estrategia: {
+      direcao: "ambos",
+      entrada: comparar(preco, ">", donchian(20, "superior")),
+      entradaVendida: comparar(preco, "<", donchian(20, "inferior")),
+      saida: comparar(preco, "<", donchian(10, "inferior")),
+      saidaVendida: comparar(preco, ">", donchian(10, "superior")),
+      stop: 0.006,
+      stopAtr: { periodo: 14, multiplo: 2 },
+      alvoLiquido: 0.015,
+      taxa: SEM_TAXA,
+    },
+  },
+];
+
+/** Todos os modelos: os de cripto e os do mini índice. */
+export const TODOS_OS_MODELOS: readonly ModeloEstrategia[] = [...MODELOS, ...MODELOS_WIN];
