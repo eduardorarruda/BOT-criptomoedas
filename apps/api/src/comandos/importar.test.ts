@@ -6,7 +6,12 @@ import type { DocumentoIngerido } from "@zentrade/contratos";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarServicoArquivos } from "../integracoes/conhecimento-arquivos.js";
 import type { ServicoConhecimento } from "../integracoes/conhecimento.js";
-import { executarImportacao, listarArquivos, type DependenciasImportacao } from "./importar.js";
+import {
+  executarImportacao,
+  tituloMarkdown,
+  listarArquivos,
+  type DependenciasImportacao,
+} from "./importar.js";
 
 const ANA = "11111111-1111-4111-8111-111111111111";
 
@@ -91,8 +96,9 @@ describe("comando importar-conhecimento", { timeout: 60_000 }, () => {
 
     const r = await executarImportacao(["--email", "ana@exemplo.com", "--pasta", pasta], deps);
 
+    // Markdown leva o primeiro "# título"; sem ele, o nome do arquivo (como em regras.txt).
     expect(docs.map((d) => [d.titulo, d.fonte])).toEqual([
-      ["estrategia", "nota"],
+      ["Reversão", "nota"],
       ["Taxas", "nota"],
       ["regras", "nota"],
     ]);
@@ -164,5 +170,12 @@ describe("comando importar-conhecimento", { timeout: 60_000 }, () => {
     await expect(
       executarImportacao(["--email", "ana@exemplo.com", "--pasta", pasta], desligado),
     ).rejects.toThrow(/VOYAGE_API_KEY/);
+  });
+
+  it("título do Markdown: primeiro # de nível 1, sem # do fim; outros tipos não", () => {
+    expect(tituloMarkdown("a.md", "texto\n# Gestão de risco ##\n## Sub")).toBe("Gestão de risco");
+    expect(tituloMarkdown("a.md", "## Só subtítulo\ntexto")).toBeUndefined();
+    expect(tituloMarkdown("a.md", "#sem-espaço não é título")).toBeUndefined();
+    expect(tituloMarkdown("a.txt", "# Título")).toBeUndefined();
   });
 });

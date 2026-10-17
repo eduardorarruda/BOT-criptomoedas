@@ -110,6 +110,13 @@ async function motivoParaIgnorar(e: EntradaPasta, limiteBytes: number): Promise<
   return null;
 }
 
+/** Em Markdown, o primeiro "# título" diz melhor do que o nome do arquivo do que se trata. */
+export function tituloMarkdown(nome: string, texto: string): string | undefined {
+  if (!/\.(md|markdown)$/i.test(nome)) return undefined;
+  const h1 = /^#[ \t]+(.+?)[ \t#]*$/m.exec(texto);
+  return h1?.[1]?.trim() || undefined;
+}
+
 async function importarArquivo(
   d: DependenciasImportacao,
   usuarioId: string,
@@ -120,8 +127,9 @@ async function importarArquivo(
   const ignorar = await motivoParaIgnorar(e, limiteBytes);
   if (ignorar) return { tipo: "ignorado", motivo: ignorar };
   try {
-    const extraido = await d.arquivos.extrairArquivo(e.relativo, await readFile(e.caminho));
-    const titulo = tituloDoArquivo(extraido);
+    const bytes = await readFile(e.caminho);
+    const extraido = await d.arquivos.extrairArquivo(e.relativo, bytes);
+    const titulo = tituloDoArquivo(extraido, tituloMarkdown(e.relativo, bytes.toString("utf8")));
     const motivo = await jaExiste(d, usuarioId, extraido, titulo, fonte);
     if (motivo) return { tipo: "duplicado", motivo };
     const r = await d.arquivos.ingerirExtraido(usuarioId, extraido, { titulo, fonte });
