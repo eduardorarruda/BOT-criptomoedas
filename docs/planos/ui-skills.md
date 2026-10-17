@@ -57,70 +57,82 @@ O dono deu a direção por escrito e pediu que o trabalho seguisse sem perguntas
 
 - **Arquivos:** `src/demo/estado.ts`, `src/demo/fonteDemo.ts`, `src/demo/vazio.ts` (novo), `src/main.tsx`, `src/demo/fonteDemo.test.ts`, `src/demo/vazio.test.ts`.
 - **Interfaces:** `OpcoesDemo.vazio?: boolean`; `estadoVazioDemo(agora): EstadoDemo`; `lerModoVazio(busca: string, armazenamento?: Storage): boolean` (`?vazio=1` liga e guarda na aba, `?vazio=0` desliga).
-- [ ] Teste: fonte vazia devolve listas vazias, resumo zerado e sessão sem 2FA. Rodar: falha.
-- [ ] Teste: `lerModoVazio` liga, lembra e desliga. Rodar: falha.
-- [ ] Implementar; rodar: passa. Commit `feat(web): exemplo vazio para ver a primeira vez`.
+- [x] Teste: fonte vazia devolve listas vazias, resumo zerado e sessão sem 2FA. Rodar: falha.
+- [x] Teste: `lerModoVazio` liga, lembra e desliga. Rodar: falha.
+- [x] Implementar; rodar: passa. Commit `feat(web): exemplo vazio para ver a primeira vez`.
 
 ### 2. Ligar o 2FA pela tela
 
 - **Arquivos:** `src/api/fonte.ts`, `src/api/fonteApi.ts`, `src/demo/fonteDemo.ts`, `src/ganchos/mutacoes.ts`, `src/paginas/contas/DoisFatores.tsx` (novo), `src/paginas/Contas.tsx`, testes.
 - **Interfaces:** `Fonte.iniciarDoisFatores(): Promise<{ segredo: string; uri: string }>`; `Fonte.ativarDoisFatores(codigo: string): Promise<void>`; `useIniciarDoisFatores()`, `useAtivarDoisFatores()` (ao ativar, a sessão em cache passa a `doisFatores: true`).
-- [ ] Teste da API: `POST /sessao/2fa` e `POST /sessao/2fa/ativar` com `{ codigo }`. Falha.
-- [ ] Teste do exemplo: ativar com 6 dígitos liga o 2FA; código errado dá erro claro. Falha.
-- [ ] Teste do painel: sem 2FA mostra "Ligar"; depois de gerar, mostra a chave e pede o código; ativado mostra "Ligado"; axe sem violações. Falha.
-- [ ] Implementar; passa. Commit `feat(web): ligar o 2FA pela tela de contas`.
+- [x] Teste da API: `POST /sessao/2fa` e `POST /sessao/2fa/ativar` com `{ codigo }`. Falha.
+- [x] Teste do exemplo: ativar com 6 dígitos liga o 2FA; código errado dá erro claro. Falha.
+- [x] Teste do painel: sem 2FA mostra "Ligar"; depois de gerar, mostra a chave e pede o código; ativado mostra "Ligado"; axe sem violações. Falha.
+- [x] Implementar; passa. Commit `feat(web): ligar o 2FA pela tela de contas`.
 
 ### 3. Progresso do "Comece aqui"
 
 - **Arquivos:** `src/lib/primeirosPassos.ts`, `src/lib/primeirosPassos.test.ts`.
 - **Interfaces:** `derivarPassos(d: DadosPassos): ResultadoPassos | null` (null enquanto carrega); `Passo { id, titulo, descricao, para, feito, opcional }`; `ResultadoPassos { passos, feitos, total, proximo, completo, operador }`.
-- [ ] Testes: instalação nova = 0 de 6 e próximo é o 2FA; cada dado marca o passo certo; robô pausado ou testnet não conta como "papel"; backtest só concluído conta; LGPD fica em `operador`, fora do total; carregando = null. Falha.
-- [ ] Implementar; passa.
+- [x] Testes: instalação nova = 0 de 6 e próximo é o 2FA; cada dado marca o passo certo; robô pausado ou testnet não conta como "papel"; backtest só concluído conta; LGPD fica em `operador`, fora do total; carregando = null. Falha.
+- [x] Implementar; passa.
 
 ### 4. "Comece aqui" na Visão geral
 
 - **Arquivos:** `src/paginas/visao/ComeceAqui.tsx`, `src/paginas/visao/useComeceAqui.ts`, `src/estilos/primeiros-passos.css`, `src/paginas/VisaoGeral.tsx`, testes + axe.
 - **Interfaces:** `ocultarComeceAqui(usuarioId)`, `mostrarComeceAqui(usuarioId)` (armazenamento local por pessoa).
-- [ ] Teste: mostra "0 de 6", o próximo passo com botão primário e os outros como link; passo feito tem check e texto "feito"; "Ocultar" some e oferece Desfazer; completo não renderiza; axe. Falha.
-- [ ] Implementar; passa. Commit `feat(web): comece aqui com progresso tirado dos dados`.
+- [x] Teste: mostra "0 de 6", o próximo passo com botão primário e os outros como link; passo feito tem check e texto "feito"; "Ocultar" some e oferece Desfazer; completo não renderiza; axe. Falha.
+- [x] Implementar; passa. Commit `feat(web): comece aqui com progresso tirado dos dados`.
 
 ### 5. Telas vazias que levam ao próximo passo
 
 - **Arquivos:** `VisaoGeral.tsx`, `Robos.tsx`, `Estrategias.tsx`, `Backtests.tsx`, `Decisoes.tsx`, `Ordens.tsx`, `aovivo/AoVivo.tsx`, `Contas.tsx`, `Tokens.tsx` e testes das telas.
-- [ ] Teste por tela: sem estratégia, Robôs aponta para Estratégias; sem estratégia, Backtests aponta para Estratégias; sem robô, Decisões e Ao vivo apontam para Robôs. Falha.
-- [ ] Implementar; passa; olhar as capturas do exemplo vazio. Commit `feat(web): telas vazias apontam o próximo passo`.
+- [x] Teste por tela: sem estratégia, Robôs aponta para Estratégias; sem estratégia, Backtests aponta para Estratégias; sem robô, Decisões e Ao vivo apontam para Robôs. Falha.
+- [x] Implementar; passa; olhar as capturas do exemplo vazio. Commit `feat(web): telas vazias apontam o próximo passo`.
 
 ### 6. Hierarquia: o que pede ação primeiro
 
 - **Arquivos:** `VisaoGeral.tsx`, `Risco.tsx`, testes.
-- [ ] Teste: a decisão pendente aparece uma vez só na Visão geral e antes dos indicadores. Falha.
-- [ ] Teste: em Risco, "Avisos" vem antes de "Limites da conta". Falha.
-- [ ] Implementar; passa. Commit `refactor(web): o que pede ação vem primeiro`.
+- [x] Teste: a decisão pendente aparece uma vez só na Visão geral e antes dos indicadores. Falha.
+- [x] Teste: em Risco, "Avisos" vem antes de "Limites da conta". Falha.
+- [x] Implementar; passa. Commit `refactor(web): o que pede ação vem primeiro`.
 
 ### 7. Avisos com ação (Desfazer) e robô otimista no sentido seguro
 
 - **Arquivos:** `src/componentes/Avisos.tsx`, `src/estilos/feedback.css`, `src/ganchos/mutacoes.ts`, `src/paginas/Robos.tsx`, testes.
 - **Interfaces:** `avisar(tom, texto, acao?: { rotulo: string; executar: () => void })`; `mudancaSegura(antes: RoboDTO, m: MudancaRobo): boolean`; `desfazerDe(antes, m): MudancaRobo | null` (nunca devolve `modo: "auto"`).
-- [ ] Testes: aviso com ação mostra o botão, executa e fecha; passar o mouse ou focar segura o tempo; `mudancaSegura` e `desfazerDe` (auto nunca volta). Falha.
-- [ ] Teste de Robôs: pausar mostra "Pausado" antes da resposta e "Desfazer" retoma. Falha.
-- [ ] Implementar; passa. Commit `feat(web): desfazer nas ações do robô e avisos que esperam o mouse`.
+- [x] Testes: aviso com ação mostra o botão, executa e fecha; passar o mouse ou focar segura o tempo; `mudancaSegura` e `desfazerDe` (auto nunca volta). Falha.
+- [x] Teste de Robôs: pausar mostra "Pausado" antes da resposta e "Desfazer" retoma. Falha.
+- [x] Implementar; passa. Commit `feat(web): desfazer nas ações do robô e avisos que esperam o mouse`.
 
 ### 8. Consistência
 
 - **Arquivos:** CSS de `src/estilos/**`, `src/componentes/**`, `src/paginas/**` (menos `conhecimento`), ícones `.tsx`.
-- [ ] Trocar valores exatos por tokens (fonte, raio); 10 px vira 11; ícones 13/15/17 viram 14/16/18; `text-wrap` em títulos e descrições; `reaisCurto` num lugar só.
-- [ ] Testes, axe e capturas iguais ou melhores. Commit `style(web): tamanhos, raios e ícones pela escala`.
+- [x] Trocar valores exatos por tokens (fonte, raio); 10 px vira 11; ícones 13/15/17 viram 14/16/18; `text-wrap` em títulos e descrições; `reaisCurto` num lugar só.
+- [x] Testes, axe e capturas iguais ou melhores. Commit `style(web): tamanhos, raios e ícones pela escala`.
 
 ### 9. Paleta de comandos e atalhos
 
 - **Arquivos:** `src/layout/comandos.ts` (+ teste), `src/layout/useAtalhosGlobais.ts` (+ teste), `src/layout/Paleta.tsx` (lazy, + teste com axe), `src/layout/AjudaAtalhos.tsx` (lazy), `src/layout/Casca.tsx`, `src/layout/BarraTopo.tsx`, `src/estilos/paleta.css`.
 - **Interfaces:** `filtrarComandos(comandos, termo): Comando[]` (sem acento, por palavra, começo vale mais); `useAtalhosGlobais({ abrirPaleta, abrirAjuda, navegar })`: Ctrl/Cmd+Shift+P e "/" abrem a paleta, "?" a ajuda, "g" e uma letra navegam; nada dispara com foco em campo de texto.
-- [ ] Testes de `filtrarComandos` e do gancho (inclui "não dispara no campo"). Falha.
-- [ ] Teste da paleta: digitar filtra, setas mudam a opção ativa (`aria-activedescendant`), Enter navega, Esc fecha; axe. Falha.
-- [ ] Implementar; conferir no build que a paleta é um pedaço à parte. Commit `feat(web): paleta de comandos e atalhos do teclado`.
+- [x] Testes de `filtrarComandos` e do gancho (inclui "não dispara no campo"). Falha.
+- [x] Teste da paleta: digitar filtra, setas mudam a opção ativa (`aria-activedescendant`), Enter navega, Esc fecha; axe. Falha.
+- [x] Implementar; conferir no build que a paleta é um pedaço à parte. Commit `feat(web): paleta de comandos e atalhos do teclado`.
 
 ### 10. Verificação antes de dizer que acabou
 
-- [ ] `npx eslint apps/web`, `npx prettier --check apps/web docs`, `npx turbo run typecheck test build --filter=@zentrade/web`: saída lida, contagem de testes anotada.
-- [ ] JS inicial (gzip) medido no `dist` e comparado com 185 kB.
-- [ ] Capturas depois (1440×900 e 390×844, escuro e claro), incluindo o "Comece aqui" no exemplo vazio.
+- [x] `npx eslint apps/web`, `npx prettier --check apps/web docs`, `npx turbo run typecheck test build --filter=@zentrade/web`: saída lida, contagem de testes anotada.
+- [x] JS inicial (gzip) medido no `dist` e comparado com 185 kB.
+- [x] Capturas depois (1440×900 e 390×844, escuro e claro), incluindo o "Comece aqui" no exemplo vazio.
+
+## Execução (o que mudou em relação ao plano)
+
+- **"Comece aqui" compacto.** Com mais da metade feita, vira uma linha só com o próximo passo e "Ver os passos". No exemplo cheio (5 de 6) a lista inteira empurrava o painel para baixo.
+- **Instalação nova sem números zerados.** Sem robô e sem histórico, a Visão geral troca indicadores e gráficos vazios por uma linha que diz quando o painel enche (`PainelVazio`).
+- **Feito fica feito.** Chegou a 6 de 6, a marca "concluído" fica por pessoa; pausar o robô em papel depois não reabre a lista. A paleta traz de volta.
+- **Ordem final da Visão geral.** Parada total e "Aguardando você" vêm antes até do "Comece aqui" (achado da revisão).
+- **Regra do robô mais estrita (revisão).** Otimista só ao pausar ou baixar o modo; na rede real, observar → sugerir já é ativação de dinheiro. O Desfazer só volta a algo mais calmo ou retoma um robô que não opera sozinho.
+- **Busca da paleta num módulo sem o menu** (`comandosBusca.ts`): com a paleta importando o menu, o bundler tirava os ícones da entrada em 11 pedaços (+2,4 kB no JS inicial).
+- **Firefox.** Ctrl+Shift+P abre janela privada no Firefox; os textos apontam a tecla / e o botão "Ir para…".
+- **Tokens.tsx** ficou como estava: o estado vazio já explica e não há passo de onboarding para tokens.
+- **Fora deste passe:** as telas de finanças (Carteira, Patrimônio, Renda fixa, Imobiliário) seguem com a própria demonstração no exemplo vazio; QR do 2FA (exigiria biblioteca).
