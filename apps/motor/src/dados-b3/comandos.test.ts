@@ -90,6 +90,18 @@ describe("importar-candles-b3", () => {
     expect(s.texto()).toMatch(/nenhum candle/);
   });
 
+  it("--desde num sábado não gera aviso de fonte curta (o primeiro pregão é segunda)", async () => {
+    const s = saida();
+    const fonte = await brapiGravada();
+    await executarImportacaoB3(["--desde", "2026-06-27"], {
+      banco: bancoDeCandlesFalso().banco,
+      fontes: { brapi: () => fonte },
+      agora: () => AGORA,
+      escrever: s.escrever,
+    });
+    expect(s.texto()).not.toMatch(/a fonte só tem dados/);
+  });
+
   it("avisa quando a fonte começa depois do pedido e quando o período passa da retenção do banco", async () => {
     const b = bancoDeCandlesFalso();
     const s = saida();

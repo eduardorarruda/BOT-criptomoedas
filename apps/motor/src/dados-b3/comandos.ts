@@ -10,6 +10,8 @@ import { INTERVALOS_B3, SIMBOLOS_B3, type IntervaloB3 } from "./pregao.js";
 
 const SAO_PAULO = lerFuso(FUSO_B3);
 const DIA = 86_400_000;
+/** Fim de semana mais um feriado emendado (carnaval): até aqui, começar depois do --desde é normal. */
+const SEM_PREGAO_MAXIMO_MS = 5 * DIA;
 /** A política de retenção da tabela candles (migração 0002) apaga o que passa de 3 anos. */
 const RETENCAO_MS = 3 * 365 * DIA;
 const MAXIMO_LINHAS_IGNORADAS = 20;
@@ -130,7 +132,7 @@ export async function executarImportacaoB3(
   d.escrever(
     `do candle de ${quando(primeiro.abertura)} ao de ${quando(ultimo.abertura)} (horário de Brasília)`,
   );
-  if (primeiro.abertura >= a.inicio + DIA)
+  if (primeiro.abertura >= a.inicio + SEM_PREGAO_MAXIMO_MS)
     d.escrever(
       `aviso: a fonte só tem dados a partir de ${quando(primeiro.abertura).slice(0, 10)}; antes disso, ela não devolveu nada (limite de histórico do intervalo ou do plano)`,
     );
