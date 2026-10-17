@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
+import { SemQuebrar } from "../componentes/SemQuebrar";
 import { useSessao } from "../ganchos/consultas";
 import type { ControleMenu } from "../lib/menuRecolhido";
 import type { ControleTema } from "../lib/tema";
@@ -94,10 +95,16 @@ export function useComandosGlobais({
   );
 
   const elementos = (
-    <Suspense fallback={null}>
-      {usou.paleta ? <Paleta aberta={paleta} comandos={comandos} aoFechar={() => setPaleta(false)} /> : null}
-      {usou.ajuda ? <AjudaAtalhos aberta={ajuda} aoFechar={() => setAjuda(false)} irPara={IR_PARA} /> : null}
-    </Suspense>
+    <SemQuebrar>
+      <Suspense fallback={null}>
+        {usou.paleta ? (
+          <Paleta aberta={paleta} comandos={comandos} aoFechar={() => setPaleta(false)} />
+        ) : null}
+        {usou.ajuda ? (
+          <AjudaAtalhos aberta={ajuda} aoFechar={() => setAjuda(false)} irPara={IR_PARA} />
+        ) : null}
+      </Suspense>
+    </SemQuebrar>
   );
   return { controle: { abrirPaleta }, elementos };
 }

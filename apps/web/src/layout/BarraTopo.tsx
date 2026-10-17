@@ -115,9 +115,9 @@ export function BarraTopo({
             type="button"
             className="barra-topo__comandos"
             onClick={abrirPaleta}
-            aria-label="Ir para… (paleta de comandos, Ctrl+Shift+P)"
-            aria-keyshortcuts="Control+Shift+P /"
-            title="Paleta de comandos (Ctrl+Shift+P ou /)"
+            aria-label="Ir para… (paleta de comandos, tecla /)"
+            aria-keyshortcuts="/ Control+Shift+P Meta+Shift+P"
+            title="Paleta de comandos (/ ou Ctrl+Shift+P)"
           >
             <Search size={16} aria-hidden="true" />
             <span className="barra-topo__comandos-texto" aria-hidden="true">

@@ -3,8 +3,8 @@ import "../estilos/paleta.css";
 
 /** "?": a lista de atalhos do teclado. Chega sob demanda, como a paleta. */
 const GERAIS: readonly (readonly [string, readonly string[]])[] = [
-  ["Abrir a paleta de comandos", ["Ctrl", "Shift", "P"]],
-  ["Abrir a paleta (fora de um campo)", ["/"]],
+  ["Abrir a paleta de comandos (fora de um campo)", ["/"]],
+  ["Abrir a paleta de qualquer lugar (no Firefox, só a tecla /)", ["Ctrl", "Shift", "P"]],
   ["Ver esta lista de atalhos", ["?"]],
   ["Buscar nas conversas (Assistente)", ["Ctrl", "K"]],
   ["Conversa nova (Assistente)", ["Ctrl", "Shift", "O"]],

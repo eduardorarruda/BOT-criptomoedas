@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Fonte } from "../../api/fonte";
 import { criarFonteDemo } from "../../demo/fonteDemo";
@@ -25,6 +25,22 @@ describe("Visão geral: o que pede ação vem primeiro", () => {
     expect(screen.getAllByRole("button", { name: /^aprovar/i })).toHaveLength(1);
     const indicadores = await screen.findByLabelText("Resumo do dia");
     expect(antes(aguardando, indicadores)).toBe(true);
+  });
+});
+
+describe("Visão geral: ordem e contagem", () => {
+  it("o que pede ação vem antes até dos primeiros passos", async () => {
+    renderizarNaRota(<VisaoGeral />, { fonte: await logada() });
+    const aguardando = await screen.findByRole("heading", { name: "Aguardando você" });
+    const passos = await screen.findByRole("region", { name: "Primeiros passos" });
+    expect(antes(aguardando, passos)).toBe(true);
+  });
+
+  it("Últimas decisões mostra seis respondidas, mesmo com uma pendente no topo", async () => {
+    renderizarNaRota(<VisaoGeral />, { fonte: await logada() });
+    const titulo = await screen.findByRole("heading", { name: "Últimas decisões" });
+    const painel = titulo.closest("section") as HTMLElement;
+    await waitFor(() => expect(within(painel).getAllByRole("article")).toHaveLength(6));
   });
 });
 

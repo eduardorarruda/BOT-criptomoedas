@@ -23,11 +23,12 @@ import { Minigrafico } from "../componentes/Minigrafico";
 import { NumeroAnimado } from "../componentes/NumeroAnimado";
 import { PrecoAoVivo } from "../componentes/PrecoAoVivo";
 import { Selo } from "../componentes/Selo";
-import { useDecisoes, useEstrategias, usePatrimonio, useResumo, useRobos } from "../ganchos/consultas";
+import { useDecisoes, usePatrimonio, useResumo, useRobos } from "../ganchos/consultas";
 import { formatarCustoIa, formatarDinheiro, sinalDe } from "../lib/formatar";
 import { variacao } from "../lib/metricas";
 import { MODO_ROBO, REDE } from "../lib/rotulos";
 import { ComeceAqui } from "./visao/ComeceAqui";
+import { ProximoPasso } from "../componentes/ProximoPasso";
 
 /** O lightweight-charts (~57 kB) chega depois dos números: a curva não segura a primeira tela. */
 const GraficoLinha = lazy(() =>
@@ -126,32 +127,11 @@ function Curva() {
 
 function Robos() {
   const { data, isPending, error, refetch } = useRobos();
-  const semEstrategia = useEstrategias().data?.length === 0;
   if (isPending) return <Esqueleto forma="lista" linhas={4} rotulo="Carregando robôs" />;
   if (error) return <ErroCarregar erro={error} tentarDeNovo={() => void refetch()} compacto />;
   if (data.length === 0)
-    return semEstrategia ? (
-      <EstadoVazio
-        icone={Bot}
-        titulo="Nenhum robô ainda"
-        acao={
-          <Link to="/estrategias" className="botao botao--primario">
-            Criar uma estratégia
-          </Link>
-        }
-      >
-        Um robô segue uma estratégia. Comece criando uma a partir de um modelo; depois o robô, em papel.
-      </EstadoVazio>
-    ) : (
-      <EstadoVazio
-        icone={Bot}
-        titulo="Nenhum robô ainda"
-        acao={
-          <Link to="/robos" className="botao botao--primario">
-            Criar o primeiro robô
-          </Link>
-        }
-      >
+    return (
+      <EstadoVazio icone={Bot} titulo="Nenhum robô ainda" acao={<ProximoPasso />}>
         Um robô segue uma estratégia num par (como BTCUSDT). Ele nasce só observando.
       </EstadoVazio>
     );
@@ -230,11 +210,17 @@ function PedeAcao() {
   );
 }
 
+/** Seis respondidas; busca mais para sobrar seis mesmo com pendentes no topo. */
+const QUANTAS_ULTIMAS = 6;
+const LIMITE_BUSCA_ULTIMAS = 20;
+
 function Decisoes() {
   const robos = useRobos().data ?? [];
-  const ultimas = useDecisoes({ limite: 6 });
+  const ultimas = useDecisoes({ limite: LIMITE_BUSCA_ULTIMAS });
   // As pendentes já estão em "Aguardando você", no topo: aqui não se repetem.
-  const respondidas = ultimas.data?.filter((d) => d.estado !== "aguardando_aprovacao");
+  const respondidas = ultimas.data
+    ?.filter((d) => d.estado !== "aguardando_aprovacao")
+    .slice(0, QUANTAS_ULTIMAS);
   return (
     <div className="pilha">
       <AnalisesAoVivo robos={robos} />
@@ -274,22 +260,11 @@ function Decisoes() {
  * gráficos vazios, uma linha que diz quando o painel enche e o próximo passo.
  */
 function PainelVazio() {
-  const semEstrategia = useEstrategias().data?.length === 0;
   return (
     <EstadoVazio
       icone={Gauge}
       titulo="O painel enche quando o primeiro robô ligar"
-      acao={
-        semEstrategia ? (
-          <Link to="/estrategias" className="botao botao--secundario">
-            Criar uma estratégia
-          </Link>
-        ) : (
-          <Link to="/robos" className="botao botao--secundario">
-            Criar um robô
-          </Link>
-        )
-      }
+      acao={<ProximoPasso variante="secundario" />}
     >
       Resultado do dia, curva de patrimônio e decisões aparecem aqui assim que um robô estiver ligado, mesmo
       em papel.
@@ -306,8 +281,8 @@ export function VisaoGeral() {
       <Cabecalho titulo="Visão geral">
         Como estão seus robôs hoje, com perdas, taxas e custo de IA à vista.
       </Cabecalho>
-      <ComeceAqui />
       <PedeAcao />
+      <ComeceAqui />
       {instalacaoNova ? <PainelVazio /> : null}
       {!instalacaoNova ? <Metricas /> : null}
       {!instalacaoNova ? (

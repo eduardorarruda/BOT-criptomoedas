@@ -91,6 +91,22 @@ describe("ComeceAqui", () => {
     expect(ver).toHaveAttribute("aria-expanded", "false");
     await usuario.click(ver);
     expect(within(s).getAllByRole("listitem")).toHaveLength(6);
+    expect(within(s).getByRole("button", { name: "Esconder os passos" })).toHaveFocus();
+  });
+
+  it("depois de completo, não volta (pausar o robô em papel não reabre a lista)", async () => {
+    const fonte = await logada({});
+    await fonte.iniciarDoisFatores();
+    await fonte.ativarDoisFatores("123456");
+    const primeira = renderizarNaRota(<ComeceAqui />, { fonte });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(screen.queryByRole("region", { name: "Primeiros passos" })).not.toBeInTheDocument();
+    primeira.unmount();
+    for (const r of await fonte.robos())
+      if (r.rede === "papel") await fonte.atualizarRobo(r.id, { pausado: true });
+    renderizarNaRota(<ComeceAqui />, { fonte });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(screen.queryByRole("region", { name: "Primeiros passos" })).not.toBeInTheDocument();
   });
 
   it("sem violações do axe", async () => {

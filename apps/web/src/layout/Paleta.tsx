@@ -43,11 +43,15 @@ export function Paleta({ aberta, comandos, aoFechar }: Props) {
   useEffect(() => {
     if (idAtivo) document.getElementById(idAtivo)?.scrollIntoView?.({ block: "nearest" });
   }, [idAtivo]);
-  const executar = (c: Comando | undefined): void => {
-    if (!c) return;
+  /** Fechar sempre limpa a busca: a próxima abertura começa do zero. */
+  const fechar = (): void => {
     aoFechar();
     setTermo("");
     setAtivo(0);
+  };
+  const executar = (c: Comando | undefined): void => {
+    if (!c) return;
+    fechar();
     c.executar();
   };
   const teclas = (e: KeyboardEvent<HTMLInputElement>): void => {
@@ -75,10 +79,10 @@ export function Paleta({ aberta, comandos, aoFechar }: Props) {
       aria-label="Paleta de comandos"
       onCancel={(e) => {
         e.preventDefault();
-        aoFechar();
+        fechar();
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) aoFechar();
+        if (e.target === e.currentTarget) fechar();
       }}
     >
       {aberta ? (

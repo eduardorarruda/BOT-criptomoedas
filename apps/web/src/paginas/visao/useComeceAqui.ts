@@ -15,23 +15,37 @@ import { derivarPassos, type ResultadoPassos } from "../../lib/primeirosPassos";
 /** A paleta avisa por este evento quando traz os primeiros passos de volta. */
 export const EVENTO_COMECE_AQUI = "zentrade:comece-aqui";
 
-const chaveOculto = (usuarioId: string): string => `zentrade:comece-aqui:oculto:${usuarioId}`;
+/**
+ * Duas marcas por pessoa, neste navegador: "oculto" (a pessoa escondeu) e "concluído"
+ * (chegou a 6 de 6 uma vez). Feito fica feito: pausar o robô em papel depois não
+ * reabre a lista. A paleta ("Mostrar os primeiros passos") apaga as duas.
+ */
+type Marca = "oculto" | "concluido";
+const chave = (marca: Marca, usuarioId: string): string => `zentrade:comece-aqui:${marca}:${usuarioId}`;
 
-export function lerComeceAquiOculto(usuarioId: string): boolean {
+function ler(marca: Marca, usuarioId: string): boolean {
   try {
-    return localStorage.getItem(chaveOculto(usuarioId)) === "1";
+    return localStorage.getItem(chave(marca, usuarioId)) === "1";
   } catch {
     return false;
   }
 }
 
-export function definirComeceAquiOculto(usuarioId: string, oculto: boolean): void {
+function gravar(marca: Marca, usuarioId: string, ligada: boolean): void {
   try {
-    if (oculto) localStorage.setItem(chaveOculto(usuarioId), "1");
-    else localStorage.removeItem(chaveOculto(usuarioId));
+    if (ligada) localStorage.setItem(chave(marca, usuarioId), "1");
+    else localStorage.removeItem(chave(marca, usuarioId));
   } catch {
     // sem armazenamento: vale até recarregar a tela
   }
+}
+
+export const lerComeceAquiOculto = (usuarioId: string): boolean =>
+  ler("oculto", usuarioId) || ler("concluido", usuarioId);
+
+export function definirComeceAquiOculto(usuarioId: string, oculto: boolean): void {
+  gravar("oculto", usuarioId, oculto);
+  if (!oculto) gravar("concluido", usuarioId, false);
 }
 
 export interface ComeceAqui {
@@ -73,6 +87,10 @@ export function useComeceAqui(): ComeceAqui {
       });
 
   const id = usuario?.id;
+  const completo = resultado?.completo === true;
+  useEffect(() => {
+    if (id && completo) gravar("concluido", id, true);
+  }, [id, completo]);
   return {
     resultado,
     oculto: id ? lerComeceAquiOculto(id) : false,

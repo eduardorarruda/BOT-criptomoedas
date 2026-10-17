@@ -98,23 +98,36 @@ export function ProvedorAvisos({ children }: { readonly children: ReactNode }) {
   const [avisos, setAvisos] = useState<readonly Aviso[]>([]);
   const [parados, setParados] = useState(false);
   const proximo = useRef(0);
+  /** Os ids na tela, para esquecer os relógios dos que saem (fora do setState). */
+  const naTela = useRef<number[]>([]);
+  const ponteiroDentro = useRef(false);
 
-  const remover = useCallback((id: number) => setAvisos((a) => a.filter((x) => x.id !== id)), []);
+  const remover = useCallback((id: number) => {
+    naTela.current = naTela.current.filter((x) => x !== id);
+    setAvisos((a) => a.filter((x) => x.id !== id));
+  }, []);
   const relogios = useRelogios(remover);
+  const continuar = useCallback((): void => {
+    relogios.continuar();
+    setParados(false);
+  }, [relogios]);
   const fechar = useCallback(
     (id: number) => {
       relogios.esquecer(id);
       remover(id);
+      // O botão que tinha o foco sai com o aviso, e o navegador não avisa (sem blur):
+      // sem o ponteiro em cima, o tempo dos outros volta a correr.
+      if (!ponteiroDentro.current) continuar();
     },
-    [relogios, remover],
+    [relogios, remover, continuar],
   );
   const avisar = useCallback<Avisar>(
     (tom, texto, acao) => {
       const id = ++proximo.current;
-      setAvisos((a) => {
-        a.slice(0, -3).forEach((velho) => relogios.esquecer(velho.id));
-        return [...a.slice(-3), { id, tom, texto, ...(acao ? { acao } : {}) }];
-      });
+      const saem = naTela.current.slice(0, -3);
+      saem.forEach((velho) => relogios.esquecer(velho));
+      naTela.current = [...naTela.current.slice(-3), id];
+      setAvisos((a) => [...a.slice(-3), { id, tom, texto, ...(acao ? { acao } : {}) }]);
       relogios.iniciar(id, acao ? DURACAO_COM_ACAO : DURACAO[tom]);
     },
     [relogios],
@@ -122,10 +135,6 @@ export function ProvedorAvisos({ children }: { readonly children: ReactNode }) {
   const parar = (): void => {
     relogios.parar();
     setParados(true);
-  };
-  const continuar = (): void => {
-    relogios.continuar();
-    setParados(false);
   };
 
   return (
@@ -136,8 +145,14 @@ export function ProvedorAvisos({ children }: { readonly children: ReactNode }) {
         className={`avisos ${parados ? "avisos--parados" : ""}`}
         aria-live="polite"
         aria-label="Avisos"
-        onPointerEnter={parar}
-        onPointerLeave={continuar}
+        onPointerEnter={() => {
+          ponteiroDentro.current = true;
+          parar();
+        }}
+        onPointerLeave={() => {
+          ponteiroDentro.current = false;
+          continuar();
+        }}
         onFocus={parar}
         onBlur={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget as Node | null)) continuar();

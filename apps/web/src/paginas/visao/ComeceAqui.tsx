@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Check, ChevronDown, EyeOff, Server } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useAvisos } from "../../componentes/Avisos";
 import type { Passo } from "../../lib/primeirosPassos";
 import { useComeceAqui } from "./useComeceAqui";
@@ -52,6 +52,14 @@ export function ComeceAqui() {
   const { resultado, oculto, ocultar, mostrar } = useComeceAqui();
   const avisar = useAvisos();
   const idLista = useId();
+  const idAlternar = useId();
+  // O botão troca de lugar entre a linha compacta e a lista aberta: o foco vai junto.
+  const alternarFoco = useRef(false);
+  useEffect(() => {
+    if (!alternarFoco.current) return;
+    alternarFoco.current = false;
+    document.getElementById(idAlternar)?.focus();
+  });
   // Com mais da metade feita, a lista recolhe: fica só o próximo passo (dá para abrir).
   const [escolhaAberta, setAberta] = useState<boolean | null>(null);
   if (!resultado || resultado.completo || oculto) return null;
@@ -82,10 +90,14 @@ export function ComeceAqui() {
       className="botao botao--fantasma botao--pequeno"
       onClick={() => {
         ocultar();
-        avisar("info", "Primeiros passos ocultos. A paleta de comandos (Ctrl+Shift+P) traz de volta.", {
-          rotulo: "Desfazer",
-          executar: mostrar,
-        });
+        avisar(
+          "info",
+          "Primeiros passos ocultos. A paleta de comandos (Ir para…, ou a tecla /) traz de volta.",
+          {
+            rotulo: "Desfazer",
+            executar: mostrar,
+          },
+        );
       }}
     >
       <EyeOff size={14} aria-hidden="true" />
@@ -98,8 +110,12 @@ export function ComeceAqui() {
         type="button"
         className="comece__alternar"
         aria-expanded={aberta}
+        id={idAlternar}
         aria-controls={aberta ? idLista : undefined}
-        onClick={() => setAberta(!aberta)}
+        onClick={() => {
+          alternarFoco.current = true;
+          setAberta(!aberta);
+        }}
       >
         <ChevronDown size={14} aria-hidden="true" />
         {aberta ? "Esconder os passos" : "Ver os passos"}

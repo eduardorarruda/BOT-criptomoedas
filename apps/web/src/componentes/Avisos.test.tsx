@@ -80,4 +80,15 @@ describe("Avisos", () => {
     act(() => vi.advanceTimersByTime(30_000));
     expect(screen.getByText("Robô pausado.")).toBeInTheDocument();
   });
+
+  it("depois de usar o botão pelo teclado (o foco some com o aviso), o próximo aviso ainda some sozinho", async () => {
+    montar(<Disparar comAcao />);
+    fireEvent.click(screen.getByRole("button", { name: "disparar" }));
+    const desfazer = screen.getByRole("button", { name: "Desfazer" });
+    fireEvent.focus(desfazer);
+    fireEvent.click(desfazer);
+    fireEvent.click(screen.getByRole("button", { name: "disparar" }));
+    act(() => vi.advanceTimersByTime(11_000));
+    await esperarSumir("Robô pausado.");
+  });
 });

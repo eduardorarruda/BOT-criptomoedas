@@ -202,7 +202,7 @@ export function Robos() {
           robô, em papel.
         </EstadoVazio>
       ) : null}
-      {robos.data?.length === 0 && estrategias.data?.length !== 0 ? (
+      {robos.data?.length === 0 && estrategias.isSuccess && estrategias.data.length > 0 ? (
         <EstadoVazio
           icone={Bot}
           titulo="Nenhum robô ainda"
