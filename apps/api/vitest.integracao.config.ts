@@ -20,6 +20,7 @@ export default defineConfig({
         "src/servidor.ts",
         // Os pontos de entrada só ligam banco e ambiente; a lógica está em comandos/*.ts ao lado.
         "src/comandos/criar-usuario.ts",
+        "src/comandos/importar-conhecimento.ts",
         "src/comandos/reindexar-conhecimento.ts",
         "src/integracao/**",
       ],

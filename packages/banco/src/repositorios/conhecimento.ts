@@ -102,6 +102,17 @@ export function repositorioConhecimento(db: Db) {
     documentoPorHash: (usuarioId: string, hash: string): Promise<string | null> =>
       comoUsuario(db, usuarioId, (tx) => idPorHash(tx, usuarioId, hash)),
 
+    /** O documento com este título e fonte, se houver (a importação de pasta não duplica). */
+    documentoPorTitulo: (usuarioId: string, titulo: string, fonte: Fonte): Promise<string | null> =>
+      comoUsuario(db, usuarioId, async (tx) => {
+        const [linha] = await tx
+          .select({ id: documentos.id })
+          .from(documentos)
+          .where(and(eq(documentos.titulo, titulo), eq(documentos.fonte, fonte)))
+          .limit(1);
+        return linha?.id ?? null;
+      }),
+
     /** Grava documento e trechos juntos. Conteúdo repetido não duplica: devolve o documento que já existe. */
     async gravarDocumento(
       doc: DocumentoParaGravar,

@@ -76,4 +76,14 @@ describe("conhecimento sem embeddings e reindexação (sob RLS)", () => {
     ).rejects.toThrow(/1024 dimensões/);
     expect(await c.banco.conhecimento.gravarVetores(c.ana.id, [])).toBe(0);
   });
+
+  it("acha documento pelo título e fonte, só da própria pessoa (para a importação não duplicar)", async () => {
+    const { id } = await documento(c.ana.id, "Plano de risco", [null]);
+    expect(await c.banco.conhecimento.documentoPorTitulo(c.ana.id, "Plano de risco", "nota")).toBe(id);
+    expect(
+      await c.banco.conhecimento.documentoPorTitulo(c.ana.id, "Plano de risco", "estrategia"),
+    ).toBeNull();
+    expect(await c.banco.conhecimento.documentoPorTitulo(c.ana.id, "plano de risco", "nota")).toBeNull();
+    expect(await c.banco.conhecimento.documentoPorTitulo(c.beto.id, "Plano de risco", "nota")).toBeNull();
+  });
 });

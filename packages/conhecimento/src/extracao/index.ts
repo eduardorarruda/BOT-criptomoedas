@@ -1,4 +1,4 @@
-export { decodificarTexto, detectarTipo, extensaoDe } from "./detectar.js";
+export { decodificarTexto, detectarTipo, extensaoAceita, extensaoDe } from "./detectar.js";
 export { extrairTexto } from "./extrair.js";
 export { textoDoHtml, type TextoDoHtml } from "./html.js";
 export { lerLink, type Extrator, type LinkLido } from "./link.js";

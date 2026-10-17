@@ -26,6 +26,9 @@ export function extensaoDe(nome: string): string {
   return ponto < 0 ? "" : nome.slice(ponto + 1).toLowerCase();
 }
 
+/** Só pela extensão (o conteúdo é conferido depois por detectarTipo): para filtrar uma pasta. */
+export const extensaoAceita = (nome: string): boolean => Object.hasOwn(EXTENSOES, extensaoDe(nome));
+
 /** Texto de verdade: UTF-8 válido e sem byte nulo (arquivo binário renomeado para .txt). */
 export function decodificarTexto(bytes: Uint8Array): string {
   if (bytes.includes(0))
