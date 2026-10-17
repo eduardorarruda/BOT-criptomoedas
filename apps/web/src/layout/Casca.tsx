@@ -103,9 +103,9 @@ function RodapeLateral({ menu }: { readonly menu?: ControleMenu }) {
             onClick={menu.alternar}
           >
             {recolhido ? (
-              <PanelLeftOpen size={17} aria-hidden="true" />
+              <PanelLeftOpen size={18} aria-hidden="true" />
             ) : (
-              <PanelLeftClose size={17} aria-hidden="true" />
+              <PanelLeftClose size={18} aria-hidden="true" />
             )}
           </button>
         ) : null}
@@ -121,7 +121,7 @@ function RodapeLateral({ menu }: { readonly menu?: ControleMenu }) {
             })
           }
         >
-          <LogOut size={17} aria-hidden="true" />
+          <LogOut size={18} aria-hidden="true" />
         </button>
       </div>
     </div>

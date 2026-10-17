@@ -66,7 +66,7 @@ function Filtros(props: {
             aria-pressed={props.ativas.has(c.valor)}
             onClick={() => props.alternar(c.valor)}
           >
-            <Icone size={13} aria-hidden="true" />
+            <Icone size={14} aria-hidden="true" />
             {c.rotulo}
             <span className="num apagado">{props.contagem.get(c.valor) ?? 0}</span>
           </button>

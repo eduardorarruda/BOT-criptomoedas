@@ -61,9 +61,9 @@ function AvisoGravado({
   return (
     <div className={`msg__aviso msg__aviso--${msg.situacao}`}>
       {interrompida ? (
-        <PauseCircle size={15} aria-hidden="true" />
+        <PauseCircle size={16} aria-hidden="true" />
       ) : (
-        <CircleAlert size={15} aria-hidden="true" />
+        <CircleAlert size={16} aria-hidden="true" />
       )}
       <span>{interrompida ? "Resposta interrompida." : (msg.erro ?? "A resposta falhou.")}</span>
       {aoTentar && !interrompida ? (
@@ -121,13 +121,13 @@ function RespostaChegando({ r, aoTentar }: { readonly r: RespostaAoVivo; readonl
         ) : null}
         {r.situacao === "interrompida" ? (
           <div className="msg__aviso msg__aviso--interrompida">
-            <PauseCircle size={15} aria-hidden="true" />
+            <PauseCircle size={16} aria-hidden="true" />
             <span>Resposta interrompida.</span>
           </div>
         ) : null}
         {r.situacao === "erro" ? (
           <div className="msg__aviso msg__aviso--erro" role="alert">
-            <CircleAlert size={15} aria-hidden="true" />
+            <CircleAlert size={16} aria-hidden="true" />
             <span>{r.erro}</span>
             <Botao pequeno variante="fantasma" icone={RotateCcw} onClick={aoTentar}>
               Tentar de novo

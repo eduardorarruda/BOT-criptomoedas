@@ -81,7 +81,7 @@ export function Fontes({ lista }: { readonly lista: readonly FonteCitada[] }) {
   return (
     <div className="fontes">
       <p className="fontes__titulo">
-        <BookOpen size={13} aria-hidden="true" /> {lista.length === 1 ? "1 fonte" : `${lista.length} fontes`}
+        <BookOpen size={14} aria-hidden="true" /> {lista.length === 1 ? "1 fonte" : `${lista.length} fontes`}
       </p>
       <ul className="fontes__lista" aria-label="Fontes consultadas">
         {lista.map((f) => {

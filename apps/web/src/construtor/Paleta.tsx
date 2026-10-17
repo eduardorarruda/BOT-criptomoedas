@@ -36,7 +36,7 @@ function Item({
       }}
       onDragEnd={() => setArrastando(null)}
     >
-      <Icone size={15} aria-hidden="true" />
+      <Icone size={16} aria-hidden="true" />
       <span>
         <strong>{nome}</strong>
         <span className="paleta__dica">{dica}</span>

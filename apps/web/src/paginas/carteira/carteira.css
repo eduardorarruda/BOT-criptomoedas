@@ -7,7 +7,7 @@
   flex-wrap: wrap;
   gap: 6px;
   align-items: baseline;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .carteira-conta .num {
@@ -18,13 +18,13 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--espaco-2);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .carteira-aviso {
   display: flex;
   gap: var(--espaco-2);
   align-items: baseline;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .carteira-grade {
@@ -76,7 +76,7 @@
 }
 .carteira-sub {
   display: block;
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 .carteira-moeda .carteira-sub {
@@ -120,7 +120,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .carteira-legenda li {
   display: grid;
@@ -161,7 +161,7 @@
 
 /* como calculamos */
 .carteira-como {
-  font-size: 13.5px;
+  font-size: var(--t-ui);
   color: var(--apagado);
 }
 .carteira-como ul {
@@ -193,11 +193,11 @@
 .carteira-recorte {
   margin: 0;
   color: var(--apagado);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .carteira-nota {
   margin: var(--espaco-3) 0 0;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .carteira-cartoes {
   display: grid;
@@ -233,25 +233,25 @@
   display: flex;
   align-items: center;
   gap: var(--espaco-2);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .carteira-cartao__ativo {
   color: var(--texto);
-  font-size: 15px;
+  font-size: var(--t-corpo);
   font-weight: 650;
 }
 .carteira-cartao__preco {
   margin-left: auto;
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .carteira-cartao__valor {
-  font-size: 22px;
+  font-size: var(--t-numero);
 }
 .carteira-cartao__barra {
   display: block;
   height: 4px;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--linha);
 }
 .carteira-cartao__barra > span {
@@ -264,12 +264,12 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px var(--espaco-3);
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
 }
 .carteira-cartao__dados > span {
   display: grid;
   gap: 1px;
 }
 .carteira-cartao__dados .apagado {
-  font-size: 11.5px;
+  font-size: var(--t-legenda);
 }

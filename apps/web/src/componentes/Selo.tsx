@@ -18,7 +18,7 @@ export function Selo({
 }) {
   return (
     <span className={`selo selo--${tom}`}>
-      {Icone ? <Icone size={13} strokeWidth={2.2} aria-hidden="true" /> : null}
+      {Icone ? <Icone size={12} strokeWidth={2.2} aria-hidden="true" /> : null}
       {!Icone && ponto ? <span className="selo__ponto" aria-hidden="true" /> : null}
       {children}
     </span>

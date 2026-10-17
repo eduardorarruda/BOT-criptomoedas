@@ -70,14 +70,14 @@ function ParadaTotal() {
   if (ligada) {
     return (
       <Link to="/risco" className="pilula-parada pilula-parada--ligada">
-        <OctagonX size={15} aria-hidden="true" />
+        <OctagonX size={16} aria-hidden="true" />
         Parada total ligada
       </Link>
     );
   }
   return (
     <Link to="/risco" className="pilula-parada">
-      <OctagonX size={15} aria-hidden="true" />
+      <OctagonX size={16} aria-hidden="true" />
       Parar tudo
     </Link>
   );

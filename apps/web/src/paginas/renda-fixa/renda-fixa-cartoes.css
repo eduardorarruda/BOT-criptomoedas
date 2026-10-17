@@ -53,7 +53,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .rf-cartao__numeros {
   display: grid;
@@ -63,12 +63,12 @@
 }
 .rf-cartao__numeros dt,
 .rf-detalhe__posicao dt {
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 .rf-cartao__numeros dd {
   margin: 2px 0 0;
-  font-size: 15px;
+  font-size: var(--t-corpo);
   overflow-wrap: anywhere;
 }
 .rf-cartao__falta {
@@ -76,11 +76,11 @@
   gap: 8px;
   margin: 0;
   color: var(--atencao);
-  font-size: 13.5px;
+  font-size: var(--t-ui);
 }
 .rf-cartao__rodape {
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
 }
 .rf-cartao__rodape svg {
   display: inline;
@@ -99,11 +99,11 @@
 }
 .rf-detalhe__posicao dd {
   margin: 2px 0 0;
-  font-size: 17px;
+  font-size: var(--t-destaque);
 }
 .rf-detalhe__posicao p {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .rf-detalhe__projecao {
   display: grid;
@@ -117,7 +117,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .rf-avisos svg {
@@ -128,7 +128,7 @@
 .rf-premissas__lista {
   margin: 0;
   padding-left: 1.2em;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .rf-premissas {

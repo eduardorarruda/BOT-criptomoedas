@@ -245,7 +245,7 @@ function Linha({
           disabled={ocupado}
           onClick={apagar}
         >
-          <Trash2 size={15} aria-hidden="true" />
+          <Trash2 size={16} aria-hidden="true" />
         </button>
       </td>
     </tr>

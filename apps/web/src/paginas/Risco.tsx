@@ -187,7 +187,7 @@ function Barreiras() {
       {itens.map((b) => (
         <li key={b.chave}>
           <span className="barreiras__icone" aria-hidden="true">
-            <ShieldAlert size={15} />
+            <ShieldAlert size={16} />
           </span>
           <span>
             <strong>{robos.find((r) => r.id === b.roboId)?.nome ?? "Robô"}</strong> — {b.mensagem}

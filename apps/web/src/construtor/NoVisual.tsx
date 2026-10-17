@@ -72,7 +72,7 @@ function Acoes({ no }: { readonly no: NoEditor }) {
         disabled={local.indice === 0}
         onClick={() => moverIrmao(-1)}
       >
-        <ArrowUp size={15} aria-hidden="true" />
+        <ArrowUp size={16} aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -81,7 +81,7 @@ function Acoes({ no }: { readonly no: NoEditor }) {
         disabled={local.indice >= irmaos - 1}
         onClick={() => moverIrmao(1)}
       >
-        <ArrowDown size={15} aria-hidden="true" />
+        <ArrowDown size={16} aria-hidden="true" />
       </button>
       {destinos.length ? (
         <select
@@ -114,7 +114,7 @@ function Acoes({ no }: { readonly no: NoEditor }) {
           anunciar(no.tipo === "nao" ? "NÃO retirado." : "Envolvido em NÃO.");
         }}
       >
-        <Ban size={15} aria-hidden="true" />
+        <Ban size={16} aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -125,7 +125,7 @@ function Acoes({ no }: { readonly no: NoEditor }) {
           anunciar(`${nome[0]?.toUpperCase()}${nome.slice(1)} removido.`);
         }}
       >
-        <Trash2 size={15} aria-hidden="true" />
+        <Trash2 size={16} aria-hidden="true" />
       </button>
     </span>
   );

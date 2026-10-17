@@ -45,9 +45,9 @@ function Cabeca({ decisao: d, robo }: Pick<Props, "decisao" | "robo">) {
     <header className="decisao__topo">
       <span className={`decisao__acao ${compra ? "decisao__acao--compra" : "decisao__acao--venda"}`}>
         {compra ? (
-          <ArrowUpRight size={15} aria-hidden="true" />
+          <ArrowUpRight size={16} aria-hidden="true" />
         ) : (
-          <ArrowDownRight size={15} aria-hidden="true" />
+          <ArrowDownRight size={16} aria-hidden="true" />
         )}
         {ACAO[d.sinal.acao]}
       </span>

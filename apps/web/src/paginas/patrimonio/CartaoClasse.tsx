@@ -56,7 +56,7 @@ export function CartaoClasse({
     >
       <div className="patrimonio-classe__topo">
         <span className={`patrimonio-classe__marca patrimonio-cor--${c.classe}`} aria-hidden="true">
-          <Icone size={17} strokeWidth={1.8} />
+          <Icone size={18} strokeWidth={1.8} />
         </span>
         <h2 className="patrimonio-classe__titulo" id={id}>
           {ROTULO_CLASSE[c.classe]}
@@ -93,7 +93,7 @@ export function CartaoClasse({
         className="botao botao--secundario botao--pequeno patrimonio-classe__link"
       >
         {LINK[c.classe]}
-        <ArrowRight size={15} aria-hidden="true" />
+        <ArrowRight size={16} aria-hidden="true" />
       </Link>
     </m.li>
   );

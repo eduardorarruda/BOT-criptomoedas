@@ -32,7 +32,7 @@
 .bt-avancado__grupo legend {
   padding: 0 6px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .bt-resultado {
   gap: var(--espaco-5);
@@ -76,7 +76,7 @@
 .bt-veredito__detalhe,
 .bt-veredito__nota,
 .bt-nota {
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .bt-veredito__nota {
@@ -89,14 +89,14 @@
 }
 .bt-tabela th[scope="row"] .apagado {
   margin-left: 6px;
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .bt-premissas {
   display: grid;
   gap: 6px;
   padding-left: 1.1em;
   list-style: disc;
-  font-size: 14px;
+  font-size: var(--t-ui);
 }
 .bt-avisos {
   display: grid;
@@ -108,13 +108,13 @@
   flex-wrap: wrap;
   gap: 6px 10px;
   align-items: baseline;
-  font-size: 14px;
+  font-size: var(--t-ui);
 }
 .bt-avisos .apagado {
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .backtests__antigo {
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 /* O resultado em destaque ocupa duas colunas: o número grande não estoura o cartão. */
 .bt-kpis > .kpi--destaque {

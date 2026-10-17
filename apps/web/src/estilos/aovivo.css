@@ -52,7 +52,7 @@
   border-top-color: var(--ganho);
 }
 .legenda__nota {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 
@@ -62,7 +62,7 @@
   gap: 2px;
 }
 .aovivo-posicao__resultado > .apagado {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
 }
 .aovivo-posicao__valor {
   display: flex;
@@ -73,10 +73,10 @@
   line-height: 1.15;
 }
 .aovivo-posicao__pct {
-  font-size: 15px;
+  font-size: var(--t-corpo);
 }
 .aovivo-posicao__nota {
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 .aovivo-posicao__dados {
@@ -88,15 +88,15 @@
   border-top: 1px solid var(--linha);
 }
 .aovivo-posicao__dados dt {
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 .aovivo-posicao__dados dd {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--t-ui);
 }
 .aovivo-posicao__distancia {
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .aovivo-posicao__vazia {
   display: grid;
@@ -117,11 +117,11 @@
   display: flex;
   justify-content: space-between;
   gap: var(--espaco-3);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .medidor__trilho {
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--superficie-2);
   overflow: hidden;
 }
@@ -142,14 +142,14 @@
   background: var(--perda);
 }
 .medidor__aviso {
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--atencao);
 }
 .medidor--limite .medidor__aviso {
   color: var(--perda);
 }
 .medidores__nota {
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 
@@ -166,10 +166,10 @@
   min-height: 32px;
   padding: 4px 10px;
   border: 1px solid var(--linha-forte);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: transparent;
   color: var(--apagado);
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   font-weight: 550;
   cursor: pointer;
   transition:
@@ -242,7 +242,7 @@
   min-width: 0;
 }
 .evento__titulo {
-  font-size: 14px;
+  font-size: var(--t-ui);
   font-weight: 550;
 }
 .evento__detalhe {
@@ -251,12 +251,12 @@
   -webkit-line-clamp: 3;
   line-clamp: 3;
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
   overflow-wrap: anywhere;
 }
 .evento__hora {
-  font-size: 12px;
+  font-size: var(--t-legenda);
   padding-top: 2px;
 }
 
@@ -267,7 +267,7 @@
   gap: var(--espaco-3);
   align-items: start;
   color: var(--apagado);
-  font-size: 13.5px;
+  font-size: var(--t-ui);
 }
 .pensando__fim--falhou {
   color: var(--perda);
@@ -324,14 +324,14 @@
 }
 .cartao-robo__nome {
   font-family: var(--fonte-titulo);
-  font-size: 22px;
+  font-size: var(--t-numero);
   line-height: 1.1;
 }
 .cartao-robo__meta {
   display: flex;
   justify-content: space-between;
   gap: var(--espaco-2);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .cartao-robo__meta .preco-tique {
@@ -343,10 +343,10 @@
   gap: 6px;
 }
 .cartao-robo__posicao {
-  font-size: 13.5px;
+  font-size: var(--t-ui);
 }
 .cartao-robo__ultimo {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   border-top: 1px solid var(--linha);
   padding-top: var(--espaco-2);
 }
@@ -384,7 +384,7 @@
     gap: var(--espaco-4);
   }
   .conexao.aovivo-conexao {
-    font-size: 12.5px;
+    font-size: var(--t-pequeno);
     gap: 6px;
   }
   .aovivo-conexao__idade {

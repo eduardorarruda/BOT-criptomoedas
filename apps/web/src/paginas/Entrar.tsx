@@ -140,7 +140,7 @@ export function Entrar() {
         {fonte.demo ? (
           <div className="entrar__demo">
             <p>
-              <FlaskConical size={15} aria-hidden="true" /> <strong>Modo de exemplo.</strong> Qualquer e-mail
+              <FlaskConical size={16} aria-hidden="true" /> <strong>Modo de exemplo.</strong> Qualquer e-mail
               e senha servem; o código é qualquer número de 6 dígitos.
             </p>
             <Botao

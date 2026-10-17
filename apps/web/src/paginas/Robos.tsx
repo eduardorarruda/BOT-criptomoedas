@@ -104,7 +104,7 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
       <div className="robo__rodape">
         <details className="robo__limites">
           <summary>
-            <SlidersHorizontal size={15} aria-hidden="true" />
+            <SlidersHorizontal size={16} aria-hidden="true" />
             <span className="so-leitor">Limites de risco:</span>
             <span className="robo__limite">
               perda diária <span className="num">{formatarDinheiro(l.perdaDiariaMaxima)}</span>
@@ -129,7 +129,7 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
             className="botao botao--fantasma botao--pequeno"
             aria-label={`Ver ${robo.nome} ao vivo`}
           >
-            <Radio size={15} aria-hidden="true" />
+            <Radio size={16} aria-hidden="true" />
             Ao vivo
           </Link>
           <Botao

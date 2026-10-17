@@ -64,7 +64,7 @@
 
 @media (max-width: 560px) {
   .metrica dd {
-    font-size: 20px;
+    font-size: var(--t-titulo-3);
     white-space: nowrap;
   }
   .metrica dd.metrica__nota {
@@ -88,7 +88,7 @@
     padding: 0 var(--espaco-2);
   }
   .placar dd {
-    font-size: 13px;
+    font-size: var(--t-pequeno);
     overflow: hidden;
     text-overflow: ellipsis;
   }

@@ -46,7 +46,7 @@ function ListaDemo() {
             <p className="documento__titulo">
               {link ? (
                 <a href={link} target="_blank" rel="noopener noreferrer">
-                  {d.titulo} <ExternalLink size={13} aria-label="(abre em outra aba)" />
+                  {d.titulo} <ExternalLink size={14} aria-label="(abre em outra aba)" />
                 </a>
               ) : (
                 d.titulo

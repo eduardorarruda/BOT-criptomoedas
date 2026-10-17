@@ -10,7 +10,7 @@
   border: 1px solid color-mix(in oklab, var(--atencao) 35%, transparent);
   border-radius: var(--raio);
   background: var(--atencao-tenue);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .imob-premissas__titulo {
   display: flex;
@@ -76,12 +76,12 @@
   min-width: 0;
 }
 .imob-metricas dt {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .imob-metricas dd {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--t-numero);
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
@@ -92,7 +92,7 @@
   font-size: 34px;
 }
 .imob-metricas .metrica__nota {
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 
 .imob-lista {
@@ -136,7 +136,7 @@
   overflow-wrap: anywhere;
 }
 .imob-cartao__meta {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .imob-cartao__numeros {
@@ -146,7 +146,7 @@
   text-align: right;
 }
 .imob-cartao__numeros small {
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 
 /* ---------- visão geral: KPIs, tabela, rodapé, alocação grande ---------- */
@@ -177,7 +177,7 @@
 .imob-tabela__sub {
   display: block;
   color: var(--apagado);
-  font-size: 12px;
+  font-size: var(--t-legenda);
   font-weight: 400;
 }
 .imob-rodape {
@@ -212,16 +212,16 @@
 .imob-rosca__centro {
   fill: var(--texto);
   font-family: var(--fonte-numero);
-  font-size: 15px;
+  font-size: var(--t-corpo);
 }
 .imob-rosca__legenda-centro {
   fill: var(--apagado);
-  font-size: 10px;
+  font-size: var(--t-micro);
 }
 .imob-rosca__lista {
   display: grid;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 /* nome numa linha; valor e fatia embaixo (nomes longos não empurram os números) */
 .imob-rosca__lista li {
@@ -239,11 +239,11 @@
   grid-column: 2;
   text-align: left;
   color: var(--apagado);
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .imob-rosca__lista li > :last-child {
   grid-column: 3;
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .imob-rosca__item--ativo {
   background: var(--superficie-2);
@@ -275,7 +275,7 @@
 .imob-grafico__eixo text {
   fill: var(--apagado);
   font-family: var(--fonte-numero);
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-variant-numeric: tabular-nums;
 }
 .imob-grafico__zero {
@@ -294,7 +294,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--espaco-2) var(--espaco-4);
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .imob-legenda li {
@@ -320,7 +320,7 @@
   border-radius: var(--raio);
   background: var(--superficie-2);
   box-shadow: var(--sombra-flutuante);
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   pointer-events: none;
 }
 .imob-dica__titulo {
@@ -334,7 +334,7 @@
 }
 .imob-tabela-dados summary {
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .imob-tabela-dados summary:hover {
@@ -386,13 +386,13 @@
   font-weight: 600;
 }
 .imob-tipo span {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .imob-passos {
   display: flex;
   gap: var(--espaco-2);
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .imob-passos [aria-current="step"] {
@@ -408,7 +408,7 @@
 .imob-lancamentos__descricao {
   white-space: normal;
   color: var(--apagado);
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
 }
 .imob-lancamento-novo {
   display: grid;
@@ -426,7 +426,7 @@
   margin: 0;
 }
 .imob-fatos dt {
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 .imob-fatos dd {
@@ -463,14 +463,14 @@
   background: var(--superficie);
 }
 .imob-lado-a-lado h3 {
-  font-size: 14px;
+  font-size: var(--t-ui);
   font-weight: 600;
 }
 .imob-lado-a-lado p {
   display: flex;
   justify-content: space-between;
   gap: var(--espaco-2);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 
 @media (max-width: 1180px) {
@@ -485,7 +485,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .imob-metricas__destaque dd {
-    font-size: 28px;
+    font-size: var(--t-titulo-2);
   }
   .imob-cartao {
     grid-template-columns: auto minmax(0, 1fr);
@@ -512,7 +512,7 @@
   }
 }
 .imob-grafico__titulo {
-  font-size: 13.5px;
+  font-size: var(--t-ui);
   font-weight: 600;
 }
 .imob-passos {

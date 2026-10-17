@@ -232,7 +232,7 @@
 .esqueleto__linha {
   display: block;
   height: 12px;
-  border-radius: 6px;
+  border-radius: var(--raio-p);
 }
 .esqueleto__linha--fina {
   height: 9px;
@@ -449,7 +449,7 @@
   background: var(--perda-tenue);
   color: var(--perda);
   font-weight: 650;
-  font-size: 15px;
+  font-size: var(--t-corpo);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
@@ -478,7 +478,7 @@
 }
 .segurar__dica,
 .segurar__aviso {
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .segurar__aviso:empty {
