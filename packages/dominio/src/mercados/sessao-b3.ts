@@ -81,6 +81,11 @@ export function horaB3(ms: number): HoraB3 {
 
 export const diaB3 = (ms: number): string => horaB3(ms).dia;
 
+const DIA_MS = 86_400_000;
+
+/** O dia de Brasília como número (dias desde 1970): para comparar dias sem montar texto. */
+export const chaveDiaB3 = (ms: number): number => Math.floor((ms + deslocamento(ms)) / DIA_MS);
+
 const HORARIO = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 /** "09:15" → 555. */
@@ -126,4 +131,3 @@ export const deveZerar = (instante: number, s: SessaoB3): boolean =>
 
 /** O fim de um candle (o instante da decisão) a partir da abertura e do fechamento gravados. */
 export const fimDoCandle = (c: { readonly fechamento: number }): number => c.fechamento + 1;
-

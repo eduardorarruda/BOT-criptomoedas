@@ -1,5 +1,5 @@
 import { serieDe, type ContextoMercado } from "./contexto.js";
-import { diaB3 } from "./mercados/sessao-b3.js";
+import { chaveDiaB3 } from "./mercados/sessao-b3.js";
 import { exigirInteiro } from "./serie.js";
 
 /**
@@ -26,9 +26,9 @@ function indice(ctx: ContextoMercado, deslocamento: number): number | null {
  * dá para saber se o histórico pegou o começo do dia.
  */
 function inicioDoDia(instantes: readonly number[], i: number): number | null {
-  const dia = diaB3(instantes[i] as number);
+  const dia = chaveDiaB3(instantes[i] as number);
   let j = i;
-  while (j > 0 && diaB3(instantes[j - 1] as number) === dia) j--;
+  while (j > 0 && chaveDiaB3(instantes[j - 1] as number) === dia) j--;
   return j === 0 ? null : j;
 }
 

@@ -131,7 +131,7 @@ export const ConfiguracaoWinEsquema = z
     pularLeilaoAbertura: z.boolean().default(true),
     margemPorContrato: ReaisPositivos(100_000).default("155"),
     contratosMaximos: z.number().int().min(1).max(500).default(5),
-    riscoPorOperacao: ReaisPositivos(10_000_000).default("50"),
+    riscoPorOperacao: ReaisPositivos(10_000_000).default("100"),
   })
   .superRefine((w, ctx) => {
     for (const message of problemasSessao(w)) ctx.addIssue({ code: "custom", path: ["zeragem"], message });

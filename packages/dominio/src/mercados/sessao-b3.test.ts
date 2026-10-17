@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  chaveDiaB3,
   deveZerar,
   diaB3,
   horaB3,
@@ -19,6 +20,9 @@ describe("hora da B3 (America/Sao_Paulo)", () => {
     // 01:30 UTC de 17/10 ainda é 16/10 em Brasília
     expect(horaB3(Date.UTC(2026, 9, 17, 1, 30))).toEqual({ dia: "2026-10-16", minutos: 22 * 60 + 30 });
     expect(diaB3(brasilia("2026-01-02", "18:15"))).toBe("2026-01-02");
+    // a chave numérica do dia muda à meia-noite de Brasília, não à de UTC
+    expect(chaveDiaB3(brasilia("2026-01-02", "23:59"))).toBe(chaveDiaB3(brasilia("2026-01-02", "00:00")));
+    expect(chaveDiaB3(brasilia("2026-01-03", "00:00"))).toBe(chaveDiaB3(brasilia("2026-01-02", "00:00")) + 1);
   });
 
   it("respeita o horário de verão de antes de 2019 (UTC−2)", () => {

@@ -34,7 +34,7 @@ describe("backtest no mini índice: o pedido", () => {
       pularLeilaoAbertura: true,
       margemPorContrato: "155",
       contratosMaximos: 5,
-      riscoPorOperacao: "50",
+      riscoPorOperacao: "100",
     });
   });
 
