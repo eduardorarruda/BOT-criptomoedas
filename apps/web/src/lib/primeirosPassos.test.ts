@@ -3,6 +3,7 @@ import { derivarPassos, type DadosPassos } from "./primeirosPassos";
 
 const NOVA: DadosPassos = {
   doisFatores: false,
+  ia: false,
   contas: [],
   estrategias: [],
   backtests: [],
@@ -14,15 +15,16 @@ const NOVA: DadosPassos = {
 const robo = (rede: "papel" | "testnet" | "real", pausado = false) => ({ rede, pausado });
 
 describe("derivarPassos", () => {
-  it("instalação nova: 0 de 6, e o primeiro passo é o 2FA", () => {
+  it("instalação nova: 0 de 7, e o primeiro passo é o 2FA", () => {
     const r = derivarPassos(NOVA);
     expect(r).not.toBeNull();
     expect(r?.feitos).toBe(0);
-    expect(r?.total).toBe(6);
+    expect(r?.total).toBe(7);
     expect(r?.completo).toBe(false);
     expect(r?.proximo?.id).toBe("2fa");
     expect(r?.passos.map((p) => p.id)).toEqual([
       "2fa",
+      "ia",
       "chave-testnet",
       "estrategia",
       "backtest",
@@ -39,11 +41,22 @@ describe("derivarPassos", () => {
       estrategias: [{ id: "e" }],
     });
     expect(r?.feitos).toBe(3);
-    expect(r?.proximo?.id).toBe("backtest");
+    expect(r?.proximo?.id).toBe("ia");
+  });
+
+  it("conectar a IA: logo depois do 2FA, leva às configurações do assistente", () => {
+    const passo = (ia: boolean) => derivarPassos({ ...NOVA, doisFatores: true, ia })?.passos[1];
+    expect(passo(false)).toMatchObject({ id: "ia", feito: false, para: "/assistente/configuracoes" });
+    expect(passo(true)?.feito).toBe(true);
+    expect(derivarPassos({ ...NOVA, doisFatores: true })?.proximo?.id).toBe("ia");
+    expect(derivarPassos({ ...NOVA, ia: undefined })).toBeNull();
   });
 
   it("só chave de testnet conta: chave de dinheiro real não é o passo seguro", () => {
-    expect(derivarPassos({ ...NOVA, contas: [{ rede: "real" }] })?.passos[1]?.feito).toBe(false);
+    expect(
+      derivarPassos({ ...NOVA, contas: [{ rede: "real" }] })?.passos.find((p) => p.id === "chave-testnet")
+        ?.feito,
+    ).toBe(false);
   });
 
   it("backtest só conta concluído (na fila, rodando ou falho não)", () => {
@@ -66,6 +79,7 @@ describe("derivarPassos", () => {
   it("tudo feito: completo e sem próximo", () => {
     const r = derivarPassos({
       doisFatores: true,
+      ia: true,
       contas: [{ rede: "testnet" }],
       estrategias: [{ id: "e" }],
       backtests: [{ estado: "concluido" }],
@@ -83,7 +97,7 @@ describe("derivarPassos", () => {
     expect(sem?.passos.some((p) => p.id === "lgpd")).toBe(false);
     const com = derivarPassos({ ...NOVA, controlador: { nome: "Ana", email: "ana@exemplo.com" } });
     expect(com?.operador?.feito).toBe(true);
-    expect(com?.total).toBe(6);
+    expect(com?.total).toBe(7);
   });
 
   it("sem saber o controlador (exemplo ou falha ao ler), o passo de quem opera some", () => {
@@ -97,6 +111,14 @@ describe("derivarPassos", () => {
 
   it("cada passo leva a uma tela", () => {
     const destinos = derivarPassos(NOVA)?.passos.map((p) => p.para);
-    expect(destinos).toEqual(["/contas", "/contas", "/estrategias", "/backtests", "/robos", "/conhecimento"]);
+    expect(destinos).toEqual([
+      "/contas",
+      "/assistente/configuracoes",
+      "/contas",
+      "/estrategias",
+      "/backtests",
+      "/robos",
+      "/conhecimento",
+    ]);
   });
 });

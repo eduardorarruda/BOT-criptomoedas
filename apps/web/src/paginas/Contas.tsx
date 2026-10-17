@@ -15,6 +15,7 @@ import { useCriarConta, useRemoverConta } from "../ganchos/mutacoes";
 import { REDE } from "../lib/rotulos";
 import { useStatusBinance } from "./carteira/ganchos";
 import { formatarData } from "../lib/tempo";
+import { SeuClaude } from "./assistente/SeuClaude";
 import { DoisFatores } from "./contas/DoisFatores";
 
 function FormConta() {
@@ -159,10 +160,11 @@ export function Contas() {
   return (
     <>
       <Cabecalho titulo="Contas e chaves">
-        As chaves de corretora que os robôs usam. O segredo fica cifrado no servidor; aqui só aparece o fim da
-        chave.
+        As chaves de corretora que os robôs usam e o seu Claude. Os segredos ficam cifrados no servidor; aqui
+        só aparece o fim de cada um.
       </Cabecalho>
       <DoisFatores />
+      <SeuClaude />
       <div className="grade-dupla">
         <Painel titulo="Chaves cadastradas" id="titulo-chaves" icone={KeyRound}>
           {contas.isPending ? <Esqueleto forma="lista" linhas={2} rotulo="Carregando chaves" /> : null}

@@ -83,3 +83,37 @@ describe("respostas de exemplo", () => {
     expect(respostaPara("qualquer outra coisa").ferramentas[0]?.nome).toBe("buscar_conhecimento");
   });
 });
+
+describe("o Claude da pessoa na demonstração", () => {
+  it("exemplo cheio: já conectado e em uso; instalação nova: desconectado, na API", async () => {
+    const cheio = rapida();
+    expect(await cheio.tokenClaude()).toMatchObject({ configurado: true, final: "…7Q2c", origem: "conexao" });
+    expect((await cheio.estado()).config.provedor).toBe("cli");
+    const nova = criarApiAssistenteDemo({ atrasoMs: 0, agora: () => AGORA, claudeConectado: false });
+    expect((await nova.tokenClaude()).configurado).toBe(false);
+    expect(await nova.estado()).toMatchObject({ config: { provedor: "api" }, tokenClaudeFinal: null });
+  });
+
+  it("conecta em três passos (qualquer código de 8+ caracteres), testa, troca e remove", async () => {
+    const api = criarApiAssistenteDemo({ atrasoMs: 0, agora: () => AGORA, claudeConectado: false });
+    await expect(api.testarTokenClaude()).rejects.toMatchObject({ codigo: "sem_token" });
+    const conexao = await api.iniciarConexaoClaude();
+    expect(conexao.urlAutorizacao).toMatch(/^https:\/\/claude\.ai\//);
+    await expect(api.enviarCodigoClaude(conexao.conexaoId, "curto")).rejects.toMatchObject({
+      codigo: "codigo_recusado",
+    });
+    await expect(api.enviarCodigoClaude(conexao.conexaoId, "codigo-de-teste")).rejects.toMatchObject({
+      codigo: "conexao_nao_encontrada",
+    });
+    const nova = await api.iniciarConexaoClaude();
+    expect((await api.enviarCodigoClaude(nova.conexaoId, "codigo-de-teste")).configurado).toBe(true);
+    expect((await api.estado()).tokenClaudeFinal).toBe("…7Q2c");
+    expect((await api.testarTokenClaude()).estado.validadaEm).toBe(AGORA);
+    const colado = await api.salvarTokenClaude(`sk-ant-oat01-${"x".repeat(80)}AbCd`);
+    expect(colado).toMatchObject({ final: "…AbCd", origem: "colado", validoAte: null });
+    await api.cancelarConexaoClaude(nova.conexaoId);
+    await api.removerTokenClaude();
+    expect((await api.tokenClaude()).configurado).toBe(false);
+    expect((await api.estado()).tokenClaudeFinal).toBeNull();
+  });
+});

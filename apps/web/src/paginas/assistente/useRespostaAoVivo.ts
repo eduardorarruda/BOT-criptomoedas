@@ -16,6 +16,7 @@ export const chavesAssistente = {
   estado: ["assistente", "estado"] as const,
   conversas: ["assistente", "conversas"] as const,
   conversa: (id: string) => ["assistente", "conversa", id] as const,
+  tokenClaude: ["assistente", "token-claude"] as const,
 };
 
 const FIM_SEM_AVISO = "A resposta parou antes do fim. Tente de novo.";

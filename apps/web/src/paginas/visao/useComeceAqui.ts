@@ -10,6 +10,7 @@ import {
   useSessao,
 } from "../../ganchos/consultas";
 import { derivarPassos, type ResultadoPassos } from "../../lib/primeirosPassos";
+import { useApiAssistente, useEstadoAssistente, useTokenClaude } from "../assistente/useApiAssistente";
 
 /** "Ocultar" vale por pessoa, neste navegador. A paleta de comandos traz de volta. */
 /** A paleta avisa por este evento quando traz os primeiros passos de volta. */
@@ -48,6 +49,23 @@ export function definirComeceAquiOculto(usuarioId: string, oculto: boolean): voi
   if (!oculto) gravar("concluido", usuarioId, false);
 }
 
+/**
+ * A IA está pronta para esta pessoa: ela conectou o Claude dela. Num servidor que não usa
+ * o Claude de cada pessoa, vale a API da Anthropic do servidor (se ela a escolheu). Sem
+ * conseguir ler (agente ou API fora), conta como não feito: o passo aparece e a tela de
+ * configurações explica o que falta.
+ */
+function useIaConectada(): boolean | undefined {
+  const api = useApiAssistente();
+  const token = useTokenClaude(api);
+  const estado = useEstadoAssistente(api);
+  if (token.isError) return false;
+  if (!token.data || estado.isPending) return undefined;
+  const e = estado.data;
+  const soApi = e !== undefined && !e.tokenClaude?.usar && e.provedores.api && e.config.provedor === "api";
+  return token.data.configurado || soApi;
+}
+
 export interface ComeceAqui {
   /** `null` enquanto os dados chegam. */
   readonly resultado: ResultadoPassos | null;
@@ -65,6 +83,7 @@ export function useComeceAqui(): ComeceAqui {
   const robos = useRobos().data;
   const documentos = useDocumentos().data;
   const config = useConfigPublica();
+  const ia = useIaConectada();
   const [, redesenhar] = useReducer((n: number) => n + 1, 0);
   useEffect(() => {
     window.addEventListener(EVENTO_COMECE_AQUI, redesenhar);
@@ -78,6 +97,7 @@ export function useComeceAqui(): ComeceAqui {
     ? null
     : derivarPassos({
         doisFatores: usuario?.doisFatores,
+        ia,
         contas,
         estrategias,
         backtests,

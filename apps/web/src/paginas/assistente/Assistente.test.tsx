@@ -10,6 +10,7 @@ import axe from "axe-core";
 import { describe, expect, it, vi } from "vitest";
 import { ErroApi } from "../../api/erros";
 import type { Fonte } from "../../api/fonte";
+import { metodosClaudeFalsos } from "../../teste/claudeFalso";
 import { renderizar } from "../../teste/renderizar";
 import type { ApiAssistente } from "./api";
 
@@ -116,6 +117,7 @@ function apiFalsa(
       }
     }),
     gravar: (id: string, mensagens: MensagemAssistente[]) => gravadas.set(id, mensagens),
+    ...metodosClaudeFalsos(),
   };
   return api satisfies ApiAssistente;
 }

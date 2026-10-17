@@ -8,6 +8,7 @@ describe("acessibilidade: primeira vez (exemplo vazio)", () => {
   it.each<[string, RegExp]>([
     ["/", /visão geral/i],
     ["/contas", /contas e chaves/i],
+    ["/assistente/configuracoes", /configurações do assistente/i],
     ["/robos", /robôs/i],
     ["/estrategias", /estratégias/i],
     ["/backtests", /backtests/i],

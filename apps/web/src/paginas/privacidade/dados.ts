@@ -3,8 +3,8 @@
  * no código (banco, API, agente, n8n e tela) em outubro de 2026; ao mudar um fluxo de
  * dados, mude aqui também. O texto corrido fica em ConteudoPrivacidade.tsx.
  */
-export const ATUALIZADA_EM = "12 de outubro de 2026";
-export const ATUALIZADA_EM_ISO = "2026-10-12";
+export const ATUALIZADA_EM = "17 de outubro de 2026";
+export const ATUALIZADA_EM_ISO = "2026-10-17";
 
 export interface Secao {
   readonly id: string;
@@ -58,6 +58,11 @@ export const DADOS: readonly Item[] = [
     titulo: "Chaves de API da corretora",
     texto:
       "A chave e o segredo da Binance que você cadastra, cifrados (AES-256-GCM). A tela mostra só os 4 últimos caracteres e a API nunca devolve a chave.",
+  },
+  {
+    titulo: "O seu Claude (token do plano)",
+    texto:
+      "Se você conectar o seu Claude: o token que a Anthropic gera para o seu plano (vale 1 ano), cifrado (AES-256-GCM), os 4 últimos caracteres para você reconhecer, se veio pela conexão na tela ou colado, quando foi conectado, o último teste e o último erro. A API nunca devolve o token; ele só é usado pelo agente para o Claude Code responder por você. Remover apaga do servidor; para revogar de vez, revogue também na sua conta do Claude.",
   },
   {
     titulo: "Tokens de API",
@@ -186,7 +191,7 @@ export const COMPARTILHAMENTOS: readonly Compartilhamento[] = [
     quem: "Anthropic (IA, pelo Claude Code)",
     onde: "Estados Unidos",
     quando: "Se o assistente usa o Claude Code de uma conta de plano.",
-    oQue: "O mesmo conteúdo da linha acima, sob os termos da conta do plano que fez o login no Claude Code (a sua ou a de quem opera a instância). A sessão não é guardada pelo Claude Code.",
+    oQue: "O mesmo conteúdo da linha acima, sob os termos da conta do plano: a do Claude que você conectou (com o seu token) ou, sem ele, a de quem opera a instância. Para conectar, a autorização é feita na própria página da Anthropic. A sessão não é guardada pelo Claude Code.",
   },
   {
     quem: "Voyage AI (busca semântica)",

@@ -11,9 +11,10 @@ import { Cabecalho, Painel } from "../../componentes/Cabecalho";
 import { CampoSelecao, CampoTexto } from "../../componentes/Campo";
 import { ErroCarregar, Esqueleto } from "../../componentes/Estados";
 import { Selo } from "../../componentes/Selo";
-import { criarApiAssistente, type ApiAssistente } from "./api";
-import { apiAssistenteDemo } from "./demo";
+import type { ApiAssistente } from "./api";
 import "./assistente.css";
+import { SeuClaude } from "./SeuClaude";
+import { useApiAssistente } from "./useApiAssistente";
 import { chavesAssistente } from "./useRespostaAoVivo";
 
 const MODELO_VALIDO = /^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,99}$/;
@@ -31,7 +32,7 @@ const PROVEDORES: readonly { id: ProvedorIa; titulo: string; texto: string; falt
     id: "cli",
     titulo: "Claude Code (o seu plano)",
     texto:
-      "Usa o login do Claude Code feito no servidor, com o limite do seu plano. Só ferramentas de leitura do ZenTrade.",
+      "Usa o Claude Code com o limite do seu plano (o Claude que você conectou acima ou o login do servidor). Só ferramentas de leitura do ZenTrade.",
     falta: "O Claude Code não está instalado no servidor do agente.",
   },
 ];
@@ -70,7 +71,11 @@ function EscolhaProvedor({
               onChange={() => aoMudar(p.id)}
             />
             <span className="config__provedor-texto">
-              <strong>{p.titulo}</strong>
+              <strong>
+                {p.id === "cli" && estado.tokenClaudeFinal
+                  ? `Claude Code (seu token ${estado.tokenClaudeFinal})`
+                  : p.titulo}
+              </strong>
               <span className="apagado">{disponivel ? p.texto : p.falta}</span>
             </span>
             <Selo tom={disponivel ? "ganho" : "neutro"} icone={disponivel ? CircleCheck : CircleSlash}>
@@ -204,7 +209,11 @@ function Formulario({ api, estado }: { readonly api: ApiAssistente; readonly est
         aoMudar={(provedor) => setR({ ...r, provedor, modelo: "" })}
       />
       <EscolhaModelo key={r.provedor} estado={estado} r={r} aoMudar={(modelo) => setR({ ...r, modelo })} />
-      {r.provedor === "cli" ? (
+      {r.provedor === "cli" && estado.tokenClaudeFinal ? (
+        <p className="apagado">
+          Com o seu Claude conectado, a conta do servidor não é usada: o Claude Code roda com o seu token.
+        </p>
+      ) : r.provedor === "cli" ? (
         <EscolhaConta estado={estado} valor={r.contaCli} aoMudar={(contaCli) => setR({ ...r, contaCli })} />
       ) : null}
       <div className="formulario__acoes">
@@ -225,10 +234,7 @@ function Formulario({ api, estado }: { readonly api: ApiAssistente; readonly est
 /** Assistente → Configurações: quem responde (API ou Claude Code), o modelo e a conta. */
 export function Configuracoes({ api: apiInjetada }: { readonly api?: ApiAssistente } = {}) {
   const fonte = useFonte();
-  const api = useMemo(
-    () => apiInjetada ?? (fonte.demo ? apiAssistenteDemo() : criarApiAssistente()),
-    [apiInjetada, fonte.demo],
-  );
+  const api = useApiAssistente(apiInjetada);
   const estado = useQuery({ queryKey: chavesAssistente.estado, queryFn: () => api.estado() });
   return (
     <>
@@ -240,13 +246,15 @@ export function Configuracoes({ api: apiInjetada }: { readonly api?: ApiAssisten
           </Link>
         }
       >
-        Escolha quem analisa os sinais dos seus robôs e responde no assistente. Vale para os dois.
+        Conecte o seu Claude e escolha quem analisa os sinais dos seus robôs e responde no assistente. Vale
+        para os dois.
       </Cabecalho>
       {fonte.demo ? (
         <p className="config__termos apagado">
           Modo de demonstração: a escolha vale só nesta aba e nenhuma IA é chamada.
         </p>
       ) : null}
+      <SeuClaude api={api} />
       <Painel titulo="Cérebro do analista e do assistente" id="titulo-config">
         {estado.isPending ? <Esqueleto linhas={4} rotulo="Carregando a configuração" /> : null}
         {estado.error ? (

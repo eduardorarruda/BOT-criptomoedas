@@ -2,18 +2,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Conversa, MensagemAssistente, MudancaConfigAssistente } from "@zentrade/contratos/esquemas";
 import { ArrowDown, PanelLeft, ShieldCheck, SquarePen } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useFonte } from "../../api/contexto";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { mensagemDe } from "../../api/erros";
 import { useAvisos } from "../../componentes/Avisos";
 import { ErroCarregar, Esqueleto } from "../../componentes/Estados";
-import { criarApiAssistente, type ApiAssistente } from "./api";
+import type { ApiAssistente } from "./api";
+import { useApiAssistente } from "./useApiAssistente";
 import "./assistente.css";
 import "./mensagens.css";
 import { BarraConversas, type PropsBarraConversas } from "./BarraConversas";
 import { Saudacao, Sugestoes } from "./Boasvindas";
 import { Compositor } from "./Compositor";
-import { apiAssistenteDemo } from "./demo";
 import { emAndamento } from "./estado";
 import { useAlturaDisponivel, useAtalhos, useMidia, useRolagemNoFim } from "./ganchos";
 import { GavetaConversas, useBarraLembrada } from "./Gaveta";
@@ -87,11 +86,7 @@ interface Props {
 
 /** Assistente: conversa com os seus dados, no formato de um app de chat (barra de conversas, mensagens e caixa). */
 export function Assistente({ api: apiInjetada, conversaInicial = null, aoTrocarConversa }: Props = {}) {
-  const fonte = useFonte();
-  const api = useMemo(
-    () => apiInjetada ?? (fonte.demo ? apiAssistenteDemo() : criarApiAssistente()),
-    [apiInjetada, fonte.demo],
-  );
+  const api = useApiAssistente(apiInjetada);
   const [atual, setAtual] = useState<string | null>(conversaInicial);
   // O endereço mudou por fora (voltar do navegador, link): a conversa aberta acompanha.
   const [inicialAnterior, setInicialAnterior] = useState(conversaInicial);

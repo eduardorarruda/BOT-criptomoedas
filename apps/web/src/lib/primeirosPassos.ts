@@ -5,10 +5,17 @@
  * Enquanto algum dado ainda carrega, devolve `null`: a lista não aparece com passos
  * "faltando" que na verdade só não chegaram.
  */
-export type IdPasso = "2fa" | "chave-testnet" | "estrategia" | "backtest" | "robo-papel" | "conhecimento";
+export type IdPasso =
+  "2fa" | "ia" | "chave-testnet" | "estrategia" | "backtest" | "robo-papel" | "conhecimento";
 
 export type DestinoPasso =
-  "/contas" | "/estrategias" | "/backtests" | "/robos" | "/conhecimento" | "/privacidade";
+  | "/contas"
+  | "/assistente/configuracoes"
+  | "/estrategias"
+  | "/backtests"
+  | "/robos"
+  | "/conhecimento"
+  | "/privacidade";
 
 export interface Passo {
   readonly id: IdPasso | "lgpd";
@@ -24,6 +31,8 @@ export interface Passo {
 
 export interface DadosPassos {
   readonly doisFatores: boolean | undefined;
+  /** A IA responde por esta pessoa: o Claude dela conectado (ou a API do servidor escolhida). */
+  readonly ia: boolean | undefined;
   readonly contas: readonly { readonly rede: string }[] | undefined;
   readonly estrategias: readonly unknown[] | undefined;
   readonly backtests: readonly { readonly estado: string }[] | undefined;
@@ -56,6 +65,15 @@ const PASSOS: readonly (Omit<Passo, "feito" | "opcional"> & {
     acao: "Ligar o 2FA",
     para: "/contas",
     feito: (d) => d.doisFatores,
+  },
+  {
+    id: "ia",
+    titulo: "Conectar a IA",
+    descricao:
+      "Conecte o seu Claude (Pro ou Max) para o analista e o assistente usarem o seu plano. É pelo navegador, sem terminal.",
+    acao: "Conectar meu Claude",
+    para: "/assistente/configuracoes",
+    feito: (d) => d.ia,
   },
   {
     id: "chave-testnet",

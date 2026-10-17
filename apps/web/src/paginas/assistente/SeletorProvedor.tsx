@@ -13,6 +13,13 @@ const FALTA: Record<ProvedorIa, string> = {
   cli: "o Claude Code não está instalado no agente",
 };
 
+/** O nome que a tela mostra: com o Claude da pessoa conectado, "Claude Code (seu token …abcd)". */
+export function nomeProvedor(estado: EstadoAssistente, p: ProvedorIa): string {
+  return p === "cli" && estado.tokenClaudeFinal
+    ? `Claude Code (seu token ${estado.tokenClaudeFinal})`
+    : NOME_PROVEDOR[p];
+}
+
 /** Por que não dá para perguntar agora (null = dá). */
 export function motivoBloqueio(estado: EstadoAssistente | undefined): string | null {
   if (!estado) return null;
@@ -83,7 +90,7 @@ export function SeletorProvedor({
         className="seletor__botao"
         aria-expanded={aberto}
         aria-controls={id}
-        aria-label={`${CURTO[provedor]} ${nomeModelo(estado)}. Quem responde: ${NOME_PROVEDOR[provedor]}. Trocar`}
+        aria-label={`${CURTO[provedor]} ${nomeModelo(estado)}. Quem responde: ${nomeProvedor(estado, provedor)}. Trocar`}
         onClick={() => setAberto(!aberto)}
       >
         <span>{CURTO[provedor]}</span> <span className="seletor__modelo">{nomeModelo(estado)}</span>
@@ -108,7 +115,7 @@ export function SeletorProvedor({
                 onChange={() => aoMudar({ provedor: p, modelo: null })}
               />
               <span>
-                {NOME_PROVEDOR[p]}
+                {nomeProvedor(estado, p)}
                 {estado.provedores[p] ? null : <small> — indisponível: {FALTA[p]}</small>}
               </span>
             </label>

@@ -7,6 +7,7 @@ import type {
 import { ErroApi } from "../../api/erros";
 import type { ApiAssistente } from "./api";
 import { tituloDaPergunta } from "./conversas";
+import { criarClaudeDemo } from "./demoClaude";
 import { respostaPara, type RespostaDemo } from "./demoRespostas";
 
 /**
@@ -18,6 +19,8 @@ interface Opcoes {
   /** Pausa base entre os pedaços da resposta (0 nos testes). */
   readonly atrasoMs?: number;
   readonly agora?: () => number;
+  /** O Claude da pessoa já conectado (padrão) ou não (instalação nova). */
+  readonly claudeConectado?: boolean;
 }
 
 interface ConversaDemo {
@@ -34,6 +37,7 @@ const ESTADO_INICIAL: EstadoAssistente = {
   config: { provedor: "api", modelo: null, contaCli: null },
   agenteNoAr: true,
   provedores: { api: true, cli: true },
+  tokenClaude: { usar: true, conectar: true },
   provedorPadrao: "api",
   contasCli: [{ id: "pessoal", nome: "pessoal", logada: true }],
   modelos: {
@@ -82,7 +86,20 @@ function pedacos(texto: string): string[] {
 export function criarApiAssistenteDemo(opcoes: Opcoes = {}): ApiAssistente {
   const atraso = opcoes.atrasoMs ?? 28;
   const agora = opcoes.agora ?? (() => Date.now());
-  let estado = ESTADO_INICIAL;
+  const conectado = opcoes.claudeConectado ?? true;
+  let estado: EstadoAssistente = {
+    ...ESTADO_INICIAL,
+    config: { ...ESTADO_INICIAL.config, provedor: conectado ? "cli" : "api" },
+    tokenClaudeFinal: conectado ? "…7Q2c" : null,
+  };
+  const claude = criarClaudeDemo({
+    agora,
+    atrasoMs: atraso,
+    conectado,
+    aoMudar: (final) => {
+      estado = { ...estado, tokenClaudeFinal: final };
+    },
+  });
   let conversas = new Map<string, ConversaDemo>();
   let sequencia = 0;
   const novoId = (prefixo: string) => `${prefixo}-demo-${++sequencia}`;
@@ -223,13 +240,20 @@ export function criarApiAssistenteDemo(opcoes: Opcoes = {}): ApiAssistente {
       conversas = copia;
     },
     enviar,
+    ...claude,
   };
 }
 
-let compartilhada: ApiAssistente | null = null;
+const compartilhadas = new Map<boolean, ApiAssistente>();
 
-/** Uma só por aba: as conversas continuam ao trocar de tela e voltar. */
-export function apiAssistenteDemo(): ApiAssistente {
-  compartilhada ??= criarApiAssistenteDemo();
-  return compartilhada;
+/**
+ * Uma só por aba: as conversas continuam ao trocar de tela e voltar. Na instalação nova
+ * (`vazio`), o Claude da pessoa ainda não está conectado.
+ */
+export function apiAssistenteDemo(vazio = false): ApiAssistente {
+  const existente = compartilhadas.get(vazio);
+  if (existente) return existente;
+  const nova = criarApiAssistenteDemo({ claudeConectado: !vazio });
+  compartilhadas.set(vazio, nova);
+  return nova;
 }

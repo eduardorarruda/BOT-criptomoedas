@@ -18,10 +18,10 @@ const secao = () => screen.findByRole("region", { name: "Primeiros passos" });
 describe("ComeceAqui", () => {
   beforeEach(() => localStorage.clear());
 
-  it("instalação nova: 0 de 6, com o 2FA como próximo passo em destaque", async () => {
+  it("instalação nova: 0 de 7, com o 2FA como próximo passo em destaque", async () => {
     renderizarNaRota(<ComeceAqui />, { fonte: await logada() });
     const s = await secao();
-    expect(within(s).getByText("0 de 6")).toBeInTheDocument();
+    expect(within(s).getByText("0 de 7")).toBeInTheDocument();
     expect(within(s).getByRole("progressbar", { name: /passos feitos/i })).toHaveAttribute(
       "aria-valuenow",
       "0",
@@ -29,7 +29,8 @@ describe("ComeceAqui", () => {
     const proximo = within(s).getByRole("link", { name: "Ligar o 2FA" });
     expect(proximo).toHaveAttribute("href", "/contas");
     expect(proximo).toHaveClass("botao--primario");
-    expect(within(s).getAllByRole("listitem")).toHaveLength(6);
+    expect(within(s).getAllByRole("listitem")).toHaveLength(7);
+    expect(within(s).getByText("Conectar a IA")).toBeInTheDocument();
   });
 
   it("passo feito aparece como feito, e o próximo é o que falta", async () => {
@@ -38,10 +39,12 @@ describe("ComeceAqui", () => {
     await fonte.ativarDoisFatores("123456");
     renderizarNaRota(<ComeceAqui />, { fonte });
     const s = await secao();
-    expect(within(s).getByText("1 de 6")).toBeInTheDocument();
+    expect(within(s).getByText("1 de 7")).toBeInTheDocument();
     const passo2fa = within(s).getByText("Ligar o 2FA").closest("li");
     expect(passo2fa).toHaveTextContent(/feito/i);
-    expect(within(s).getByRole("link", { name: "Cadastrar a chave" })).toHaveClass("botao--primario");
+    const conectar = within(s).getByRole("link", { name: "Conectar meu Claude" });
+    expect(conectar).toHaveClass("botao--primario");
+    expect(conectar).toHaveAttribute("href", "/assistente/configuracoes");
   });
 
   it("no exemplo cheio, sem controlador conhecido, o passo de quem opera não aparece", async () => {
@@ -55,7 +58,7 @@ describe("ComeceAqui", () => {
     const s = await secao();
     expect(within(s).getByText(/controlador dos dados/i)).toBeInTheDocument();
     expect(within(s).getByText(/ZENTRADE_CONTROLADOR_NOME/)).toBeInTheDocument();
-    expect(within(s).getByText("0 de 6")).toBeInTheDocument();
+    expect(within(s).getByText("0 de 7")).toBeInTheDocument();
   });
 
   it("ocultar some com a lista e o Desfazer traz de volta", async () => {
@@ -84,13 +87,14 @@ describe("ComeceAqui", () => {
     const usuario = userEvent.setup();
     renderizarNaRota(<ComeceAqui />, { fonte: await logada({}) });
     const s = await secao();
-    expect(within(s).getByText("5 de 6")).toBeInTheDocument();
+    expect(within(s).getByText("6 de 7")).toBeInTheDocument();
     expect(within(s).queryByRole("list")).not.toBeInTheDocument();
     expect(within(s).getByRole("link", { name: "Ligar o 2FA" })).toHaveClass("botao--primario");
     const ver = within(s).getByRole("button", { name: "Ver os passos" });
     expect(ver).toHaveAttribute("aria-expanded", "false");
     await usuario.click(ver);
-    expect(within(s).getAllByRole("listitem")).toHaveLength(6);
+    expect(within(s).getAllByRole("listitem")).toHaveLength(7);
+    expect(within(s).getByText("Conectar a IA").closest("li")).toHaveTextContent(/feito/i);
     expect(within(s).getByRole("button", { name: "Esconder os passos" })).toHaveFocus();
   });
 

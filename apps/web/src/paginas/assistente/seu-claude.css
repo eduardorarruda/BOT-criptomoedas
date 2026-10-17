@@ -1,0 +1,275 @@
+/* ---------- Claude Code (seu plano): conectar a conta, como as chaves da corretora ---------- */
+.seu-claude {
+  display: grid;
+  gap: var(--espaco-4);
+}
+
+.seu-claude__aviso,
+.seu-claude__indisponivel {
+  display: flex;
+  gap: var(--espaco-2);
+  align-items: flex-start;
+  margin: 0;
+  padding: var(--espaco-3);
+  border-radius: var(--raio);
+  font-size: var(--t-ui);
+  color: var(--texto-2);
+  text-wrap: pretty;
+}
+.seu-claude__aviso {
+  background: var(--atencao-tenue);
+  border: 1px solid color-mix(in oklab, var(--atencao) 35%, transparent);
+}
+.seu-claude__aviso > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--atencao);
+}
+.seu-claude__indisponivel {
+  background: var(--superficie-2);
+  border: 1px solid var(--linha-forte);
+}
+.seu-claude__aviso .link-seta {
+  color: var(--texto);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* O cartão de conta conectada */
+.seu-claude__cartao {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--espaco-3) var(--espaco-4);
+  align-items: start;
+  padding: var(--espaco-4);
+  border: 1px solid color-mix(in oklab, var(--marca) 30%, var(--linha-forte));
+  border-radius: var(--raio-g);
+  background: linear-gradient(135deg, var(--marca-tenue), transparent 55%), var(--superficie-2);
+  box-shadow: var(--brilho-borda);
+}
+.seu-claude__cartao--erro {
+  border-color: color-mix(in oklab, var(--atencao) 45%, var(--linha-forte));
+  background: linear-gradient(135deg, var(--atencao-tenue), transparent 55%), var(--superficie-2);
+}
+.seu-claude__marca {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--raio-pilula);
+  background: var(--marca);
+  color: var(--sobre-marca);
+}
+.seu-claude__cartao--erro .seu-claude__marca {
+  background: var(--atencao);
+  color: var(--sobre-atencao);
+}
+.seu-claude__textos {
+  display: grid;
+  gap: var(--espaco-1);
+  min-width: 0;
+}
+.seu-claude__textos p {
+  margin: 0;
+  text-wrap: pretty;
+}
+.seu-claude__linha {
+  font-size: var(--t-corpo);
+  color: var(--texto);
+}
+.seu-claude__erro {
+  display: flex;
+  gap: var(--espaco-1);
+  align-items: baseline;
+  color: var(--perda);
+  font-size: var(--t-ui);
+}
+.seu-claude__uso {
+  font-size: var(--t-ui);
+  color: var(--texto-2);
+}
+.seu-claude__uso .link-seta {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--marca);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.seu-claude__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+  justify-content: flex-end;
+}
+
+/* Os três passos */
+.conectar-claude {
+  display: grid;
+  gap: var(--espaco-4);
+}
+.passos-claude {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--espaco-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+.passos-claude__passo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  padding: var(--espaco-2) var(--espaco-3);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie-2);
+  color: var(--apagado);
+  font-size: var(--t-ui);
+}
+.passos-claude__marca {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--raio-pilula);
+  border: 1px solid var(--linha-forte);
+  font-family: var(--fonte-numero);
+  font-size: var(--t-legenda);
+}
+.passos-claude__passo--atual {
+  border-color: color-mix(in oklab, var(--marca) 55%, var(--linha-forte));
+  background: var(--marca-tenue);
+  color: var(--texto);
+  font-weight: 550;
+}
+.passos-claude__passo--atual .passos-claude__marca {
+  border-color: var(--marca);
+  background: var(--marca);
+  color: var(--sobre-marca);
+}
+.passos-claude__passo--feito {
+  color: var(--texto-2);
+}
+.passos-claude__passo--feito .passos-claude__marca {
+  border-color: color-mix(in oklab, var(--marca) 60%, transparent);
+  color: var(--marca);
+}
+
+.conectar-claude__inicio,
+.conectar-claude__autorizar,
+.conectar-claude__erro {
+  display: grid;
+  gap: var(--espaco-3);
+}
+.conectar-claude__inicio p,
+.conectar-claude__autorizar p {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--texto-2);
+  text-wrap: pretty;
+}
+.conectar-claude__inicio .formulario__acoes,
+.conectar-claude__erro .formulario__acoes {
+  justify-content: flex-start;
+}
+.conectar-claude__principal,
+.conectar-claude__abrir {
+  min-height: 48px;
+  padding: 0 var(--espaco-5);
+  font-size: var(--t-corpo);
+}
+.conectar-claude__abrir {
+  justify-self: start;
+  text-decoration: none;
+}
+.conectar-claude__contagem .num {
+  color: var(--texto);
+}
+.conectar-claude__codigo {
+  display: grid;
+  gap: var(--espaco-3);
+  padding-top: var(--espaco-3);
+  border-top: 1px solid var(--linha);
+}
+.conectar-claude__codigo .formulario__acoes {
+  justify-content: flex-start;
+}
+
+/* Avançado: colar o token */
+.colar-token {
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+}
+.colar-token__resumo {
+  padding: var(--espaco-3) var(--espaco-4);
+  cursor: pointer;
+  color: var(--texto-2);
+  font-size: var(--t-ui);
+  font-weight: 550;
+}
+.colar-token__resumo:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+  border-radius: var(--raio);
+}
+.colar-token__corpo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espaco-5);
+  padding: 0 var(--espaco-4) var(--espaco-4);
+}
+.colar-token__passo {
+  display: grid;
+  gap: var(--espaco-3);
+  align-content: start;
+}
+.colar-token__passo > p {
+  margin: 0;
+}
+.colar-token__linha {
+  display: flex;
+  gap: var(--espaco-2);
+}
+.colar-token__linha .campo__entrada {
+  flex: 1;
+  min-width: 0;
+}
+.colar-token__passo .formulario__acoes {
+  justify-content: flex-start;
+}
+
+@media (max-width: 760px) {
+  .seu-claude__cartao {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .seu-claude__acoes {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+  .passos-claude {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .colar-token__corpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .conectar-claude__principal,
+  .conectar-claude__abrir {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .passos-claude__passo {
+    transition:
+      background var(--dur-media) var(--curva),
+      border-color var(--dur-media) var(--curva),
+      color var(--dur-media) var(--curva);
+  }
+}

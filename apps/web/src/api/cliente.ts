@@ -27,6 +27,8 @@ export interface OpcoesCliente {
   readonly base?: string;
   readonly fetch?: typeof fetch;
   readonly lerCsrf?: () => string | null;
+  /** Prazo de cada pedido (padrão 15 s). Conectar o Claude, por exemplo, espera mais. */
+  readonly tempoLimiteMs?: number;
 }
 
 export interface ClienteApi {
@@ -101,7 +103,7 @@ export function criarCliente(opcoes: OpcoesCliente = {}): ClienteApi {
         credentials: "same-origin",
         headers: montarCabecalhos(metodo, temCorpo, lerCsrf()),
         ...(temCorpo ? { body: JSON.stringify(corpo) } : {}),
-        signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
+        signal: AbortSignal.timeout(opcoes.tempoLimiteMs ?? TEMPO_LIMITE_MS),
       });
     } catch {
       throw ERRO_SEM_CONEXAO();
