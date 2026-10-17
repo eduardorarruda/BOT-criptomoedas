@@ -1,4 +1,13 @@
-import { precoAlvo, precoStop, type Candle, type Estrategia, type Valor } from "@zentrade/dominio";
+import {
+  aFavor,
+  contra,
+  precoAlvo,
+  precoStop,
+  type Candle,
+  type Estrategia,
+  type Sentido,
+  type Valor,
+} from "@zentrade/dominio";
 
 /**
  * Stop e alvo DENTRO do candle. O robô ao vivo vigia a cada minuto; no backtest só há
@@ -11,6 +20,10 @@ import { precoAlvo, precoStop, type Candle, type Estrategia, type Valor } from "
  *   4. a máxima tocou o alvo: sai no alvo.
  * Depois do merge das ordens de stop/OCO na corretora de papel, estas regras podem
  * virar ordens em repouso na própria corretora (veja docs/estrategias.md).
+ *
+ * Para posição VENDIDA (mini índice), o espelho: o stop está acima e é tocado pela
+ * MÁXIMA; o alvo está abaixo e é tocado pela mínima; o salto de abertura acima do
+ * stop sai na abertura; stop e alvo no mesmo candle contam o stop.
  */
 export interface NiveisSaida {
   readonly stop: Valor;
@@ -31,11 +44,16 @@ export function niveisDaPosicao(
   return { stop: precoStop(precoMedio, e.stop), alvo: precoAlvo(precoMedio, e.alvoLiquido, e.taxa) };
 }
 
-export function saidaNoCandle(c: Candle, n: NiveisSaida): SaidaIntrabar | null {
-  if (c.abre.lte(n.stop)) return { preco: c.abre, motivo: "stop", ambiguo: false };
-  if (c.abre.gte(n.alvo)) return { preco: c.abre, motivo: "alvo", ambiguo: false };
-  const tocouStop = c.minima.lte(n.stop);
-  const tocouAlvo = c.maxima.gte(n.alvo);
+export function saidaNoCandle(
+  c: Candle,
+  n: NiveisSaida,
+  sentido: Sentido = "comprado",
+): SaidaIntrabar | null {
+  if (contra(c.abre, n.stop, sentido)) return { preco: c.abre, motivo: "stop", ambiguo: false };
+  if (aFavor(c.abre, n.alvo, sentido)) return { preco: c.abre, motivo: "alvo", ambiguo: false };
+  const comprado = sentido === "comprado";
+  const tocouStop = contra(comprado ? c.minima : c.maxima, n.stop, sentido);
+  const tocouAlvo = aFavor(comprado ? c.maxima : c.minima, n.alvo, sentido);
   if (tocouStop) return { preco: n.stop, motivo: "stop", ambiguo: tocouAlvo };
   if (tocouAlvo) return { preco: n.alvo, motivo: "alvo", ambiguo: false };
   return null;
@@ -45,9 +63,10 @@ export function saidaNoCandle(c: Candle, n: NiveisSaida): SaidaIntrabar | null {
 export function saidaNoCaminho(
   minutos: readonly Candle[],
   n: NiveisSaida,
+  sentido: Sentido = "comprado",
 ): (SaidaIntrabar & { readonly em: number }) | null {
   for (const m of minutos) {
-    const saida = saidaNoCandle(m, n);
+    const saida = saidaNoCandle(m, n, sentido);
     if (saida) return { ...saida, em: m.fechamento };
   }
   return null;

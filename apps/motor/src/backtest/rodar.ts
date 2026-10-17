@@ -5,6 +5,7 @@ import {
   formatarNumero,
   limiteInferior,
   posicaoDe,
+  problemasNoMercado,
   recorte,
   validarEstrategia,
   type Candle,
@@ -239,7 +240,8 @@ async function aposFechamento(m: Montagem, e: EntradaBacktest, c: Candle, st: Es
  * e a saída por tempo do domínio. Determinístico: mesma entrada, mesmo resultado; sem rede.
  */
 export async function rodarBacktest(e: EntradaBacktest): Promise<ResultadoBacktest> {
-  const problemas = validarEstrategia(e.estrategia);
+  // O à vista de cripto só opera comprado: estratégia vendida (ou nos dois sentidos) não roda aqui.
+  const problemas = [...validarEstrategia(e.estrategia), ...problemasNoMercado(e.estrategia, "cripto")];
   if (problemas.length > 0)
     throw new RangeError(`Estratégia inválida para o backtest: ${problemas.join("; ")}.`);
   const inicio = e.inicio ?? Number.NEGATIVE_INFINITY;
