@@ -1,3 +1,4 @@
+import { ocultarTokensClaude } from "@zentrade/contratos";
 import { z } from "zod";
 import type { FimProcesso } from "./processo.js";
 
@@ -42,7 +43,7 @@ export function lerResultado(linhas: readonly string[]): ResultadoCli | null {
 }
 
 const AUTENTICACAO =
-  /\b(log ?in|logged|not authenticated|authenticat\w*|unauthori[sz]ed|oauth|credential\w*|token expired|invalid api key)\b/i;
+  /\b(log ?in|logged|not authenticated|authenticat\w*|unauthori[sz]ed|oauth|credential\w*|token expired|token (has been )?revoked|invalid (api key|bearer token|token)|401)\b/i;
 const LIMITE = /\b(rate.?limit\w*|usage limit|quota|too many requests|429|limit reached)\b/i;
 
 export type CodigoFalhaCli = "autenticacao" | "limite" | "nao_encontrado" | "tempo" | "falhou";
@@ -63,7 +64,8 @@ function ultimaLinha(stderr: string): string {
     .split("\n")
     .map((l) => l.trim())
     .filter((l) => l !== "");
-  const ultima = linhas.at(-1) ?? "";
+  // O detalhe vai para o log: token ou chave que o CLI tenha ecoado sai oculto.
+  const ultima = ocultarTokensClaude(linhas.at(-1) ?? "");
   return ultima.length > 300 ? `${ultima.slice(0, 299)}…` : ultima;
 }
 

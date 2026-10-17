@@ -1,3 +1,4 @@
+import { lerChaveMestra } from "@zentrade/banco";
 import { PROVEDORES_EMBEDDINGS, type ProvedorEmbeddings } from "@zentrade/conhecimento";
 import { z } from "zod";
 import { MODELO_PADRAO } from "./analista.js";
@@ -42,6 +43,9 @@ const Ambiente = z.object({
     .enum(PROVEDORES_EMBEDDINGS, { error: "aceita voyage, ollama ou nenhum" })
     .default("voyage"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  // A mesma chave mestra da API: decifra (e cifra) o token do Claude Code de cada pessoa.
+  // Opcional: sem ela, o provedor "cli" usa só as contas de AGENTE_CLAUDE_CONTAS.
+  ZENTRADE_CHAVE_MESTRA: z.string().optional(),
 });
 
 export interface ConfigCliDoAgente {
@@ -71,6 +75,8 @@ export interface ConfigAgente {
     readonly maxPorMinuto: number;
   };
   readonly nivelLog: z.infer<typeof Ambiente>["LOG_LEVEL"];
+  /** 32 bytes; ausente = sem o token do Claude Code de cada pessoa. */
+  readonly chaveMestra?: Buffer;
 }
 
 export class ErroConfiguracao extends Error {
@@ -89,6 +95,16 @@ function contasDe(valor: string | undefined): readonly ContaClaude[] {
     return lerContas(valor);
   } catch (e) {
     throw new ErroConfiguracao(`Configuração do agente inválida — ${(e as Error).message}`);
+  }
+}
+
+function chaveMestraDe(valor: string): Buffer {
+  try {
+    return lerChaveMestra(valor);
+  } catch {
+    throw new ErroConfiguracao(
+      "Configuração do agente inválida — ZENTRADE_CHAVE_MESTRA: precisa ter 32 bytes em base64, a mesma da API (gere com: openssl rand -base64 32).",
+    );
   }
 }
 
@@ -123,6 +139,7 @@ export function configDoAgente(env: Readonly<Record<string, string | undefined>>
       maxPorMinuto: a.AGENTE_CHAT_MAX_POR_MINUTO,
     },
     ...(a.ANTHROPIC_API_KEY ? { chaveAnthropic: a.ANTHROPIC_API_KEY } : {}),
+    ...(a.ZENTRADE_CHAVE_MESTRA ? { chaveMestra: chaveMestraDe(a.ZENTRADE_CHAVE_MESTRA) } : {}),
     ...(a.REDIS_URL ? { urlRedis: a.REDIS_URL } : {}),
     ...(a.ZENTRADE_USUARIO_ID ? { usuarioIdPadrao: a.ZENTRADE_USUARIO_ID } : {}),
   };

@@ -1,4 +1,4 @@
-import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -10,6 +10,8 @@ import { join } from "node:path";
 export interface PastaExecucao {
   readonly caminho: string;
   gravar(nome: string, conteudo: string): Promise<string>;
+  /** Uma pasta vazia (0700) dentro desta, ex.: o CLAUDE_CONFIG_DIR novo de cada execução. */
+  criarSubpasta(nome: string): Promise<string>;
   apagar(): Promise<void>;
 }
 
@@ -22,6 +24,11 @@ export async function criarPastaExecucao(base = tmpdir()): Promise<PastaExecucao
       const arquivo = join(caminho, nome);
       await writeFile(arquivo, conteudo, { mode: 0o600 });
       return arquivo;
+    },
+    async criarSubpasta(nome) {
+      const pasta = join(caminho, nome);
+      await mkdir(pasta, { mode: 0o700 });
+      return pasta;
     },
     apagar: () => rm(caminho, { recursive: true, force: true }),
   };

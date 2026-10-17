@@ -66,9 +66,12 @@ export class ChatCli {
   }
 
   /** Transmite a resposta e devolve o custo que o CLI informou (no plano, é estimativa). */
-  async responder(p: PedidoChat & { readonly contaId: string | null }): Promise<Valor> {
+  async responder(
+    p: PedidoChat & { readonly usuarioId: string; readonly contaId: string | null },
+  ): Promise<Valor> {
     const leitor = criarLeitorTexto(p.aoTexto);
     const exec = await this.#executor.executar({
+      usuarioId: p.usuarioId,
       ferramentas: p.ferramentas,
       instrucoes: SYSTEM_CHAT,
       entrada: promptComHistorico(p, this.#agora()),

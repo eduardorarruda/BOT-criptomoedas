@@ -2,9 +2,11 @@ import { dirname } from "node:path";
 
 /**
  * O ambiente em que o `claude` roda. Começa vazio e só recebe o necessário para ele achar
- * o login da conta e sair para a rede. NUNCA leva: ANTHROPIC_API_KEY (o CLI cobraria por
- * uso em vez de usar o plano), DATABASE_URL, AGENTE_SEGREDO, REDIS_URL, chaves da Voyage
- * nem variáveis que injetam código (NODE_OPTIONS, LD_PRELOAD).
+ * o login da conta e sair para a rede. NUNCA leva: ANTHROPIC_API_KEY nem
+ * ANTHROPIC_AUTH_TOKEN (o CLI cobraria por uso, e as duas passam na frente do token do
+ * plano), DATABASE_URL, AGENTE_SEGREDO, ZENTRADE_CHAVE_MESTRA, REDIS_URL, chaves da Voyage
+ * nem variáveis que injetam código (NODE_OPTIONS, LD_PRELOAD). O token do plano da pessoa
+ * (CLAUDE_CODE_OAUTH_TOKEN) só entra quando o executor o passa em `extras`.
  */
 const BASICAS = [
   "HOME",
@@ -31,6 +33,13 @@ const BASICAS = [
   "USE_BUILTIN_RIPGREP",
 ] as const;
 
+/** Cinto e suspensório: nem por `extras` estas passam (têm precedência sobre o token do plano). */
+const SEMPRE_FORA: ReadonlySet<string> = new Set([
+  "ANTHROPIC_API_KEY",
+  "ANTHROPIC_AUTH_TOKEN",
+  "ANTHROPIC_BASE_URL",
+]);
+
 export function ambienteLimpo(
   origem: Readonly<Record<string, string | undefined>>,
   extras: Readonly<Record<string, string>>,
@@ -51,5 +60,7 @@ export function ambienteLimpo(
   env["TERM"] = "dumb";
   env["CI"] = "1";
   env["DISABLE_AUTOUPDATER"] = "1";
-  return { ...env, ...extras };
+  return Object.fromEntries(
+    Object.entries({ ...env, ...extras }).filter(([chave]) => !SEMPRE_FORA.has(chave)),
+  );
 }

@@ -82,6 +82,11 @@ export function argumentosChat(p: ParametrosComando): string[] {
   return [...comuns(p), "--output-format", "stream-json", "--verbose", "--include-partial-messages"];
 }
 
+/** Teste do token: uma resposta só, em JSON, sem esquema (1 volta, teto baixo). */
+export function argumentosTeste(p: ParametrosComando): string[] {
+  return [...comuns(p), "--output-format", "json"];
+}
+
 /** O arquivo `--mcp-config`: a ponte MCP do ZenTrade como servidor stdio. */
 export function configuracaoMcp(ponte: {
   readonly comando: string;

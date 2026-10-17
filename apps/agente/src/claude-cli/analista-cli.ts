@@ -98,6 +98,7 @@ export class AnalistaCli {
       ...(opcoes.orcamento ? { orcamento: opcoes.orcamento } : {}),
     };
     const exec = await this.#executor.executar({
+      usuarioId: opcoes.usuarioId,
       ferramentas: ferramentasDaAnalise(contexto, this.#deps, opcoes.aoUsarFerramenta),
       instrucoes: SYSTEM_PROMPT,
       entrada: mensagemDoPedido(pedido, this.#agora()),

@@ -88,6 +88,7 @@ async function chat(corpo: string) {
   const textos: string[] = [];
   const responder = () =>
     new ChatCli({ executor, tempoMs: 10_000, agora: () => new Date("2026-10-10T12:00:00Z") }).responder({
+      usuarioId: "7b0c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59",
       historico: [{ papel: "usuario", texto: "oi" }],
       pergunta: "Como estão os robôs?",
       ferramentas: [resumo],

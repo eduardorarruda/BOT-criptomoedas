@@ -105,6 +105,7 @@ function executorFalso(custo: number, structured?: unknown) {
           total_cost_usd: custo,
         },
         falha: null,
+        credencial: "conta",
       };
     },
   };

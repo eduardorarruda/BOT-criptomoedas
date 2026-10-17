@@ -81,3 +81,30 @@ describe("configDoAgente", () => {
     );
   });
 });
+
+describe("chave mestra no agente (token do Claude Code de cada pessoa)", () => {
+  const chave = Buffer.alloc(32, 7).toString("base64");
+
+  it("é opcional: sem ela, o agente não usa nem conecta o token de ninguém", () => {
+    expect(configDoAgente(valido).chaveMestra).toBeUndefined();
+    expect(configDoAgente({ ...valido, ZENTRADE_CHAVE_MESTRA: "" }).chaveMestra).toBeUndefined();
+  });
+
+  it("lida em base64, 32 bytes", () => {
+    expect(configDoAgente({ ...valido, ZENTRADE_CHAVE_MESTRA: chave }).chaveMestra).toEqual(
+      Buffer.alloc(32, 7),
+    );
+  });
+
+  it("chave inválida derruba a partida com o nome da variável, nunca o valor", () => {
+    const curta = Buffer.alloc(16, 9).toString("base64");
+    expect(() => configDoAgente({ ...valido, ZENTRADE_CHAVE_MESTRA: curta })).toThrow(
+      /ZENTRADE_CHAVE_MESTRA.*32 bytes/,
+    );
+    try {
+      configDoAgente({ ...valido, ZENTRADE_CHAVE_MESTRA: curta });
+    } catch (e) {
+      expect((e as Error).message).not.toContain(curta);
+    }
+  });
+});
