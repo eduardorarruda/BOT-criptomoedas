@@ -128,6 +128,9 @@ function registrarConexao(app: App, deps: Dependencias): void {
       },
     },
     async (req) => {
+      // É este passo que grava o token: a mesma barreira do começo (senão uma sessão roubada
+      // terminaria a conexão com o código de outra conta do Claude).
+      exigirSegurancaForte(req, deps.agora());
       const usuarioId = usuarioIdDe(req);
       return noAgente(() => agenteDe(deps).enviarCodigo(usuarioId, req.params.id, req.body.codigo));
     },

@@ -175,6 +175,17 @@ describe("o Claude da pessoa pela API", () => {
     const inicio = await pedir(ana, "POST", "/assistente/claude-token/conexao", { usuarioId: beto.id });
     expect(inicio.statusCode).toBe(201);
     expect(inicio.json()).toMatchObject({ conexaoId: CONEXAO, urlAutorizacao: LINK });
+    api.relogio.t += 6 * 60_000;
+    const codigoSemConfirmar = await pedir(
+      ana,
+      "POST",
+      `/assistente/claude-token/conexao/${CONEXAO}/codigo`,
+      {
+        codigo: "codigo-certo#estado",
+      },
+    );
+    expect(codigoSemConfirmar.json().erro.codigo).toBe("reautenticacao_necessaria");
+    await confirmar(ana, segredoAna);
     const ruim = await pedir(ana, "POST", `/assistente/claude-token/conexao/${CONEXAO}/codigo`, {
       codigo: "abc\r\nexit",
     });
@@ -193,6 +204,7 @@ describe("o Claude da pessoa pela API", () => {
   });
 
   it("o erro do agente chega à tela com o código dele", async () => {
+    await confirmar(ana, segredoAna);
     agente.codigoErrado = true;
     const r = await pedir(ana, "POST", `/assistente/claude-token/conexao/${CONEXAO}/codigo`, {
       codigo: "codigo-errado#estado",

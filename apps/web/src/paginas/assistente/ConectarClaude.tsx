@@ -192,7 +192,8 @@ export function ConectarClaude({
   const enviarCodigo = async (conexao: ConexaoClaude, codigo: string) => {
     setFase({ tipo: "conferindo", conexao });
     try {
-      const estado = await api.enviarCodigoClaude(conexao.conexaoId, codigo);
+      // Gravar o token pede a identidade confirmada há pouco (a autorização pode ter demorado).
+      const estado = await comConfirmacao(() => api.enviarCodigoClaude(conexao.conexaoId, codigo));
       aberta.current = null;
       setFase({ tipo: "inicio" });
       aoConectar(estado);
