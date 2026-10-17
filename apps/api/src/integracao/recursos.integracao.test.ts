@@ -399,6 +399,7 @@ describe("rotas de recursos contra banco e Redis reais", () => {
     expect(r.json()).toEqual({
       ok: true,
       servicos: { banco: true, redis: true, motor: false, agente: false },
+      conhecimento: "hibrida",
     });
   });
 

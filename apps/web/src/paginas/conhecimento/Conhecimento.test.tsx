@@ -43,6 +43,7 @@ function apiFalsa(): ApiConhecimento {
         publicadoEm: 1,
         texto: "Nunca arriscar mais de 1%.",
         pontuacao: 0.1,
+        modo: "hibrida" as const,
       },
     ]),
     enviarLink: vi.fn(async () => ({ ...ingerido, titulo: "Página" })),

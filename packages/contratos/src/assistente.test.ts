@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ConfigAssistenteEsquema,
   DocumentoDetalheEsquema,
+  EstadoConhecimentoEsquema,
   EventoChatEsquema,
   EventoRespostaAgenteEsquema,
   FonteCitadaEsquema,
@@ -10,6 +11,7 @@ import {
   NovaMensagemEsquema,
   NovoLinkEsquema,
   PedidoRespostaAgenteEsquema,
+  ResultadoBuscaConhecimentoEsquema,
 } from "./assistente.js";
 
 const USUARIO = "7b0c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59";
@@ -115,5 +117,29 @@ describe("conhecimento", () => {
       trechos: 3,
     });
     expect(d.origem).toBe("arquivo");
+  });
+
+  it("resultado da busca diz o modo (híbrida ou só palavras)", () => {
+    const base = {
+      trechoId: "t1",
+      documentoId: "d1",
+      fonte: "nota",
+      titulo: "Plano",
+      url: null,
+      publicadoEm: 1,
+      texto: "x",
+      pontuacao: 0.1,
+    };
+    expect(ResultadoBuscaConhecimentoEsquema.parse({ ...base, modo: "palavras" }).modo).toBe("palavras");
+    expect(ResultadoBuscaConhecimentoEsquema.safeParse({ ...base, modo: "vetorial" }).success).toBe(false);
+  });
+
+  it("estado da base: modo da busca, trechos sem vetor e o motivo quando desligada", () => {
+    expect(EstadoConhecimentoEsquema.parse({ busca: "palavras", trechosSemVetor: 12, motivo: null })).toEqual(
+      { busca: "palavras", trechosSemVetor: 12, motivo: null },
+    );
+    expect(
+      EstadoConhecimentoEsquema.safeParse({ busca: "x", trechosSemVetor: 0, motivo: null }).success,
+    ).toBe(false);
   });
 });

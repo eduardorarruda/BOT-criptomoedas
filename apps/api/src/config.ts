@@ -1,4 +1,5 @@
 import { ConfigBancoEsquema } from "@zentrade/banco";
+import { PROVEDORES_EMBEDDINGS } from "@zentrade/conhecimento";
 import { z } from "zod";
 
 const booleano = z
@@ -47,9 +48,10 @@ const EsquemaApi = z.object({
   N8N_USUARIO_ID: z.uuid("N8N_USUARIO_ID precisa ser o UUID de uma pessoa").optional(),
   AGENTE_URL: url("AGENTE_URL", "http://127.0.0.1:8081").optional(),
   // O provedor é conferido aqui (erro de digitação derruba cedo); as chaves e URLs de
-  // cada provedor (VOYAGE_*, OLLAMA_*) são lidas por @zentrade/conhecimento.
+  // cada provedor (VOYAGE_*, OLLAMA_*) são lidas por @zentrade/conhecimento. nenhum =
+  // sem embeddings: a base de conhecimento funciona com busca só por palavras.
   EMBEDDINGS_PROVEDOR: z
-    .enum(["voyage", "ollama"], { error: "EMBEDDINGS_PROVEDOR aceita voyage ou ollama" })
+    .enum(PROVEDORES_EMBEDDINGS, { error: "EMBEDDINGS_PROVEDOR aceita voyage, ollama ou nenhum" })
     .default("voyage"),
   // Opcional: cotações de FIIs pela brapi.dev. Sem ele, o preço é informado à mão.
   BRAPI_TOKEN: z

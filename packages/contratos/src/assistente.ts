@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DocumentoEsquema, DocumentoIngeridoEsquema } from "./api.js";
+import { DocumentoEsquema, DocumentoIngeridoEsquema, EstadoBuscaConhecimento } from "./api.js";
 import { Id, Instante } from "./comum.js";
 import { FonteEsquema } from "./proposta.js";
 import { FonteDocumento } from "./webhook-esquemas.js";
@@ -192,6 +192,23 @@ export const DocumentoComTrechosEsquema = z.object({
 });
 export type DocumentoComTrechos = z.infer<typeof DocumentoComTrechosEsquema>;
 
+/**
+ * Como a busca no conhecimento roda: `hibrida` (semântica + palavras) ou `palavras`
+ * (sem embeddings configurados: EMBEDDINGS_PROVEDOR=nenhum, só o full-text).
+ */
+export const ModoBuscaConhecimento = z.enum(["hibrida", "palavras"]);
+export type ModoBuscaConhecimento = z.infer<typeof ModoBuscaConhecimento>;
+
+/** `GET /conhecimento/estado`: em que modo a busca está e quantos trechos esperam a reindexação. */
+export const EstadoConhecimentoEsquema = z.object({
+  busca: EstadoBuscaConhecimento,
+  /** Trechos da pessoa gravados sem vetor; `reindexar-conhecimento` calcula quando houver provedor. */
+  trechosSemVetor: z.number().int().nonnegative(),
+  /** Por que a base está desligada; `null` quando funciona. */
+  motivo: z.string().nullable(),
+});
+export type EstadoConhecimento = z.infer<typeof EstadoConhecimentoEsquema>;
+
 /** Resultado de `GET /conhecimento/busca?q=`: os trechos mais parecidos da base da pessoa. */
 export const ResultadoBuscaConhecimentoEsquema = z.object({
   trechoId: Id,
@@ -202,6 +219,7 @@ export const ResultadoBuscaConhecimentoEsquema = z.object({
   publicadoEm: Instante,
   texto: z.string(),
   pontuacao: z.number(),
+  modo: ModoBuscaConhecimento,
 });
 export type ResultadoBuscaConhecimento = z.infer<typeof ResultadoBuscaConhecimentoEsquema>;
 

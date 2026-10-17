@@ -50,6 +50,11 @@ describe("quando algo de fora falha", () => {
     );
   });
 
+  it("sem chave de embeddings, a saúde continua ok e diz que a busca no conhecimento está desligada", async () => {
+    const r = await api.app.inject({ method: "GET", url: "/api/v1/saude" });
+    expect(r.json()).toMatchObject({ ok: true, conhecimento: "desligada" });
+  });
+
   it("conhecimento do n8n numa instalação de uma pessoa vai para ela; sem embeddings, 503 explicado", async () => {
     const corpo = JSON.stringify({ fonte: "noticia", titulo: "x", publicadoEm: 1, texto: "y" });
     const r = await api.app.inject({

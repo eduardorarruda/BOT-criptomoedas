@@ -2,7 +2,12 @@ import type { Banco } from "@zentrade/banco";
 import { ErroEmbeddings, type Embeddings, type RepositorioConhecimento } from "@zentrade/conhecimento";
 import { describe, expect, it, vi } from "vitest";
 import { ErroApi } from "../erros.js";
-import { criarServicoConhecimento, prepararEmbeddings, repositorioRag } from "./conhecimento.js";
+import {
+  criarServicoConhecimento,
+  estadoDaBusca,
+  prepararEmbeddings,
+  repositorioRag,
+} from "./conhecimento.js";
 
 const USUARIO = "7b0c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59";
 const embeddings: Embeddings = {
@@ -106,11 +111,30 @@ describe("ingestão do RAG pela API", () => {
   });
 });
 
+describe("ingestão sem embeddings (EMBEDDINGS_PROVEDOR=nenhum)", () => {
+  it("grava os trechos sem vetor e o serviço diz que a busca é só por palavras", async () => {
+    const { repositorio, gravados } = repositorioFalso();
+    const servico = criarServicoConhecimento({ repositorio, documentos, embeddings: { embeddings: null } });
+    await expect(servico.ingerir(USUARIO, nota)).resolves.toMatchObject({ novo: true, trechos: 1 });
+    expect(gravados[0]?.trechos).toEqual([expect.objectContaining({ embedding: null })]);
+    expect(servico.busca).toBe("palavras");
+  });
+
+  it("estadoDaBusca: híbrida, só palavras ou desligada", () => {
+    expect(estadoDaBusca({ embeddings })).toBe("hibrida");
+    expect(estadoDaBusca({ embeddings: null })).toBe("palavras");
+    expect(estadoDaBusca({ indisponivel: "sem chave" })).toBe("desligada");
+  });
+});
+
 describe("configuração dos embeddings", () => {
   it("usa a mesma leitura de ambiente do agente; sem chave, RAG desligado com explicação", () => {
     expect(prepararEmbeddings({ EMBEDDINGS_PROVEDOR: "ollama" })).toHaveProperty("embeddings");
+    expect(prepararEmbeddings({ EMBEDDINGS_PROVEDOR: "nenhum" })).toEqual({ embeddings: null });
     const sem = prepararEmbeddings({});
-    expect(sem).toEqual({ indisponivel: expect.stringMatching(/VOYAGE_API_KEY/) });
+    expect(sem).toEqual({
+      indisponivel: expect.stringMatching(/VOYAGE_API_KEY.*EMBEDDINGS_PROVEDOR=nenhum/s),
+    });
   });
 
   it("erro que não é de configuração sobe", () => {

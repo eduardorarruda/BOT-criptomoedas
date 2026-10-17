@@ -1,6 +1,7 @@
 import {
   ArquivoIngeridoEsquema,
   DocumentoComTrechosEsquema,
+  EstadoConhecimentoEsquema,
   FonteDocumento,
   LIMITE_ARQUIVO_BYTES,
   NovoLinkEsquema,
@@ -96,6 +97,13 @@ function registrarIngestao(app: App, deps: Dependencias): void {
 }
 
 function registrarConsultas(app: App, deps: Dependencias): void {
+  // Para a tela avisar "busca só por palavras" antes mesmo de alguém buscar.
+  app.get(
+    "/conhecimento/estado",
+    { config: { acesso: "leitura" }, schema: { response: { 200: EstadoConhecimentoEsquema } } },
+    async (req) => servico(deps).estado(usuarioIdDe(req)),
+  );
+
   app.get(
     "/conhecimento/busca",
     {

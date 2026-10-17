@@ -1,5 +1,10 @@
 import type { Banco } from "@zentrade/banco";
-import type { Documento, DocumentoIngerido, FonteDocumento } from "@zentrade/contratos";
+import type {
+  Documento,
+  DocumentoIngerido,
+  EstadoBuscaConhecimento,
+  FonteDocumento,
+} from "@zentrade/contratos";
 import {
   criarRepositorioPostgres,
   embeddingsDoAmbiente,
@@ -21,6 +26,8 @@ export interface DocumentoNovo {
 }
 
 export interface ServicoConhecimento {
+  /** Como a busca roda nesta API: híbrida, só por palavras (EMBEDDINGS_PROVEDOR=nenhum) ou desligada. */
+  readonly busca: EstadoBuscaConhecimento;
   ingerir(usuarioId: string, doc: DocumentoNovo): Promise<DocumentoIngerido>;
 }
 
@@ -31,6 +38,11 @@ export interface ServicoConhecimento {
 export type FonteEmbeddings = { readonly embeddings: Embeddings | null } | { readonly indisponivel: string };
 
 type Ambiente = Readonly<Record<string, string | undefined>>;
+
+export function estadoDaBusca(f: FonteEmbeddings): EstadoBuscaConhecimento {
+  if ("indisponivel" in f) return "desligada";
+  return f.embeddings ? "hibrida" : "palavras";
+}
 
 /**
  * Lê EMBEDDINGS_PROVEDOR, VOYAGE_* e OLLAMA_* pela mesma função do agente: uma
@@ -67,6 +79,7 @@ export function criarServicoConhecimento(o: {
   readonly embeddings: FonteEmbeddings;
 }): ServicoConhecimento {
   return {
+    busca: estadoDaBusca(o.embeddings),
     async ingerir(usuarioId, doc) {
       if ("indisponivel" in o.embeddings) {
         throw new ErroApi(

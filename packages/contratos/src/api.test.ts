@@ -9,6 +9,7 @@ import {
   DocumentoEsquema,
   DocumentoIngeridoEsquema,
   ResumoEsquema,
+  SaudeEsquema,
   SaudeN8nEsquema,
   SessaoEsquema,
   TokenCriadoEsquema,
@@ -112,6 +113,15 @@ describe("contrato dos webhooks", () => {
     expect(ConhecimentoWebhookEsquema.safeParse({ ...noticia, url: "javascript:alert(1)" }).success).toBe(
       false,
     );
+  });
+
+  it("saúde diz o modo da busca no conhecimento, sem ser obrigatório", () => {
+    const servicos = { banco: true, redis: true, motor: false, agente: false };
+    expect(SaudeEsquema.parse({ ok: true, servicos, conhecimento: "palavras" }).conhecimento).toBe(
+      "palavras",
+    );
+    expect(SaudeEsquema.safeParse({ ok: true, servicos }).success).toBe(true);
+    expect(SaudeEsquema.safeParse({ ok: true, servicos, conhecimento: "vetorial" }).success).toBe(false);
   });
 
   it("saúde para o vigia aceita motor que nunca bateu", () => {

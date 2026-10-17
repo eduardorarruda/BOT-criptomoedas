@@ -10,9 +10,14 @@ import {
   type RepositorioConhecimento,
   type TextoExtraido,
 } from "@zentrade/conhecimento";
-import type { ArquivoIngerido, FonteDocumento, ResultadoBuscaConhecimento } from "@zentrade/contratos";
+import type {
+  ArquivoIngerido,
+  EstadoConhecimento,
+  FonteDocumento,
+  ResultadoBuscaConhecimento,
+} from "@zentrade/contratos";
 import { ErroApi } from "../erros.js";
-import type { FonteEmbeddings, ServicoConhecimento } from "./conhecimento.js";
+import { estadoDaBusca, type FonteEmbeddings, type ServicoConhecimento } from "./conhecimento.js";
 import { extrairIsolado } from "./extracao-isolada.js";
 
 /** Arquivos e links para a base de conhecimento da pessoa, e a busca nela. */
@@ -20,6 +25,8 @@ export interface ServicoArquivos {
   ingerirArquivo(usuarioId: string, a: ArquivoEnviado): Promise<ArquivoIngerido>;
   ingerirLink(usuarioId: string, l: LinkPedido): Promise<ArquivoIngerido>;
   buscar(usuarioId: string, consulta: string, limite: number): Promise<ResultadoBuscaConhecimento[]>;
+  /** Modo da busca e quantos trechos da pessoa esperam vetor (para a tela avisar). */
+  estado(usuarioId: string): Promise<EstadoConhecimento>;
 }
 
 export interface ArquivoEnviado {
@@ -37,7 +44,9 @@ export interface LinkPedido {
 
 export interface DependenciasArquivos {
   readonly conhecimento: ServicoConhecimento;
-  readonly banco: Pick<Banco, "conhecimentoDetalhe">;
+  readonly banco: Pick<Banco, "conhecimentoDetalhe"> & {
+    readonly conhecimento: Pick<Banco["conhecimento"], "contarTrechosSemVetor">;
+  };
   readonly repositorio: RepositorioConhecimento;
   readonly embeddings: FonteEmbeddings;
   readonly agora: () => number;
@@ -124,6 +133,7 @@ async function buscar(d: DependenciasArquivos, usuarioId: string, consulta: stri
   if ("indisponivel" in d.embeddings) {
     throw new ErroApi(503, "conhecimento_indisponivel", `o RAG está desligado: ${d.embeddings.indisponivel}`);
   }
+  // embeddings null (EMBEDDINGS_PROVEDOR=nenhum): a busca roda só por palavras e diz isso.
   const busca = criarBuscaHibrida({ repositorio: d.repositorio, embeddings: d.embeddings.embeddings });
   const achados = await busca.buscar(consulta, { usuarioId, limite }).catch((e: unknown) => {
     if (e instanceof ErroConhecimento) throw new ErroApi(400, "busca_invalida", e.message);
@@ -139,7 +149,16 @@ async function buscar(d: DependenciasArquivos, usuarioId: string, consulta: stri
     publicadoEm: a.publicadoEm.getTime(),
     texto: a.texto,
     pontuacao: a.pontuacao,
+    modo: busca.modo,
   }));
+}
+
+async function estado(d: DependenciasArquivos, usuarioId: string): Promise<EstadoConhecimento> {
+  return {
+    busca: estadoDaBusca(d.embeddings),
+    trechosSemVetor: await d.banco.conhecimento.contarTrechosSemVetor(usuarioId),
+    motivo: "indisponivel" in d.embeddings ? d.embeddings.indisponivel : null,
+  };
 }
 
 /**
@@ -151,5 +170,6 @@ export function criarServicoArquivos(d: DependenciasArquivos): ServicoArquivos {
     ingerirArquivo: (usuarioId, a) => ingerirArquivo(d, usuarioId, a),
     ingerirLink: (usuarioId, l) => ingerirLink(d, usuarioId, l),
     buscar: (usuarioId, consulta, limite) => buscar(d, usuarioId, consulta, limite),
+    estado: (usuarioId) => estado(d, usuarioId),
   };
 }
