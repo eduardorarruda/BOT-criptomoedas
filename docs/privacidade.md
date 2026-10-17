@@ -78,7 +78,7 @@ Cada item foi conferido no código. Ao mudar um fluxo de dados, atualize [`apps/
 - **Logs.** A API registra, por pedido, método, caminho, status, tempo e o IP de origem que enxerga. Atrás do nginx do Docker, esse IP é o do container, não o do visitante, porque a API não confia no proxy. Configure a rotação dos logs do Docker (por exemplo, `max-size` e `max-file` no `daemon.json`) e um prazo curto.
 - **Backups.** Eles copiam todos os dados pessoais. Cifre, restrinja o acesso e defina por quanto tempo guarda (veja [operacao.md](operacao.md#backups)).
 - **Alertas.** O Telegram e o e-mail são um destino por instalação. Numa instância com várias pessoas, todas recebem no mesmo chat os alertas e o relatório de todas. Avise as pessoas ou use uma instância por pessoa.
-- **Provedor de IA e embeddings.** Com `EMBEDDINGS_PROVEDOR=ollama` e sem assistente, o texto da base de conhecimento não sai do servidor. Pelo Claude Code, o conteúdo vai sob os termos da conta de plano que fez o login: se a conta é sua, e não da pessoa, diga isso a ela.
+- **Provedor de IA e embeddings.** Com `EMBEDDINGS_PROVEDOR=ollama` ou `nenhum` (busca só por palavras) e sem assistente, o texto da base de conhecimento não sai do servidor. Pelo Claude Code, o conteúdo vai sob os termos da conta de plano que fez o login: se a conta é sua, e não da pessoa, diga isso a ela.
 - **Pluggy.** Desconectar na tela apaga a conexão só no ZenTrade. A revogação na Pluggy e no banco é feita lá.
 - **Incidentes.** Se houver incidente que possa causar risco ou dano relevante, comunique a ANPD e as pessoas afetadas (art. 48).
 

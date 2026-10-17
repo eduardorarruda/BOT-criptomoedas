@@ -31,7 +31,7 @@ docker compose --env-file .env -f infra/docker-compose.yml --profile app up -d -
 
 Sobe banco, Redis e n8n, aplica as migrações (serviço `migrar`, que sai ao terminar) e só então a API, o motor, o agente e a tela. A tela fica em <http://localhost:8088> (nginx, com a API atrás de `/api`); a API também responde em `127.0.0.1:8080` para a CLI. Tudo preso em `127.0.0.1`; o agente e o motor não publicam porta. As portas mudam por `*_PORTA_HOST` no `.env`. Com o perfil `app`, ponha `ZENTRADE_API_URL_PARA_N8N=http://api:8080` para o n8n achar a API.
 
-O motor sobe em papel com o agente fixo (`MOTOR_AGENTE_FIXO`); para usar a IA, defina `MOTOR_AGENTE_URL=http://agente:8081` e `AGENTE_SEGREDO`. O agente precisa de `ANTHROPIC_API_KEY` para subir, e os embeddings de `VOYAGE_API_KEY` (ou `EMBEDDINGS_PROVEDOR=ollama` com o Ollama no host).
+O motor sobe em papel com o agente fixo (`MOTOR_AGENTE_FIXO`); para usar a IA, defina `MOTOR_AGENTE_URL=http://agente:8081` e `AGENTE_SEGREDO`. O agente precisa de `ANTHROPIC_API_KEY` para subir, e os embeddings de `VOYAGE_API_KEY` (ou `EMBEDDINGS_PROVEDOR=ollama` com o Ollama no host, ou `EMBEDDINGS_PROVEDOR=nenhum` para a busca só por palavras; veja [base de conhecimento](#base-de-conhecimento-e-embeddings)).
 
 Para derrubar: `docker compose -f infra/docker-compose.yml --profile app down` (com `-v` apaga também os dados).
 
@@ -47,7 +47,7 @@ corepack pnpm dev:agente    # agente, em outro terminal (opcional)
 
 Serviços e portas em desenvolvimento: API `8080`, agente `8081` (só rede interna), tela `5173`, PostgreSQL `55432`, Redis `56379`, n8n `5678`.
 
-Confira a saúde: `GET /api/v1/saude` responde `{ ok, servicos: { banco, redis, motor, agente } }` sem precisar de login. `motor: true` depende da batida que o motor grava no Redis (`zentrade:motor:batida`); **pendente:** o motor desta versão ainda não grava essa batida, então aparece `false` mesmo no ar.
+Confira a saúde: `GET /api/v1/saude` responde `{ ok, servicos: { banco, redis, motor, agente }, conhecimento }` sem precisar de login (`conhecimento` diz se a busca está `hibrida`, só por `palavras` ou `desligada`). `motor: true` depende da batida que o motor grava no Redis (`zentrade:motor:batida`); **pendente:** o motor desta versão ainda não grava essa batida, então aparece `false` mesmo no ar.
 
 ## Criar o primeiro usuário
 
@@ -66,6 +66,69 @@ Com mais de uma pessoa cadastrada, defina `N8N_USUARIO_ID` com o id de quem rece
 1. Entre pela tela (`POST /api/v1/sessao` por trás).
 2. Ligue o **2FA** logo no primeiro acesso.
 3. Crie os tokens de que vai precisar (tela → Tokens): um de **leitura** e um de **operar** para o n8n. O token aparece uma vez só; cole direto na credencial do n8n.
+
+## Base de conhecimento e embeddings
+
+A base de conhecimento de cada pessoa (notas, arquivos, links, notícias do n8n) é o que o analista e o assistente consultam com `buscar_conhecimento`. A busca junta duas leituras: a **semântica**, por embeddings (vetores), e a **por palavras**, pelo full-text do PostgreSQL. `EMBEDDINGS_PROVEDOR` escolhe de onde vêm os embeddings, o mesmo para a API e o agente:
+
+| `EMBEDDINGS_PROVEDOR` | Busca                         | Precisa de                                                                  | Custo e privacidade                              |
+| --------------------- | ----------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------ |
+| `nenhum`              | só por palavras               | nada                                                                        | grátis; o texto não sai do servidor              |
+| `voyage` (padrão)     | híbrida: semântica + palavras | `VOYAGE_API_KEY` ([dashboard.voyageai.com](https://dashboard.voyageai.com)) | pago por uso; o texto vai para a Voyage AI       |
+| `ollama`              | híbrida, com o `bge-m3` local | Ollama no host (`OLLAMA_URL`) com `ollama pull bge-m3`                      | grátis; precisa de uma máquina que rode o modelo |
+
+**Só por palavras (`nenhum`).** Notas, arquivos e links entram normalmente, só que sem vetor. A busca ignora acento e junta singular e plural ("acoes" acha "ações", "mini indice" acha "mini índice", "operações" acha "operação"), conta o título do documento e corta palavras vazias ("de", "para"). O que ela **não** faz é achar pelo sentido: "proteção da posição" não acha um texto que só diz "stop". A tela de Conhecimento avisa "Busca só por palavras (sem embeddings configurados)", `GET /api/v1/conhecimento/estado` e a saúde dizem o modo, e o agente avisa o modelo para procurar com os termos do texto.
+
+**O padrão continua `voyage`, de propósito.** Sem `EMBEDDINGS_PROVEDOR` e sem chave, nada muda de modo sozinho: a API sobe com o conhecimento desligado (503 explicando, e a saúde diz `desligada`) e o agente não sobe, os dois com uma mensagem que sugere `nenhum`. Assim, uma chave que sumiu do `.env` não vira, sem ninguém ver, uma busca pior. O `.env.example` já vem com `nenhum`, para uma instalação nova funcionar de primeira; troque quando tiver a chave.
+
+**Trocar de `nenhum` para `voyage` ou `ollama`.** Ponha o provedor e a chave no `.env`, reinicie a API e o agente e rode a reindexação, que calcula os vetores de tudo o que entrou sem eles:
+
+```bash
+corepack pnpm --filter @zentrade/api build
+corepack pnpm --filter @zentrade/api reindexar-conhecimento                  # todas as pessoas
+corepack pnpm --filter @zentrade/api reindexar-conhecimento -- --email voce@exemplo.com --lote 32
+# no Docker:
+docker compose --env-file .env -f infra/docker-compose.yml --profile app run --rm api \
+  node dist/comandos/reindexar-conhecimento.js
+```
+
+Ela vai por pessoa, em lotes (`--lote`, padrão 64 trechos por chamada), mostra o progresso e grava cada lote na hora: se cair no meio (rede, limite da Voyage), rode de novo e ela continua de onde parou; sem nada pendente, não gasta nenhuma chamada. Enquanto isso, a busca já é híbrida para os trechos com vetor e por palavras para os que ainda não têm. `GET /api/v1/conhecimento/estado` mostra quantos trechos da pessoa esperam vetor (`trechosSemVetor`).
+
+> **Trocar de `voyage` para `ollama` (ou de modelo)** não é coberto pela reindexação: os vetores que já existem são de outro modelo e não se comparam com os novos. Nesse caso, apague os vetores e rode de novo: `update trechos set embedding = null;` no banco e depois `reindexar-conhecimento`.
+
+### Importar uma pasta de documentos
+
+Para popular a base de uma pessoa de uma vez (por exemplo, as notas de partida em `conhecimento/semente`):
+
+```bash
+corepack pnpm --filter @zentrade/api build
+corepack pnpm --filter @zentrade/api importar-conhecimento -- \
+  --email voce@exemplo.com --pasta conhecimento/semente [--fonte nota]
+```
+
+- Lê cada `.md`, `.txt`, `.pdf`, `.docx` e `.html` da pasta e das subpastas, pelo mesmo caminho do envio pela tela: o tipo é conferido pelo conteúdo, PDF, DOCX e HTML são lidos numa thread isolada, o limite é 15 MB por arquivo, e o documento aparece na tela com origem "arquivo".
+- Pula, dizendo o motivo, o que já existe (mesmo conteúdo, ou mesmo título e fonte), os tipos não suportados, arquivos vazios, ocultos (`.git`), links simbólicos e o `README` da pasta. Rodar de novo não duplica nada.
+- O título é o do HTML (`<title>`) ou o nome do arquivo sem extensão. `--fonte` aceita `diario`, `noticia`, `regra_corretora`, `estrategia` ou `nota` (padrão).
+- No fim, um resumo (`importados`, `já existiam`, `ignorados`, `falhas`); o código de saída é 1 se algum arquivo falhou. Com `nenhum`, os documentos entram sem vetor: rode a reindexação quando tiver um provedor.
+- `--pasta` relativa vale a partir de onde você chamou o `pnpm` (a raiz do repositório, no exemplo).
+
+No Docker, a pasta precisa estar dentro do container. Monte-a só para a importação:
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.yml --profile app run --rm \
+  -v "$PWD/conhecimento/semente:/importar:ro" api \
+  node dist/comandos/importar-conhecimento.js --email voce@exemplo.com --pasta /importar
+```
+
+Ou copie-a para a API que já está no ar e importe de lá:
+
+```bash
+docker compose -f infra/docker-compose.yml --profile app cp conhecimento/semente api:/tmp/semente
+docker compose --env-file .env -f infra/docker-compose.yml --profile app exec api \
+  node dist/comandos/importar-conhecimento.js --email voce@exemplo.com --pasta /tmp/semente
+```
+
+A cópia em `/tmp` some quando o container é recriado; os documentos ficam no banco.
 
 ## Conectar a testnet
 
