@@ -1,0 +1,152 @@
+/* Paleta de comandos (Ctrl/Cmd+Shift+P ou "/") e ajuda de atalhos ("?"). Chega com a paleta. */
+.paleta {
+  width: min(600px, calc(100vw - 32px));
+  max-height: min(560px, calc(100dvh - 96px));
+  margin: 12vh auto auto;
+  padding: 0;
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio-g);
+  background: var(--superficie-relevo), var(--superficie);
+  color: var(--texto);
+  box-shadow: var(--sombra-flutuante);
+  overflow: hidden;
+}
+.paleta::backdrop {
+  background: rgb(3 7 5 / 0.55);
+  backdrop-filter: blur(3px);
+}
+.paleta[open] {
+  animation: surgir var(--dur-media) var(--curva);
+}
+.paleta__corpo {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  max-height: inherit;
+}
+.paleta__busca {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3) var(--espaco-4);
+  border-bottom: 1px solid var(--linha);
+  color: var(--apagado);
+}
+.paleta__busca input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  background: none;
+  color: var(--texto);
+  font-size: var(--t-destaque);
+}
+.paleta__busca input:focus-visible {
+  outline: none;
+}
+.paleta__busca:focus-within {
+  box-shadow: inset 0 -2px 0 var(--foco);
+}
+.paleta__lista {
+  overflow-y: auto;
+  padding: var(--espaco-2);
+  overscroll-behavior: contain;
+}
+.paleta__grupo + .paleta__grupo {
+  margin-top: var(--espaco-2);
+}
+.paleta__grupo-titulo {
+  padding: var(--espaco-2) var(--espaco-3) var(--espaco-1);
+}
+.paleta__opcao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+  min-height: 40px;
+  padding: 0 var(--espaco-3);
+  border-radius: var(--raio);
+  font-size: var(--t-ui);
+  cursor: pointer;
+}
+.paleta__opcao[aria-selected="true"] {
+  background: var(--marca-tenue);
+  color: var(--texto);
+  box-shadow: inset 2px 0 0 var(--marca);
+}
+.paleta__tecla {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--linha-forte);
+  border-bottom-width: 2px;
+  border-radius: var(--raio-p);
+  background: var(--superficie-2);
+  color: var(--texto-2);
+  font-family: var(--fonte-numero);
+  font-size: var(--t-micro);
+  line-height: 1;
+  white-space: nowrap;
+}
+.paleta__vazio {
+  margin: 0;
+  padding: var(--espaco-4);
+  color: var(--apagado);
+  text-wrap: pretty;
+}
+.paleta__dicas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-4);
+  margin: 0;
+  padding: var(--espaco-2) var(--espaco-4);
+  border-top: 1px solid var(--linha);
+  font-size: var(--t-legenda);
+  color: var(--apagado);
+}
+.paleta__dicas span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-1);
+}
+@media (max-width: 560px) {
+  .paleta {
+    margin-top: var(--espaco-4);
+  }
+  .paleta__dicas {
+    display: none;
+  }
+}
+
+/* ajuda de atalhos */
+.atalhos {
+  display: grid;
+  gap: var(--espaco-4);
+  margin: 0;
+}
+.atalhos__grupo {
+  display: grid;
+  gap: var(--espaco-2);
+}
+.atalhos__grupo h3 {
+  margin: 0;
+}
+.atalhos__lista {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--espaco-2) var(--espaco-4);
+  margin: 0;
+}
+.atalhos__lista dt {
+  color: var(--texto-2);
+}
+.atalhos__lista dd {
+  display: flex;
+  gap: var(--espaco-1);
+  margin: 0;
+  justify-content: flex-end;
+}
+.atalhos__lista > div {
+  display: contents;
+}

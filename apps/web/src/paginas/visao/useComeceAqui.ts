@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { useFonte } from "../../api/contexto";
 import {
   useBacktests,
@@ -12,6 +12,9 @@ import {
 import { derivarPassos, type ResultadoPassos } from "../../lib/primeirosPassos";
 
 /** "Ocultar" vale por pessoa, neste navegador. A paleta de comandos traz de volta. */
+/** A paleta avisa por este evento quando traz os primeiros passos de volta. */
+export const EVENTO_COMECE_AQUI = "zentrade:comece-aqui";
+
 const chaveOculto = (usuarioId: string): string => `zentrade:comece-aqui:oculto:${usuarioId}`;
 
 export function lerComeceAquiOculto(usuarioId: string): boolean {
@@ -49,6 +52,10 @@ export function useComeceAqui(): ComeceAqui {
   const documentos = useDocumentos().data;
   const config = useConfigPublica();
   const [, redesenhar] = useReducer((n: number) => n + 1, 0);
+  useEffect(() => {
+    window.addEventListener(EVENTO_COMECE_AQUI, redesenhar);
+    return () => window.removeEventListener(EVENTO_COMECE_AQUI, redesenhar);
+  }, []);
 
   // No exemplo cheio ninguém opera a instância: o passo do controlador não se aplica.
   const operadorSeAplica = !fonte.demo || fonte.vazio === true;

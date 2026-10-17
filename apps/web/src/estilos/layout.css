@@ -276,6 +276,58 @@
   align-items: center;
   gap: var(--espaco-2);
 }
+/* "Ir para…": a paleta de comandos, também por Ctrl/Cmd+Shift+P ou "/" */
+.barra-topo__comandos {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  min-height: 36px;
+  padding: 0 var(--espaco-2) 0 var(--espaco-3);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--apagado);
+  font-size: var(--t-pequeno);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-curta),
+    color var(--dur-curta);
+}
+.barra-topo__comandos:hover {
+  border-color: var(--linha-forte);
+  color: var(--texto);
+}
+.barra-topo__comandos:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+.barra-topo__comandos-texto {
+  min-width: 72px;
+  text-align: left;
+}
+.barra-topo__tecla {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio-p);
+  font-family: var(--fonte-numero);
+  font-size: var(--t-micro);
+  color: var(--texto-2);
+}
+@media (max-width: 900px) {
+  .barra-topo__comandos {
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+    padding: 0;
+  }
+  .barra-topo__comandos-texto,
+  .barra-topo__tecla {
+    display: none;
+  }
+}
 
 .conexao {
   display: inline-flex;

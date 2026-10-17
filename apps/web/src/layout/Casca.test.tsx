@@ -50,4 +50,31 @@ describe("casca: teclado e foco", () => {
     },
     PRAZO_MS,
   );
+
+  it(
+    'a paleta abre com "/", acha a tela sem acento e leva até ela',
+    async () => {
+      const usuario = userEvent.setup();
+      abrirApp("/");
+      await screen.findByRole("heading", { level: 1, name: /visão geral/i }, { timeout: 30_000 });
+      await usuario.keyboard("/");
+      const busca = await screen.findByRole("combobox", { name: /buscar comando/i }, { timeout: 30_000 });
+      await usuario.type(busca, "estrategias");
+      await usuario.keyboard("{Enter}");
+      await screen.findByRole("heading", { level: 1, name: /estratégias/i }, { timeout: 30_000 });
+    },
+    PRAZO_MS,
+  );
+
+  it(
+    "g e uma letra vão direto à tela",
+    async () => {
+      const usuario = userEvent.setup();
+      abrirApp("/");
+      await screen.findByRole("heading", { level: 1, name: /visão geral/i }, { timeout: 30_000 });
+      await usuario.keyboard("gp");
+      await screen.findByRole("heading", { level: 1, name: /^risco$/i }, { timeout: 30_000 });
+    },
+    PRAZO_MS,
+  );
 });

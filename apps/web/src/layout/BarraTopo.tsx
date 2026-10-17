@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Moon, OctagonX, Sun } from "lucide-react";
+import { Menu, Moon, OctagonX, Search, Sun } from "lucide-react";
 import { Dinheiro } from "../componentes/Dinheiro";
 import { NumeroAnimado } from "../componentes/NumeroAnimado";
 import { useResumo } from "../ganchos/consultas";
@@ -86,9 +86,12 @@ function ParadaTotal() {
 export function BarraTopo({
   tema,
   abrirMenu,
+  abrirPaleta,
 }: {
   readonly tema: ControleTema;
   readonly abrirMenu: () => void;
+  /** Abre a paleta de comandos (o mesmo que Ctrl/Cmd+Shift+P ou "/"). */
+  readonly abrirPaleta?: () => void;
 }) {
   const claro = tema.tema === "claro";
   return (
@@ -107,6 +110,24 @@ export function BarraTopo({
       <Conexao />
       <Placar />
       <div className="barra-topo__acoes">
+        {abrirPaleta ? (
+          <button
+            type="button"
+            className="barra-topo__comandos"
+            onClick={abrirPaleta}
+            aria-label="Ir para… (paleta de comandos, Ctrl+Shift+P)"
+            aria-keyshortcuts="Control+Shift+P /"
+            title="Paleta de comandos (Ctrl+Shift+P ou /)"
+          >
+            <Search size={16} aria-hidden="true" />
+            <span className="barra-topo__comandos-texto" aria-hidden="true">
+              Ir para…
+            </span>
+            <kbd className="barra-topo__tecla" aria-hidden="true">
+              /
+            </kbd>
+          </button>
+        ) : null}
         <ParadaTotal />
         <button
           type="button"
