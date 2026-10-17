@@ -19,6 +19,7 @@ import { PainelConta } from "./risco/PainelConta";
 import { PainelDivergencias } from "./risco/PainelDivergencias";
 import { PainelOrcamentoIa } from "./risco/PainelOrcamentoIa";
 import { PainelPausas } from "./risco/PainelPausas";
+import { ProximoPasso } from "../componentes/ProximoPasso";
 import { TabelaRolagem } from "../componentes/TabelaRolagem";
 
 function ParadaTotal() {
@@ -95,6 +96,17 @@ function Limites() {
   if (robos.isPending) return <Esqueleto forma="lista" linhas={4} rotulo="Carregando limites" />;
   if (robos.error)
     return <ErroCarregar erro={robos.error} tentarDeNovo={() => void robos.refetch()} compacto />;
+  if (robos.data.length === 0)
+    return (
+      <EstadoVazio
+        compacto
+        icone={Gauge}
+        titulo="Nenhum robô ainda"
+        acao={<ProximoPasso variante="secundario" />}
+      >
+        Cada robô tem seus limites (perda diária, exposição, confiança mínima). Eles aparecem aqui.
+      </EstadoVazio>
+    );
   return (
     <TabelaRolagem rotulo="Limites de cada robô (role para os lados)">
       <table className="tabela">
@@ -187,21 +199,31 @@ function Barreiras() {
   );
 }
 
-/** Limites da conta (todos os robôs da pessoa), pausas, orçamento de IA e o formulário. */
-function Conta() {
+/** O que está acontecendo agora na conta: pausas em vigor e divergências com a corretora. */
+function EstadoConta() {
   const situacao = useSituacaoConta();
   if (situacao.isPending) return <Esqueleto altura={220} rotulo="Carregando os limites da conta" />;
   if (situacao.error)
     return <ErroCarregar erro={situacao.error} tentarDeNovo={() => void situacao.refetch()} />;
+  return (
+    <>
+      <PainelPausas pausas={situacao.data.pausas} agora={situacao.data.em} />
+      <PainelDivergencias />
+    </>
+  );
+}
+
+/** Os números da conta (todos os robôs da pessoa), o orçamento de IA e o formulário de limites. */
+function Conta() {
+  const situacao = useSituacaoConta();
+  if (!situacao.data) return null;
   const s = situacao.data;
   return (
     <>
-      <PainelPausas pausas={s.pausas} agora={s.em} />
       <div className="grade-dupla">
         <PainelConta situacao={s} />
         <PainelOrcamentoIa orcamento={s.orcamentoIa} limites={s.limites} />
       </div>
-      <PainelDivergencias />
       <Painel
         titulo="Limites da conta"
         id="titulo-limites-conta"
@@ -223,8 +245,9 @@ export function Risco() {
       </Cabecalho>
       <ParadaTotal />
       <div className="pilha">
-        <Conta />
+        <EstadoConta />
         <PainelAvisos />
+        <Conta />
         <Painel
           titulo="Limites por robô"
           id="titulo-limites"

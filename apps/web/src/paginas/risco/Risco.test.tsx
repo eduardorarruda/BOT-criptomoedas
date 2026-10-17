@@ -121,3 +121,16 @@ describe("tela Risco: conta, pausas, divergências, orçamento e avisos", () => 
     expect(await screen.findByRole("button", { name: /Tentar de novo/ })).toBeInTheDocument();
   });
 });
+
+describe("tela Risco: o estado vem antes da configuração", () => {
+  it("avisos e divergências aparecem antes do formulário de limites da conta", async () => {
+    montar();
+    const avisos = await painel("Avisos");
+    const divergencias = await painel("Divergências com a corretora");
+    const formulario = await painel("Limites da conta");
+    const antes = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(antes(divergencias, formulario)).toBe(true);
+    expect(antes(avisos, formulario)).toBe(true);
+  });
+});

@@ -45,7 +45,7 @@ export function Estrategias() {
           <nav className="estrategias__lista" aria-label="Suas estratégias">
             {lista.length === 0 ? (
               <EstadoVazio icone={ListTree} titulo="Nenhuma estratégia">
-                Comece pela regra ao lado: um exemplo simples já vem montado.
+                Comece por um modelo, ao lado: ele preenche as regras, e nada é salvo até você criar.
               </EstadoVazio>
             ) : (
               <ul role="list">
@@ -69,6 +69,7 @@ export function Estrategias() {
           <Construtor
             key={editando ?? "nova"}
             inicial={inicial}
+            modelosAbertos={lista.length === 0}
             salvando={salvar.isPending}
             aoSalvar={(id, estrategia) =>
               salvar.mutate(

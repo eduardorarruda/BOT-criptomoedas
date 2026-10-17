@@ -8,6 +8,7 @@ import { Botao } from "../componentes/Botao";
 import { Cabecalho } from "../componentes/Cabecalho";
 import { Dialogo } from "../componentes/Dialogo";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
+import { ProximoPasso } from "../componentes/ProximoPasso";
 import { PrecoAoVivo } from "../componentes/PrecoAoVivo";
 import { Segmentado } from "../componentes/Segmentado";
 import { Selo } from "../componentes/Selo";
@@ -170,7 +171,13 @@ export function Robos() {
       </Cabecalho>
       {robos.isPending ? <Esqueleto forma="cartoes" quantidade={4} rotulo="Carregando robôs" /> : null}
       {robos.error ? <ErroCarregar erro={robos.error} tentarDeNovo={() => void robos.refetch()} /> : null}
-      {robos.data?.length === 0 ? (
+      {robos.data?.length === 0 && estrategias.data?.length === 0 ? (
+        <EstadoVazio icone={Bot} titulo="Nenhum robô ainda" acao={<ProximoPasso />}>
+          Um robô segue uma estratégia. Crie a primeira a partir de um modelo; depois volte aqui para criar o
+          robô, em papel.
+        </EstadoVazio>
+      ) : null}
+      {robos.data?.length === 0 && estrategias.data?.length !== 0 ? (
         <EstadoVazio
           icone={Bot}
           titulo="Nenhum robô ainda"

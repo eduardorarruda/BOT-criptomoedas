@@ -6,6 +6,7 @@ import { AnalisesAoVivo } from "../componentes/decisao/AnalisesAoVivo";
 import { CartaoDecisao } from "../componentes/decisao/CartaoDecisao";
 import { Dinheiro } from "../componentes/Dinheiro";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
+import { ProximoPasso } from "../componentes/ProximoPasso";
 import { CartaoKpi, GradeKpi } from "../componentes/Kpi";
 import {
   AlternarDensidade,
@@ -198,6 +199,8 @@ export function Decisoes() {
   const lista = (v: string | undefined) => (v ? v.split(",") : []);
   const roboUnico = lista(b.robo).length === 1 ? lista(b.robo)[0] : undefined;
   const periodo = descreverPeriodo(b);
+  // Sem nenhuma decisão, os filtros não têm o que filtrar: a tela mostra só o próximo passo.
+  const nadaAinda = consulta.isSuccess && todas.length === 0;
 
   return (
     <>
@@ -205,108 +208,119 @@ export function Decisoes() {
         O diário dos robôs: por que o sinal disparou, o que a IA argumentou, o que o risco decidiu e como
         terminou.
       </Cabecalho>
-      <BarraFiltros
-        rotulo="Filtros das decisões"
-        busca={{
-          valor: b.q,
-          aoMudar: (q) => mudar({ q }, { substituir: true }),
-          rotulo: "Buscar nas decisões",
-          sugestao: "Buscar no raciocínio: RSI, alvo, confiança…",
-        }}
-        ativos={ativos}
-        aoLimpar={limpar}
-        resumo={
-          consulta.data ? (
+      {nadaAinda ? null : (
+        <BarraFiltros
+          rotulo="Filtros das decisões"
+          busca={{
+            valor: b.q,
+            aoMudar: (q) => mudar({ q }, { substituir: true }),
+            rotulo: "Buscar nas decisões",
+            sugestao: "Buscar no raciocínio: RSI, alvo, confiança…",
+          }}
+          ativos={ativos}
+          aoLimpar={limpar}
+          resumo={
+            consulta.data ? (
+              <>
+                <span className="num">{f.filtradas.length}</span> de{" "}
+                <span className="num">{todas.length}</span> decisões · {periodo}
+                {todas.length >= LIMITE_API ? ` (as ${LIMITE_API} mais recentes)` : ""}
+              </>
+            ) : null
+          }
+          extra={<VisoesSalvas tela="decisoes" buscaAtual={b} aoAplicar={aplicar} />}
+          maisAtivos={
+            [b.simbolo, b.acao, b.desfecho, b.agrupar === "dia" ? undefined : b.agrupar].filter(Boolean)
+              .length
+          }
+          maisFiltros={
             <>
-              <span className="num">{f.filtradas.length}</span> de <span className="num">{todas.length}</span>{" "}
-              decisões · {periodo}
-              {todas.length >= LIMITE_API ? ` (as ${LIMITE_API} mais recentes)` : ""}
-            </>
-          ) : null
-        }
-        extra={<VisoesSalvas tela="decisoes" buscaAtual={b} aoAplicar={aplicar} />}
-        maisAtivos={
-          [b.simbolo, b.acao, b.desfecho, b.agrupar === "dia" ? undefined : b.agrupar].filter(Boolean).length
-        }
-        maisFiltros={
-          <>
-            <FiltroChips
-              rotulo="Par"
-              opcoes={f.simbolos}
-              selecionados={lista(b.simbolo)}
-              aoMudar={(v) => mudar({ simbolo: v.join(",") || undefined })}
-            />
-            <FiltroChips
-              rotulo="Ação"
-              opcoes={f.acoes}
-              selecionados={lerLista(b.acao, ACOES)}
-              aoMudar={(v) => mudar({ acao: v.join(",") || undefined })}
-            />
-            <FiltroChips
-              rotulo="Desfecho"
-              opcoes={f.desfechos}
-              selecionados={lerLista(b.desfecho, DESFECHOS)}
-              aoMudar={(v) => mudar({ desfecho: v.join(",") || undefined })}
-            />
-            {visao === "cartoes" ? (
-              <FiltroOpcao
-                rotulo="Agrupar por"
-                rotuloTodos="Dia"
-                opcoes={AGRUPAR}
-                valor={b.agrupar === "dia" ? undefined : b.agrupar}
-                aoMudar={(agrupar) => mudar({ agrupar })}
+              <FiltroChips
+                rotulo="Par"
+                opcoes={f.simbolos}
+                selecionados={lista(b.simbolo)}
+                aoMudar={(v) => mudar({ simbolo: v.join(",") || undefined })}
               />
-            ) : null}
-          </>
-        }
-        ferramentas={
-          <>
-            <SeletorOrdem
-              opcoes={ORDENS}
-              valor={b.ordem ?? "data"}
-              direcao={b.dir ?? "desc"}
-              aoMudar={(ordem, dir) =>
-                mudar({ ordem: ordem === "data" ? undefined : ordem, dir: dir === "desc" ? undefined : dir })
-              }
-            />
-            <AlternarVisao
-              opcoes={[
-                { valor: "cartoes", rotulo: "Cartões", icone: LayoutList },
-                { valor: "tabela", rotulo: "Tabela", icone: Table2 },
-              ]}
-              valor={visao}
-              aoMudar={(v) => mudar({ visao: v === "cartoes" ? undefined : v })}
-            />
-            <AlternarDensidade
-              compacta={compacta}
-              aoMudar={(c) => mudar({ densidade: c ? "compacta" : undefined })}
-            />
-          </>
-        }
-      >
-        <SeletorPeriodo valor={b} aoMudar={(p) => mudar(p)} />
-        <FiltroChips
-          rotulo="Robô"
-          opcoes={f.robos}
-          selecionados={lista(b.robo)}
-          aoMudar={(v) => mudar({ robo: v.join(",") || undefined })}
-        />
-        <FiltroChips
-          rotulo="Estado"
-          opcoes={f.estados}
-          selecionados={lerLista(b.estado, ESTADOS)}
-          aoMudar={(v) => mudar({ estado: v.join(",") || undefined })}
-        />
-      </BarraFiltros>
+              <FiltroChips
+                rotulo="Ação"
+                opcoes={f.acoes}
+                selecionados={lerLista(b.acao, ACOES)}
+                aoMudar={(v) => mudar({ acao: v.join(",") || undefined })}
+              />
+              <FiltroChips
+                rotulo="Desfecho"
+                opcoes={f.desfechos}
+                selecionados={lerLista(b.desfecho, DESFECHOS)}
+                aoMudar={(v) => mudar({ desfecho: v.join(",") || undefined })}
+              />
+              {visao === "cartoes" ? (
+                <FiltroOpcao
+                  rotulo="Agrupar por"
+                  rotuloTodos="Dia"
+                  opcoes={AGRUPAR}
+                  valor={b.agrupar === "dia" ? undefined : b.agrupar}
+                  aoMudar={(agrupar) => mudar({ agrupar })}
+                />
+              ) : null}
+            </>
+          }
+          ferramentas={
+            <>
+              <SeletorOrdem
+                opcoes={ORDENS}
+                valor={b.ordem ?? "data"}
+                direcao={b.dir ?? "desc"}
+                aoMudar={(ordem, dir) =>
+                  mudar({
+                    ordem: ordem === "data" ? undefined : ordem,
+                    dir: dir === "desc" ? undefined : dir,
+                  })
+                }
+              />
+              <AlternarVisao
+                opcoes={[
+                  { valor: "cartoes", rotulo: "Cartões", icone: LayoutList },
+                  { valor: "tabela", rotulo: "Tabela", icone: Table2 },
+                ]}
+                valor={visao}
+                aoMudar={(v) => mudar({ visao: v === "cartoes" ? undefined : v })}
+              />
+              <AlternarDensidade
+                compacta={compacta}
+                aoMudar={(c) => mudar({ densidade: c ? "compacta" : undefined })}
+              />
+            </>
+          }
+        >
+          <SeletorPeriodo valor={b} aoMudar={(p) => mudar(p)} />
+          <FiltroChips
+            rotulo="Robô"
+            opcoes={f.robos}
+            selecionados={lista(b.robo)}
+            aoMudar={(v) => mudar({ robo: v.join(",") || undefined })}
+          />
+          <FiltroChips
+            rotulo="Estado"
+            opcoes={f.estados}
+            selecionados={lerLista(b.estado, ESTADOS)}
+            aoMudar={(v) => mudar({ estado: v.join(",") || undefined })}
+          />
+        </BarraFiltros>
+      )}
       <AnalisesAoVivo robos={robos} roboId={roboUnico} />
       {consulta.isPending ? <Esqueleto forma="lista" quantidade={6} rotulo="Carregando as decisões" /> : null}
       {consulta.error ? (
         <ErroCarregar erro={consulta.error} tentarDeNovo={() => void consulta.refetch()} />
       ) : null}
-      {consulta.data?.length === 0 ? (
-        <EstadoVazio icone={ScrollText} titulo="Nada por aqui">
-          Quando uma estratégia der sinal, a decisão aparece aqui com o raciocínio, as fontes e o veredito do
-          risco.
+      {nadaAinda ? (
+        <EstadoVazio
+          icone={ScrollText}
+          titulo="Nenhuma decisão ainda"
+          acao={robos.length === 0 ? <ProximoPasso /> : undefined}
+        >
+          {robos.length === 0
+            ? "As decisões vêm dos robôs. Quando um estiver ligado e a estratégia der sinal, cada decisão aparece aqui com o raciocínio, as fontes e o veredito do risco."
+            : "Quando uma estratégia der sinal, a decisão aparece aqui com o raciocínio, as fontes e o veredito do risco."}
         </EstadoVazio>
       ) : null}
       {todas.length > 0 && f.filtradas.length === 0 ? <SemResultados aoLimpar={limpar} /> : null}

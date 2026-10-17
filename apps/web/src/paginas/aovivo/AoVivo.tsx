@@ -1,9 +1,10 @@
 import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Bot } from "lucide-react";
 import { useMemo } from "react";
 import type { RegistroAoVivo } from "../../api/esquemas";
 import { Cabecalho } from "../../componentes/Cabecalho";
+import { ProximoPasso } from "../../componentes/ProximoPasso";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../../componentes/Estados";
 import { Segmentado } from "../../componentes/Segmentado";
 import { useAoVivo, useDecisoes, usePosicoes, useRobos } from "../../ganchos/consultas";
@@ -116,15 +117,7 @@ export function AoVivo() {
       {robos.isPending ? <Esqueleto forma="cartoes" quantidade={4} rotulo="Carregando os robôs" /> : null}
       {robos.error ? <ErroCarregar erro={robos.error} tentarDeNovo={() => void robos.refetch()} /> : null}
       {robos.data && lista.length === 0 ? (
-        <EstadoVazio
-          icone={Bot}
-          titulo="Nenhum robô para acompanhar"
-          acao={
-            <Link to="/robos" className="link-seta">
-              Criar um robô
-            </Link>
-          }
-        >
+        <EstadoVazio icone={Bot} titulo="Nenhum robô para acompanhar" acao={<ProximoPasso />}>
           Crie um robô (ele nasce só observando, sem enviar ordem) e volte aqui para ver cada passo dele.
         </EstadoVazio>
       ) : null}
