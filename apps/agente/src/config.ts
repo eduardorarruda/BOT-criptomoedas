@@ -1,3 +1,4 @@
+import { PROVEDORES_EMBEDDINGS, type ProvedorEmbeddings } from "@zentrade/conhecimento";
 import { z } from "zod";
 import { MODELO_PADRAO } from "./analista.js";
 import { lerContas, type ContaClaude } from "./claude-cli/contas.js";
@@ -35,6 +36,11 @@ const Ambiente = z.object({
   AGENTE_CHAT_TIMEOUT_MS: inteiro(10_000, 1_800_000, 300_000),
   AGENTE_CHAT_MAX_SIMULTANEAS: inteiro(1, 64, 4),
   AGENTE_CHAT_MAX_POR_MINUTO: inteiro(1, 600, 20),
+  // Embeddings do conhecimento: nenhum = só busca por palavras. As chaves e URLs de cada
+  // provedor (VOYAGE_*, OLLAMA_*) são lidas por @zentrade/conhecimento, como na API.
+  EMBEDDINGS_PROVEDOR: z
+    .enum(PROVEDORES_EMBEDDINGS, { error: "aceita voyage, ollama ou nenhum" })
+    .default("voyage"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 });
 
@@ -58,6 +64,7 @@ export interface ConfigAgente {
   readonly maxPorMinuto: number;
   readonly usuarioIdPadrao?: string;
   readonly cli: ConfigCliDoAgente;
+  readonly provedorEmbeddings: ProvedorEmbeddings;
   readonly chat: {
     readonly timeoutMs: number;
     readonly maxSimultaneas: number;
@@ -103,6 +110,7 @@ export function configDoAgente(env: Readonly<Record<string, string | undefined>>
     maxSimultaneas: a.AGENTE_MAX_SIMULTANEAS,
     maxPorMinuto: a.AGENTE_MAX_POR_MINUTO,
     nivelLog: a.LOG_LEVEL,
+    provedorEmbeddings: a.EMBEDDINGS_PROVEDOR,
     cli: {
       caminho: a.AGENTE_CLAUDE_CAMINHO,
       contas: contasDe(a.AGENTE_CLAUDE_CONTAS),

@@ -31,6 +31,15 @@ describe("configDoAgente", () => {
     expect(erro).not.toMatch(/curto-demais-segredo/);
   });
 
+  it("aceita EMBEDDINGS_PROVEDOR nenhum (busca só por palavras); o padrão continua voyage", () => {
+    expect(configDoAgente(valido).provedorEmbeddings).toBe("voyage");
+    expect(configDoAgente({ ...valido, EMBEDDINGS_PROVEDOR: "nenhum" }).provedorEmbeddings).toBe("nenhum");
+    expect(configDoAgente({ ...valido, EMBEDDINGS_PROVEDOR: "ollama" }).provedorEmbeddings).toBe("ollama");
+    expect(() => configDoAgente({ ...valido, EMBEDDINGS_PROVEDOR: "openai" })).toThrow(
+      /EMBEDDINGS_PROVEDOR.*voyage, ollama ou nenhum/,
+    );
+  });
+
   it("valida o usuário padrão como uuid", () => {
     expect(() => configDoAgente({ ...valido, ZENTRADE_USUARIO_ID: "ana" })).toThrow(/ZENTRADE_USUARIO_ID/);
     expect(

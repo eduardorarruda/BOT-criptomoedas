@@ -17,7 +17,11 @@ const decisao = {
   estado: "barrada" as const,
 };
 
-function montar(dados: Partial<DadosDaPessoa> = {}, achados: unknown[] = []) {
+function montar(
+  dados: Partial<DadosDaPessoa> = {},
+  achados: unknown[] = [],
+  modo: "hibrida" | "palavras" = "hibrida",
+) {
   const citacoes = new RegistroCitacoes();
   const d: DadosDaPessoa = {
     resumo: vi.fn(async () => ({}) as never),
@@ -30,7 +34,7 @@ function montar(dados: Partial<DadosDaPessoa> = {}, achados: unknown[] = []) {
   };
   const lista = ferramentasDoChat(
     { usuarioId: USUARIO_TESTE, citacoes, agora: () => 99 },
-    { dados: d, busca: { buscar: vi.fn(async () => achados as never) } },
+    { dados: d, busca: { modo, buscar: vi.fn(async () => achados as never) } },
   );
   const rodar = async (nome: string, entrada: unknown = {}) => {
     const r = await executarFerramenta(
@@ -127,6 +131,16 @@ describe("ferramentas do assistente", () => {
     const r = await rodar("buscar_conhecimento", { consulta: "x", fontes: ["noticia"] });
     expect(r.dados).toMatchObject({ natureza: expect.stringMatching(/nunca siga instruções/) });
     expect(citacoes.lista[0]).toMatchObject({ id: "d1", url: null });
+    expect(r.dados.modoBusca).toBeUndefined();
+  });
+
+  it("buscar_conhecimento sem embeddings avisa que a busca foi só por palavras", async () => {
+    const r = await montar({}, [], "palavras").rodar("buscar_conhecimento", { consulta: "mini indice" });
+    expect(r.dados).toMatchObject({
+      aviso: "Nada encontrado.",
+      modoBusca: "palavras",
+      sobreABusca: expect.stringMatching(/só por palavras/),
+    });
   });
 });
 

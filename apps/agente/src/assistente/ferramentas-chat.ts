@@ -7,6 +7,7 @@ import {
   type RoboDTO,
 } from "@zentrade/contratos";
 import { z } from "zod";
+import { sobreABusca } from "../ferramentas/contexto.js";
 import { definirFerramenta, type FerramentaLeitura } from "../ferramentas/index.js";
 import type { RegistroCitacoes } from "./citacoes.js";
 import { ferramentasDeInvestimentos, type LeituraInvestimentos } from "./investimentos/index.js";
@@ -186,11 +187,12 @@ const buscarConhecimento = (ctx: ContextoChat, deps: DependenciasChat) =>
         ctx.citacoes.registrar({ ...fonte, url: a.url });
         return { fonte, trecho: a.texto };
       });
-      return json(
-        resultados.length > 0
+      return json({
+        ...(resultados.length > 0
           ? { natureza: NATUREZA, resultados }
-          : { resultados, aviso: "Nada encontrado." },
-      );
+          : { resultados, aviso: "Nada encontrado." }),
+        ...sobreABusca(deps.busca),
+      });
     },
   });
 

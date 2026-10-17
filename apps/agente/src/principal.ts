@@ -61,12 +61,16 @@ function prepararRedis(config: ConfigAgente, log: Logger) {
 
 /** Banco, RAG, Redis, Claude Code e API da Anthropic, montados a partir do ambiente validado. */
 function montarServicos(config: ConfigAgente, logger: Logger) {
-  const sql = postgres(config.urlBanco, { max: 5 });
+  // Sem onnotice o postgres.js jogaria no console os avisos do full-text (consulta só de stopwords).
+  const sql = postgres(config.urlBanco, { max: 5, onnotice: () => undefined });
   const banco = criarBancoDoAgente({ url: config.urlBanco, maximoConexoes: 5 });
   const busca = criarBuscaHibrida({
     repositorio: criarRepositorioPostgres(sql),
     embeddings: embeddingsDoAmbiente(semVazias(process.env)),
   });
+  if (busca.modo === "palavras") {
+    logger.info("EMBEDDINGS_PROVEDOR=nenhum: o conhecimento é buscado só por palavras");
+  }
   const dependencias = { busca, historico: criarHistoricoPostgres(sql) };
   const { redis, publicador, alertar } = prepararRedis(config, logger);
   // Orçamento de IA da pessoa: vale para as análises e o assistente, nos dois provedores.

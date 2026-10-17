@@ -128,6 +128,27 @@ describe("ferramentas do analista", () => {
       const { dados } = await rodar("buscar_conhecimento", { consulta: "nada" });
       expect(dados.resultados).toEqual([]);
       expect(dados.aviso).toMatch(/nada/i);
+      expect(dados.modoBusca).toBeUndefined();
+    });
+
+    it("sem embeddings, diz que a busca foi só por palavras (com ou sem resultado)", async () => {
+      const comAchado = await rodar(
+        "buscar_conhecimento",
+        { consulta: "taxa" },
+        {},
+        deps({ busca: { modo: "palavras", buscar: vi.fn(async () => [achado]) } }),
+      );
+      expect(comAchado.dados).toMatchObject({
+        modoBusca: "palavras",
+        sobreABusca: expect.stringMatching(/só por palavras.*sem embeddings/),
+      });
+      const vazio = await rodar(
+        "buscar_conhecimento",
+        { consulta: "nada" },
+        {},
+        deps({ busca: { modo: "palavras", buscar: vi.fn(async () => []) } }),
+      );
+      expect(vazio.dados).toMatchObject({ modoBusca: "palavras", aviso: expect.stringMatching(/nada/i) });
     });
   });
 
