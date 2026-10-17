@@ -26,15 +26,16 @@ const SEM_AGENTE: EstadoAgenteAssistente = {
 
 export const TITULO_PADRAO = "Nova conversa";
 
-/** A escolha da pessoa, ou o padrão do agente para quem nunca escolheu. */
+/** A escolha da pessoa (ou o padrão do agente para quem nunca escolheu) e se ela conectou o Claude. */
 async function estadoDa(deps: Dependencias, usuarioId: string): Promise<EstadoAssistente> {
-  const [agente, gravada] = await Promise.all([
+  const [agente, gravada, token] = await Promise.all([
     deps.assistente?.estado() ?? Promise.resolve(null),
     deps.banco.assistente.configGravada(usuarioId),
+    deps.banco.credenciaisClaude.estado(usuarioId),
   ]);
   const base = agente ?? SEM_AGENTE;
   const config: ConfigAssistente = gravada ?? { provedor: base.provedorPadrao, modelo: null, contaCli: null };
-  return { ...base, config, agenteNoAr: agente !== null };
+  return { ...base, config, agenteNoAr: agente !== null, tokenClaudeFinal: token.final };
 }
 
 /** Só aceita provedor e conta que o agente diz ter; sem agente no ar, não dá para conferir. */

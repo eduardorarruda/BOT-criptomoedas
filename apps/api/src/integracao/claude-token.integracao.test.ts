@@ -117,6 +117,9 @@ describe("o Claude da pessoa pela API", () => {
     expect(salvo.json()).toMatchObject({ configurado: true, final: "…wxyz", origem: "colado" });
     expect(salvo.body).not.toContain("sk-ant");
     expect((await pedir(ana, "GET", "/assistente/claude-token")).body).not.toContain("sk-ant");
+    const config = (await pedir(ana, "GET", "/assistente/config")).json();
+    expect(config).toMatchObject({ tokenClaudeFinal: "…wxyz", tokenClaude: { usar: true, conectar: true } });
+    expect((await pedir(beto, "GET", "/assistente/config")).json().tokenClaudeFinal).toBeNull();
   });
 
   it("formato: chave da API recusada com explicação; nada de token no erro", async () => {

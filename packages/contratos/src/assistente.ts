@@ -76,6 +76,8 @@ export const EstadoAssistenteEsquema = EstadoAgenteAssistenteEsquema.extend({
   config: ConfigAssistenteEsquema,
   /** false = a API não alcançou o agente; provedores e contas vêm vazios. */
   agenteNoAr: z.boolean(),
+  /** O final (…abcd) do token do Claude que a pessoa conectou; null = não conectou. */
+  tokenClaudeFinal: z.string().max(8).nullable().optional(),
 });
 export type EstadoAssistente = z.infer<typeof EstadoAssistenteEsquema>;
 
