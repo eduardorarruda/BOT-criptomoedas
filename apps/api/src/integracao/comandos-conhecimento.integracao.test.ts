@@ -148,9 +148,10 @@ describe("importar-conhecimento contra o PostgreSQL (EMBEDDINGS_PROVEDOR=nenhum)
       await api.app.inject({ method: "GET", url: "/api/v1/conhecimento/documentos", headers: comSessao(ana) })
     ).json() as { titulo: string; fonte: string; origem: string; nomeArquivo: string }[];
     expect(docs.map((d) => [d.titulo, d.fonte, d.origem, d.nomeArquivo]).sort()).toEqual([
+      // Markdown leva o primeiro "# título"; texto sem título fica com o nome do arquivo.
+      ["Reversão à média", "estrategia", "arquivo", "reversao-a-media.md"],
       ["Taxas da corretora", "estrategia", "arquivo", "taxas.html"],
       ["regras-de-risco", "estrategia", "arquivo", "regras-de-risco.txt"],
-      ["reversao-a-media", "estrategia", "arquivo", "reversao-a-media.md"],
     ]);
 
     const busca = await api.app.inject({
@@ -163,7 +164,7 @@ describe("importar-conhecimento contra o PostgreSQL (EMBEDDINGS_PROVEDOR=nenhum)
         .json()
         .map((r: { titulo: string }) => r.titulo)
         .sort(),
-    ).toEqual(["Taxas da corretora", "reversao-a-media"]);
+    ).toEqual(["Reversão à média", "Taxas da corretora"]);
   });
 
   it("rodar de novo não duplica; outra pessoa importa a mesma pasta para a própria base", async () => {
