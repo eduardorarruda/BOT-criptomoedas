@@ -135,6 +135,12 @@ export const ResultadoTesteClaudeEsquema = z.object({
 });
 export type ResultadoTesteClaude = z.infer<typeof ResultadoTesteClaudeEsquema>;
 
+/** O que a API devolve no teste: o resultado e o estado já com validada_em ou ultimo_erro. */
+export const TesteTokenClaudeEsquema = ResultadoTesteClaudeEsquema.extend({
+  estado: EstadoTokenClaudeEsquema,
+});
+export type TesteTokenClaude = z.infer<typeof TesteTokenClaudeEsquema>;
+
 /** O que o agente pode fazer com o token de cada pessoa (vai no estado do assistente). */
 export const CapacidadeTokenClaudeEsquema = z.object({
   /** O agente tem o Claude Code e a chave mestra: usa o token guardado de cada pessoa. */

@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
 import { criarBancoDoAgente, type BancoDoAgente } from "@zentrade/banco";
 import { criarBuscaHibrida, criarRepositorioPostgres, embeddingsDoAmbiente } from "@zentrade/conhecimento";
-import type { EstadoAgenteAssistente } from "@zentrade/contratos";
+import { ocultarTokensClaude, type EstadoAgenteAssistente } from "@zentrade/contratos";
 import { Redis } from "ioredis";
 import pino, { type Logger } from "pino";
 import postgres from "postgres";
@@ -187,6 +187,8 @@ async function iniciar(): Promise<void> {
       ],
       censor: "[oculto]",
     },
+    // Última barreira: qualquer sk-ant-… que sobrar na linha sai oculto.
+    hooks: { streamWrite: ocultarTokensClaude },
   });
   const s = montarServicos(config, logger);
   const app = criarServidor({

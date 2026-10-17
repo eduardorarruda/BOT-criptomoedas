@@ -19,6 +19,18 @@ describe("logs sem segredo", () => {
     expect(texto).toContain("[oculto]");
   });
 
+  it("o token do Claude e o código de autorização nunca chegam ao log, nem soltos numa mensagem", () => {
+    const token = `sk-ant-oat01-${"x".repeat(90)}`;
+    const linhas: string[] = [];
+    const log = criarLog("info", { write: (l: string) => void linhas.push(l) });
+    log.info({ req: { body: { token, codigo: "abc#def" } }, corpo: { token } }, `falhou com ${token}`);
+    log.error({ err: new Error(`quebrou: ${token}`) }, "erro");
+    const texto = linhas.join("");
+    expect(texto).not.toContain(token.slice(13));
+    expect(texto).not.toContain("abc#def");
+    expect(texto).toContain("sk-ant-[oculto]");
+  });
+
   it("erro sai sem pilha: tipo, mensagem e código", () => {
     const erro = Object.assign(new TypeError("quebrou"), { code: "E_X" });
     expect(resumirErro(erro)).toEqual({ tipo: "TypeError", mensagem: "quebrou", codigo: "E_X" });

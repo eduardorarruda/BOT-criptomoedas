@@ -11,6 +11,7 @@ import {
   type ProvedorIa,
 } from "@zentrade/contratos";
 import { z } from "zod";
+import { criarClienteTokenClaude, type ClienteTokenClaude } from "./claude-token.js";
 import type { Buscar } from "./tipos.js";
 
 /**
@@ -21,6 +22,8 @@ export interface ClienteAssistente {
   /** `null` = o agente não respondeu (fora do ar ou segredo errado). */
   estado(): Promise<EstadoAgenteAssistente | null>;
   responder(pedido: PedidoRespostaAgente, sinal: AbortSignal): AsyncIterable<EventoRespostaAgente>;
+  /** O Claude de cada pessoa: conectar pelo botão e testar o token guardado. */
+  readonly tokenClaude: ClienteTokenClaude;
 }
 
 export class ErroAgenteAssistente extends Error {
@@ -77,6 +80,7 @@ export function criarClienteAssistente(o: {
   const buscar = o.buscar ?? fetch;
   const cabecalhos = { authorization: `Bearer ${o.segredo}`, "content-type": "application/json" };
   return {
+    tokenClaude: criarClienteTokenClaude(o),
     async estado() {
       try {
         const r = await buscar(`${o.url}/assistente/estado`, {
