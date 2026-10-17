@@ -181,9 +181,11 @@ describe("árvore de regras", () => {
       const longo = contextoDeCandles(
         Array.from({ length: 80 }, (_, i) => {
           const fecha = 100 + 10 * Math.sin(i / 6) + i * 0.1;
+          // candles de 1 h por 3 dias: os indicadores do pregão precisam ver o começo do dia
+          const abertura = Date.parse("2026-10-14T09:00:00-03:00") + i * 3_600_000;
           return {
-            abertura: i,
-            fechamento: i + 1,
+            abertura,
+            fechamento: abertura + 3_599_999,
             abre: dec(fecha - 0.2),
             maxima: dec(fecha + 1),
             minima: dec(fecha - 1),

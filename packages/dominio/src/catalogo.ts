@@ -1,6 +1,7 @@
 import { hlcDe, serieDe, type ContextoMercado } from "./contexto.js";
 import { formatarNumero } from "./formatar.js";
 import { ema, rsi, sma } from "./indicadores.js";
+import { faixaDeAbertura, vwapDoDia } from "./indicadores-sessao.js";
 import { adx, estocastico, macd, momento, roc } from "./momento.js";
 import { atr, bollinger, donchian } from "./volatilidade.js";
 import { volumeMedio, volumeRelativo } from "./volume.js";
@@ -20,6 +21,7 @@ export type SaidaDonchian = "superior" | "inferior" | "meio";
 export type SaidaMacd = "macd" | "sinal" | "histograma";
 export type SaidaEstocastico = "k" | "d";
 export type SaidaAdx = "adx" | "maisDI" | "menosDI";
+export type SaidaFaixaAbertura = "superior" | "inferior" | "meio";
 
 export type OperandoIndicador =
   | { readonly tipo: "indicador"; readonly nome: IndicadorSimples; readonly periodo: number }
@@ -51,10 +53,18 @@ export type OperandoIndicador =
       readonly suavizacao: number;
       readonly saida: SaidaEstocastico;
     }
-  | { readonly tipo: "indicador"; readonly nome: "adx"; readonly periodo: number; readonly saida: SaidaAdx };
+  | { readonly tipo: "indicador"; readonly nome: "adx"; readonly periodo: number; readonly saida: SaidaAdx }
+  | { readonly tipo: "indicador"; readonly nome: "vwap" }
+  | {
+      readonly tipo: "indicador";
+      readonly nome: "faixaAbertura";
+      /** Minutos desde o primeiro candle do dia. */
+      readonly periodo: number;
+      readonly saida: SaidaFaixaAbertura;
+    };
 
 export type Indicador = OperandoIndicador["nome"];
-export type GrupoIndicador = "tendencia" | "momento" | "volatilidade" | "volume";
+export type GrupoIndicador = "tendencia" | "momento" | "volatilidade" | "volume" | "sessao";
 export type ParametroIndicador = "periodo" | "desvios" | "rapida" | "lenta" | "periodoSinal" | "suavizacao";
 
 export interface DefinicaoIndicador {
@@ -204,6 +214,28 @@ export const INDICADORES: Readonly<Record<Indicador, DefinicaoIndicador>> = {
     saidas: [],
     padrao: { tipo: "indicador", nome: "volumeRelativo", periodo: 20 },
   },
+  vwap: {
+    titulo: "VWAP do dia",
+    grupo: "sessao",
+    descricao:
+      "preço médio do dia ponderado pelo volume, desde o primeiro candle do pregão; sem volume (como no índice à vista), não há valor",
+    parametros: [],
+    saidas: [],
+    padrao: { tipo: "indicador", nome: "vwap" },
+  },
+  faixaAbertura: {
+    titulo: "Faixa de abertura",
+    grupo: "sessao",
+    descricao:
+      "maior máxima e menor mínima dos primeiros N minutos do pregão; só existe depois que eles passam",
+    parametros: [{ campo: "periodo", rotulo: "minutos" }],
+    saidas: [
+      { valor: "superior", rotulo: "topo da faixa" },
+      { valor: "inferior", rotulo: "fundo da faixa" },
+      { valor: "meio", rotulo: "meio da faixa" },
+    ],
+    padrao: { tipo: "indicador", nome: "faixaAbertura", periodo: 30, saida: "superior" },
+  },
 };
 
 /** Parâmetros em texto: vírgula entre eles, ou ponto e vírgula se algum tiver casa decimal. */
@@ -241,6 +273,11 @@ const ROTULO_MACD: Readonly<Record<SaidaMacd, string>> = {
   histograma: "histograma do MACD",
 };
 const ROTULO_ADX: Readonly<Record<SaidaAdx, string>> = { adx: "ADX", maisDI: "+DI", menosDI: "−DI" };
+const ROTULO_FAIXA: Readonly<Record<SaidaFaixaAbertura, string>> = {
+  superior: "topo da faixa de abertura",
+  inferior: "fundo da faixa de abertura",
+  meio: "meio da faixa de abertura",
+};
 
 /** O nome que aparece nas explicações: "banda inferior de Bollinger(20, 2)". */
 export function rotuloIndicador(op: OperandoIndicador): string {
@@ -255,6 +292,10 @@ export function rotuloIndicador(op: OperandoIndicador): string {
       return `%${op.saida.toUpperCase()} estocástico(${parametros(op.periodo, op.suavizacao)})`;
     case "adx":
       return `${ROTULO_ADX[op.saida]}(${parametros(op.periodo)})`;
+    case "vwap":
+      return "VWAP do dia";
+    case "faixaAbertura":
+      return `${ROTULO_FAIXA[op.saida]}(${parametros(op.periodo)} min)`;
     default:
       return `${SIGLA[op.nome]}(${parametros(op.periodo)})`;
   }
@@ -304,6 +345,10 @@ export function valorIndicador(
       const v = hlcDe(ctx);
       return (v && adx(v, op.periodo, deslocamento)?.[op.saida]) ?? null;
     }
+    case "vwap":
+      return vwapDoDia(ctx, deslocamento);
+    case "faixaAbertura":
+      return faixaDeAbertura(ctx, op.periodo, deslocamento)?.[op.saida] ?? null;
   }
 }
 
@@ -326,6 +371,7 @@ export function problemasIndicador(op: OperandoIndicador): string[] {
       );
     return problemas;
   }
+  if (op.nome === "vwap") return problemas;
   if (!inteiroEntre(op.periodo, 1, PERIODO_MAXIMO))
     problemas.push(`o período de ${nome} precisa ser inteiro entre 1 e ${PERIODO_MAXIMO}`);
   if (
@@ -351,6 +397,10 @@ export function nomeIndicador(nome: Indicador): string {
       return "estocástico";
     case "adx":
       return "ADX";
+    case "vwap":
+      return "VWAP";
+    case "faixaAbertura":
+      return "faixa de abertura";
     default:
       return SIGLA[nome];
   }

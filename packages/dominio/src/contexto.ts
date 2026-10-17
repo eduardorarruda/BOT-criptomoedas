@@ -16,9 +16,17 @@ export interface ContextoMercado {
   readonly maximas?: readonly number[];
   readonly minimas?: readonly number[];
   readonly volumes?: readonly number[];
+  /**
+   * Abertura de cada candle (ms UTC), alinhada aos fechamentos. Só os indicadores
+   * do pregão (VWAP do dia, faixa de abertura) usam: eles precisam saber onde o dia
+   * começa. Sem ela, esses indicadores dão "dados insuficientes".
+   */
+  readonly instantes?: readonly number[];
+  /** Duração de um candle em ms (sem ela, sai da menor distância entre instantes). */
+  readonly intervaloMs?: number;
 }
 
-export type SerieCandle = "aberturas" | "maximas" | "minimas" | "volumes";
+export type SerieCandle = "aberturas" | "maximas" | "minimas" | "volumes" | "instantes";
 
 /** A série pedida, se veio e está alinhada com os fechamentos. */
 export function serieDe(ctx: ContextoMercado, nome: SerieCandle): readonly number[] | null {
@@ -33,14 +41,21 @@ export function hlcDe(ctx: ContextoMercado): SerieHLC | null {
   return maximas && minimas ? { maximas, minimas, fechamentos: ctx.fechamentos } : null;
 }
 
-/** Contexto completo (OHLCV) a partir de candles fechados. Decimal vira número: é análise. */
+/** Duração de um candle (o fechamento gravado é o último ms dele). */
+export const duracaoDoCandle = (c: Pick<Candle, "abertura" | "fechamento">): number =>
+  c.fechamento - c.abertura + 1;
+
+/** Contexto completo (OHLCV e instantes) a partir de candles fechados. Decimal vira número: é análise. */
 export function contextoDeCandles(candles: readonly Candle[]): ContextoMercado {
+  const primeiro = candles[0];
   return {
     fechamentos: candles.map((c) => c.fecha.toNumber()),
     aberturas: candles.map((c) => c.abre.toNumber()),
     maximas: candles.map((c) => c.maxima.toNumber()),
     minimas: candles.map((c) => c.minima.toNumber()),
     volumes: candles.map((c) => c.volume.toNumber()),
+    instantes: candles.map((c) => c.abertura),
+    ...(primeiro ? { intervaloMs: duracaoDoCandle(primeiro) } : {}),
   };
 }
 
@@ -53,5 +68,7 @@ export function contextoAte(ctx: ContextoMercado, fim: number): ContextoMercado 
     ...(ctx.maximas ? { maximas: ctx.maximas.slice(0, n) } : {}),
     ...(ctx.minimas ? { minimas: ctx.minimas.slice(0, n) } : {}),
     ...(ctx.volumes ? { volumes: ctx.volumes.slice(0, n) } : {}),
+    ...(ctx.instantes ? { instantes: ctx.instantes.slice(0, n) } : {}),
+    ...(ctx.intervaloMs !== undefined ? { intervaloMs: ctx.intervaloMs } : {}),
   };
 }

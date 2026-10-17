@@ -6,6 +6,7 @@ export * from "./dinheiro.js";
 export * from "./estrategia.js";
 export * from "./formatar.js";
 export * from "./indicadores.js";
+export * from "./indicadores-sessao.js";
 export * from "./livro.js";
 export * from "./mercados/index.js";
 export * from "./modelos.js";
