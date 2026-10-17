@@ -7,11 +7,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      // main.ts só liga as peças (testadas uma a uma) ao processo; fila.ts é o Worker do
-      // BullMQ, medido no test:integracao contra um Redis de verdade.
+      // main.ts e comandos/ só ligam as peças (testadas uma a uma) ao processo; fila.ts é o
+      // Worker do BullMQ, medido no test:integracao contra um Redis de verdade.
       exclude: [
         "src/**/*.test.ts",
         "src/main.ts",
+        "src/comandos/**",
         "src/index.ts",
         "src/teste/**",
         "src/integracao/**",
