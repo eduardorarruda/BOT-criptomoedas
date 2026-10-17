@@ -18,6 +18,9 @@ describe("DoisFatores", () => {
     renderizar(<DoisFatores />, await fonteLogada());
     await usuario.click(await screen.findByRole("button", { name: "Ligar o 2FA" }));
     expect(await screen.findByText(/^[A-Z2-7]{4}( [A-Z2-7]{4}){7}$/)).toBeInTheDocument();
+    // No computador, o caminho é escanear o QR com o celular (o link otpauth:// não abre nada no PC).
+    const qr = screen.getByRole("img", { name: /qr code.*app autenticador/i });
+    expect(qr.querySelectorAll("rect").length).toBeGreaterThan(50);
     expect(screen.getByRole("link", { name: /abrir no app autenticador/i })).toHaveAttribute(
       "href",
       expect.stringMatching(/^otpauth:\/\/totp\//),

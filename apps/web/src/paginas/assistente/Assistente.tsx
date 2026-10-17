@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import type { Conversa, MensagemAssistente, MudancaConfigAssistente } from "@zentrade/contratos/esquemas";
 import { ArrowDown, PanelLeft, ShieldCheck, SquarePen } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
@@ -17,7 +18,7 @@ import { emAndamento } from "./estado";
 import { useAlturaDisponivel, useAtalhos, useMidia, useRolagemNoFim } from "./ganchos";
 import { GavetaConversas, useBarraLembrada } from "./Gaveta";
 import { ListaMensagens } from "./Mensagens";
-import { motivoBloqueio, SeletorProvedor } from "./SeletorProvedor";
+import { motivoBloqueio, precisaConectarClaude, SeletorProvedor } from "./SeletorProvedor";
 import { chavesAssistente, useRespostaAoVivo } from "./useRespostaAoVivo";
 
 const NENHUMA: readonly MensagemAssistente[] = [];
@@ -272,6 +273,17 @@ export function Assistente({ api: apiInjetada, conversaInicial = null, aoTrocarC
             </button>
           ) : null}
           <div className="chat__coluna">
+            {precisaConectarClaude(estado.data) ? (
+              <div className="chat__conectar" role="note">
+                <p>
+                  <strong>Conecte o seu Claude.</strong> O Claude Code responde com o plano de cada pessoa; o
+                  seu ainda não está conectado.
+                </p>
+                <Link to="/assistente/configuracoes" className="botao botao--primario chat__conectar-botao">
+                  Conectar meu Claude
+                </Link>
+              </div>
+            ) : null}
             <Compositor
               entradaRef={entradaRef}
               emAndamento={andando}

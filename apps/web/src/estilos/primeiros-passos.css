@@ -251,6 +251,27 @@
   font-family: var(--fonte-numero);
   font-size: var(--t-legenda);
 }
+/* O QR fica sempre preto no branco, nos dois temas: é o que as câmeras leem melhor. */
+.dois-fatores__qr {
+  display: block;
+  width: 176px;
+  height: 176px;
+  margin: 0 0 var(--espaco-3);
+  border-radius: var(--raio-p);
+  fill: #000;
+}
+.dois-fatores__qr-fundo {
+  fill: #fff;
+}
+/* O link otpauth:// só ajuda no celular; no computador ele abre o diálogo do sistema. */
+.dois-fatores__abrir-no-celular {
+  display: none;
+}
+@media (hover: none) and (pointer: coarse) {
+  .dois-fatores__abrir-no-celular {
+    display: inline-flex;
+  }
+}
 .dois-fatores__segredo {
   display: flex;
   flex-wrap: wrap;

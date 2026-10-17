@@ -33,6 +33,15 @@ export function motivoBloqueio(estado: EstadoAssistente | undefined): string | n
   return null;
 }
 
+/**
+ * O Claude Code está escolhido, o servidor usa o token de cada pessoa e esta pessoa ainda
+ * não conectou o dela: o chat mostra o caminho em vez de esconder nas configurações.
+ */
+export function precisaConectarClaude(estado: EstadoAssistente | undefined): boolean {
+  if (!estado?.agenteNoAr || estado.config.provedor !== "cli") return false;
+  return estado.tokenClaude?.usar === true && !estado.tokenClaudeFinal;
+}
+
 function nomeModelo(estado: EstadoAssistente): string {
   const { provedor, modelo } = estado.config;
   if (!modelo) return "modelo padrão";

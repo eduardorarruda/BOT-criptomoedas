@@ -1,5 +1,6 @@
 import { Check, Copy, ExternalLink, ShieldCheck, Smartphone } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import { encode } from "uqr";
 import { mensagemDe } from "../../api/erros";
 import type { SegredoDoisFatores } from "../../api/fonte";
 import { useAvisos } from "../../componentes/Avisos";
@@ -23,8 +24,10 @@ function Chave({ segredo }: { readonly segredo: SegredoDoisFatores }) {
         <span className="dois-fatores__numero" aria-hidden="true">
           1
         </span>
-        No app autenticador (Aegis, Google Authenticator, 1Password…), adicione uma conta com esta chave:
+        No app autenticador do celular (Google Authenticator, Microsoft Authenticator, 2FAS, Aegis…), toque em
+        adicionar e escaneie o QR code. Sem câmera? Digite a chave abaixo.
       </p>
+      <QrCode texto={segredo.uri} />
       <div className="dois-fatores__segredo">
         <code className="num">{emGrupos(segredo.segredo)}</code>
         <Botao
@@ -41,12 +44,38 @@ function Chave({ segredo }: { readonly segredo: SegredoDoisFatores }) {
           Não deu para copiar. Selecione a chave e copie com Ctrl+C.
         </p>
       ) : null}
-      <a className="link-seta" href={segredo.uri}>
+      {/* Só em tela de toque: no computador o otpauth:// não abre app nenhum (vira o diálogo do xdg-open). */}
+      <a className="link-seta dois-fatores__abrir-no-celular" href={segredo.uri}>
         <Smartphone size={14} aria-hidden="true" />
         Abrir no app autenticador (no celular)
         <ExternalLink size={14} aria-hidden="true" />
       </a>
     </div>
+  );
+}
+
+const BORDA_QR = 2;
+
+/** QR do link otpauth:// para o app do celular. Desenhado em SVG com elementos, sem HTML injetado. */
+function QrCode({ texto }: { readonly texto: string }) {
+  const { data, size } = useMemo(() => encode(texto, { ecc: "M" }), [texto]);
+  const lado = size + BORDA_QR * 2;
+  const modulos = data.flatMap((linha, y) =>
+    linha.flatMap((escuro, x) =>
+      escuro ? [<rect key={`${x}-${y}`} x={x + BORDA_QR} y={y + BORDA_QR} width={1} height={1} />] : [],
+    ),
+  );
+  return (
+    <svg
+      className="dois-fatores__qr"
+      viewBox={`0 0 ${lado} ${lado}`}
+      role="img"
+      aria-label="QR code para adicionar o ZenTrade no app autenticador"
+      shapeRendering="crispEdges"
+    >
+      <rect width={lado} height={lado} className="dois-fatores__qr-fundo" />
+      {modulos}
+    </svg>
   );
 }
 

@@ -61,6 +61,28 @@
   padding: var(--espaco-2) 0 var(--espaco-3);
   background: linear-gradient(to top, var(--fundo) 75%, transparent);
 }
+.chat__conectar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-2) var(--espaco-3);
+  margin-bottom: var(--espaco-2);
+  padding: var(--espaco-2) var(--espaco-3);
+  border: 1px solid color-mix(in oklab, var(--marca) 40%, var(--linha));
+  border-radius: var(--raio);
+  background: color-mix(in oklab, var(--marca) 8%, var(--superficie));
+  font-size: var(--t-legenda);
+  line-height: 1.45;
+}
+.chat__conectar p {
+  margin: 0;
+  flex: 1 1 260px;
+}
+.chat__conectar-botao {
+  flex: none;
+  text-decoration: none;
+}
 .chat__nota {
   margin: var(--espaco-2) auto 0;
   max-width: 64ch;
