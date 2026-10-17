@@ -119,6 +119,7 @@ services:
       # A origem da tela servida pelo nginx (CORS e WebSocket só aceitam esta).
       ZENTRADE_ORIGEM_WEB: ${ZENTRADE_ORIGEM_WEB_DOCKER:-http://localhost:${WEB_PORTA_HOST:-8088}}
       COOKIE_SEGURO: ${COOKIE_SEGURO:-true}
+      CLAUDE_EXIGE_2FA: ${CLAUDE_EXIGE_2FA:-true}
       # A tela (nginx) é o proxy na frente da API, na rede privada do Docker; ela sobrescreve
       # o X-Forwarded-For com o IP real da conexão.
       API_PROXY_CONFIAVEL: ${API_PROXY_CONFIAVEL:-loopback,uniquelocal}

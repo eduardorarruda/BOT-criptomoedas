@@ -78,6 +78,8 @@ export const EstadoAssistenteEsquema = EstadoAgenteAssistenteEsquema.extend({
   agenteNoAr: z.boolean(),
   /** O final (…abcd) do token do Claude que a pessoa conectou; null = não conectou. */
   tokenClaudeFinal: z.string().max(8).nullable().optional(),
+  /** Conectar o Claude exige 2FA nesta instância (o operador pode desligar). Ausente = exige. */
+  claudeExige2fa: z.boolean().optional(),
 });
 export type EstadoAssistente = z.infer<typeof EstadoAssistenteEsquema>;
 

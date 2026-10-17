@@ -40,6 +40,11 @@ const EsquemaApi = z.object({
   }),
   ZENTRADE_ORIGEM_WEB: url("ZENTRADE_ORIGEM_WEB", "http://localhost:5173").default("http://localhost:5173"),
   COOKIE_SEGURO: booleano,
+  /**
+   * Conectar o Claude da pessoa exige 2FA ligado (padrão). Quem opera a instância pode
+   * desligar; a senha confirmada nos últimos 5 minutos continua sendo pedida.
+   */
+  CLAUDE_EXIGE_2FA: booleano,
   N8N_URL: url("N8N_URL", "http://127.0.0.1:5678").default("http://127.0.0.1:5678"),
   N8N_WEBHOOK_SEGREDO: z
     .string({ error: "defina N8N_WEBHOOK_SEGREDO (gere com: openssl rand -hex 32)" })

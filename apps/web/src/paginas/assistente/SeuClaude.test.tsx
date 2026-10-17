@@ -140,6 +140,14 @@ describe("Claude Code (seu plano): conectar pelo navegador", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Conectar meu Claude" })).toBeDisabled());
   });
 
+  it("instância que não exige 2FA para o Claude: sem 2FA, o botão fica liberado", async () => {
+    const api = apiFalsa({ estado: { claudeExige2fa: false } });
+    renderizar(<SeuClaude api={api} />, fonte(false));
+    const botao = await screen.findByRole("button", { name: "Conectar meu Claude" });
+    await waitFor(() => expect(botao).toBeEnabled());
+    expect(screen.queryByRole("link", { name: /Ligar o 2FA/ })).toBeNull();
+  });
+
   it("servidor sem a conexão pelo botão: só a opção de colar, já aberta", async () => {
     const api = apiFalsa({ estado: { tokenClaude: { usar: true, conectar: false } } });
     renderizar(<SeuClaude api={api} />, fonte());

@@ -3,7 +3,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { generate } from "otplib";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { criarClienteAssistente } from "../integracoes/assistente.js";
-import { comSessao, montarApi, type Api, type Pessoa } from "./ajuda.js";
+import { comSessao, montarApi, SENHA, type Api, type Pessoa } from "./ajuda.js";
 
 const SEGREDO = "a".repeat(40);
 const TOKEN = `sk-ant-oat01-${"Q".repeat(86)}wxyz`;
@@ -236,5 +236,45 @@ describe("o Claude da pessoa pela API", () => {
     const linhas = await api.banco.conexao.sql<{ acao: string }[]>`
       select acao from auditoria where usuario_id = ${ana.id} and acao like 'token_claude%' order by sequencia`;
     expect(linhas.map((l) => l.acao)).toEqual(["token_claude_salvo", "token_claude_removido"]);
+  });
+});
+
+describe("operador desliga o 2FA obrigatório para o Claude (CLAUDE_EXIGE_2FA=false)", () => {
+  let api: Api;
+  let agente: AgenteFalso;
+  let carla: Pessoa;
+
+  beforeAll(async () => {
+    agente = await subirAgenteFalso();
+    api = await montarApi({
+      ambiente: { CLAUDE_EXIGE_2FA: "false" },
+      extras: () => ({ assistente: criarClienteAssistente({ url: agente.url, segredo: SEGREDO }) }),
+    });
+    carla = await api.pessoa("carla@exemplo.com");
+  });
+  afterAll(async () => {
+    await api.encerrar();
+    await agente.fechar();
+  });
+
+  const pedir = (method: "GET" | "POST", url: string, payload?: unknown) =>
+    api.app.inject({
+      method,
+      url: `/api/v1${url}`,
+      headers: comSessao(carla),
+      ...(payload ? { payload } : {}),
+    });
+
+  it("a tela fica sabendo que o 2FA não é exigido", async () => {
+    expect((await pedir("GET", "/assistente/config")).json()).toMatchObject({ claudeExige2fa: false });
+  });
+
+  it("conectar sem 2FA ainda pede a senha confirmada há pouco, e depois aceita", async () => {
+    api.relogio.t += 6 * 60_000;
+    const semConfirmar = await pedir("POST", "/assistente/claude-token/conexao");
+    expect(semConfirmar.json().erro.codigo).toBe("reautenticacao_necessaria");
+    const confirmou = await pedir("POST", "/sessao/confirmar", { senha: SENHA });
+    expect(confirmou.statusCode).toBe(204);
+    expect((await pedir("POST", "/assistente/claude-token/conexao")).statusCode).toBe(201);
   });
 });

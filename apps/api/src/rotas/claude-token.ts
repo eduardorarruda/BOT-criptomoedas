@@ -28,9 +28,9 @@ const ParamConexao = z.object({ id: z.uuid("conexão não encontrada; comece de 
  * 2FA ligado e identidade confirmada nos últimos 5 minutos. O 2FA vem antes, para não
  * pedir a senha à toa.
  */
-function exigirSegurancaForte(req: FastifyRequest, agora: number): void {
+function exigirSegurancaForte(req: FastifyRequest, agora: number, exige2fa: boolean): void {
   const a = req.autenticacao;
-  if (a?.via === "sessao" && !a.usuario.doisFatores) {
+  if (exige2fa && a?.via === "sessao" && !a.usuario.doisFatores) {
     throw proibido(
       "2fa_obrigatorio",
       "para conectar o seu Claude, ligue antes a verificação em duas etapas (2FA) em Contas e chaves",
@@ -78,7 +78,7 @@ function registrarToken(app: App, deps: Dependencias): void {
       schema: { body: NovoTokenClaudeEsquema, response: { 200: EstadoTokenClaudeEsquema } },
     },
     async (req) => {
-      exigirSegurancaForte(req, deps.agora());
+      exigirSegurancaForte(req, deps.agora(), deps.config.CLAUDE_EXIGE_2FA);
       return repo.salvar(usuarioIdDe(req), req.body.token, "colado");
     },
   );
@@ -111,7 +111,7 @@ function registrarConexao(app: App, deps: Dependencias): void {
       schema: { response: { 201: ConexaoClaudeEsquema } },
     },
     async (req, reply) => {
-      exigirSegurancaForte(req, deps.agora());
+      exigirSegurancaForte(req, deps.agora(), deps.config.CLAUDE_EXIGE_2FA);
       const usuarioId = usuarioIdDe(req);
       return reply.code(201).send(await noAgente(() => agenteDe(deps).conectar(usuarioId)));
     },
@@ -130,7 +130,7 @@ function registrarConexao(app: App, deps: Dependencias): void {
     async (req) => {
       // É este passo que grava o token: a mesma barreira do começo (senão uma sessão roubada
       // terminaria a conexão com o código de outra conta do Claude).
-      exigirSegurancaForte(req, deps.agora());
+      exigirSegurancaForte(req, deps.agora(), deps.config.CLAUDE_EXIGE_2FA);
       const usuarioId = usuarioIdDe(req);
       return noAgente(() => agenteDe(deps).enviarCodigo(usuarioId, req.params.id, req.body.codigo));
     },

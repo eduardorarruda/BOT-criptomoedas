@@ -35,7 +35,13 @@ async function estadoDa(deps: Dependencias, usuarioId: string): Promise<EstadoAs
   ]);
   const base = agente ?? SEM_AGENTE;
   const config: ConfigAssistente = gravada ?? { provedor: base.provedorPadrao, modelo: null, contaCli: null };
-  return { ...base, config, agenteNoAr: agente !== null, tokenClaudeFinal: token.final };
+  return {
+    ...base,
+    config,
+    agenteNoAr: agente !== null,
+    tokenClaudeFinal: token.final,
+    claudeExige2fa: deps.config.CLAUDE_EXIGE_2FA,
+  };
 }
 
 /** Só aceita provedor e conta que o agente diz ter; sem agente no ar, não dá para conferir. */

@@ -23,7 +23,7 @@ import { chavesAssistente } from "./useRespostaAoVivo";
 function bloqueioDe(doisFatores: boolean | undefined, estado: EstadoAssistente | undefined): string | null {
   if (estado && !estado.agenteNoAr)
     return "O agente de IA está fora do ar agora. Tente de novo em instantes.";
-  if (doisFatores === false)
+  if (doisFatores === false && estado?.claudeExige2fa !== false)
     return "Ligue a verificação em duas etapas (2FA) antes de conectar o seu Claude.";
   return null;
 }
@@ -205,7 +205,7 @@ export function SeuClaude({ api: injetada }: { readonly api?: ApiAssistente } = 
       {token.isPending || estado.isPending ? <Esqueleto linhas={3} rotulo="Carregando o seu Claude" /> : null}
       {token.error ? <ErroCarregar erro={token.error} tentarDeNovo={() => void token.refetch()} /> : null}
       {e && (!e.agenteNoAr || !capacidade?.usar) ? <Indisponivel estado={e} /> : null}
-      {e && sessao.data && !sessao.data.doisFatores && !conectado ? (
+      {e && sessao.data && !sessao.data.doisFatores && e.claudeExige2fa !== false && !conectado ? (
         <p className="seu-claude__aviso" role="note">
           <ShieldAlert size={16} aria-hidden="true" />
           <span>

@@ -35,6 +35,7 @@ O ZenTrade guarda chaves de corretora e envia ordens com dinheiro. Este document
   - **Logs:** a saída do CLI nunca é registrada; a API e o agente ocultam `token`/`codigo` e trocam qualquer `sk-ant-…` da linha inteira por `sk-ant-[oculto]` antes de gravar.
   - **Ao usar:** o token vai só no ambiente do processo filho (`CLAUDE_CODE_OAUTH_TOKEN`), nunca na linha de comando; `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` e `ANTHROPIC_BASE_URL` saem do ambiente (elas passariam na frente do token). Cada execução usa uma pasta de configuração nova, apagada no fim. Se o token não abre (chave mestra trocada), o CLI **não** cai para a conta do servidor: falha com a mensagem de reconectar.
 - **Defesa de quem opera:** a mesma `ZENTRADE_CHAVE_MESTRA` na API e no agente, fora do git, com cópia segura (sem ela, os tokens viram lixo e cada pessoa reconecta). Cada pessoa conecta **a própria** conta: o plano é pessoal (termos da Anthropic).
+- **Escolha de quem opera:** `CLAUDE_EXIGE_2FA=false` dispensa o 2FA para conectar o Claude nesta instância (útil numa instalação pessoal em que o 2FA atrapalha). A senha confirmada nos últimos 5 minutos continua obrigatória, mas quem tiver a senha de alguém consegue conectar um Claude na conta dela. Numa instância com várias pessoas, mantenha `true`.
 - **Defesa de cada pessoa:** se suspeitar de vazamento, **Remover** na tela e revogar o token na conta do Claude.
 
 ### Sessão e tokens
