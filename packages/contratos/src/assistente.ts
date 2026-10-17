@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DocumentoEsquema, DocumentoIngeridoEsquema, EstadoBuscaConhecimento } from "./api.js";
+import { CapacidadeTokenClaudeEsquema } from "./claude-token.js";
 import { Id, Instante } from "./comum.js";
 import { FonteEsquema } from "./proposta.js";
 import { FonteDocumento } from "./webhook-esquemas.js";
@@ -65,6 +66,8 @@ export const EstadoAgenteAssistenteEsquema = z.object({
   provedorPadrao: ProvedorIa,
   contasCli: z.array(ContaCliEsquema),
   modelos: z.object({ api: z.array(ModeloSugeridoEsquema), cli: z.array(ModeloSugeridoEsquema) }),
+  /** O Claude de cada pessoa (token guardado). Ausente = agente antigo, sem isso. */
+  tokenClaude: CapacidadeTokenClaudeEsquema.optional(),
 });
 export type EstadoAgenteAssistente = z.infer<typeof EstadoAgenteAssistenteEsquema>;
 
