@@ -51,7 +51,7 @@ export function Sugestoes({
       {SUGESTOES.map(({ texto, icone: Icone }) => (
         <li key={texto}>
           <button type="button" className="sugestao" onClick={() => aoEscolher(texto)} disabled={desligadas}>
-            <Icone size={15} aria-hidden="true" />
+            <Icone size={16} aria-hidden="true" />
             {texto}
           </button>
         </li>

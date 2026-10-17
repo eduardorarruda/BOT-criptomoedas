@@ -7,6 +7,7 @@ import type {
   SituacaoConta,
   SituacaoRede,
 } from "@zentrade/contratos/esquemas";
+import { LIMITES_CONTA_PADRAO } from "@zentrade/contratos/esquemas";
 import { dec } from "@zentrade/dominio";
 
 /**
@@ -182,21 +183,24 @@ const proximoMesUtc = (agora: number): number => {
 
 const atingido = (valor: string, limite: string | null): boolean => limite !== null && dec(valor).gte(limite);
 
-export function demoRisco(inicio: number) {
-  let limites = LIMITES_INICIAIS;
+/** `vazio`: instalação nova (o exemplo com `?vazio=1`), sem robôs, pausas nem avisos. */
+export function demoRisco(inicio: number, { vazio = false }: { readonly vazio?: boolean } = {}) {
+  let limites = vazio ? LIMITES_CONTA_PADRAO : LIMITES_INICIAIS;
   let liberadaEm: number | null = null;
-  let divergencias = divergenciasIniciais(inicio);
-  let avisos = avisosIniciais(inicio);
+  let divergencias = vazio ? [] : divergenciasIniciais(inicio);
+  let avisos = vazio ? [] : avisosIniciais(inicio);
+  const gastoMes = vazio ? "0" : GASTO_MES;
+  const gastoDia = vazio ? "0" : GASTO_DIA;
   const fimSequenciaSol = inicio + 3 * HORA + 40 * MIN;
 
   function orcamento() {
-    const usoMes = limites.orcamentoIaMensalUsd ? dec(GASTO_MES).div(limites.orcamentoIaMensalUsd) : null;
-    const usoDia = limites.orcamentoIaDiarioUsd ? dec(GASTO_DIA).div(limites.orcamentoIaDiarioUsd) : null;
+    const usoMes = limites.orcamentoIaMensalUsd ? dec(gastoMes).div(limites.orcamentoIaMensalUsd) : null;
+    const usoDia = limites.orcamentoIaDiarioUsd ? dec(gastoDia).div(limites.orcamentoIaDiarioUsd) : null;
     const usos = [usoMes, usoDia].filter((u) => u !== null).map((u) => u.toNumber());
     const uso = usos.length > 0 ? Math.max(...usos) : null;
     return {
-      gastoMes: GASTO_MES,
-      gastoDia: GASTO_DIA,
+      gastoMes,
+      gastoDia,
       limiteMensal: limites.orcamentoIaMensalUsd,
       limiteDiario: limites.orcamentoIaDiarioUsd,
       uso,
@@ -206,6 +210,7 @@ export function demoRisco(inicio: number) {
 
   function pausas(agora: number): PausaConta[] {
     const lista: PausaConta[] = [];
+    if (vazio) return lista;
     const perda = dec(TESTNET.perdaDoDia).neg().toFixed();
     if (atingido(perda, limites.perdaDiariaMaxima))
       lista.push({
@@ -272,7 +277,7 @@ export function demoRisco(inicio: number) {
       return {
         limites,
         liberadaEm,
-        redes: [TESTNET, PAPEL],
+        redes: vazio ? [] : [TESTNET, PAPEL],
         pausas: pausas(agora),
         orcamentoIa: orcamento(),
         em: agora,

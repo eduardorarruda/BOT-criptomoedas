@@ -118,3 +118,6 @@ export function rentabilidadeContratada(t: {
       return "Regra da poupança";
   }
 }
+
+/** Reais sem centavos, para eixos de gráfico ("R$ 1.235"). Número já é aproximação aqui. */
+export const reaisCurto = (v: number): string => `R$ ${Math.round(v).toLocaleString("pt-BR")}`;

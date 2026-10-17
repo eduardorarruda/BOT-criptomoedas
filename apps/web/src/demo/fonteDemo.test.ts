@@ -268,3 +268,49 @@ describe("fonte demo: backtests", () => {
     await expect(fonte.backtest("x")).rejects.toMatchObject({ codigo: "nao_encontrado" });
   });
 });
+
+describe("fonte demo: instalação nova (vazio)", () => {
+  it("começa sem nada: listas vazias, resumo zerado e sessão sem 2FA", async () => {
+    const { fonte } = nova({ vazio: true });
+    const usuario = await entrar(fonte);
+    expect(usuario.doisFatores).toBe(false);
+    expect(await fonte.estrategias()).toEqual([]);
+    expect(await fonte.robos()).toEqual([]);
+    expect(await fonte.decisoes()).toEqual([]);
+    expect(await fonte.ordens()).toEqual([]);
+    expect(await fonte.patrimonio()).toEqual([]);
+    expect(await fonte.backtests()).toEqual([]);
+    expect(await fonte.documentos()).toEqual([]);
+    expect(await fonte.contas()).toEqual([]);
+    expect(await fonte.tokens()).toEqual([]);
+    expect(await fonte.automacoes()).toEqual([]);
+    expect(await fonte.aoVivo()).toEqual([]);
+    expect(await fonte.resumo()).toMatchObject({
+      resultadoHoje: "0.00",
+      exposicao: "0.00",
+      robosAtivos: 0,
+      taxasHoje: "0.00",
+    });
+  });
+});
+
+describe("fonte demo: 2FA", () => {
+  it("gera o segredo, recusa código errado e liga com 6 dígitos", async () => {
+    const { fonte } = nova({ vazio: true });
+    await entrar(fonte);
+    const { segredo, uri } = await fonte.iniciarDoisFatores();
+    expect(segredo).toMatch(/^[A-Z2-7]{32}$/);
+    expect(uri).toContain(`secret=${segredo}`);
+    expect(uri.startsWith("otpauth://totp/")).toBe(true);
+    await expect(fonte.ativarDoisFatores("12")).rejects.toMatchObject({ codigo: "codigo_2fa_invalido" });
+    await fonte.ativarDoisFatores("123456");
+    expect((await fonte.obterSessao())?.doisFatores).toBe(true);
+    await expect(fonte.iniciarDoisFatores()).rejects.toMatchObject({ codigo: "2fa_ja_ativo" });
+  });
+
+  it("ativar antes de gerar o segredo explica o que falta", async () => {
+    const { fonte } = nova({ vazio: true });
+    await entrar(fonte);
+    await expect(fonte.ativarDoisFatores("123456")).rejects.toMatchObject({ codigo: "2fa_nao_iniciado" });
+  });
+});

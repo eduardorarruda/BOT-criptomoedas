@@ -16,6 +16,7 @@ import { useMenuRecolhido, type ControleMenu } from "../lib/menuRecolhido";
 import { useTema } from "../lib/tema";
 import { AvisoDemo } from "./AvisoDemo";
 import { BarraTopo } from "./BarraTopo";
+import { useComandosGlobais } from "./ComandosGlobais";
 import { Navegacao } from "./Navegacao";
 import { grupoDe } from "./navegacao";
 import { RodapeLegal } from "./RodapeLegal";
@@ -28,6 +29,7 @@ export function Casca() {
   const [menuAberto, setMenuAberto] = useState(false);
   const { pathname } = useLocation();
   useTempoReal();
+  const comandos = useComandosGlobais({ tema, menu });
 
   return (
     <div className={`app ${menu.recolhido ? "app--recolhida" : ""}`}>
@@ -46,7 +48,11 @@ export function Casca() {
         </aside>
         <div className="principal">
           {fonte.demo ? <AvisoDemo /> : null}
-          <BarraTopo tema={tema} abrirMenu={() => setMenuAberto(true)} />
+          <BarraTopo
+            tema={tema}
+            abrirMenu={() => setMenuAberto(true)}
+            abrirPaleta={comandos.controle.abrirPaleta}
+          />
           <main id="conteudo" className="conteudo" tabIndex={-1}>
             <ContextoSecao.Provider value={grupoDe(pathname)}>
               <TransicaoPagina />
@@ -56,6 +62,7 @@ export function Casca() {
         </div>
       </div>
       <MenuMovel aberto={menuAberto} aoFechar={() => setMenuAberto(false)} />
+      {comandos.elementos}
     </div>
   );
 }
@@ -96,9 +103,9 @@ function RodapeLateral({ menu }: { readonly menu?: ControleMenu }) {
             onClick={menu.alternar}
           >
             {recolhido ? (
-              <PanelLeftOpen size={17} aria-hidden="true" />
+              <PanelLeftOpen size={18} aria-hidden="true" />
             ) : (
-              <PanelLeftClose size={17} aria-hidden="true" />
+              <PanelLeftClose size={18} aria-hidden="true" />
             )}
           </button>
         ) : null}
@@ -114,7 +121,7 @@ function RodapeLateral({ menu }: { readonly menu?: ControleMenu }) {
             })
           }
         >
-          <LogOut size={17} aria-hidden="true" />
+          <LogOut size={18} aria-hidden="true" />
         </button>
       </div>
     </div>

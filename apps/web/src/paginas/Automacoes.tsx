@@ -31,7 +31,7 @@ function Saude() {
         return (
           <li key={s}>
             <span className={`servicos__icone ${ok ? "" : "servicos__icone--fora"}`} aria-hidden="true">
-              <Server size={15} />
+              <Server size={16} />
             </span>
             <span>{SERVICOS[s]}</span>
             <Selo tom={ok ? "marca" : "perda"} icone={ok ? CircleCheck : CircleX}>

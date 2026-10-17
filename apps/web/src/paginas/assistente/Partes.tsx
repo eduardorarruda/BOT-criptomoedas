@@ -15,7 +15,7 @@ import { linkSeguro } from "../../lib/link";
 import { FONTE_DOCUMENTO } from "../../lib/rotulos";
 import { formatarDataHora, formatarHora } from "../../lib/tempo";
 import type { EstadoEtapa } from "./estado";
-import { useCopiar } from "./useCopiar";
+import { useCopiar } from "../../ganchos/useCopiar";
 
 /**
  * Peças de uma resposta: as consultas que o assistente fez (recolhidas numa linha, como
@@ -81,7 +81,7 @@ export function Fontes({ lista }: { readonly lista: readonly FonteCitada[] }) {
   return (
     <div className="fontes">
       <p className="fontes__titulo">
-        <BookOpen size={13} aria-hidden="true" /> {lista.length === 1 ? "1 fonte" : `${lista.length} fontes`}
+        <BookOpen size={14} aria-hidden="true" /> {lista.length === 1 ? "1 fonte" : `${lista.length} fontes`}
       </p>
       <ul className="fontes__lista" aria-label="Fontes consultadas">
         {lista.map((f) => {

@@ -172,9 +172,9 @@ function Degrau({
           <li key={t.id}>
             <button type="button" className="rf-escada__titulo" onClick={() => abrir(t.id)}>
               {t.origem === "pluggy" ? (
-                <PlugZap size={13} aria-label="Pluggy" />
+                <PlugZap size={14} aria-label="Pluggy" />
               ) : (
-                <PencilLine size={13} aria-label="Manual" />
+                <PencilLine size={14} aria-label="Manual" />
               )}
               <span>{t.nome}</span>
               <span className="apagado num">

@@ -18,7 +18,7 @@ export function exigirNumeros(campos: Readonly<Record<string, string>>): void {
     );
   }
 }
-export const reaisCurto = (v: number) => `R$ ${Math.round(v).toLocaleString("pt-BR")}`;
+export { reaisCurto } from "./formato";
 
 /** Último CDI e meta Selic publicados, para começar o formulário (a pessoa ajusta). */
 export function taxasIniciais(i: Indicadores | undefined) {

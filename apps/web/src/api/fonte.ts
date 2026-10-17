@@ -38,6 +38,13 @@ import type {
 export type EventoTela = Evento;
 export type EstadoConexao = "conectando" | "conectado" | "reconectando" | "desligado";
 
+export interface SegredoDoisFatores {
+  /** Base32, para digitar no app autenticador. */
+  readonly segredo: string;
+  /** `otpauth://totp/...`, que abre direto no app (no celular). */
+  readonly uri: string;
+}
+
 export interface Credenciais {
   readonly email: string;
   readonly senha: string;
@@ -89,11 +96,17 @@ export interface OuvintesTempoReal {
 
 export interface Fonte {
   readonly demo: boolean;
+  /** Só no exemplo: abre como instalação nova (`?vazio=1`). As telas com demonstração própria seguem. */
+  readonly vazio?: boolean;
 
   obterSessao(): Promise<Usuario | null>;
   entrar(c: Credenciais): Promise<Usuario>;
   sair(): Promise<void>;
   confirmarIdentidade(c: Confirmacao): Promise<void>;
+  /** Gera o segredo do autenticador (2FA) da pessoa; pede identidade confirmada. */
+  iniciarDoisFatores(): Promise<SegredoDoisFatores>;
+  /** Liga o 2FA com o primeiro código do app autenticador. */
+  ativarDoisFatores(codigo: string): Promise<void>;
 
   resumo(): Promise<Resumo>;
   patrimonio(): Promise<PontoPatrimonio[]>;

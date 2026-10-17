@@ -32,7 +32,7 @@
   min-width: 0;
 }
 .patrimonio-total__rotulo {
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .patrimonio-total__valor {
@@ -46,10 +46,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--espaco-2);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .patrimonio-total__cambio {
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 
 /* donut */
@@ -80,7 +80,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .patrimonio-legenda li {
   display: grid;
@@ -130,7 +130,7 @@
 }
 .patrimonio-classe__titulo {
   flex: 1;
-  font-size: 15px;
+  font-size: var(--t-corpo);
   font-weight: 600;
 }
 .patrimonio-classe__valor {
@@ -143,7 +143,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--espaco-2) var(--espaco-4);
   margin: 0;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .patrimonio-classe__dados dt {
   color: var(--apagado);
@@ -152,7 +152,7 @@
   margin: 0;
 }
 .patrimonio-classe__nota {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   line-height: 1.5;
   color: var(--apagado);
 }
@@ -163,7 +163,7 @@
   display: flex;
   gap: var(--espaco-2);
   align-items: baseline;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .patrimonio-acoes {
@@ -175,7 +175,7 @@
 
 /* como somamos */
 .patrimonio-como {
-  font-size: 13.5px;
+  font-size: var(--t-ui);
   color: var(--apagado);
 }
 .patrimonio-como ul {

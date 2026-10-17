@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Cabecalho, Painel } from "../componentes/Cabecalho";
 import { Dinheiro } from "../componentes/Dinheiro";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
+import { ProximoPasso } from "../componentes/ProximoPasso";
 import { CartaoKpi, GradeKpi } from "../componentes/Kpi";
 import {
   BarraFiltros,
@@ -322,12 +323,27 @@ export function Ordens() {
   const robosDasPosicoes = robosEscolhidos.length
     ? robos.filter((r) => robosEscolhidos.includes(r.id))
     : robos;
+  const cabecalho = (
+    <Cabecalho titulo="Ordens e posições">
+      O que foi para a corretora, o que foi executado e quanto custou em taxas.
+    </Cabecalho>
+  );
+
+  // Instalação nova: sem robô e sem ordem, uma explicação e o próximo passo no lugar de filtros e painéis vazios.
+  if (ordensQ.isSuccess && todas.length === 0 && robosQ.isSuccess && robos.length === 0)
+    return (
+      <>
+        {cabecalho}
+        <EstadoVazio icone={ArrowLeftRight} titulo="Nenhuma ordem ainda" acao={<ProximoPasso />}>
+          Ordens e posições aparecem quando um robô no modo Automático decide, ou quando você aprova uma
+          sugestão. Primeiro, um robô.
+        </EstadoVazio>
+      </>
+    );
 
   return (
     <>
-      <Cabecalho titulo="Ordens e posições">
-        O que foi para a corretora, o que foi executado e quanto custou em taxas.
-      </Cabecalho>
+      {cabecalho}
       <BarraFiltros
         rotulo="Filtros das ordens"
         busca={{

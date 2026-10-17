@@ -91,7 +91,7 @@ function Numeros({ t }: { readonly t: TituloRendaFixa }) {
   if (!p.disponivel) {
     return (
       <p className="rf-cartao__falta">
-        <TriangleAlert size={15} aria-hidden="true" /> {p.motivo}
+        <TriangleAlert size={16} aria-hidden="true" /> {p.motivo}
       </p>
     );
   }
@@ -148,7 +148,7 @@ function Cartao({ t, abrir }: { readonly t: TituloRendaFixa; readonly abrir: (id
       <p className="rf-cartao__rodape apagado">
         {t.emissor ? (
           <>
-            <Building2 size={13} aria-hidden="true" /> {t.emissor} ·{" "}
+            <Building2 size={14} aria-hidden="true" /> {t.emissor} ·{" "}
           </>
         ) : null}
         aplicado em {data(t.dataAplicacao)} ·{" "}

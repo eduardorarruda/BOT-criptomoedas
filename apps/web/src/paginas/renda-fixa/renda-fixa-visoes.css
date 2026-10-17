@@ -41,7 +41,7 @@
 .rf-tabela__sub {
   display: block;
   color: var(--apagado);
-  font-size: 12px;
+  font-size: var(--t-legenda);
   font-weight: 400;
 }
 
@@ -59,12 +59,12 @@
   align-items: center;
   gap: var(--espaco-2);
   margin: 0;
-  font-size: 15px;
+  font-size: var(--t-corpo);
   font-weight: 600;
 }
 .rf-escada__explica {
   margin: 0 0 var(--espaco-2);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .rf-escada__lista {
   display: grid;
@@ -91,7 +91,7 @@
 }
 .rf-escada__marca {
   color: var(--apagado);
-  font-size: 12px;
+  font-size: var(--t-legenda);
   font-weight: 400;
   text-transform: none;
 }
@@ -102,14 +102,14 @@
 .rf-escada__barra {
   display: block;
   height: 10px;
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: linear-gradient(90deg, var(--marca-profunda), var(--marca));
 }
 .rf-escada__degrau--passado .rf-escada__barra {
   background: var(--linha-forte);
 }
 .rf-escada__valor {
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .rf-escada__titulos {
   display: grid;
@@ -130,7 +130,7 @@
   background: none;
   color: var(--texto);
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--t-ui);
   text-align: left;
   cursor: pointer;
 }
@@ -143,7 +143,7 @@
   color: var(--apagado);
 }
 .rf-escada__titulo .apagado {
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .rf-escada__titulo:hover {
   background: var(--superficie-2);

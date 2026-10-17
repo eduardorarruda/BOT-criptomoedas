@@ -8,6 +8,7 @@ import { Botao } from "../componentes/Botao";
 import { Cabecalho } from "../componentes/Cabecalho";
 import { Dialogo } from "../componentes/Dialogo";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
+import { ProximoPasso } from "../componentes/ProximoPasso";
 import { PrecoAoVivo } from "../componentes/PrecoAoVivo";
 import { Segmentado } from "../componentes/Segmentado";
 import { Selo } from "../componentes/Selo";
@@ -16,6 +17,8 @@ import { useAtualizarRobo, useCriarRobo } from "../ganchos/mutacoes";
 import { formatarDinheiro, formatarPercentual } from "../lib/formatar";
 import { MODO_ROBO, REDE } from "../lib/rotulos";
 import { formatarData } from "../lib/tempo";
+import { desfazerDe } from "../lib/mudancaRobo";
+import type { MudancaRobo } from "../api/fonte";
 import { EditorLimites } from "./robos/EditorLimites";
 import { FormRobo } from "./robos/FormRobo";
 
@@ -25,11 +28,34 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
   const atualizar = useAtualizarRobo();
   const avisar = useAvisos();
   const [confirmarAuto, setConfirmarAuto] = useState(false);
-  const mudar = (mudanca: Parameters<typeof atualizar.mutate>[0]["mudanca"], texto: string): void =>
+  const mudar = (mudanca: MudancaRobo, texto: string): void => {
+    // O "antes" é o robô de agora: o Desfazer volta exatamente a ele (nunca ao automático).
+    const desfazer = desfazerDe(robo, mudanca);
     atualizar.mutate(
       { id: robo.id, mudanca },
-      { onSuccess: () => avisar("sucesso", texto), onError: (e) => avisar("erro", mensagemDe(e)) },
+      {
+        onSuccess: () =>
+          avisar(
+            "sucesso",
+            texto,
+            desfazer
+              ? {
+                  rotulo: "Desfazer",
+                  executar: () =>
+                    atualizar.mutate(
+                      { id: robo.id, mudanca: desfazer },
+                      {
+                        onSuccess: () => avisar("info", `Desfeito: ${robo.nome} voltou como estava.`),
+                        onError: (e) => avisar("erro", mensagemDe(e)),
+                      },
+                    ),
+                }
+              : undefined,
+          ),
+        onError: (e) => avisar("erro", mensagemDe(e)),
+      },
     );
+  };
   const l = robo.limites;
 
   return (
@@ -78,7 +104,7 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
       <div className="robo__rodape">
         <details className="robo__limites">
           <summary>
-            <SlidersHorizontal size={15} aria-hidden="true" />
+            <SlidersHorizontal size={16} aria-hidden="true" />
             <span className="so-leitor">Limites de risco:</span>
             <span className="robo__limite">
               perda diária <span className="num">{formatarDinheiro(l.perdaDiariaMaxima)}</span>
@@ -103,7 +129,7 @@ function LinhaRobo({ robo, nomeEstrategia }: { readonly robo: RoboDTO; readonly 
             className="botao botao--fantasma botao--pequeno"
             aria-label={`Ver ${robo.nome} ao vivo`}
           >
-            <Radio size={15} aria-hidden="true" />
+            <Radio size={16} aria-hidden="true" />
             Ao vivo
           </Link>
           <Botao
@@ -170,7 +196,13 @@ export function Robos() {
       </Cabecalho>
       {robos.isPending ? <Esqueleto forma="cartoes" quantidade={4} rotulo="Carregando robôs" /> : null}
       {robos.error ? <ErroCarregar erro={robos.error} tentarDeNovo={() => void robos.refetch()} /> : null}
-      {robos.data?.length === 0 ? (
+      {robos.data?.length === 0 && estrategias.data?.length === 0 ? (
+        <EstadoVazio icone={Bot} titulo="Nenhum robô ainda" acao={<ProximoPasso />}>
+          Um robô segue uma estratégia. Crie a primeira a partir de um modelo; depois volte aqui para criar o
+          robô, em papel.
+        </EstadoVazio>
+      ) : null}
+      {robos.data?.length === 0 && estrategias.isSuccess && estrategias.data.length > 0 ? (
         <EstadoVazio
           icone={Bot}
           titulo="Nenhum robô ainda"

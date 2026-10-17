@@ -35,7 +35,7 @@
 .divergencia__investigar summary {
   cursor: pointer;
   width: fit-content;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .divergencia__investigar ul {
@@ -43,7 +43,7 @@
   padding-left: 1.2em;
   display: grid;
   gap: 4px;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .divergencias__historico {
   display: grid;
@@ -51,7 +51,7 @@
   margin: var(--espaco-3) 0 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .conta-redes {
   display: grid;
@@ -67,7 +67,7 @@
   align-items: center;
   gap: var(--espaco-2);
   margin: 0;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   font-weight: 500;
 }
 .medidor--livre .medidor__topo {
@@ -88,7 +88,7 @@
 }
 .limites-conta__grupo legend {
   padding: 0 6px;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   font-weight: 600;
 }
 .limites-conta__grupo .caixa {
@@ -100,5 +100,5 @@
   display: grid;
   gap: 2px;
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }

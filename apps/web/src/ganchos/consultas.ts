@@ -29,6 +29,16 @@ export function useSaude() {
   return useQuery({ queryKey: chaves.saude, queryFn: () => fonte.saude(), refetchInterval: 30_000 });
 }
 
+/** Contato do controlador (LGPD) e versão: muda só quando quem opera reinicia a API. */
+export function useConfigPublica() {
+  const fonte = useFonte();
+  return useQuery({
+    queryKey: chaves.configPublica,
+    queryFn: () => fonte.configPublica(),
+    staleTime: Infinity,
+  });
+}
+
 export function useEstrategias() {
   const fonte = useFonte();
   return useQuery({ queryKey: chaves.estrategias, queryFn: () => fonte.estrategias() });

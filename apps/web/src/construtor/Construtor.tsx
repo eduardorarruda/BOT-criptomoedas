@@ -15,8 +15,10 @@ export function Construtor({
   inicial,
   salvando,
   aoSalvar,
+  modelosAbertos = false,
 }: {
   readonly inicial: EstadoConstrutor;
+  readonly modelosAbertos?: boolean;
   readonly salvando: boolean;
   readonly aoSalvar: (id: string | null, e: NovaEstrategia) => void;
 }) {
@@ -29,7 +31,10 @@ export function Construtor({
     <div className="construtor">
       <div className="construtor__principal">
         {estado.id === null ? (
-          <Modelos aoUsar={(m) => despachar({ tipo: "carregar", estado: deModelo(m) })} />
+          <Modelos
+            abertoInicial={modelosAbertos}
+            aoUsar={(m) => despachar({ tipo: "carregar", estado: deModelo(m) })}
+          />
         ) : null}
         <CampoTexto
           rotulo="Nome da estratégia"

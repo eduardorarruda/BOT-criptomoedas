@@ -1,7 +1,7 @@
-import type { DecisaoDTO } from "@zentrade/contratos/esquemas";
+import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useFonte } from "../api/contexto";
-import type { EscopoToken } from "../api/esquemas";
+import type { EscopoToken, Usuario } from "../api/esquemas";
 import type {
   Credenciais,
   FiltroDecisoes,
@@ -13,6 +13,7 @@ import type {
   PedidoBacktest,
 } from "../api/fonte";
 import { useComConfirmacao } from "../sessao/Reautenticacao";
+import { mudancaSegura } from "../lib/mudancaRobo";
 import { aplicarDecisao, aplicarRobo } from "./atualizarCache";
 import { chaves } from "./chaves";
 
@@ -61,6 +62,25 @@ function useResponderDecisao(aprovar: boolean) {
 export const useAprovarDecisao = () => useResponderDecisao(true);
 export const useRecusarDecisao = () => useResponderDecisao(false);
 
+/** 2FA: gerar o segredo é ação crítica (pede identidade confirmada); ativar liga na sessão em cache. */
+export function useIniciarDoisFatores() {
+  const fonte = useFonte();
+  const comConfirmacao = useComConfirmacao();
+  return useMutation({ mutationFn: () => comConfirmacao(() => fonte.iniciarDoisFatores()) });
+}
+
+export function useAtivarDoisFatores() {
+  const fonte = useFonte();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (codigo: string) => fonte.ativarDoisFatores(codigo),
+    onSuccess: () =>
+      qc.setQueryData(chaves.sessao, (u: Usuario | null | undefined) =>
+        u ? { ...u, doisFatores: true } : u,
+      ),
+  });
+}
+
 export function useParadaTotal() {
   const fonte = useFonte();
   const qc = useQueryClient();
@@ -88,6 +108,10 @@ export function useCriarRobo() {
   });
 }
 
+/**
+ * Mudar um robô. No sentido seguro (pausar, observar, sugerir) a tela muda na hora e
+ * volta se a API recusar; o resto espera a resposta (lib/mudancaRobo).
+ */
 export function useAtualizarRobo() {
   const fonte = useFonte();
   const qc = useQueryClient();
@@ -95,6 +119,20 @@ export function useAtualizarRobo() {
   return useMutation({
     mutationFn: ({ id, mudanca }: { id: string; mudanca: MudancaRobo }) =>
       comConfirmacao(() => fonte.atualizarRobo(id, mudanca)),
+    onMutate: async ({ id, mudanca }) => {
+      const antes = qc.getQueryData<RoboDTO[]>(chaves.robos)?.find((r) => r.id === id);
+      if (!antes || !mudancaSegura(antes, mudanca)) return { antes: undefined };
+      await qc.cancelQueries({ queryKey: chaves.robos });
+      qc.setQueryData<RoboDTO[]>(chaves.robos, (l) =>
+        l?.map((r) => (r.id === id ? { ...r, ...mudanca } : r)),
+      );
+      return { antes };
+    },
+    // Volta só este robô: outra mudança que deu certo no meio do caminho fica.
+    onError: (_e, { id }, contexto) => {
+      const antes = contexto?.antes;
+      if (antes) qc.setQueryData<RoboDTO[]>(chaves.robos, (l) => l?.map((r) => (r.id === id ? antes : r)));
+    },
     onSuccess: (robo) => {
       qc.setQueryData(chaves.robos, (l: Parameters<typeof aplicarRobo>[0] | undefined) =>
         aplicarRobo(l ?? [], robo),

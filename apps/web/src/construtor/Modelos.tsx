@@ -10,8 +10,15 @@ import { deRegra } from "./arvore";
  * funcionar e onde tendem a falhar. Usar um modelo preenche o construtor; nada é
  * salvo até a pessoa clicar em criar.
  */
-export function Modelos({ aoUsar }: { readonly aoUsar: (m: ModeloEstrategia) => void }) {
-  const [aberto, setAberto] = useState(false);
+export function Modelos({
+  aoUsar,
+  abertoInicial = false,
+}: {
+  readonly aoUsar: (m: ModeloEstrategia) => void;
+  /** Sem nenhuma estratégia ainda, os modelos já vêm abertos: são o melhor começo. */
+  readonly abertoInicial?: boolean;
+}) {
+  const [aberto, setAberto] = useState(abertoInicial);
   return (
     <details className="modelos" open={aberto} onToggle={(e) => setAberto(e.currentTarget.open)}>
       <summary className="modelos__resumo">
@@ -30,7 +37,7 @@ function ListaModelos({ aoUsar }: { readonly aoUsar: (m: ModeloEstrategia) => vo
       <ul role="list" className="modelos__lista">
         {MODELOS.map((m) => (
           <li key={m.id} className="modelos__item">
-            <h3 className="modelos__nome">{m.nome}</h3>
+            <h2 className="modelos__nome">{m.nome}</h2>
             <p className="modelos__regra">
               <strong>Compra quando</strong> {frase(deRegra(m.estrategia.entrada))}.
             </p>

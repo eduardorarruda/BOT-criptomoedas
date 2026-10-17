@@ -2,7 +2,7 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import { memo, type ComponentProps } from "react";
 import ReactMarkdown, { type Components, type ExtraProps } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useCopiar } from "./useCopiar";
+import { useCopiar } from "../../ganchos/useCopiar";
 
 /**
  * A resposta do assistente em Markdown (com tabelas, do GFM). O texto vem de um modelo

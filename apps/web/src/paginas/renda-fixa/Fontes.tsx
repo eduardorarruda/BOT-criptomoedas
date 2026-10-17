@@ -94,7 +94,7 @@ export function RegrasEmVigor() {
   return (
     <details className="rf-regras">
       <summary>
-        <Scale size={15} aria-hidden="true" /> Regras de imposto usadas nas contas (conferidas em{" "}
+        <Scale size={16} aria-hidden="true" /> Regras de imposto usadas nas contas (conferidas em{" "}
         {data(r.verificadoEm)})
       </summary>
       <div className="rf-regras__corpo">

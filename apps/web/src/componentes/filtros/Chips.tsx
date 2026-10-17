@@ -58,7 +58,7 @@ export function FiltroChips<T extends string>({
                 aoMudar(opcoes.map((x) => x.valor).filter((v) => nova.includes(v)));
               }}
             />
-            <Check size={13} strokeWidth={2.4} aria-hidden="true" className="chip__marca" />
+            <Check size={14} strokeWidth={2.4} aria-hidden="true" className="chip__marca" />
             <span>{o.rotulo}</span>
             <Contagem n={o.contagem} />
           </label>

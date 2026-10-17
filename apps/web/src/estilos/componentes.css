@@ -8,7 +8,7 @@
 .marca__palavra {
   display: inline-flex;
   align-items: baseline;
-  font-size: 22px;
+  font-size: var(--t-numero);
   line-height: 1;
 }
 .marca__zen {
@@ -155,7 +155,7 @@
   align-items: center;
   gap: 4px;
   color: var(--apagado);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   text-decoration: none;
 }
 .link-seta:hover {
@@ -220,11 +220,11 @@
   line-height: 1.5;
 }
 .campo__dica {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .campo__erro {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   color: var(--perda);
 }
 .campo--num .campo__entrada,
@@ -234,7 +234,7 @@
   font-variant-numeric: tabular-nums;
 }
 .campo--codigo .campo__entrada {
-  font-size: 22px;
+  font-size: var(--t-numero);
   letter-spacing: 0.4em;
   text-align: center;
 }
@@ -247,7 +247,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-size: 14px;
+  font-size: var(--t-ui);
   cursor: pointer;
 }
 .caixa input,
@@ -286,10 +286,10 @@
   border-radius: var(--raio);
   background: var(--perda-tenue);
   color: var(--perda);
-  font-size: 14px;
+  font-size: var(--t-ui);
 }
 .formulario__secao {
-  font-size: 14px;
+  font-size: var(--t-ui);
   font-weight: 600;
   margin-top: var(--espaco-2);
 }
@@ -305,7 +305,7 @@
   padding: 10px 12px;
   border-radius: var(--raio);
   background: var(--superficie-2);
-  font-size: 14px;
+  font-size: var(--t-ui);
 }
 .nota svg {
   margin-top: 2px;
@@ -345,7 +345,7 @@
   display: block;
   padding: 6px 12px;
   border-radius: 7px;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   font-weight: 550;
   color: var(--apagado);
   white-space: nowrap;

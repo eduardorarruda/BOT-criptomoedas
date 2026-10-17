@@ -38,7 +38,7 @@
 .chat__titulo {
   margin: 0 0 0 var(--espaco-1);
   min-width: 0;
-  font-size: 15px;
+  font-size: var(--t-corpo);
   font-weight: 560;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -64,7 +64,7 @@
 .chat__nota {
   margin: var(--espaco-2) auto 0;
   max-width: 64ch;
-  font-size: 11.5px;
+  font-size: var(--t-legenda);
   line-height: 1.4;
   color: var(--apagado);
   text-align: center;
@@ -85,11 +85,11 @@
   gap: 6px;
   padding: 6px 14px;
   border: 1px solid var(--linha-forte);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--superficie-2);
   color: var(--texto);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   box-shadow: var(--sombra-flutuante);
   cursor: pointer;
 }
@@ -122,7 +122,7 @@
 .saudacao__texto {
   max-width: 54ch;
   margin: 0;
-  font-size: 14.5px;
+  font-size: var(--t-corpo);
   line-height: 1.55;
   color: var(--apagado);
 }
@@ -141,11 +141,11 @@
   gap: var(--espaco-2);
   padding: 8px 14px;
   border: 1px solid var(--linha);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--superficie);
   color: var(--texto);
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--t-ui);
   cursor: pointer;
   transition:
     border-color var(--dur-curta),
@@ -187,7 +187,7 @@
   background: transparent;
   color: var(--texto);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--t-corpo);
   line-height: 1.5;
   resize: none;
   overflow-y: auto;
@@ -204,7 +204,7 @@
 }
 .compositor__motivo {
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   line-height: 1.45;
   color: var(--atencao);
 }
@@ -219,7 +219,7 @@
   min-width: 0;
 }
 .compositor__contador {
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
   font-variant-numeric: tabular-nums;
 }
@@ -233,7 +233,7 @@
   width: 34px;
   height: 34px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--marca);
   color: var(--sobre-marca);
   cursor: pointer;
@@ -270,7 +270,7 @@
   background: transparent;
   color: var(--texto);
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   font-weight: 550;
   cursor: pointer;
 }
@@ -311,7 +311,7 @@
 }
 .seletor__grupo legend {
   padding: 6px 8px 4px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -323,7 +323,7 @@
   gap: 10px;
   padding: 7px 8px;
   border-radius: var(--raio-p);
-  font-size: 13.5px;
+  font-size: var(--t-ui);
   line-height: 1.4;
   cursor: pointer;
 }
@@ -336,7 +336,7 @@
 }
 .seletor__opcao small {
   color: var(--apagado);
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .seletor__opcao--off {
   color: var(--apagado);
@@ -349,7 +349,7 @@
   margin-top: 4px;
   padding: 9px 8px 5px;
   border-top: 1px solid var(--linha);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
   text-decoration: none;
 }
@@ -391,7 +391,7 @@
   background: var(--marca-tenue);
   color: var(--texto);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--t-ui);
   font-weight: 550;
   cursor: pointer;
   transition: background var(--dur-curta);
@@ -424,7 +424,7 @@
   background: transparent;
   color: var(--texto);
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--t-ui);
 }
 .barra__busca input:focus-visible {
   outline: none;
@@ -435,7 +435,7 @@
   border: 1px solid var(--linha);
   border-radius: 4px;
   font-family: var(--fonte-numero);
-  font-size: 10.5px;
+  font-size: var(--t-micro);
   font-weight: 400;
   color: var(--apagado);
   white-space: nowrap;
@@ -448,14 +448,14 @@
 }
 .barra__vazia {
   margin: var(--espaco-4) var(--espaco-2);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   line-height: 1.5;
   color: var(--apagado);
 }
 .barra__grupo-titulo {
   margin: 0;
   padding: var(--espaco-4) var(--espaco-2) var(--espaco-1);
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -499,7 +499,7 @@
   background: transparent;
   color: var(--texto);
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--t-ui);
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -549,7 +549,7 @@
   background: var(--fundo);
   color: var(--texto);
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--t-ui);
 }
 
 /* ---------- gaveta (celular) ---------- */
@@ -607,10 +607,10 @@
 .config__provedor-texto {
   display: grid;
   gap: 2px;
-  font-size: 13.5px;
+  font-size: var(--t-ui);
 }
 .config__termos {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   margin-top: var(--espaco-4);
 }
 .config__aviso {
@@ -619,7 +619,7 @@
   padding: var(--espaco-3);
   border-radius: var(--raio);
   background: var(--perda-tenue);
-  font-size: 13.5px;
+  font-size: var(--t-ui);
 }
 
 /* ---------- telas pequenas e toque ---------- */
@@ -647,16 +647,16 @@
     font-size: 30px;
   }
   .saudacao__texto {
-    font-size: 13.5px;
+    font-size: var(--t-ui);
   }
   .sugestao {
-    font-size: 13px;
+    font-size: var(--t-pequeno);
   }
   .compositor__entrada {
     font-size: 16px; /* 16 px: o iOS não dá zoom ao focar */
   }
   .chat__nota {
-    font-size: 11px;
+    font-size: var(--t-micro);
   }
 }
 @media (hover: none) {

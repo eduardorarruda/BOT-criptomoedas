@@ -1,4 +1,4 @@
-import { data, fracaoPct, pct, reais, rentabilidadeContratada, tomDe } from "./formato";
+import { data, fracaoPct, pct, reais, reaisCurto, rentabilidadeContratada, tomDe } from "./formato";
 
 describe("formatação da renda fixa", () => {
   it("reais em pt-BR, com sinal tipográfico", () => {
@@ -40,5 +40,12 @@ describe("formatação da renda fixa", () => {
     expect(
       rentabilidadeContratada({ indexador: "POUPANCA", percentualIndexador: null, taxaAnual: null }),
     ).toBe("Regra da poupança");
+  });
+});
+
+describe("reaisCurto (eixos dos gráficos)", () => {
+  it("arredonda e agrupa o milhar em pt-BR", () => {
+    expect(reaisCurto(1234.56)).toBe("R$ 1.235");
+    expect(reaisCurto(0)).toBe("R$ 0");
   });
 });

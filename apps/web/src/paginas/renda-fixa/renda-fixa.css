@@ -23,7 +23,7 @@
   background: none;
   color: var(--apagado);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--t-ui);
   cursor: pointer;
   border-radius: var(--raio-p) var(--raio-p) 0 0;
   transition: color var(--dur-curta) var(--curva);
@@ -53,7 +53,7 @@
   grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr));
 }
 .rf-metricas__data {
-  font-size: 20px;
+  font-size: var(--t-titulo-3);
 }
 .rf-grade {
   display: grid;
@@ -88,7 +88,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13.5px;
+  font-size: var(--t-ui);
 }
 .rf-legenda li {
   display: grid;
@@ -104,7 +104,7 @@
 .rf-legenda__valor {
   grid-column: 2;
   color: var(--apagado);
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
 }
 
 .rf-linhas__caixa {
@@ -120,7 +120,7 @@
 .rf-linhas text {
   fill: var(--apagado);
   font-family: var(--fonte-numero);
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-variant-numeric: tabular-nums;
 }
 .rf-linhas__grade line {
@@ -154,7 +154,7 @@
   background: none;
   color: inherit;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--t-ui);
   text-align: left;
   cursor: pointer;
 }
@@ -166,7 +166,7 @@
   min-width: 0;
 }
 .rf-vencimentos__nome {
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
   overflow-wrap: anywhere;
 }
@@ -182,7 +182,7 @@
   margin: 0;
 }
 .rf-taxas__item dt {
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .rf-taxas__item dd {
@@ -191,12 +191,12 @@
 }
 .rf-taxas__item .rf-taxas__data {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 .rf-fonte {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 
@@ -223,7 +223,7 @@
   gap: 10px;
 }
 .rf-item__logo {
-  border-radius: 6px;
+  border-radius: var(--raio-p);
 }
 .rf-item p {
   margin: 0;
@@ -246,7 +246,7 @@
   margin-top: var(--espaco-6);
   padding-top: var(--espaco-4);
   border-top: 1px solid var(--linha);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .rf-regras summary {
   display: inline-flex;

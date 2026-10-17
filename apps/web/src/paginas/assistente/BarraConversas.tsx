@@ -189,7 +189,7 @@ export function BarraConversas({
         </kbd>
       </button>
       <div className="barra__busca">
-        <Search size={15} aria-hidden="true" />
+        <Search size={16} aria-hidden="true" />
         <input
           ref={buscaRef}
           type="search"

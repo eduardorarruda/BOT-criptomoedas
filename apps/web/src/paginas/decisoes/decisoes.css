@@ -3,7 +3,7 @@
   margin-left: 6px;
   color: var(--apagado);
   font-family: var(--fonte-numero);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 [data-densidade="compacta"].linha-do-tempo {
   gap: var(--espaco-4);
@@ -40,7 +40,7 @@
 .diario-tabela__sub {
   display: block;
   color: var(--apagado);
-  font-size: 12px;
+  font-size: var(--t-legenda);
 }
 .diario-tabela__linha--aberta > * {
   background: color-mix(in oklab, var(--superficie-2) 60%, transparent);

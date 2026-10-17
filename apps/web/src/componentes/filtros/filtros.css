@@ -50,7 +50,7 @@
   align-items: center;
   gap: var(--espaco-2) var(--espaco-4);
   min-height: 22px;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .filtros__resumo {
   margin: 0;
@@ -85,10 +85,10 @@
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--marca);
   color: var(--sobre-marca);
-  font-size: 12px;
+  font-size: var(--t-legenda);
   font-weight: 650;
 }
 
@@ -116,7 +116,7 @@
   background: var(--fundo);
   color: var(--texto);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--t-ui);
 }
 .filtro-busca__entrada::-webkit-search-cancel-button {
   appearance: none;
@@ -163,7 +163,7 @@
   margin-bottom: 6px;
   padding: 0;
   color: var(--apagado);
-  font-size: 11.5px;
+  font-size: var(--t-legenda);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -181,10 +181,10 @@
   min-height: 30px;
   padding: 0 12px;
   border: 1px solid var(--linha-forte);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: transparent;
   color: var(--texto);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
@@ -225,13 +225,13 @@
 }
 .chip__contagem {
   color: var(--apagado);
-  font-size: 11.5px;
+  font-size: var(--t-legenda);
 }
 .chip__trilho {
   position: relative;
   width: 26px;
   height: 16px;
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--linha-forte);
   transition: background var(--dur-curta) var(--curva);
 }
@@ -267,14 +267,14 @@
 .filtro-periodo__data {
   display: grid;
   gap: 2px;
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 .filtro-periodo__data .campo__entrada {
   min-height: 34px;
   padding: 4px 8px;
   color: var(--texto);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 
 /* ferramentas: ordem, visão, densidade */
@@ -291,7 +291,7 @@
   background: var(--superficie-2);
   color: var(--texto);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   cursor: pointer;
 }
 .ferramenta-botao:hover:not(:disabled) {
@@ -312,7 +312,7 @@
 }
 .ferramenta-ordem__rotulo {
   color: var(--apagado);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .ferramenta-ordem__selecao {
   min-height: 36px;
@@ -330,7 +330,7 @@
   background-repeat: no-repeat;
   color: var(--texto);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   appearance: none;
   cursor: pointer;
 }
@@ -354,7 +354,7 @@
   padding: 0 10px;
   border-radius: calc(var(--raio) - 3px);
   color: var(--apagado);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   cursor: pointer;
 }
 .ferramenta-visao__opcao:hover {
@@ -402,7 +402,7 @@
 }
 .visoes__vazio {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 .visoes__lista {
   display: grid;
@@ -451,7 +451,7 @@
 .visoes__nova .campo__entrada {
   min-height: 36px;
   padding: 4px 10px;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 
 /* paginação */
@@ -465,7 +465,7 @@
 }
 .paginacao__posicao {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
 }
 
 /* densidade: as listas das telas leem este atributo */

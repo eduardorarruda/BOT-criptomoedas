@@ -32,7 +32,7 @@ export function Navegacao({
                   title={recolhida ? rotulo : undefined}
                 >
                   <span className="navegacao__icone">
-                    <Icone size={17} strokeWidth={1.8} aria-hidden="true" />
+                    <Icone size={18} strokeWidth={1.8} aria-hidden="true" />
                     {recolhida && para === "/decisoes" && aguardando > 0 ? (
                       <span className="navegacao__ponto" aria-hidden="true" />
                     ) : null}

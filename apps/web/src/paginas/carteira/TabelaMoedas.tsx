@@ -89,7 +89,7 @@ function Linha({
           {m.ativo}
           {m.referencia ? <span className="apagado carteira-sub">caixa</span> : null}
           {m.avisos.length > 0 ? (
-            <TriangleAlert size={13} className="atencao" aria-label={`${m.avisos.length} aviso(s)`} />
+            <TriangleAlert size={14} className="atencao" aria-label={`${m.avisos.length} aviso(s)`} />
           ) : null}
         </button>
       </th>

@@ -36,6 +36,20 @@ figure {
   margin: 0;
 }
 
+/* títulos curtos não deixam uma palavra sozinha na última linha; textos curtos quebram melhor */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+.painel__descricao,
+.estado-vazio__titulo,
+.campo__dica,
+.campo__erro,
+.formulario__erro {
+  text-wrap: pretty;
+}
+
 ul[role="list"],
 ol[role="list"] {
   list-style: none;

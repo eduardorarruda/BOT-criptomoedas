@@ -60,6 +60,25 @@ export function estadoInicialDemo(agora: number): EstadoDemo {
   };
 }
 
+/** Instalação nova: nada cadastrado, nada operado (o exemplo com `?vazio=1`). */
+export function estadoVazioDemo(): EstadoDemo {
+  return {
+    usuario: null,
+    confirmadoAte: 0,
+    paradaTotal: false,
+    estrategias: [],
+    robos: [],
+    decisoes: [],
+    ordens: [],
+    patrimonio: [],
+    backtests: [],
+    documentos: [],
+    tokens: [],
+    contas: [],
+    automacoes: [],
+  };
+}
+
 function ordensDoRobo(e: EstadoDemo, roboId: string): OrdemDTO[] {
   const decisoes = new Set(e.decisoes.filter((d) => d.roboId === roboId).map((d) => d.id));
   return e.ordens.filter((o) => decisoes.has(o.decisaoId)).sort((a, b) => a.criadaEm - b.criadaEm);
@@ -113,7 +132,7 @@ export function resumoDemo(e: EstadoDemo, agora: number, precoDe: (simbolo: stri
     .filter((x) => hoje(x.em))
     .map((x) => x.taxaCotacao);
   return {
-    resultadoHoje: naoRealizado.plus(REALIZADO_HOJE).toFixed(2),
+    resultadoHoje: naoRealizado.plus(e.robos.length ? REALIZADO_HOJE : "0").toFixed(2),
     exposicao: exposicao.toFixed(2),
     maiorQueda30d: maiorQueda(e.patrimonio.map((p) => p.valor)),
     robosAtivos: e.robos.filter((r) => !r.pausado).length,

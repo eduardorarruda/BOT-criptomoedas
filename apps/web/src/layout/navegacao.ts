@@ -20,7 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-type RotaApp =
+export type RotaApp =
   | "/"
   | "/aovivo"
   | "/assistente"

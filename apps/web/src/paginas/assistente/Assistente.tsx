@@ -238,7 +238,7 @@ export function Assistente({ api: apiInjetada, conversaInicial = null, aoTrocarC
                 aria-label="Nova conversa"
                 title="Nova conversa"
               >
-                <SquarePen size={17} aria-hidden="true" />
+                <SquarePen size={18} aria-hidden="true" />
               </button>
             </>
           )}
@@ -295,7 +295,7 @@ export function Assistente({ api: apiInjetada, conversaInicial = null, aoTrocarC
               <Sugestoes aoEscolher={(t) => void perguntar(t)} desligadas={bloqueio !== null || andando} />
             ) : null}
             <p className="chat__nota">
-              <ShieldCheck size={13} aria-hidden="true" /> O assistente só lê os seus dados e não envia
+              <ShieldCheck size={14} aria-hidden="true" /> O assistente só lê os seus dados e não envia
               ordens. Não é recomendação de investimento: operar cripto envolve risco de perda, inclusive
               total.
             </p>

@@ -18,7 +18,7 @@ function useFonteRisco(): FonteRisco {
     if (injetada) return injetada;
     if (!fonte.demo) return criarFonteRisco();
     // Uma demonstração por fonte: o estado (limites salvos, divergência aceita) sobrevive à navegação.
-    const existente = demos.get(fonte) ?? criarFonteRiscoDemo();
+    const existente = demos.get(fonte) ?? criarFonteRiscoDemo(Date.now, fonte.vazio);
     demos.set(fonte, existente);
     return existente;
   }, [injetada, fonte]);

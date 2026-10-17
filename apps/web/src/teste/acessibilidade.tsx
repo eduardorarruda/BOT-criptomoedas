@@ -22,17 +22,19 @@ export interface OpcoesTela {
   readonly sessao?: boolean;
   /** Passo depois da primeira tela (ex.: abrir um item pelo link); devolve o título da tela final. */
   readonly depois?: () => Promise<RegExp>;
+  /** Abre o exemplo como instalação nova (sem robôs, estratégias nem histórico). */
+  readonly vazio?: boolean;
 }
 
 export async function violacoesNaTela(
   caminho: string,
   titulo: RegExp,
-  { sessao = true, depois }: OpcoesTela = {},
+  { sessao = true, depois, vazio = false }: OpcoesTela = {},
 ): Promise<string[]> {
   if (sessao) sessionStorage.setItem("zentrade:demo:sessao", "1");
   else sessionStorage.removeItem("zentrade:demo:sessao");
   window.history.pushState({}, "", caminho);
-  render(<App fonte={criarFonteDemo({ latenciaMs: [0, 0], primeiraAnaliseMs: 60_000 })} />);
+  render(<App fonte={criarFonteDemo({ latenciaMs: [0, 0], primeiraAnaliseMs: 60_000, vazio })} />);
   await screen.findByRole("heading", { level: 1, name: titulo }, { timeout: 30_000 });
   if (depois) {
     const final = await depois();

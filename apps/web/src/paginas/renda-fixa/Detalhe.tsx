@@ -10,11 +10,10 @@ import { Dialogo } from "../../componentes/Dialogo";
 import { ErroCarregar, Esqueleto } from "../../componentes/Estados";
 import { useRemoverTitulo, useTituloRF } from "./consultas";
 import type { PremissasTela } from "./fonte";
-import { data, LIQUIDEZ, pct, reais, rentabilidadeContratada, TIPO, tomDe } from "./formato";
+import { data, LIQUIDEZ, pct, reais, rentabilidadeContratada, TIPO, tomDe, reaisCurto } from "./formato";
 import { Legenda, Linhas } from "./Graficos";
 
 const curto = (dia: string) => `${dia.slice(5, 7)}/${dia.slice(2, 4)}`;
-const reaisCurto = (v: number) => `R$ ${Math.round(v).toLocaleString("pt-BR")}`;
 
 type PosicaoCalculada = Extract<TituloDetalhe["posicao"], { disponivel: true }>;
 type Linha = [string, string, (string | undefined)?, string?];

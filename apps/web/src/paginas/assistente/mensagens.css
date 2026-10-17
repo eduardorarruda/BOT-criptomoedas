@@ -20,7 +20,7 @@
   border: 1px solid var(--linha);
   border-radius: 18px 18px 6px 18px;
   background: var(--superficie-2);
-  font-size: 15px;
+  font-size: var(--t-corpo);
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -40,7 +40,7 @@
   display: grid;
   gap: var(--espaco-3);
   min-width: 0;
-  font-size: 15px;
+  font-size: var(--t-corpo);
   line-height: 1.65;
 }
 .msg__pensando {
@@ -81,7 +81,7 @@
   gap: var(--espaco-2);
   padding: 8px 12px;
   border-radius: var(--raio);
-  font-size: 13.5px;
+  font-size: var(--t-ui);
   line-height: 1.45;
 }
 .msg__aviso--erro {
@@ -104,7 +104,7 @@
   align-items: center;
   gap: 2px;
   min-height: 28px;
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
   opacity: 0;
   transition: opacity var(--dur-curta);
@@ -150,7 +150,7 @@
   background: var(--superficie);
   color: var(--apagado);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   cursor: pointer;
   transition:
     color var(--dur-curta),
@@ -191,7 +191,7 @@
   padding: 6px 0 6px 14px;
   border-left: 2px solid var(--linha);
   list-style: none;
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   color: var(--apagado);
 }
 .etapas__lista[hidden] {
@@ -208,7 +208,7 @@
   border-radius: 4px;
   background: var(--superficie-2);
   font-family: var(--fonte-numero);
-  font-size: 11.5px;
+  font-size: var(--t-legenda);
 }
 
 /* ---------- fontes ---------- */
@@ -221,7 +221,7 @@
   align-items: center;
   gap: 6px;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 .fontes__lista {
@@ -239,10 +239,10 @@
   max-width: 100%;
   padding: 4px 10px;
   border: 1px solid var(--linha);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--superficie);
   color: var(--texto);
-  font-size: 12.5px;
+  font-size: var(--t-pequeno);
   line-height: 1.5;
   text-decoration: none;
 }
@@ -250,7 +250,7 @@ a.fonte:hover {
   border-color: var(--marca);
 }
 .fonte__tipo {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   color: var(--marca);
 }
@@ -299,11 +299,11 @@ a.fonte:hover {
   letter-spacing: -0.01em;
 }
 .md h3.md__titulo {
-  font-size: 16.5px;
+  font-size: var(--t-destaque);
   font-weight: 620;
 }
 .md h4.md__titulo {
-  font-size: 15px;
+  font-size: var(--t-corpo);
   font-weight: 620;
 }
 .md * + .md__titulo {
@@ -348,7 +348,7 @@ a.fonte:hover {
   justify-content: space-between;
   padding: 3px 6px 3px 12px;
   border-bottom: 1px solid var(--linha);
-  font-size: 12px;
+  font-size: var(--t-legenda);
   color: var(--apagado);
 }
 .md__codigo-lingua {
@@ -364,7 +364,7 @@ a.fonte:hover {
   background: transparent;
   color: var(--apagado);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--t-legenda);
   cursor: pointer;
 }
 .md__copiar:hover {
@@ -376,7 +376,7 @@ a.fonte:hover {
   padding: 12px 14px;
   overflow-x: auto;
   font-family: var(--fonte-numero);
-  font-size: 13px;
+  font-size: var(--t-pequeno);
   line-height: 1.55;
 }
 .md__codigo pre code {
@@ -391,7 +391,7 @@ a.fonte:hover {
 .md table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: var(--t-ui);
   font-variant-numeric: tabular-nums;
   overflow-wrap: normal;
 }
