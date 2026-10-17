@@ -96,6 +96,8 @@ export interface OuvintesTempoReal {
 
 export interface Fonte {
   readonly demo: boolean;
+  /** Só no exemplo: abre como instalação nova (`?vazio=1`). As telas com demonstração própria seguem. */
+  readonly vazio?: boolean;
 
   obterSessao(): Promise<Usuario | null>;
   entrar(c: Credenciais): Promise<Usuario>;

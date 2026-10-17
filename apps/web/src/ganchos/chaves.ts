@@ -7,6 +7,8 @@ export const chaves = {
   resumo: ["resumo"] as const,
   patrimonio: ["patrimonio"] as const,
   saude: ["saude"] as const,
+  /** A mesma chave da política de privacidade (paginas/privacidade): o cache é um só. */
+  configPublica: ["publico", "config"] as const,
   estrategias: ["estrategias"] as const,
   robos: ["robos"] as const,
   posicoes: ["posicao"] as const,

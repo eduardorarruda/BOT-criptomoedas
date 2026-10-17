@@ -48,8 +48,8 @@ export function criarFonteRisco(cliente: ClienteApi = criarCliente()): FonteRisc
 }
 
 /** A demonstração guarda o estado na memória da aba: salvar, liberar e aceitar mudam a tela. */
-export function criarFonteRiscoDemo(agora: () => number = Date.now): FonteRisco {
-  const demo = demoRisco(agora());
+export function criarFonteRiscoDemo(agora: () => number = Date.now, vazio = false): FonteRisco {
+  const demo = demoRisco(agora(), { vazio });
   return {
     situacao: async () => demo.situacao(agora()),
     salvarLimites: async (l) => demo.salvarLimites(l),

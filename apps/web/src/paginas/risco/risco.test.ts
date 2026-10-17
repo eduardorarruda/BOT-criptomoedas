@@ -126,3 +126,16 @@ describe("conta de demonstração", () => {
     expect(d.marcarLidos(agora)).toBe(0);
   });
 });
+
+describe("demonstração de Risco numa instalação nova", () => {
+  it("vazia: limites padrão, sem redes, pausas, divergências nem avisos", () => {
+    const d = demoRisco(Date.UTC(2026, 9, 10), { vazio: true });
+    const s = d.situacao(Date.UTC(2026, 9, 10, 12));
+    expect(s.limites).toEqual(LIMITES_CONTA_PADRAO);
+    expect(s.redes).toEqual([]);
+    expect(s.pausas).toEqual([]);
+    expect(s.orcamentoIa.gastoMes).toBe("0");
+    expect(d.divergencias()).toEqual([]);
+    expect(d.avisos()).toEqual([]);
+  });
+});

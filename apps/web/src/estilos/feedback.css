@@ -389,6 +389,39 @@
   --tom-aviso: var(--atencao);
   --duracao-aviso: 5000ms;
 }
+/* com ação (Desfazer): fica mais (Avisos.tsx, DURACAO_COM_ACAO) e o botão vem antes do fechar */
+.aviso--com-acao {
+  grid-template-columns: auto 1fr auto auto;
+  --duracao-aviso: 10000ms;
+}
+.aviso__acao {
+  align-self: center;
+  min-height: 32px;
+  margin-block: -6px;
+  padding: 0 var(--espaco-3);
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio-p);
+  background: transparent;
+  color: var(--texto);
+  font-size: var(--t-pequeno);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-curta),
+    border-color var(--dur-curta);
+}
+.aviso__acao:hover {
+  background: var(--superficie-2);
+  border-color: var(--apagado);
+}
+.aviso__acao:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+/* ponteiro ou foco nos avisos: o tempo para, e a barrinha também */
+.avisos--parados .aviso::after {
+  animation-play-state: paused;
+}
 .aviso .botao-icone {
   width: 28px;
   height: 28px;

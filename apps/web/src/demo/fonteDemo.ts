@@ -133,6 +133,7 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
 
   return {
     demo: true,
+    vazio: opcoes.vazio ?? false,
 
     obterSessao: comAtraso(() => estado.usuario),
     entrar: comAtraso((c) => {

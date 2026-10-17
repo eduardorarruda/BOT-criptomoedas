@@ -1,0 +1,329 @@
+/*
+ * "Comece aqui" (Visão geral) e o painel do 2FA (Contas e chaves): a primeira vez.
+ * Calmo de propósito: uma borda de marca, o próximo passo em destaque e o resto quieto.
+ */
+.comece {
+  position: relative;
+  display: grid;
+  gap: var(--espaco-4);
+  padding: var(--espaco-5);
+  border: 1px solid color-mix(in oklab, var(--marca) 28%, var(--linha));
+  border-radius: var(--raio-g);
+  background:
+    radial-gradient(640px 220px at 0% 0%, var(--marca-tenue), transparent 70%), var(--superficie-relevo),
+    var(--superficie);
+  box-shadow: var(--brilho-borda), var(--sombra-1);
+}
+.comece__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espaco-4);
+}
+.comece__cabeca {
+  display: grid;
+  gap: var(--espaco-1);
+  max-width: 60ch;
+}
+.comece__sobretitulo {
+  color: var(--marca);
+}
+.comece__titulo {
+  margin: 0;
+  font-size: var(--t-titulo-2);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.comece__descricao {
+  margin: 0;
+  color: var(--texto-2);
+  text-wrap: pretty;
+}
+.comece__lado {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-4);
+}
+.comece__progresso {
+  display: grid;
+  gap: 6px;
+  min-width: 140px;
+}
+.comece__contagem {
+  font-size: var(--t-pequeno);
+  color: var(--texto-2);
+}
+.comece__barra {
+  display: block;
+  height: 6px;
+  border-radius: var(--raio-pilula);
+  background: var(--superficie-3);
+  overflow: hidden;
+}
+.comece__barra-cheia {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--marca);
+  transition: width var(--dur-longa) var(--curva-saida);
+}
+
+.comece__lista {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--linha-suave);
+}
+.comece__passo {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3) var(--espaco-2);
+  border-bottom: 1px solid var(--linha-suave);
+}
+.comece__passo--proximo {
+  margin-inline: calc(-1 * var(--espaco-2));
+  padding-inline: var(--espaco-4);
+  border-radius: var(--raio);
+  border-bottom-color: transparent;
+  background: var(--marca-tenue);
+}
+.comece__marca {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio-pilula);
+  font-family: var(--fonte-numero);
+  font-size: var(--t-legenda);
+  color: var(--apagado);
+}
+.comece__passo--proximo .comece__marca {
+  border-color: var(--marca);
+  color: var(--marca);
+}
+.comece__passo--feito .comece__marca {
+  border-color: transparent;
+  background: var(--marca);
+  color: var(--sobre-marca);
+}
+.comece__textos {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.comece__passo-titulo {
+  margin: 0;
+  font-size: var(--t-ui);
+  font-weight: 560;
+  color: var(--texto);
+  text-wrap: pretty;
+}
+.comece__passo--feito .comece__passo-titulo {
+  font-weight: 450;
+  color: var(--apagado);
+}
+.comece__passo-descricao {
+  margin: 0;
+  font-size: var(--t-pequeno);
+  color: var(--apagado);
+  text-wrap: pretty;
+}
+.comece__feito {
+  font-size: var(--t-legenda);
+  color: var(--apagado);
+}
+.comece__acao {
+  justify-self: end;
+  white-space: nowrap;
+}
+.comece__alternar {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-1);
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--apagado);
+  font-size: var(--t-pequeno);
+  cursor: pointer;
+}
+.comece__alternar:hover {
+  color: var(--texto);
+}
+.comece__alternar[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.comece__alternar svg {
+  transition: transform var(--dur-curta) var(--curva);
+}
+.comece__operador {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3) var(--espaco-4);
+  border: 1px dashed var(--linha-forte);
+  border-radius: var(--raio);
+  color: var(--apagado);
+}
+.comece__operador code {
+  font-family: var(--fonte-numero);
+  font-size: 0.92em;
+  color: var(--texto-2);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .comece {
+    padding: var(--espaco-4);
+  }
+  .comece__lado {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .comece__progresso {
+    flex: 1;
+  }
+  .comece__passo {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .comece__passo .comece__acao {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .comece__operador {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .comece__operador .comece__acao {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+/* ---------- 2FA (Contas e chaves) ---------- */
+.dois-fatores__inicio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-4);
+}
+.dois-fatores__inicio p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--texto-2);
+  text-wrap: pretty;
+}
+.dois-fatores__passos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espaco-5);
+}
+.dois-fatores__chave,
+.dois-fatores__ativar {
+  display: grid;
+  gap: var(--espaco-3);
+  align-content: start;
+}
+.dois-fatores__passo {
+  display: flex;
+  gap: var(--espaco-2);
+  margin: 0;
+  color: var(--texto-2);
+  text-wrap: pretty;
+}
+.dois-fatores__numero {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--raio-pilula);
+  background: var(--marca-tenue);
+  color: var(--marca);
+  font-family: var(--fonte-numero);
+  font-size: var(--t-legenda);
+}
+.dois-fatores__segredo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+  padding: var(--espaco-3);
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
+  background: var(--superficie-2);
+}
+.dois-fatores__segredo code {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--t-corpo);
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.dois-fatores__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--espaco-3);
+}
+.dois-fatores__codigo {
+  flex: 1;
+  min-width: 160px;
+  max-width: 220px;
+}
+.dois-fatores__linha > .botao {
+  margin-top: 26px;
+}
+@media (max-width: 760px) {
+  .dois-fatores__passos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Visão geral: decisões que aguardam você, no topo ---------- */
+.grade-aguardando {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap: var(--espaco-3);
+}
+
+/* Com mais da metade feita: uma linha só, com o próximo passo */
+.comece--compacto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-3) var(--espaco-5);
+  padding: var(--espaco-3) var(--espaco-4);
+}
+.comece__compacto-cabeca {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-4);
+}
+.comece__titulo-compacto {
+  margin: 0;
+  font-size: var(--t-ui);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.comece--compacto .comece__progresso {
+  min-width: 96px;
+}
+.comece__compacto-proximo {
+  flex: 1 1 220px;
+}
+.comece__compacto-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2) var(--espaco-3);
+}

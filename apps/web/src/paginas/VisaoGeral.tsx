@@ -5,6 +5,8 @@ import {
   Bot,
   Layers,
   ChartLine,
+  Gauge,
+  Hourglass,
   OctagonX,
   Receipt,
   ScrollText,
@@ -21,10 +23,11 @@ import { Minigrafico } from "../componentes/Minigrafico";
 import { NumeroAnimado } from "../componentes/NumeroAnimado";
 import { PrecoAoVivo } from "../componentes/PrecoAoVivo";
 import { Selo } from "../componentes/Selo";
-import { useDecisoes, usePatrimonio, useResumo, useRobos } from "../ganchos/consultas";
+import { useDecisoes, useEstrategias, usePatrimonio, useResumo, useRobos } from "../ganchos/consultas";
 import { formatarCustoIa, formatarDinheiro, sinalDe } from "../lib/formatar";
 import { variacao } from "../lib/metricas";
 import { MODO_ROBO, REDE } from "../lib/rotulos";
+import { ComeceAqui } from "./visao/ComeceAqui";
 
 /** O lightweight-charts (~57 kB) chega depois dos números: a curva não segura a primeira tela. */
 const GraficoLinha = lazy(() =>
@@ -40,70 +43,56 @@ function Metricas() {
   const valores = curva && curva.length > 1 ? curva.map((p) => Number(p.valor)) : null;
   const mes = curva && curva.length > 1 ? variacao(curva.map((p) => p.valor)) : null;
   return (
-    <>
-      {r.paradaTotal ? (
-        <div className="faixa faixa--atencao" role="status">
-          <OctagonX size={18} aria-hidden="true" />
-          <p>
-            <strong>Parada total ligada.</strong> Nenhuma entrada nova até você desligar; o stop e o alvo das
-            posições abertas seguem valendo.
-          </p>
-          <Link to="/risco" className="botao botao--secundario botao--pequeno">
-            Ir para Risco
-          </Link>
-        </div>
-      ) : null}
-      <GradeKpi colunas={5} rotulo="Resumo do dia">
-        <CartaoKpi
-          destaque
-          rotulo="Resultado do dia"
-          valor={<Dinheiro valor={r.resultadoHoje} sinal colorir animar />}
-          nota="inclui posições abertas pelo preço atual"
-          {...(mes
-            ? {
-                variacao: (
-                  <>
-                    {formatarDinheiro(mes.absoluta, { sinal: true })}{" "}
-                    <span className="apagado">em 30 dias</span>
-                  </>
-                ),
-                tomVariacao: sinalDe(mes.absoluta),
-              }
-            : {})}
-          grafico={valores ? <Minigrafico valores={valores} largura={240} altura={44} /> : undefined}
-        />
-        <CartaoKpi
-          icone={Layers}
-          rotulo="Exposição"
-          valor={<NumeroAnimado valor={r.exposicao} formatar={(t) => formatarDinheiro(t)} />}
-          nota="em posições abertas"
-        />
-        <CartaoKpi
-          icone={TrendingDown}
-          rotulo="Maior queda"
-          valor={<Dinheiro valor={queda} colorir />}
-          nota="nos últimos 30 dias"
-        />
-        <CartaoKpi
-          icone={Receipt}
-          rotulo="Taxas hoje"
-          valor={
-            r.taxasHoje ? (
-              <NumeroAnimado valor={r.taxasHoje} formatar={(t) => formatarDinheiro(t)} />
-            ) : (
-              <span className="apagado">—</span>
-            )
-          }
-          nota="pagas à corretora"
-        />
-        <CartaoKpi
-          icone={Sparkles}
-          rotulo="Custo de IA hoje"
-          valor={<NumeroAnimado valor={r.custoIaHoje} formatar={formatarCustoIa} />}
-          nota="análises do agente"
-        />
-      </GradeKpi>
-    </>
+    <GradeKpi colunas={5} rotulo="Resumo do dia">
+      <CartaoKpi
+        destaque
+        rotulo="Resultado do dia"
+        valor={<Dinheiro valor={r.resultadoHoje} sinal colorir animar />}
+        nota="inclui posições abertas pelo preço atual"
+        {...(mes
+          ? {
+              variacao: (
+                <>
+                  {formatarDinheiro(mes.absoluta, { sinal: true })}{" "}
+                  <span className="apagado">em 30 dias</span>
+                </>
+              ),
+              tomVariacao: sinalDe(mes.absoluta),
+            }
+          : {})}
+        grafico={valores ? <Minigrafico valores={valores} largura={240} altura={44} /> : undefined}
+      />
+      <CartaoKpi
+        icone={Layers}
+        rotulo="Exposição"
+        valor={<NumeroAnimado valor={r.exposicao} formatar={(t) => formatarDinheiro(t)} />}
+        nota="em posições abertas"
+      />
+      <CartaoKpi
+        icone={TrendingDown}
+        rotulo="Maior queda"
+        valor={<Dinheiro valor={queda} colorir />}
+        nota="nos últimos 30 dias"
+      />
+      <CartaoKpi
+        icone={Receipt}
+        rotulo="Taxas hoje"
+        valor={
+          r.taxasHoje ? (
+            <NumeroAnimado valor={r.taxasHoje} formatar={(t) => formatarDinheiro(t)} />
+          ) : (
+            <span className="apagado">—</span>
+          )
+        }
+        nota="pagas à corretora"
+      />
+      <CartaoKpi
+        icone={Sparkles}
+        rotulo="Custo de IA hoje"
+        valor={<NumeroAnimado valor={r.custoIaHoje} formatar={formatarCustoIa} />}
+        nota="análises do agente"
+      />
+    </GradeKpi>
   );
 }
 
@@ -137,10 +126,23 @@ function Curva() {
 
 function Robos() {
   const { data, isPending, error, refetch } = useRobos();
+  const semEstrategia = useEstrategias().data?.length === 0;
   if (isPending) return <Esqueleto forma="lista" linhas={4} rotulo="Carregando robôs" />;
   if (error) return <ErroCarregar erro={error} tentarDeNovo={() => void refetch()} compacto />;
   if (data.length === 0)
-    return (
+    return semEstrategia ? (
+      <EstadoVazio
+        icone={Bot}
+        titulo="Nenhum robô ainda"
+        acao={
+          <Link to="/estrategias" className="botao botao--primario">
+            Criar uma estratégia
+          </Link>
+        }
+      >
+        Um robô segue uma estratégia. Comece criando uma a partir de um modelo; depois o robô, em papel.
+      </EstadoVazio>
+    ) : (
       <EstadoVazio
         icone={Bot}
         titulo="Nenhum robô ainda"
@@ -182,21 +184,59 @@ function Robos() {
   );
 }
 
-function Decisoes() {
+/**
+ * O que pede ação agora, antes de qualquer número: a parada total ligada e as decisões
+ * que esperam aprovação (elas expiram). Sem nada pendente, não ocupa espaço.
+ */
+function PedeAcao() {
   const robos = useRobos().data ?? [];
-  const aguardando = useDecisoes({ estado: "aguardando_aprovacao" });
-  const ultimas = useDecisoes({ limite: 6 });
+  const paradaTotal = useResumo().data?.paradaTotal ?? false;
+  const aguardando = useDecisoes({ estado: "aguardando_aprovacao" }).data ?? [];
+  if (!paradaTotal && aguardando.length === 0) return null;
   return (
-    <div className="pilha">
-      {aguardando.data?.length ? (
-        <Painel titulo="Aguardando você" id="titulo-aguardando">
-          <div className="pilha">
-            {aguardando.data.map((d) => (
+    <>
+      {paradaTotal ? (
+        <div className="faixa faixa--atencao" role="status">
+          <OctagonX size={18} aria-hidden="true" />
+          <p>
+            <strong>Parada total ligada.</strong> Nenhuma entrada nova até você desligar; o stop e o alvo das
+            posições abertas seguem valendo.
+          </p>
+          <Link to="/risco" className="botao botao--secundario botao--pequeno">
+            Ir para Risco
+          </Link>
+        </div>
+      ) : null}
+      {aguardando.length ? (
+        <Painel
+          titulo="Aguardando você"
+          id="titulo-aguardando"
+          icone={Hourglass}
+          variante="atencao"
+          descricao={
+            aguardando.length === 1
+              ? "Uma ordem espera sua resposta antes de ir para a corretora."
+              : `${aguardando.length} ordens esperam sua resposta antes de ir para a corretora.`
+          }
+        >
+          <div className="grade-aguardando">
+            {aguardando.map((d) => (
               <CartaoDecisao key={d.id} decisao={d} robo={robos.find((r) => r.id === d.roboId)} compacto />
             ))}
           </div>
         </Painel>
       ) : null}
+    </>
+  );
+}
+
+function Decisoes() {
+  const robos = useRobos().data ?? [];
+  const ultimas = useDecisoes({ limite: 6 });
+  // As pendentes já estão em "Aguardando você", no topo: aqui não se repetem.
+  const respondidas = ultimas.data?.filter((d) => d.estado !== "aguardando_aprovacao");
+  return (
+    <div className="pilha">
       <AnalisesAoVivo robos={robos} />
       <Painel
         titulo="Últimas decisões"
@@ -212,13 +252,15 @@ function Decisoes() {
         {ultimas.error ? (
           <ErroCarregar erro={ultimas.error} tentarDeNovo={() => void ultimas.refetch()} compacto />
         ) : null}
-        {ultimas.data?.length === 0 ? (
-          <EstadoVazio icone={ScrollText} titulo="Nenhuma decisão ainda">
-            Quando uma estratégia der sinal, a decisão aparece aqui com o porquê.
+        {respondidas?.length === 0 ? (
+          <EstadoVazio icone={ScrollText} titulo="Nenhuma decisão ainda" compacto>
+            {robos.length === 0
+              ? "Quando um robô estiver ligado e a estratégia der sinal, a decisão aparece aqui com o porquê."
+              : "Quando uma estratégia der sinal, a decisão aparece aqui com o porquê."}
           </EstadoVazio>
         ) : null}
         <div className="pilha pilha--justa">
-          {ultimas.data?.map((d) => (
+          {respondidas?.map((d) => (
             <CartaoDecisao key={d.id} decisao={d} robo={robos.find((r) => r.id === d.roboId)} compacto />
           ))}
         </div>
@@ -227,33 +269,69 @@ function Decisoes() {
   );
 }
 
+/**
+ * Instalação nova (nenhum robô, nenhum histórico): no lugar de indicadores zerados e
+ * gráficos vazios, uma linha que diz quando o painel enche e o próximo passo.
+ */
+function PainelVazio() {
+  const semEstrategia = useEstrategias().data?.length === 0;
+  return (
+    <EstadoVazio
+      icone={Gauge}
+      titulo="O painel enche quando o primeiro robô ligar"
+      acao={
+        semEstrategia ? (
+          <Link to="/estrategias" className="botao botao--secundario">
+            Criar uma estratégia
+          </Link>
+        ) : (
+          <Link to="/robos" className="botao botao--secundario">
+            Criar um robô
+          </Link>
+        )
+      }
+    >
+      Resultado do dia, curva de patrimônio e decisões aparecem aqui assim que um robô estiver ligado, mesmo
+      em papel.
+    </EstadoVazio>
+  );
+}
+
 export function VisaoGeral() {
+  const robos = useRobos().data;
+  const curva = usePatrimonio().data;
+  const instalacaoNova = robos?.length === 0 && curva !== undefined && curva.length < 2;
   return (
     <>
       <Cabecalho titulo="Visão geral">
         Como estão seus robôs hoje, com perdas, taxas e custo de IA à vista.
       </Cabecalho>
-      <Metricas />
-      <div className="grade-visao">
-        <div className="pilha">
-          <Painel titulo="Curva de patrimônio" id="titulo-curva" icone={ChartLine} variante="destaque">
-            <Curva />
-          </Painel>
-          <Painel
-            titulo="Robôs"
-            id="titulo-robos"
-            icone={Bot}
-            acoes={
-              <Link to="/robos" className="link-seta">
-                Gerenciar <ArrowRight size={14} aria-hidden="true" />
-              </Link>
-            }
-          >
-            <Robos />
-          </Painel>
+      <ComeceAqui />
+      <PedeAcao />
+      {instalacaoNova ? <PainelVazio /> : null}
+      {!instalacaoNova ? <Metricas /> : null}
+      {!instalacaoNova ? (
+        <div className="grade-visao">
+          <div className="pilha">
+            <Painel titulo="Curva de patrimônio" id="titulo-curva" icone={ChartLine} variante="destaque">
+              <Curva />
+            </Painel>
+            <Painel
+              titulo="Robôs"
+              id="titulo-robos"
+              icone={Bot}
+              acoes={
+                <Link to="/robos" className="link-seta">
+                  Gerenciar <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              }
+            >
+              <Robos />
+            </Painel>
+          </div>
+          <Decisoes />
         </div>
-        <Decisoes />
-      </div>
+      ) : null}
     </>
   );
 }
