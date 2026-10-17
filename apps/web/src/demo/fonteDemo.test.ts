@@ -88,6 +88,16 @@ describe("fonte demo: ações críticas", () => {
     expect((await fonte.contas()).map((c) => c.id)).not.toContain(conta.id);
   });
 
+  it("criar token de API pede reautenticação, como a API de verdade", async () => {
+    const { fonte, relogio } = nova();
+    await entrar(fonte);
+    await expect(fonte.criarToken("cli", "leitura")).resolves.toMatchObject({ nome: "cli" });
+    relogio.avancar(6 * 60_000);
+    await expect(fonte.criarToken("cli", "operar")).rejects.toMatchObject({
+      codigo: "reautenticacao_necessaria",
+    });
+  });
+
   it("ligar o automático com dinheiro real pede reautenticação", async () => {
     const { fonte, relogio } = nova();
     const robo = await fonte.criarRobo({
@@ -216,6 +226,7 @@ describe("fonte demo: dados", () => {
 
   it("cria token mostrado uma vez, revoga, e cria notas", async () => {
     const { fonte } = nova();
+    await entrar(fonte);
     const t = await fonte.criarToken("CLI", "leitura");
     expect(t.token).toMatch(/^zt_exemplo_/);
     expect((await fonte.tokens()).some((x) => "token" in x)).toBe(false);

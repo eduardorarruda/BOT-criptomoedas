@@ -283,6 +283,7 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
 
     tokens: comAtraso(() => [...estado.tokens]),
     criarToken: comAtraso((nome, escopo) => {
+      exigirConfirmacao();
       const token = { id: novoId("t"), nome, escopo, criadoEm: agora(), ultimoUsoEm: null };
       mudar((e) => ({ ...e, tokens: [...e.tokens, token] }));
       return { ...token, token: novoToken(aleatorio) };
