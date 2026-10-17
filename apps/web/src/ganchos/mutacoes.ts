@@ -120,16 +120,18 @@ export function useAtualizarRobo() {
     mutationFn: ({ id, mudanca }: { id: string; mudanca: MudancaRobo }) =>
       comConfirmacao(() => fonte.atualizarRobo(id, mudanca)),
     onMutate: async ({ id, mudanca }) => {
-      if (!mudancaSegura(mudanca)) return { antes: undefined };
+      const antes = qc.getQueryData<RoboDTO[]>(chaves.robos)?.find((r) => r.id === id);
+      if (!antes || !mudancaSegura(antes, mudanca)) return { antes: undefined };
       await qc.cancelQueries({ queryKey: chaves.robos });
-      const antes = qc.getQueryData<RoboDTO[]>(chaves.robos);
       qc.setQueryData<RoboDTO[]>(chaves.robos, (l) =>
         l?.map((r) => (r.id === id ? { ...r, ...mudanca } : r)),
       );
       return { antes };
     },
-    onError: (_e, _v, contexto) => {
-      if (contexto?.antes) qc.setQueryData(chaves.robos, contexto.antes);
+    // Volta só este robô: outra mudança que deu certo no meio do caminho fica.
+    onError: (_e, { id }, contexto) => {
+      const antes = contexto?.antes;
+      if (antes) qc.setQueryData<RoboDTO[]>(chaves.robos, (l) => l?.map((r) => (r.id === id ? antes : r)));
     },
     onSuccess: (robo) => {
       qc.setQueryData(chaves.robos, (l: Parameters<typeof aplicarRobo>[0] | undefined) =>

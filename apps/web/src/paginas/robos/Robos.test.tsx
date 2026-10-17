@@ -74,4 +74,13 @@ describe("Robôs: pausar e desfazer", () => {
     expect(await screen.findByText(/SOL rompimento agora está em Observar/, {}, ESPERA)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Desfazer" })).not.toBeInTheDocument();
   });
+
+  it("pausar um robô no automático não oferece Desfazer (retomar é pelo botão)", async () => {
+    const usuario = userEvent.setup();
+    renderizarNaRota(<Robos />, { fonte: await logada() });
+    const sol = await cartao("SOL rompimento");
+    await usuario.click(within(sol).getByRole("button", { name: "Pausar" }));
+    expect(await screen.findByText(/SOL rompimento pausado/, {}, ESPERA)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Desfazer" })).not.toBeInTheDocument();
+  });
 });
