@@ -25,8 +25,9 @@ const doc: DocumentoDetalhe = {
 };
 const ingerido: ArquivoIngerido = { ...doc, novo: true, trechos: 2, caracteres: 120, truncado: false };
 
-function apiFalsa(): ApiConhecimento {
+function apiFalsa(busca: "hibrida" | "palavras" = "hibrida"): ApiConhecimento {
   return {
+    estado: vi.fn(async () => ({ busca, trechosSemVetor: 0, motivo: null })),
     documentos: vi.fn(async () => [doc]),
     detalhe: vi.fn(async () => ({
       documento: doc,
@@ -43,7 +44,7 @@ function apiFalsa(): ApiConhecimento {
         publicadoEm: 1,
         texto: "Nunca arriscar mais de 1%.",
         pontuacao: 0.1,
-        modo: "hibrida" as const,
+        modo: busca,
       },
     ]),
     enviarLink: vi.fn(async () => ({ ...ingerido, titulo: "Página" })),
@@ -101,6 +102,16 @@ describe("tela de Conhecimento", () => {
     await userEvent.type(within(busca).getByRole("searchbox"), "risco{Enter}");
     expect(await screen.findAllByText("Nunca arriscar mais de 1%.")).not.toHaveLength(0);
     expect(api.buscar).toHaveBeenCalledWith("risco");
+    expect(screen.queryByText(/só por palavras/)).not.toBeInTheDocument();
+  });
+
+  it("sem embeddings configurados, avisa discretamente que a busca é só por palavras", async () => {
+    renderizar(<Conhecimento api={apiFalsa("palavras")} />, fonte);
+    const busca = await screen.findByRole("search");
+    expect(
+      await screen.findByText("Busca só por palavras (sem embeddings configurados)."),
+    ).toBeInTheDocument();
+    expect(busca.parentElement).toHaveTextContent(/só por palavras/);
   });
 });
 

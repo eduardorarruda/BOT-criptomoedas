@@ -17,6 +17,10 @@ export function BuscaConhecimento({ api }: { readonly api: ApiConhecimento }) {
     queryFn: () => api.buscar(consulta),
     enabled: consulta !== "",
   });
+  // Só um aviso: se o estado não vier, a busca continua funcionando e o aviso não aparece.
+  const estado = useQuery({ queryKey: ["conhecimento", "estado"], queryFn: () => api.estado() });
+  const soPalavras =
+    estado.data?.busca === "palavras" || (busca.data ?? []).some((r) => r.modo === "palavras");
   const enviar = (e: FormEvent) => {
     e.preventDefault();
     setConsulta(texto.trim());
@@ -38,6 +42,11 @@ export function BuscaConhecimento({ api }: { readonly api: ApiConhecimento }) {
           onChange={(e) => setTexto(e.target.value)}
         />
       </form>
+      {soPalavras ? (
+        <p className="apagado busca-conhecimento__modo">
+          Busca só por palavras (sem embeddings configurados).
+        </p>
+      ) : null}
       {busca.isFetching ? <Esqueleto linhas={3} rotulo="Buscando" /> : null}
       {busca.error ? (
         <ErroCarregar erro={busca.error} tentarDeNovo={() => void busca.refetch()} compacto />

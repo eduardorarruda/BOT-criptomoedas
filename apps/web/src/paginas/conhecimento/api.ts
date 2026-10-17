@@ -2,10 +2,12 @@ import {
   ArquivoIngeridoEsquema,
   DocumentoComTrechosEsquema,
   DocumentoDetalheEsquema,
+  EstadoConhecimentoEsquema,
   ResultadoBuscaConhecimentoEsquema,
   type ArquivoIngerido,
   type DocumentoComTrechos,
   type DocumentoDetalhe,
+  type EstadoConhecimento,
   type FonteDocumento,
   type ResultadoBuscaConhecimento,
 } from "@zentrade/contratos/esquemas";
@@ -25,6 +27,8 @@ interface NovoLinkTela {
 }
 
 export interface ApiConhecimento {
+  /** Modo da busca (híbrida ou só por palavras, sem embeddings) e trechos sem vetor. */
+  estado(): Promise<EstadoConhecimento>;
   documentos(): Promise<DocumentoDetalhe[]>;
   detalhe(id: string): Promise<DocumentoComTrechos>;
   apagar(id: string): Promise<void>;
@@ -96,6 +100,7 @@ export function criarApiConhecimento(
 ): ApiConhecimento {
   const { pedir } = cliente;
   return {
+    estado: () => pedir("GET", "/conhecimento/estado", EstadoConhecimentoEsquema),
     documentos: () => pedir("GET", "/conhecimento/documentos", z.array(DocumentoDetalheEsquema)),
     detalhe: (id) =>
       pedir("GET", `/conhecimento/documentos/${encodeURIComponent(id)}`, DocumentoComTrechosEsquema),
