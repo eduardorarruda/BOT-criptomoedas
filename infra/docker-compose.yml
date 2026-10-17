@@ -194,7 +194,11 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Opcional: sem a chave, só o Claude Code (provedor "cli") atende.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      # Contas do Claude Code: id=/pasta, separadas por vírgula, dentro do volume claude-contas.
+      # A mesma chave mestra da API: cifra e decifra o token do Claude que cada pessoa conecta
+      # pela tela (Assistente → Configurações). Sem ela, só as contas abaixo.
+      ZENTRADE_CHAVE_MESTRA: ${ZENTRADE_CHAVE_MESTRA:-}
+      # Contas do Claude Code (alternativa ao token de cada pessoa): id=/pasta, separadas por
+      # vírgula, dentro do volume claude-contas.
       AGENTE_CLAUDE_CONTAS: ${AGENTE_CLAUDE_CONTAS:-principal=/dados/claude/principal}
       AGENTE_CLI_MAX_TURNOS: ${AGENTE_CLI_MAX_TURNOS:-8}
       AGENTE_CLI_TETO_USD: ${AGENTE_CLI_TETO_USD:-1}

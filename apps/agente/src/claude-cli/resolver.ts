@@ -18,10 +18,15 @@ export function resolverClaude(configurado: string, path: string | undefined): s
   if (isAbsolute(configurado)) {
     return basename(configurado) === "claude" && executavel(configurado) ? configurado : null;
   }
-  if (configurado.includes("/")) return null;
+  return resolverNoPath(configurado, path);
+}
+
+/** Um executável pelo nome, só nas pastas absolutas do PATH (ex.: o `script` do util-linux). */
+export function resolverNoPath(nome: string, path: string | undefined): string | null {
+  if (nome.includes("/")) return null;
   for (const pasta of (path ?? "").split(":")) {
     if (pasta === "" || !isAbsolute(pasta)) continue;
-    const candidato = join(pasta, configurado);
+    const candidato = join(pasta, nome);
     if (executavel(candidato)) return candidato;
   }
   return null;

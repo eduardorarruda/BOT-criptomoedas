@@ -24,15 +24,17 @@ FROM ${NODE_IMAGEM} AS execucao
 # ripgrep do sistema, a chave conferida pelo SHA-256 publicado. Sem atualização
 # automática no container: a versão muda ao reconstruir a imagem. Para uma imagem sem o
 # CLI (só o provedor "api"): --build-arg CLAUDE_CODE=nao.
+# util-linux-misc traz o `script`: o pseudo-terminal em que o agente roda o
+# `claude setup-token` quando a pessoa clica em "Conectar meu Claude" (ADR 008).
 ARG CLAUDE_CODE=sim
 ARG CLAUDE_CODE_CHAVE_SHA256=395759c1f7449ef4cdef305a42e820f3c766d6090d142634ebdb049f113168b6
 RUN if [ "$CLAUDE_CODE" = "sim" ]; then \
-      apk add --no-cache libgcc libstdc++ ripgrep \
+      apk add --no-cache libgcc libstdc++ ripgrep util-linux-misc \
       && wget -qO /etc/apk/keys/claude-code.rsa.pub https://downloads.claude.ai/keys/claude-code.rsa.pub \
       && echo "$CLAUDE_CODE_CHAVE_SHA256  /etc/apk/keys/claude-code.rsa.pub" | sha256sum -c - \
       && echo "https://downloads.claude.ai/claude-code/apk/stable" >> /etc/apk/repositories \
       && apk add --no-cache claude-code \
-      && claude --version; \
+      && claude --version && script --version; \
     fi
 # Pasta das contas do Claude Code (uma subpasta por conta, CLAUDE_CONFIG_DIR): um volume,
 # para o login sobreviver à troca do container. Veja docs/operacao.md.

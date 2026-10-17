@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
-import { criarBancoDoAgente } from "@zentrade/banco";
+import { criarBancoDoAgente, type BancoDoAgente } from "@zentrade/banco";
 import { criarBuscaHibrida, criarRepositorioPostgres, embeddingsDoAmbiente } from "@zentrade/conhecimento";
 import type { EstadoAgenteAssistente } from "@zentrade/contratos";
 import { Redis } from "ioredis";
@@ -13,8 +13,11 @@ import { registrarRotasAssistente } from "./assistente/rotas.js";
 import { ServicoChat } from "./assistente/servico-chat.js";
 import { AnalistaCli } from "./claude-cli/analista-cli.js";
 import { descreverContas } from "./claude-cli/contas.js";
-import { ExecutorClaude } from "./claude-cli/executor.js";
-import { resolverClaude } from "./claude-cli/resolver.js";
+import { ExecutorClaude, type FonteTokensClaude } from "./claude-cli/executor.js";
+import { resolverClaude, resolverNoPath } from "./claude-cli/resolver.js";
+import { ConexoesClaude } from "./claude-cli/token/conexoes.js";
+import { registrarRotasTokenClaude } from "./claude-cli/token/rotas.js";
+import { criarTesteToken } from "./claude-cli/token/testar.js";
 import { configDoAgente, semVazias, type ConfigAgente } from "./config.js";
 import { alertasRedis, publicadorNulo, publicadorRedis } from "./eventos/publicador.js";
 import { AnalistaComOrcamento, PortaoOrcamento } from "./orcamento.js";
@@ -26,7 +29,12 @@ import { MODELOS_SUGERIDOS } from "./provedores/modelos.js";
 import { criarServidor } from "./servidor.js";
 
 /** O Claude Code, se estiver instalado: executor com a ponte MCP deste agente. */
-function prepararCli(config: ConfigAgente, sessoes: SessoesPonte, log: Logger): ExecutorClaude | null {
+function prepararCli(
+  config: ConfigAgente,
+  sessoes: SessoesPonte,
+  tokens: FonteTokensClaude | null,
+  log: Logger,
+): ExecutorClaude | null {
   const caminho = resolverClaude(config.cli.caminho, process.env["PATH"]);
   if (!caminho) {
     log.warn(
@@ -44,9 +52,40 @@ function prepararCli(config: ConfigAgente, sessoes: SessoesPonte, log: Logger): 
       maxTurnos: config.cli.maxTurnos,
       tetoUsd: config.cli.tetoUsd,
       env: process.env,
+      ...(tokens ? { tokens } : {}),
     },
     sessoes,
   );
+}
+
+/**
+ * O Claude de cada pessoa: com o CLI e a chave mestra, o agente usa o token que ela
+ * conectou; com o `script` (util-linux) também, conecta pelo botão da tela.
+ */
+function prepararTokenClaude(
+  config: ConfigAgente,
+  executor: ExecutorClaude | null,
+  credenciais: BancoDoAgente["credenciaisClaude"],
+  log: Logger,
+) {
+  if (!executor || !credenciais) {
+    if (executor) log.info("ZENTRADE_CHAVE_MESTRA ausente no agente: o Claude de cada pessoa fica desligado");
+    return { conexoes: null, testar: null, capacidade: { usar: false, conectar: false } };
+  }
+  const testar = criarTesteToken({ executor, registrar: credenciais.registrarTeste });
+  const script = resolverNoPath("script", process.env["PATH"]);
+  const claude = resolverClaude(config.cli.caminho, process.env["PATH"]);
+  if (!script || !claude) {
+    log.warn("utilitário script (util-linux) não encontrado: conectar o Claude pelo botão fica desligado");
+    return { conexoes: null, testar, capacidade: { usar: true, conectar: false } };
+  }
+  const conexoes = new ConexoesClaude({
+    claude,
+    script,
+    env: process.env,
+    salvar: (usuarioId, token) => credenciais.salvar(usuarioId, token, "conexao"),
+  });
+  return { conexoes, testar, capacidade: { usar: true, conectar: true } };
 }
 
 function prepararRedis(config: ConfigAgente, log: Logger) {
@@ -63,7 +102,11 @@ function prepararRedis(config: ConfigAgente, log: Logger) {
 function montarServicos(config: ConfigAgente, logger: Logger) {
   // Sem onnotice o postgres.js jogaria no console os avisos do full-text (consulta só de stopwords).
   const sql = postgres(config.urlBanco, { max: 5, onnotice: () => undefined });
-  const banco = criarBancoDoAgente({ url: config.urlBanco, maximoConexoes: 5 });
+  const banco = criarBancoDoAgente({
+    url: config.urlBanco,
+    maximoConexoes: 5,
+    ...(config.chaveMestra ? { chaveMestra: config.chaveMestra } : {}),
+  });
   const busca = criarBuscaHibrida({
     repositorio: criarRepositorioPostgres(sql),
     embeddings: embeddingsDoAmbiente(semVazias(process.env)),
@@ -80,7 +123,8 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
     ...(alertar ? { alertar } : {}),
   });
   const sessoes = new SessoesPonte();
-  const executor = prepararCli(config, sessoes, logger);
+  const executor = prepararCli(config, sessoes, banco.credenciaisClaude, logger);
+  const tokenClaude = prepararTokenClaude(config, executor, banco.credenciaisClaude, logger);
   const cliente = config.chaveAnthropic ? new Anthropic({ apiKey: config.chaveAnthropic }) : null;
   const provedorPadrao = cliente || !executor ? "api" : "cli";
   const configDaPessoa = configComPadrao(banco.configGravada, provedorPadrao);
@@ -115,9 +159,16 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
     provedorPadrao,
     contasCli: executor ? descreverContas(config.cli.contas, process.env["HOME"]) : [],
     modelos: MODELOS_SUGERIDOS,
+    tokenClaude: tokenClaude.capacidade,
   });
-  const fechar = () => Promise.allSettled([sql.end({ timeout: 5 }), banco.fechar(), redis?.quit()]);
-  return { analista, chat, estado, publicador, sessoes, fechar };
+  const fechar = () =>
+    Promise.allSettled([
+      tokenClaude.conexoes?.encerrarTodas(),
+      sql.end({ timeout: 5 }),
+      banco.fechar(),
+      redis?.quit(),
+    ]);
+  return { analista, chat, estado, publicador, sessoes, tokenClaude, fechar };
 }
 
 /** Sobe o serviço do agente: valida o ambiente, monta os serviços e escuta na porta 8081. */
@@ -125,7 +176,17 @@ async function iniciar(): Promise<void> {
   const config = configDoAgente(process.env);
   const logger = pino({
     level: config.nivelLog,
-    redact: ["req.headers.authorization", "req.headers['x-zentrade-ponte']"],
+    // O token do Claude e o código de autorização nunca vão para o log (nem por engano).
+    redact: {
+      paths: [
+        "req.headers.authorization",
+        "req.headers['x-zentrade-ponte']",
+        "*.token",
+        "*.codigo",
+        "*.CLAUDE_CODE_OAUTH_TOKEN",
+      ],
+      censor: "[oculto]",
+    },
   });
   const s = montarServicos(config, logger);
   const app = criarServidor({
@@ -147,6 +208,12 @@ async function iniciar(): Promise<void> {
           tempoMs: config.chat.timeoutMs,
           maxSimultaneas: config.chat.maxSimultaneas,
           maxPorMinuto: config.chat.maxPorMinuto,
+        }),
+      (a) =>
+        registrarRotasTokenClaude(a, {
+          segredo: config.segredo,
+          conexoes: s.tokenClaude.conexoes,
+          testar: s.tokenClaude.testar,
         }),
     ],
   });
