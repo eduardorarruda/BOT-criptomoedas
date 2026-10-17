@@ -14,6 +14,7 @@ export * from "./reconciliacao.js";
 export * from "./regras.js";
 export * from "./risco.js";
 export * from "./saidas.js";
+export * from "./sentido.js";
 export * from "./risco-conta.js";
 export * from "./tipos.js";
 export * from "./volatilidade.js";

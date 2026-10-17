@@ -5,6 +5,7 @@ import { formatarNumero } from "./formatar.js";
 import type { Posicao } from "./posicao.js";
 import { custoIdaEVolta, precoAlvo, precoStop } from "./precos.js";
 import { avaliar, validarRegra, type Regra } from "./regras.js";
+import { contra, DIRECOES, direcaoDe, sentidosDa, aFavor, type Direcao, type Sentido } from "./sentido.js";
 import {
   distanciaDeRisco,
   stopDeEntrada,
@@ -40,6 +41,17 @@ export interface Estrategia {
   readonly tempoMaximo?: number;
   /** Tamanho pela volatilidade: o risco por operação dividido por k × ATR(n). */
   readonly tamanhoPorVolatilidade?: TamanhoPorVolatilidade;
+  /**
+   * Para que lado abrir posição. Sem ele, "comprado" — o único lado do à vista de
+   * cripto, onde o robô e o backtest recusam as outras direções. Com "vendido" ou
+   * "ambos" (mercados futuros, como o mini índice), vale `entradaVendida`; com
+   * "vendido", a `entrada` (de compra) fica guardada, mas não é usada.
+   */
+  readonly direcao?: Direcao;
+  /** Quando abrir uma venda a descoberto. Obrigatória com direção "vendido" ou "ambos". */
+  readonly entradaVendida?: Regra;
+  /** Saída antecipada da posição vendida (o espelho de `saida`). */
+  readonly saidaVendida?: Regra;
 }
 
 /** Os preços derivados da entrada moram em precos.ts; daqui saem para o resto do domínio. */
@@ -71,59 +83,144 @@ export type Sinal =
 /**
  * Com posição aberta, nesta ordem: stop (o efetivo, se o acompanhamento o subiu),
  * alvo, regra de saída, tempo máximo; senão, aguarda. Sem posição: regra de entrada.
+ *
+ * É o caminho do à vista de cripto: só compra. Uma estratégia com outra direção não
+ * abre posição aqui (o mercado à vista não tem venda a descoberto); ela roda no
+ * backtest do mini índice, por `decidirComSentido`.
  */
 export function decidir(e: Estrategia, ctx: ContextoDecisao, posicao: Posicao): Sinal {
-  if (posicao.quantidade.gt(0)) return decidirComPosicao(e, ctx, posicao);
-
+  if (posicao.quantidade.gt(0)) {
+    const s = decidirAberta(e, ctx, posicao.precoMedio, "comprado");
+    return s.acao === "SAIR" ? { acao: "VENDER", motivo: s.motivo, explicacao: s.explicacao } : s;
+  }
+  if (direcaoDe(e) !== "comprado")
+    return {
+      acao: "AGUARDAR",
+      explicacao: `a estratégia opera ${direcaoDe(e) === "vendido" ? "vendida" : "nos dois sentidos"}; no mercado à vista o robô só compra`,
+    };
   const r = avaliar(e.entrada, ctx);
   if (!r.valor) return { acao: "AGUARDAR", explicacao: r.explicacao };
-  const { stop, explicacao } = stopDeEntrada(e, ctx.preco, ctx);
-  const distancia = distanciaDeRisco(e, ctx);
+  const { stop, alvo, distanciaRisco, explicacao } = abertura(e, ctx, "comprado");
   return {
     acao: "COMPRAR",
     stop,
-    alvo: precoAlvo(ctx.preco, e.alvoLiquido, e.taxa),
-    ...(distancia ? { distanciaRisco: distancia } : {}),
+    alvo,
+    ...(distanciaRisco ? { distanciaRisco } : {}),
     explicacao: explicacao ? `${r.explicacao}; ${explicacao}` : r.explicacao,
   };
 }
 
-function decidirComPosicao(e: Estrategia, ctx: ContextoDecisao, posicao: Posicao): Sinal {
-  const fixo = precoStop(posicao.precoMedio, e.stop);
+function abertura(e: Estrategia, ctx: ContextoDecisao, sentido: Sentido) {
+  const { stop, explicacao } = stopDeEntrada(e, ctx.preco, ctx, sentido);
+  return {
+    stop,
+    alvo: precoAlvo(ctx.preco, e.alvoLiquido, e.taxa, sentido),
+    distanciaRisco: distanciaDeRisco(e, ctx),
+    explicacao,
+  };
+}
+
+type Aberta =
+  | { readonly acao: "SAIR"; readonly motivo: MotivoVenda; readonly explicacao: string }
+  | { readonly acao: "AGUARDAR"; readonly explicacao: string };
+
+/** A posição aberta no sentido dado: stop, alvo, regra de saída do lado, tempo. */
+function decidirAberta(e: Estrategia, ctx: ContextoDecisao, entrada: Valor, sentido: Sentido): Aberta {
+  const fixo = precoStop(entrada, e.stop, sentido);
   const a = ctx.acompanhamento;
-  const movido = a !== undefined && a.stop.gt(fixo);
+  const movido = a !== undefined && !aFavor(fixo, a.stop, sentido);
   const stop = movido ? a.stop : fixo;
-  const alvo = precoAlvo(posicao.precoMedio, e.alvoLiquido, e.taxa);
+  const alvo = precoAlvo(entrada, e.alvoLiquido, e.taxa, sentido);
   const nomeStop = movido ? "stop efetivo" : "stop";
-  if (ctx.preco.lte(stop)) {
+  if (contra(ctx.preco, stop, sentido)) {
     return {
-      acao: "VENDER",
+      acao: "SAIR",
       motivo: "stop",
       explicacao: `preço ${formatarNumero(ctx.preco)} chegou ao ${nomeStop} ${formatarNumero(stop)}`,
     };
   }
-  if (ctx.preco.gte(alvo)) {
+  if (aFavor(ctx.preco, alvo, sentido)) {
     return {
-      acao: "VENDER",
+      acao: "SAIR",
       motivo: "alvo",
       explicacao: `preço ${formatarNumero(ctx.preco)} chegou ao alvo ${formatarNumero(alvo)}`,
     };
   }
-  if (e.saida) {
-    const r = avaliar(e.saida, ctx);
-    if (r.valor) return { acao: "VENDER", motivo: "regra de saída", explicacao: r.explicacao };
+  const saida = sentido === "comprado" ? e.saida : e.saidaVendida;
+  if (saida) {
+    const r = avaliar(saida, ctx);
+    if (r.valor) return { acao: "SAIR", motivo: "regra de saída", explicacao: r.explicacao };
   }
   if (e.tempoMaximo !== undefined && a && a.candles >= e.tempoMaximo) {
     return {
-      acao: "VENDER",
+      acao: "SAIR",
       motivo: "tempo",
       explicacao: `a posição completou ${a.candles} candles sem chegar ao alvo (limite de ${e.tempoMaximo})`,
     };
   }
   const tempo = e.tempoMaximo !== undefined && a ? `, ${a.candles} de ${e.tempoMaximo} candles` : "";
+  const lado = sentido === "vendido" ? "posição vendida aberta" : "posição aberta";
   return {
     acao: "AGUARDAR",
-    explicacao: `posição aberta: ${nomeStop} em ${formatarNumero(stop)}, alvo em ${formatarNumero(alvo)}${tempo}`,
+    explicacao: `${lado}: ${nomeStop} em ${formatarNumero(stop)}, alvo em ${formatarNumero(alvo)}${tempo}`,
+  };
+}
+
+/** A posição aberta de um mercado com os dois lados (mini índice): o sentido e o preço de entrada. */
+export interface PosicaoComSentido {
+  readonly sentido: Sentido;
+  readonly precoMedio: Valor;
+}
+
+export type SinalComSentido =
+  | {
+      readonly acao: "ABRIR";
+      readonly sentido: Sentido;
+      readonly stop: Valor;
+      readonly alvo: Valor;
+      /** Com tamanho pela volatilidade: k × ATR(n), para o dimensionamento. */
+      readonly distanciaRisco?: Valor;
+      readonly explicacao: string;
+    }
+  | { readonly acao: "ZERAR"; readonly motivo: MotivoVenda; readonly explicacao: string }
+  | { readonly acao: "AGUARDAR"; readonly explicacao: string };
+
+/**
+ * A decisão nos mercados com os dois lados. Com posição aberta, as mesmas regras de
+ * `decidir`, espelhadas no vendido (stop acima, alvo abaixo, `saidaVendida`). Sem
+ * posição, avalia a entrada de cada sentido que a direção permite; se as duas dizem
+ * sim no mesmo candle, fica de fora (sinal contraditório não abre posição).
+ */
+export function decidirComSentido(
+  e: Estrategia,
+  ctx: ContextoDecisao,
+  aberta: PosicaoComSentido | null,
+): SinalComSentido {
+  if (aberta) {
+    const s = decidirAberta(e, ctx, aberta.precoMedio, aberta.sentido);
+    return s.acao === "SAIR" ? { acao: "ZERAR", motivo: s.motivo, explicacao: s.explicacao } : s;
+  }
+  const avaliados = sentidosDa(direcaoDe(e)).map((sentido) => {
+    const regra = sentido === "comprado" ? e.entrada : e.entradaVendida;
+    const r = regra ? avaliar(regra, ctx) : { valor: false, explicacao: "sem regra de entrada vendida" };
+    return { sentido, ...r, explicacao: `${sentido === "comprado" ? "compra" : "venda"}: ${r.explicacao}` };
+  });
+  const sim = avaliados.filter((a) => a.valor);
+  if (sim.length > 1)
+    return {
+      acao: "AGUARDAR",
+      explicacao: `as regras de compra e de venda deram sim no mesmo candle: fica de fora (${sim.map((s) => s.explicacao).join("; ")})`,
+    };
+  const escolhido = sim[0];
+  if (!escolhido) return { acao: "AGUARDAR", explicacao: avaliados.map((a) => a.explicacao).join("; ") };
+  const { stop, alvo, distanciaRisco, explicacao } = abertura(e, ctx, escolhido.sentido);
+  return {
+    acao: "ABRIR",
+    sentido: escolhido.sentido,
+    stop,
+    alvo,
+    ...(distanciaRisco ? { distanciaRisco } : {}),
+    explicacao: explicacao ? `${escolhido.explicacao}; ${explicacao}` : escolhido.explicacao,
   };
 }
 
@@ -164,11 +261,30 @@ function problemasSaidas(e: Estrategia): string[] {
   return problemas;
 }
 
+/** A direção e as regras do lado vendido. */
+function problemasDirecao(e: Estrategia): string[] {
+  if (e.direcao !== undefined && !DIRECOES.includes(e.direcao))
+    return ["a direção precisa ser comprado, vendido ou ambos"];
+  const vende = direcaoDe(e) !== "comprado";
+  const problemas: string[] = [];
+  if (vende && !e.entradaVendida)
+    problemas.push("com a direção vendido ou ambos, a estratégia precisa da regra de entrada vendida");
+  if (!vende && (e.entradaVendida || e.saidaVendida))
+    problemas.push("as regras do lado vendido só valem com a direção vendido ou ambos");
+  if (e.entradaVendida) problemas.push(...validarRegra(e.entradaVendida));
+  if (e.saidaVendida) problemas.push(...validarRegra(e.saidaVendida));
+  return problemas;
+}
+
 export function validarEstrategia(e: Estrategia): string[] {
-  const problemas = [...validarRegra(e.entrada), ...(e.saida ? validarRegra(e.saida) : [])];
+  const problemas = [
+    ...validarRegra(e.entrada),
+    ...(e.saida ? validarRegra(e.saida) : []),
+    ...problemasDirecao(e),
+  ];
   if (!(e.stop > 0 && e.stop < 0.5)) problemas.push("o stop precisa estar entre 0% e 50%");
   if (!(e.alvoLiquido > 0 && e.alvoLiquido < 1))
     problemas.push("o alvo líquido precisa ser maior que 0% e menor que 100%");
   if (!(e.taxa >= 0 && e.taxa < 0.01)) problemas.push("a taxa precisa estar entre 0% e 1%");
-  return [...problemas, ...problemasSaidas(e)];
+  return [...new Set([...problemas, ...problemasSaidas(e)])];
 }
