@@ -73,7 +73,8 @@ describe("listarArquivos", () => {
   });
 });
 
-describe("comando importar-conhecimento", () => {
+// HTML e PDF passam pela worker thread da extração: sob carga, passa dos 5 s padrão.
+describe("comando importar-conhecimento", { timeout: 60_000 }, () => {
   it("importa md, txt e html, pula duplicados e não suportados com o motivo, e resume", async () => {
     await writeFile(join(pasta, "estrategia.md"), "# Reversão\n\nComprar abaixo da média com stop curto.");
     await writeFile(join(pasta, "z-copia.md"), "# Reversão\n\nComprar abaixo da média com stop curto.");
