@@ -21,6 +21,7 @@
     "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts",
     "iniciar": "node --env-file-if-exists=../../.env dist/servidor.js",
     "criar-usuario": "node --env-file-if-exists=../../.env dist/comandos/criar-usuario.js",
+    "reindexar-conhecimento": "node --env-file-if-exists=../../.env dist/comandos/reindexar-conhecimento.js",
     "dev": "tsc -p tsconfig.build.json && (tsc -p tsconfig.build.json --watch --preserveWatchOutput & node --env-file-if-exists=../../.env --watch dist/servidor.js)"
   },
   "dependencies": {
