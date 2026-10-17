@@ -11,6 +11,7 @@ import { dec, MODELOS_WIN, paraTexto, type Candle, type Estrategia } from "@zent
 import { describe, expect, it } from "vitest";
 import { registroDeTeste } from "../../teste/cenario.js";
 import { brasilia, diasUteis, serieWinIbov } from "../../teste/win.js";
+import { PREGOES_SEMENTE, sementeWinIbov5m } from "../../teste/win-ibov.js";
 import { processarBacktest, type RepositorioBacktestsDoMotor } from "../servico.js";
 import { AVISO_APROXIMACAO } from "./servico.js";
 
@@ -53,13 +54,12 @@ const pedido = (
 });
 
 /**
- * As candles do WIN vêm do banco (o contrato de dados): o repositório falso responde
- * por página, como o de verdade. A corretora de papel também as tem, para o caso de o
- * carregador ainda tentar a corretora quando o banco não cobre a janela.
+ * Os candles do WIN vêm só do banco (o contrato de dados): o repositório falso responde
+ * por página, como o de verdade. A corretora de papel fica vazia de WIN: o carregador
+ * nunca a chama para símbolos da B3.
  */
 function montar(p: BacktestParaRodar, candles: readonly Candle[] = CANDLES) {
   const papel = new PapelCorretora({ saldos: {}, taxa: 0, deslizamentoBps: 0 });
-  candles.forEach((c) => papel.alimentar(p.simbolo, "5m", c));
   const banco = {
     candles: async (c: { simbolo: string; inicio: number; fim: number }) =>
       c.simbolo === p.simbolo
@@ -164,10 +164,26 @@ describe("backtest do mini índice, de ponta a ponta (WIN-IBOV determinístico)"
     expect(dec(w.corretagem).equals(dec(1).times(w.contratosNegociados))).toBe(true);
   });
 
+  it("a semente de dados do WIN-IBOV (3 pregões, contrato de dados) roda de ponta a ponta", async () => {
+    const semente = sementeWinIbov5m();
+    const p = {
+      ...pedido(FAIXA!.estrategia),
+      inicio: PREGOES_SEMENTE[0],
+      fim: PREGOES_SEMENTE[2] + 86_400_000,
+    };
+    const m = montar(p, semente);
+    expect(await processarBacktest(m.deps, m.opcoes, "w1")).toBe("concluido");
+    const metricas = MetricasBacktestEsquema.parse(m.gravado.concluido!.metricas);
+    expect(metricas.candles).toBe(252);
+    expect(metricas.win?.dias).toBe(3);
+    // nada dorme posicionado: toda operação fechou no pregão em que abriu
+    expect(metricas.win?.zeragens).toBeLessThanOrEqual(3);
+  });
+
   it("sem candles do WIN no banco: falha com a mensagem para a pessoa", async () => {
     const m = montar(pedido(FAIXA!.estrategia), []);
     expect(await processarBacktest(m.deps, m.opcoes, "w1")).toBe("falhou");
-    expect(m.gravado.falhou).toMatch(/não tem nenhum candle/);
+    expect(m.gravado.falhou).toMatch(/Não há candles de WIN-IBOV em 5m no banco/);
   });
 });
 

@@ -14,15 +14,14 @@ import { limitesDoBacktest } from "../limites.js";
 import { validarBacktest } from "../validacao/index.js";
 import { barrasPorAnoDaSerie, metricasGravadasWin } from "./metricas.js";
 import { modeloWinDe } from "./modelo.js";
-import { rodarBacktestWin, type ResultadoBacktestWin } from "./rodar.js";
+import { HISTORICO_WIN, rodarBacktestWin, type ResultadoBacktestWin } from "./rodar.js";
 
 /**
- * O aquecimento em INTERVALOS de calendário: o mini índice só tem candles no pregão
- * (umas 9 das 24 horas, 5 dias da semana), então pedir 200 intervalos antes do início
- * traria só um pregão de 5 minutos. 7 × 200 cobre o histórico que os indicadores usam
- * mesmo com fim de semana e feriado no meio.
+ * Candles de aquecimento antes do início: o mesmo histórico que os indicadores veem no
+ * robô. O carregador conta em pregões (vai mais para trás em tempo corrido) e lê o
+ * mini índice só do banco.
  */
-const AQUECIMENTO_WIN = 7 * 200;
+const AQUECIMENTO_WIN = HISTORICO_WIN;
 
 export const AVISO_APROXIMACAO =
   "Aproximação: o índice à vista não tem a base do futuro nem o horário completo do WIN; valide com dados reais do WIN antes de operar.";
