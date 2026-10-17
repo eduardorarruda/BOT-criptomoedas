@@ -1,5 +1,5 @@
 import { readdir, readFile, stat } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { basename, join, relative, resolve } from "node:path";
 import type { Banco } from "@zentrade/banco";
 import { extensaoAceita, extensaoDe, hashConteudo } from "@zentrade/conhecimento";
 import { FonteDocumento, LIMITE_ARQUIVO_BYTES } from "@zentrade/contratos";
@@ -96,6 +96,20 @@ async function jaExiste(
   return null;
 }
 
+// O README de uma pasta de notas descreve os arquivos (índice, como importar): não é conhecimento.
+const README = /^readme(\.[^.]+)?$/i;
+
+/** Por que um arquivo nem é lido, ou null se ele segue para a extração. */
+async function motivoParaIgnorar(e: EntradaPasta, limiteBytes: number): Promise<string | null> {
+  if (!e.comum) return "não é um arquivo comum (links simbólicos não são seguidos)";
+  if (!extensaoAceita(e.relativo)) return `tipo não suportado: .${extensaoDe(e.relativo) || "sem extensão"}`;
+  if (README.test(basename(e.relativo))) return "README da pasta: descreve os arquivos, não é conteúdo";
+  const { size } = await stat(e.caminho);
+  if (size === 0) return "arquivo vazio";
+  if (size > limiteBytes) return `passa de ${Math.floor(limiteBytes / 1024 / 1024)} MB`;
+  return null;
+}
+
 async function importarArquivo(
   d: DependenciasImportacao,
   usuarioId: string,
@@ -103,16 +117,8 @@ async function importarArquivo(
   e: EntradaPasta,
   limiteBytes: number,
 ): Promise<Resultado> {
-  if (!e.comum)
-    return { tipo: "ignorado", motivo: "não é um arquivo comum (links simbólicos não são seguidos)" };
-  if (!extensaoAceita(e.relativo)) {
-    return { tipo: "ignorado", motivo: `tipo não suportado: .${extensaoDe(e.relativo) || "sem extensão"}` };
-  }
-  const { size } = await stat(e.caminho);
-  if (size === 0) return { tipo: "ignorado", motivo: "arquivo vazio" };
-  if (size > limiteBytes) {
-    return { tipo: "ignorado", motivo: `passa de ${Math.floor(limiteBytes / 1024 / 1024)} MB` };
-  }
+  const ignorar = await motivoParaIgnorar(e, limiteBytes);
+  if (ignorar) return { tipo: "ignorado", motivo: ignorar };
   try {
     const extraido = await d.arquivos.extrairArquivo(e.relativo, await readFile(e.caminho));
     const titulo = tituloDoArquivo(extraido);
@@ -157,10 +163,11 @@ function lerArgs(argv: readonly string[]) {
 }
 
 /**
- * importar-conhecimento: cada .md, .txt, .pdf, .docx e .html da pasta (e subpastas) entra
- * na base da pessoa pelo mesmo caminho do envio pela tela (extração isolada, limite de
- * tamanho, mesma ingestão, origem "arquivo"). Pula o que já existe (mesmo conteúdo, ou
- * mesmo título e fonte) e o que não é suportado, dizendo o motivo; no fim, um resumo.
+ * importar-conhecimento: cada .md, .txt, .pdf, .docx e .html da pasta (e subpastas, menos
+ * o README) entra na base da pessoa pelo mesmo caminho do envio pela tela (extração
+ * isolada, limite de tamanho, mesma ingestão, origem "arquivo"). Pula o que já existe
+ * (mesmo conteúdo, ou mesmo título e fonte) e o que não é suportado, dizendo o motivo;
+ * no fim, um resumo.
  */
 export async function executarImportacao(
   argv: readonly string[],

@@ -83,6 +83,7 @@ describe("comando importar-conhecimento", () => {
       "<html><head><title>Taxas</title></head><body><p>A taxa é 0,1%.</p></body></html>",
     );
     await writeFile(join(pasta, "foto.png"), "PNG");
+    await writeFile(join(pasta, "README.md"), "# Notas\n\nComo importar esta pasta.");
     await writeFile(join(pasta, "vazio.md"), "");
     await writeFile(join(pasta, "falso.pdf"), "não sou pdf");
     const { deps, docs, linhas } = montar();
@@ -94,18 +95,19 @@ describe("comando importar-conhecimento", () => {
       ["Taxas", "nota"],
       ["regras", "nota"],
     ]);
-    expect(r).toMatchObject({ importados: 3, trechos: 6, duplicados: 1, ignorados: 2, falhas: 1 });
+    expect(r).toMatchObject({ importados: 3, trechos: 6, duplicados: 1, ignorados: 3, falhas: 1 });
     expect(linhas).toEqual(
       expect.arrayContaining([
         "+ estrategia.md: importado (2 trechos)",
         "= z-copia.md: já existe (mesmo conteúdo)",
         "- foto.png: ignorado (tipo não suportado: .png)",
         "- vazio.md: ignorado (arquivo vazio)",
+        "- README.md: ignorado (README da pasta: descreve os arquivos, não é conteúdo)",
         expect.stringMatching(/^! falso\.pdf: falhou \(.*não é um PDF/),
       ]),
     );
     expect(linhas.at(-1)).toBe(
-      "resumo: 3 importados (6 trechos), 1 já existia, 2 ignorados, 1 falha. Busca só por palavras: " +
+      "resumo: 3 importados (6 trechos), 1 já existia, 3 ignorados, 1 falha. Busca só por palavras: " +
         "rode reindexar-conhecimento quando configurar um provedor de embeddings.",
     );
   });
