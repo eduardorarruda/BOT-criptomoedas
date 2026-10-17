@@ -178,6 +178,8 @@ services:
       ZENTRADE_CHAVE_MESTRA: ${ZENTRADE_CHAVE_MESTRA:-}
       # "desenvolvimento" libera BINANCE_API_KEY/SECRET acima para quem não cadastrou chave.
       ZENTRADE_AMBIENTE: ${ZENTRADE_AMBIENTE:-producao}
+      # Só o comando importar-candles-b3 usa (Ibovespa intradiário; veja docs/dados-b3.md).
+      BRAPI_TOKEN: ${BRAPI_TOKEN:-}
     depends_on:
       migrar: { condition: service_completed_successfully }
       redis: { condition: service_healthy }

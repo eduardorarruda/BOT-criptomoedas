@@ -19,7 +19,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "start": "node --env-file-if-exists=../../.env dist/main.js",
-    "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts"
+    "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts",
+    "importar-candles-b3": "node --env-file-if-exists=../../.env dist/comandos/importar-candles-b3.js",
+    "importar-candles-csv": "node --env-file-if-exists=../../.env dist/comandos/importar-candles-csv.js"
   },
   "dependencies": {
     "@zentrade/banco": "workspace:*",
