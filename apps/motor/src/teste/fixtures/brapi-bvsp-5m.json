@@ -1,0 +1,179 @@
+{
+  "results": [
+    {
+      "symbol": "^BVSP",
+      "shortName": "IBOVESPA",
+      "longName": "IBOVESPA",
+      "currency": "BRL",
+      "regularMarketPrice": 128380.0,
+      "regularMarketDayHigh": 128400.0,
+      "regularMarketDayLow": 128250.0,
+      "regularMarketDayRange": "128250 - 128400",
+      "regularMarketChange": 75.0,
+      "regularMarketChangePercent": 0.06,
+      "regularMarketTime": "2026-07-02T13:05:00.000Z",
+      "marketCap": null,
+      "regularMarketVolume": 0,
+      "regularMarketPreviousClose": 128305.0,
+      "regularMarketOpen": 128305.0,
+      "fiftyTwoWeekRange": "110000 - 135000",
+      "fiftyTwoWeekLow": 110000.0,
+      "fiftyTwoWeekHigh": 135000.0,
+      "priceEarnings": null,
+      "earningsPerShare": null,
+      "logourl": "https://icons.brapi.dev/icons/BRAPI.svg",
+      "usedInterval": "5m",
+      "usedRange": "5d",
+      "historicalDataPrice": [
+        {
+          "date": 1782910800,
+          "open": 128000.0,
+          "high": 128027.5,
+          "low": 127992.5,
+          "close": 128015.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782911100,
+          "open": 128015.0,
+          "high": 128027.5,
+          "low": 127997.5,
+          "close": 128005.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782911400,
+          "open": 128005.0,
+          "high": 128022.5,
+          "low": 127997.5,
+          "close": 128010.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782911700,
+          "open": 128010.0,
+          "high": 128042.5,
+          "low": 128002.5,
+          "close": 128030.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782912000,
+          "open": 128030.0,
+          "high": 128042.5,
+          "low": 127997.5,
+          "close": 128005.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782912300,
+          "open": 128005.0,
+          "high": 128027.5,
+          "low": 127997.5,
+          "close": 128015.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782912600,
+          "open": 128015.0,
+          "high": 128027.5,
+          "low": 128007.5,
+          "close": 128015.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782912900,
+          "open": 128015.0,
+          "high": 128027.5,
+          "low": 128002.5,
+          "close": 128010.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782913200,
+          "open": 128010.0,
+          "high": 128052.5,
+          "low": 128002.5,
+          "close": 128040.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782913500,
+          "open": 128040.0,
+          "high": 128052.5,
+          "low": 128017.5,
+          "close": 128025.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782913800,
+          "open": 128025.0,
+          "high": 128047.5,
+          "low": 128017.5,
+          "close": 128035.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782914100,
+          "open": 128035.0,
+          "high": 128052.5,
+          "low": 128027.5,
+          "close": 128040.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782914400,
+          "open": null,
+          "high": null,
+          "low": null,
+          "close": null,
+          "volume": null,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782914700,
+          "open": 128060.0,
+          "high": 128312.12000000001,
+          "low": 128055.0,
+          "close": 128300.4,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782941400,
+          "open": 128300.0,
+          "high": 128310.0,
+          "low": 128290.0,
+          "close": 128305.0,
+          "volume": 0,
+          "adjustedClose": null
+        },
+        {
+          "date": 1782997200,
+          "open": 128305.0,
+          "high": 128400.0,
+          "low": 128250.0,
+          "close": 128380.0,
+          "volume": 0,
+          "adjustedClose": null
+        }
+      ],
+      "validRanges": ["1d", "2d", "5d", "7d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
+      "validIntervals": ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]
+    }
+  ],
+  "requestedAt": "2026-07-02T13:10:00.000Z",
+  "took": 3
+}

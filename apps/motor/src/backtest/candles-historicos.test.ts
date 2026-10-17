@@ -2,7 +2,9 @@ import type { Intervalo } from "@zentrade/contratos";
 import { PapelCorretora } from "@zentrade/corretora";
 import { dec, paraTexto, type Candle } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
+import { bancoDeCandlesFalso } from "../teste/banco-candles.js";
 import { serie } from "../teste/candles.js";
+import { aberturaSemente, sementeWinIbov5m } from "../teste/win-ibov.js";
 import { candlesHistoricos, type CandlesDoBanco } from "./candles-historicos.js";
 
 const H = 3_600_000;
@@ -98,5 +100,82 @@ describe("candles históricos do backtest", () => {
         0,
       ),
     ).rejects.toThrow(/longo demais/);
+  });
+
+  describe("símbolos da B3 (WIN-IBOV e WIN): só do banco, nunca da Binance", () => {
+    const M5 = 300_000;
+    const binance = () => {
+      let chamadas = 0;
+      return {
+        corretora: {
+          candles: async () => {
+            chamadas++;
+            throw new Error("não deveria ir à Binance para um símbolo da B3");
+          },
+        },
+        chamadas: () => chamadas,
+      };
+    };
+    const terceiroPregao = {
+      simbolo: "WIN-IBOV",
+      intervalo: "5m" as const,
+      inicio: aberturaSemente(2, 0),
+      fim: aberturaSemente(2, 83) + M5,
+    };
+
+    it("lê do banco, com aquecimento contado em pregões e não em horas corridas", async () => {
+      const b = bancoDeCandlesFalso();
+      await b.banco.gravar("WIN-IBOV", "5m", sementeWinIbov5m());
+      const bn = binance();
+      const lista = await candlesHistoricos({ banco: b.banco, corretora: bn.corretora }, terceiroPregao, 100);
+      expect(bn.chamadas()).toBe(0);
+      const antes = lista.filter((k) => k.abertura < terceiroPregao.inicio);
+      // 100 candles de 5m são 8 h corridas, mas o pregão anterior acabou 17 h antes.
+      expect(antes.length).toBeGreaterThanOrEqual(100);
+      expect(lista.filter((k) => k.abertura >= terceiroPregao.inicio)).toHaveLength(84);
+      expect(lista.every((k, i) => i === 0 || k.abertura > lista[i - 1]!.abertura)).toBe(true);
+      expect(b.gravacoes).toHaveLength(1);
+    });
+
+    it("WIN também; sem candles no banco, falha explicando como importar (e não baixa da Binance)", async () => {
+      const b = bancoDeCandlesFalso();
+      const bn = binance();
+      await expect(
+        candlesHistoricos(
+          { banco: b.banco, corretora: bn.corretora },
+          { ...terceiroPregao, simbolo: "WIN" },
+          0,
+        ),
+      ).rejects.toThrow(/importar-candles-csv/);
+      expect(bn.chamadas()).toBe(0);
+    });
+
+    it("só o aquecimento no banco, sem a janela: também falha (não é backtest)", async () => {
+      const b = bancoDeCandlesFalso();
+      await b.banco.gravar("WIN-IBOV", "5m", sementeWinIbov5m().slice(0, 168));
+      await expect(
+        candlesHistoricos({ banco: b.banco, corretora: binance().corretora }, terceiroPregao, 100),
+      ).rejects.toThrow(/importar-candles-b3/);
+    });
+
+    it("sem banco, recusa em vez de ir à Binance", async () => {
+      const bn = binance();
+      await expect(candlesHistoricos({ corretora: bn.corretora }, terceiroPregao, 0)).rejects.toThrow(
+        /só vêm do banco/,
+      );
+      expect(bn.chamadas()).toBe(0);
+    });
+
+    it("1m (precisão de minuto, opcional) sem dados volta vazio, sem erro e sem Binance", async () => {
+      const b = bancoDeCandlesFalso();
+      const bn = binance();
+      const lista = await candlesHistoricos(
+        { banco: b.banco, corretora: bn.corretora },
+        { ...terceiroPregao, intervalo: "1m" },
+        0,
+      );
+      expect(lista).toEqual([]);
+      expect(bn.chamadas()).toBe(0);
+    });
   });
 });

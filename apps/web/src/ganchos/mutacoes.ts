@@ -175,8 +175,11 @@ export function useRemoverConta() {
 export function useCriarToken() {
   const fonte = useFonte();
   const qc = useQueryClient();
+  const comConfirmacao = useComConfirmacao();
   return useMutation({
-    mutationFn: ({ nome, escopo }: { nome: string; escopo: EscopoToken }) => fonte.criarToken(nome, escopo),
+    // Token dá acesso programático: a API pede a identidade confirmada há pouco.
+    mutationFn: ({ nome, escopo }: { nome: string; escopo: EscopoToken }) =>
+      comConfirmacao(() => fonte.criarToken(nome, escopo)),
     onSuccess: () => void qc.invalidateQueries({ queryKey: chaves.tokens }),
   });
 }

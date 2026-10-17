@@ -343,6 +343,15 @@ Com `VITE_PUBLICO=1`:
 
 O `llms.txt` (em `apps/web/public/` e na raiz do repositório) resume o projeto para buscadores com IA. Os dois são iguais, e um teste confere isso.
 
+## Dados da B3 (mini índice)
+
+Os candles do mini índice para o backtest não vêm da Binance: são importados para a tabela `candles` por dois comandos do motor, `importar-candles-b3` (Ibovespa intradiário pela brapi, gravado como `WIN-IBOV`; exige `BRAPI_TOKEN` de um plano com intradiário) e `importar-candles-csv` (o WIN exportado do MetaTrader 5, ou um CSV genérico). Uso, opções, Docker, fontes avaliadas e limites em [dados-b3.md](dados-b3.md).
+
+```bash
+corepack pnpm --filter "@zentrade/motor..." build
+corepack pnpm --filter @zentrade/motor importar-candles-csv -- --simbolo WIN --intervalo 5m --arquivo WIN_M5.csv
+```
+
 ## Backups
 
 O que guardar, e onde:

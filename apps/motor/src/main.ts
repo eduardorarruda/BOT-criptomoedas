@@ -5,8 +5,9 @@ import { Redis } from "ioredis";
 import { resolve } from "node:path";
 import type { Logger } from "pino";
 import { consumirBacktests, type ConsumidorBacktests } from "./backtest/fila.js";
+import { cacheDeCandlesDoBacktest, criarDadosHistoricos, redeDosDadosAoVivo } from "./dados-backtest.js";
 import { processarBacktest } from "./backtest/servico.js";
-import { criarDadosPublicos, montarMotor } from "./composicao.js";
+import { montarMotor } from "./composicao.js";
 import { lerConfig, type Config } from "./config.js";
 import { Motor } from "./motor.js";
 import { criarRegistro } from "./registro.js";
@@ -43,7 +44,10 @@ function ligarBacktests(config: Config, infra: Infra, registro: Logger): Consumi
   }
   const deps = {
     backtests: banco.backtests,
-    fontes: { banco: banco.mercado, corretora: criarDadosPublicos(config, registro) },
+    fontes: {
+      banco: cacheDeCandlesDoBacktest(redeDosDadosAoVivo(config), banco.mercado),
+      corretora: criarDadosHistoricos(registro),
+    },
     registro,
   };
   const opcoes = {

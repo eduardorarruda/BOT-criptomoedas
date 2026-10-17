@@ -436,6 +436,7 @@ Os limites abaixo são **propostas iniciais**, para serem fixados por escrito an
 
 **Fase 1: dados e backtest do WIN com custos da B3**
 
+- Dados: como importar o WIN (CSV do MetaTrader 5) e a aproximação pelo Ibovespa (`WIN-IBOV`) está em [`dados-b3.md`](dados-b3.md).
 - Construir: série contínua de 1 minuto (pelo menos 2 anos), regra de rolagem explícita, custos B3 pela tabela de tarifação, slippage de 1 tick por perna em stop e mercado e 3 ticks na abertura e em notícias, sessão e zeragem, IR estimado no relatório.
 - Validar como em [`fundamentacao.md`](fundamentacao.md): hipótese antes dos dados, walk-forward com pelo menos 6 janelas, número de variações testadas registrado, Deflated Sharpe ([Bailey e López de Prado](https://www.davidhbailey.com/dhbpapers/deflated-sharpe.pdf)) e probabilidade de overfitting ([Bailey et al.](https://www.davidhbailey.com/dhbpapers/backtest-prob.pdf)).
 - **Avança se:**
