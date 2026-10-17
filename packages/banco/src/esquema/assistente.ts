@@ -10,6 +10,7 @@ import { instante } from "./tipos.js";
  */
 
 export const PROVEDORES_IA = ["api", "cli"] as const;
+export const ORIGENS_TOKEN_CLAUDE = ["conexao", "colado"] as const;
 export const PAPEIS_MENSAGEM = ["usuario", "assistente"] as const;
 export const SITUACOES_MENSAGEM = ["ok", "erro", "interrompida"] as const;
 export const ORIGENS_DOCUMENTO = ["texto", "arquivo", "link", "automacao"] as const;
@@ -30,6 +31,27 @@ export const assistenteConfig = pgTable(
     atualizadoEm: instante("atualizado_em").notNull().defaultNow(),
   },
   () => [check("assistente_config_provedor", sql.raw(`provedor in (${lista(PROVEDORES_IA)})`))],
+);
+
+/**
+ * O Claude da própria pessoa (migração 0013_credenciais_claude): o token do `claude
+ * setup-token`, cifrado em envelope como as chaves da corretora (ZENTRADE_CHAVE_MESTRA).
+ * Um por pessoa. Só o final (…abcd) sai para a tela; o agente decifra para rodar o CLI.
+ */
+export const credenciaisClaude = pgTable(
+  "credenciais_claude",
+  {
+    usuarioId: uuid("usuario_id")
+      .primaryKey()
+      .references(() => usuarios.id, { onDelete: "cascade" }),
+    tokenCifrado: text("token_cifrado").notNull(),
+    tokenFinal: text("token_final").notNull(),
+    origem: text("origem", { enum: ORIGENS_TOKEN_CLAUDE }).notNull(),
+    criadaEm: instante("criada_em").notNull().defaultNow(),
+    validadaEm: instante("validada_em"),
+    ultimoErro: text("ultimo_erro"),
+  },
+  () => [check("credenciais_claude_origem", sql.raw(`origem in (${lista(ORIGENS_TOKEN_CLAUDE)})`))],
 );
 
 export const assistenteConversas = pgTable(

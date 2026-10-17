@@ -57,6 +57,12 @@ export {
 export type { RetratoConta, RoboDoRetrato, SaidaComPerda } from "./repositorios/retrato-conta.js";
 export type { DadosSituacaoConta, RepositorioRiscoConta } from "./repositorios/risco-conta.js";
 export type { ContaCorretora, NovaConta, RedeConta } from "./repositorios/contas.js";
+export {
+  cifrarTokenClaude,
+  decifrarTokenClaude,
+  type RepositorioCredenciaisClaude,
+  type ResultadoTesteGravado,
+} from "./repositorios/credenciais-claude.js";
 export type { DadosProposta, DecisaoComOrdem, FiltroDecisoes } from "./repositorios/decisoes.js";
 export type { DadosEstrategia, DetalheEstrategia } from "./repositorios/estrategias.js";
 export { validarDadosEstrategia } from "./repositorios/estrategias.js";

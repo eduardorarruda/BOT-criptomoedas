@@ -15,6 +15,7 @@ import { repositorioCarteira } from "./repositorios/carteira.js";
 import { repositorioConfiguracao } from "./repositorios/configuracao.js";
 import { repositorioConhecimento } from "./repositorios/conhecimento.js";
 import { repositorioContas } from "./repositorios/contas.js";
+import { repositorioCredenciaisClaude } from "./repositorios/credenciais-claude.js";
 import { repositorioDecisoes } from "./repositorios/decisoes.js";
 import { repositorioDivergencias } from "./repositorios/divergencias.js";
 import { repositorioEstrategias } from "./repositorios/estrategias.js";
@@ -113,6 +114,7 @@ export function criarBanco(opcoes: OpcoesBanco) {
     tokens: repositorioTokens(db),
     contas: repositorioContas(db, opcoes.chaveMestra),
     credenciais: portaCredenciais(db, opcoes.chaveMestra),
+    credenciaisClaude: repositorioCredenciaisClaude(db, opcoes.chaveMestra),
     carteira: repositorioCarteira(db),
     configuracao: repositorioConfiguracao(db),
     auditoria: repositorioAuditoria(db),

@@ -92,6 +92,13 @@
       "when": 1792241597735,
       "tag": "0012_conhecimento_sem_embeddings",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792265754062,
+      "tag": "0013_credenciais_claude",
+      "breakpoints": true
     }
   ]
 }
