@@ -25,12 +25,24 @@ import { App } from "./App";
  * VITE_DEMO=1 liga o modo de demonstração: dados fictícios e mercado simulado no
  * navegador, sem API. O código do exemplo só entra no pacote quando é usado. A fonte
  * da API é importação estática: ela (e os esquemas Zod) vem junto com a entrada, em
- * paralelo, em vez de esperar a entrada rodar para só então ser pedida.
+ * paralelo, em vez de esperar a entrada rodar para só então ser pedida. No exemplo,
+ * `?vazio=1` abre como uma instalação nova (para ver a primeira vez).
  */
+function sessaoDaAba(): Storage | undefined {
+  try {
+    return sessionStorage;
+  } catch {
+    return undefined;
+  }
+}
+
 async function escolherFonte(): Promise<Fonte> {
   if (import.meta.env.VITE_DEMO === "1") {
-    const { criarFonteDemo } = await import("./demo/fonteDemo");
-    return criarFonteDemo();
+    const [{ criarFonteDemo }, { lerModoVazio }] = await Promise.all([
+      import("./demo/fonteDemo"),
+      import("./demo/vazio"),
+    ]);
+    return criarFonteDemo({ vazio: lerModoVazio(location.search, sessaoDaAba()) });
   }
   return criarFonteApi();
 }

@@ -15,7 +15,7 @@ import { linkSeguro } from "../../lib/link";
 import { FONTE_DOCUMENTO } from "../../lib/rotulos";
 import { formatarDataHora, formatarHora } from "../../lib/tempo";
 import type { EstadoEtapa } from "./estado";
-import { useCopiar } from "./useCopiar";
+import { useCopiar } from "../../ganchos/useCopiar";
 
 /**
  * Peças de uma resposta: as consultas que o assistente fez (recolhidas numa linha, como

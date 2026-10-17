@@ -1,7 +1,7 @@
 import type { DecisaoDTO } from "@zentrade/contratos/esquemas";
 import { useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useFonte } from "../api/contexto";
-import type { EscopoToken } from "../api/esquemas";
+import type { EscopoToken, Usuario } from "../api/esquemas";
 import type {
   Credenciais,
   FiltroDecisoes,
@@ -60,6 +60,25 @@ function useResponderDecisao(aprovar: boolean) {
 }
 export const useAprovarDecisao = () => useResponderDecisao(true);
 export const useRecusarDecisao = () => useResponderDecisao(false);
+
+/** 2FA: gerar o segredo é ação crítica (pede identidade confirmada); ativar liga na sessão em cache. */
+export function useIniciarDoisFatores() {
+  const fonte = useFonte();
+  const comConfirmacao = useComConfirmacao();
+  return useMutation({ mutationFn: () => comConfirmacao(() => fonte.iniciarDoisFatores()) });
+}
+
+export function useAtivarDoisFatores() {
+  const fonte = useFonte();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (codigo: string) => fonte.ativarDoisFatores(codigo),
+    onSuccess: () =>
+      qc.setQueryData(chaves.sessao, (u: Usuario | null | undefined) =>
+        u ? { ...u, doisFatores: true } : u,
+      ),
+  });
+}
 
 export function useParadaTotal() {
   const fonte = useFonte();

@@ -24,7 +24,12 @@ import {
   TokenApiEsquema,
   TokenCriadoEsquema,
 } from "./esquemas";
-import { ConfigPublicaEsquema, type Sessao, type Usuario } from "@zentrade/contratos/esquemas";
+import {
+  ConfigPublicaEsquema,
+  SegredoDoisFatoresEsquema,
+  type Sessao,
+  type Usuario,
+} from "@zentrade/contratos/esquemas";
 import type { Fonte } from "./fonte";
 import { conectarTempoReal } from "./tempoReal";
 
@@ -58,6 +63,10 @@ export function criarFonteApi(cliente: ClienteApi = criarCliente()): Fonte {
     },
     confirmarIdentidade: async (c) => {
       await pedir("POST", "/sessao/confirmar", null, c);
+    },
+    iniciarDoisFatores: () => pedir("POST", "/sessao/2fa", SegredoDoisFatoresEsquema),
+    ativarDoisFatores: async (codigo) => {
+      await pedir("POST", "/sessao/2fa/ativar", null, { codigo });
     },
 
     resumo: () => pedir("GET", "/resumo", ResumoEsquema),

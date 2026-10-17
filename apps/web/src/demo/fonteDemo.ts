@@ -5,7 +5,7 @@ import type { Backtest } from "../api/esquemas";
 import type { Fonte, OuvintesTempoReal } from "../api/fonte";
 import { criarAleatorio, type Aleatorio } from "./aleatorio";
 import { ehSimboloDemo, criarMercado } from "./mercado";
-import { estadoInicialDemo, posicaoDTO, resumoDemo, type EstadoDemo } from "./estado";
+import { estadoInicialDemo, estadoVazioDemo, posicaoDTO, resumoDemo, type EstadoDemo } from "./estado";
 import { criarSimulacao } from "./simulacao";
 import { USUARIO_DEMO } from "./dados";
 import { comTentativasDemo, simularBacktest } from "./backtestDemo";
@@ -25,6 +25,8 @@ export interface OpcoesDemo {
   readonly analiseCadaMs?: number;
   readonly primeiraAnaliseMs?: number;
   readonly etapaMs?: number;
+  /** Instalação nova: começa sem estratégias, robôs, chaves nem histórico. */
+  readonly vazio?: boolean;
 }
 
 const CHAVE_SESSAO = "zentrade:demo:sessao";
@@ -50,6 +52,13 @@ function gravarSessao(ativa: boolean): void {
   }
 }
 
+const BASE32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+/** Segredo TOTP de exemplo (base32, 160 bits), como o que a API gera. */
+function novoSegredo(aleatorio: Aleatorio): string {
+  return Array.from({ length: 32 }, () => BASE32[Math.floor(aleatorio() * BASE32.length)]).join("");
+}
+
 function novoToken(aleatorio: Aleatorio): string {
   const alfabeto = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const corpo = Array.from({ length: 32 }, () => alfabeto[Math.floor(aleatorio() * alfabeto.length)]).join(
@@ -63,7 +72,9 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
   const aleatorio = opcoes.aleatorio ?? criarAleatorio(2026);
   const [latMin, latMax] = opcoes.latenciaMs ?? [180, 520];
   const mercado = criarMercado(aleatorio);
-  let estado: EstadoDemo = { ...estadoInicialDemo(agora()), usuario: lerSessao() ? USUARIO_DEMO : null };
+  const inicial = opcoes.vazio ? estadoVazioDemo() : estadoInicialDemo(agora());
+  let estado: EstadoDemo = { ...inicial, usuario: lerSessao() ? USUARIO_DEMO : null };
+  let segredo2fa: string | null = null;
   const ouvintes = new Set<OuvintesTempoReal>();
   let contador = 0;
 
@@ -152,6 +163,32 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
       if (valor.trim().length === 0)
         throw new ErroApi("confirmacao_invalida", "Digite sua senha ou o código do autenticador.", 401);
       mudar((e) => ({ ...e, confirmadoAte: agora() + CONFIRMACAO_MS }));
+    }),
+
+    iniciarDoisFatores: comAtraso(() => {
+      exigirConfirmacao();
+      if (estado.usuario?.doisFatores)
+        throw new ErroApi(
+          "2fa_ja_ativo",
+          "O 2FA já está ligado. Para trocar de aparelho, fale com quem administra o servidor.",
+          409,
+        );
+      segredo2fa = novoSegredo(aleatorio);
+      const conta = encodeURIComponent(`ZenTrade:${estado.usuario?.email ?? "voce@exemplo.com"}`);
+      return { segredo: segredo2fa, uri: `otpauth://totp/${conta}?secret=${segredo2fa}&issuer=ZenTrade` };
+    }),
+    ativarDoisFatores: comAtraso((codigo) => {
+      if (!segredo2fa)
+        throw new ErroApi("2fa_nao_iniciado", "Gere a chave do autenticador antes de digitar o código.", 409);
+      // No exemplo não há relógio TOTP de verdade: qualquer código de 6 números vale.
+      if (!/^\d{6}$/.test(codigo.trim()))
+        throw new ErroApi(
+          "codigo_2fa_invalido",
+          "Código incorreto. Confira se o app foi configurado com a chave nova e digite os 6 números.",
+          401,
+        );
+      segredo2fa = null;
+      mudar((e) => ({ ...e, usuario: e.usuario ? { ...e.usuario, doisFatores: true } : e.usuario }));
     }),
 
     resumo: comAtraso(() => resumoDemo(estado, agora(), mercado.preco)),

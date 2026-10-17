@@ -25,6 +25,17 @@ describe("fonte da API", () => {
     await expect(fonte.obterSessao()).rejects.toMatchObject({ codigo: "sem_conexao" });
   });
 
+  it("2FA: gera o segredo e ativa com o código", async () => {
+    const { cliente, pedir } = clienteFalso({ segredo: "ABC", uri: "otpauth://totp/x?secret=ABC" });
+    const f = criarFonteApi(cliente);
+    await expect(f.iniciarDoisFatores()).resolves.toMatchObject({ segredo: "ABC" });
+    await f.ativarDoisFatores("123456");
+    expect(pedir.mock.calls.map((c) => [c[0], c[1], c[3]])).toEqual([
+      ["POST", "/sessao/2fa", undefined],
+      ["POST", "/sessao/2fa/ativar", { codigo: "123456" }],
+    ]);
+  });
+
   it("cria robô sempre observando", async () => {
     const { cliente, pedir } = clienteFalso({});
     await criarFonteApi(cliente).criarRobo({
