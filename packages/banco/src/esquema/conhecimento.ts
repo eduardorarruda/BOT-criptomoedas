@@ -7,6 +7,14 @@ import { instante, tsvector } from "./tipos.js";
 export const FONTES = ["diario", "noticia", "regra_corretora", "estrategia", "nota"] as const;
 export const DIMENSOES_EMBEDDING = 1024;
 
+/**
+ * Busca textual em português: 'portuguese' junta formas como operação/operações; a
+ * zentrade_pt (migração 0012: unaccent + radical) faz "acoes" achar "ações" e
+ * "indice" achar "índice". O vetor guarda as duas leituras.
+ */
+const textoBuscavel = (coluna: string) =>
+  sql.raw(`to_tsvector('portuguese', ${coluna}) || to_tsvector('zentrade_pt', ${coluna})`);
+
 export const documentos = pgTable(
   "documentos",
   {
@@ -20,6 +28,7 @@ export const documentos = pgTable(
     publicadoEm: instante("publicado_em").notNull(),
     hashConteudo: text("hash_conteudo").notNull(),
     criadoEm: instante("criado_em").notNull().defaultNow(),
+    busca: tsvector("busca").generatedAlwaysAs(textoBuscavel("titulo")),
   },
   (t) => [
     unique("documentos_usuario_hash").on(t.usuarioId, t.hashConteudo),
@@ -38,8 +47,10 @@ export const trechos = pgTable(
       .references(() => usuarios.id, { onDelete: "cascade" }),
     ordem: integer("ordem").notNull(),
     texto: text("texto").notNull(),
-    embedding: vector("embedding", { dimensions: DIMENSOES_EMBEDDING }).notNull(),
-    busca: tsvector("busca").generatedAlwaysAs(sql`to_tsvector('simple', texto)`),
+    // Sem vetor quando não há provedor de embeddings (EMBEDDINGS_PROVEDOR=nenhum);
+    // reindexar-conhecimento preenche depois.
+    embedding: vector("embedding", { dimensions: DIMENSOES_EMBEDDING }),
+    busca: tsvector("busca").generatedAlwaysAs(textoBuscavel("texto")),
     criadoEm: instante("criado_em").notNull().defaultNow(),
   },
   (t) => [

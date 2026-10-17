@@ -140,6 +140,10 @@
   color: var(--apagado);
   white-space: pre-wrap;
 }
+.busca-conhecimento__modo {
+  margin: 0;
+  font-size: 12.5px;
+}
 
 /* ---------- documento com trechos ---------- */
 .documento--detalhado {

@@ -90,4 +90,30 @@ describe("busca híbrida", () => {
     await expect(busca.buscar("ok", { usuarioId: "nao-uuid" })).rejects.toThrow(/usuarioId/);
     await expect(busca.buscar("ok", { usuarioId: USUARIO, limite: 0 })).rejects.toThrow(/limite/);
   });
+
+  it("diz o modo: híbrida com embeddings, só palavras sem eles", () => {
+    expect(
+      criarBuscaHibrida({ repositorio: repo([], []), embeddings: criarEmbeddingsDeterministicos() }).modo,
+    ).toBe("hibrida");
+    expect(criarBuscaHibrida({ repositorio: repo([], []), embeddings: null }).modo).toBe("palavras");
+  });
+});
+
+describe("busca sem embeddings (EMBEDDINGS_PROVEDOR=nenhum)", () => {
+  it("usa só a busca textual, na ordem dela, sem consultar a vetorial", async () => {
+    const r = repo([trecho("v", "nota")], [trecho("b", "nota"), trecho("a", "nota")]);
+    const busca = criarBuscaHibrida({ repositorio: r, embeddings: null, agora: () => agora });
+    const achados = await busca.buscar("mini índice", { usuarioId: USUARIO, limite: 5 });
+    expect(achados.map((a) => a.trechoId)).toEqual(["b", "a"]);
+    expect(r.buscarVetorial).not.toHaveBeenCalled();
+    expect(vi.mocked(r.buscarTextual).mock.calls[0]![1]).toBe("mini | índice");
+  });
+
+  it("sem palavra útil na consulta, devolve vazio sem ir ao banco", async () => {
+    const r = repo([trecho("v", "nota")], [trecho("t", "nota")]);
+    const busca = criarBuscaHibrida({ repositorio: r, embeddings: null });
+    await expect(busca.buscar("é ?", { usuarioId: USUARIO })).resolves.toEqual([]);
+    expect(r.buscarTextual).not.toHaveBeenCalled();
+    expect(r.buscarVetorial).not.toHaveBeenCalled();
+  });
 });

@@ -62,7 +62,8 @@ export const embeddingsFalsos: Embeddings = {
 };
 
 export interface OpcoesApi {
-  readonly embeddings?: Embeddings;
+  /** Ausente: RAG desligado (sem chave). `null`: EMBEDDINGS_PROVEDOR=nenhum (só palavras). */
+  readonly embeddings?: Embeddings | null;
   readonly fila?: FilaBacktests;
   /** Variáveis de ambiente a mais (ex.: N8N_USUARIO_ID). */
   readonly ambiente?: Readonly<Record<string, string>>;
@@ -123,9 +124,13 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
   const conhecimento = criarServicoConhecimento({
     repositorio: repositorioRag(banco),
     documentos: banco.conhecimento,
-    embeddings: o.embeddings
-      ? { embeddings: o.embeddings }
-      : { indisponivel: "VOYAGE_API_KEY não está definida (use EMBEDDINGS_PROVEDOR=ollama para local)" },
+    embeddings:
+      o.embeddings !== undefined
+        ? { embeddings: o.embeddings }
+        : {
+            indisponivel:
+              "VOYAGE_API_KEY não está definida (use EMBEDDINGS_PROVEDOR=ollama para local ou nenhum para só palavras)",
+          },
   });
   const deps: Dependencias = {
     config,

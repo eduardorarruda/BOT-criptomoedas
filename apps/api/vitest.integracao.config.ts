@@ -18,7 +18,10 @@ export default defineConfig({
         "src/**/*.test.ts",
         "src/index.ts",
         "src/servidor.ts",
+        // Os pontos de entrada só ligam banco e ambiente; a lógica está em comandos/*.ts ao lado.
         "src/comandos/criar-usuario.ts",
+        "src/comandos/importar-conhecimento.ts",
+        "src/comandos/reindexar-conhecimento.ts",
         "src/integracao/**",
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },

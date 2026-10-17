@@ -63,4 +63,30 @@ describe("fundirResultados (Reciprocal Rank Fusion)", () => {
     expect(fundirResultados([lista], { ...neutras, limite: 2 })).toHaveLength(2);
     expect(lista).toEqual(copia);
   });
+
+  it("lista ausente (sem embeddings) é ignorada: vale a ordem da lista que sobrou", () => {
+    const textual = [item("a", "nota"), item("b", "nota")];
+    const r = fundirResultados([null, textual], neutras);
+    expect(r.map((x) => x.id)).toEqual(["a", "b"]);
+    expect(r[0]!.pontuacao).toBeCloseTo(1 / 61, 10);
+    expect(r[1]!.pontuacao).toBeCloseTo(1 / 62, 10);
+  });
+
+  it("sem lista nenhuma, ou só com listas vazias, devolve vazio", () => {
+    expect(fundirResultados([], neutras)).toEqual([]);
+    expect(fundirResultados([[], null, undefined], neutras)).toEqual([]);
+  });
+
+  it("item repetido na mesma lista conta uma vez, pela melhor posição", () => {
+    const [a] = fundirResultados([[item("a", "nota"), item("b", "nota"), item("a", "nota")]], neutras);
+    expect(a).toMatchObject({ id: "a" });
+    expect(a!.pontuacao).toBeCloseTo(1 / 61, 10);
+  });
+
+  it("corpus misto: o que só a textual acha (trecho sem vetor) ainda entra no resultado", () => {
+    const vetorial = [item("com-vetor", "nota")];
+    const textual = [item("sem-vetor", "nota"), item("com-vetor", "nota")];
+    const r = fundirResultados([vetorial, textual], neutras);
+    expect(r.map((x) => x.id)).toEqual(["com-vetor", "sem-vetor"]);
+  });
 });

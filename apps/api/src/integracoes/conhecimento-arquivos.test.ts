@@ -23,9 +23,13 @@ const ingerido = {
 function deps(extra: Partial<DependenciasArquivos> = {}) {
   const ingerir = vi.fn(async (_u: string, _d: unknown) => ingerido);
   const gravarOrigem = vi.fn(async () => undefined);
+  const contarTrechosSemVetor = vi.fn(async () => 3);
   const d: DependenciasArquivos = {
-    conhecimento: { ingerir },
-    banco: { conhecimentoDetalhe: { gravarOrigem } as never },
+    conhecimento: { ingerir, busca: "desligada" },
+    banco: {
+      conhecimentoDetalhe: { gravarOrigem } as never,
+      conhecimento: { contarTrechosSemVetor },
+    },
     repositorio: {} as RepositorioConhecimento,
     embeddings: { indisponivel: "sem chave" },
     agora: () => 5,
@@ -87,7 +91,9 @@ describe("serviço de arquivos", () => {
       codigo: "arquivo_invalido",
     });
     const falha = new Error("banco caiu");
-    const { s: s2 } = deps({ conhecimento: { ingerir: async () => Promise.reject(falha) } });
+    const { s: s2 } = deps({
+      conhecimento: { ingerir: async () => Promise.reject(falha), busca: "hibrida" },
+    });
     await expect(
       s2.ingerirArquivo(USUARIO, { nome: "a.txt", bytes: Buffer.from("x"), fonte: "nota" }),
     ).rejects.toBe(falha);
@@ -144,7 +150,7 @@ describe("serviço de arquivos", () => {
     } as unknown as RepositorioConhecimento;
     const { s } = deps({ embeddings, repositorio, agora: () => Date.UTC(2026, 0, 2) });
     const [achado] = await s.buscar(USUARIO, "taxa", 5);
-    expect(achado).toMatchObject({ documentoId: "d", publicadoEm: Date.UTC(2026, 0, 1) });
+    expect(achado).toMatchObject({ documentoId: "d", publicadoEm: Date.UTC(2026, 0, 1), modo: "hibrida" });
     await expect(s.buscar(USUARIO, "   ", 5)).rejects.toBeInstanceOf(ErroApi);
     const quebrado = deps({
       embeddings: {
@@ -157,5 +163,41 @@ describe("serviço de arquivos", () => {
     }).s;
     await expect(quebrado.buscar(USUARIO, "taxa", 5)).rejects.toMatchObject({ statusCode: 502 });
     expect(new ErroConhecimento("x")).toBeInstanceOf(Error);
+  });
+
+  it("busca sem embeddings (nenhum): só a textual, cada resultado marcado como modo palavras", async () => {
+    const buscarVetorial = vi.fn();
+    const repositorio = {
+      buscarVetorial,
+      buscarTextual: async () => [
+        {
+          trechoId: "t",
+          documentoId: "d",
+          fonte: "nota" as const,
+          titulo: "Mini índice",
+          url: null,
+          publicadoEm: new Date("2026-01-01T00:00:00Z"),
+          texto: "mini índice",
+        },
+      ],
+    } as unknown as RepositorioConhecimento;
+    const { s } = deps({ embeddings: { embeddings: null }, repositorio });
+    expect(await s.buscar(USUARIO, "mini indice", 5)).toEqual([
+      expect.objectContaining({ titulo: "Mini índice", modo: "palavras" }),
+    ]);
+    expect(buscarVetorial).not.toHaveBeenCalled();
+  });
+
+  it("estado: modo da busca, trechos sem vetor da pessoa e o motivo quando desligada", async () => {
+    expect(await deps({ embeddings: { embeddings: null } }).s.estado(USUARIO)).toEqual({
+      busca: "palavras",
+      trechosSemVetor: 3,
+      motivo: null,
+    });
+    expect(await deps().s.estado(USUARIO)).toEqual({
+      busca: "desligada",
+      trechosSemVetor: 3,
+      motivo: "sem chave",
+    });
   });
 });

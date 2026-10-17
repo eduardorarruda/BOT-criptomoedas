@@ -87,7 +87,7 @@ docker compose --env-file .env -f infra/docker-compose.yml --profile app run --r
   node dist/comandos/criar-usuario.js --email voce@exemplo.com --nome "Você"
 ```
 
-A tela fica em <http://localhost:8088> e a API em `127.0.0.1:8080` (`GET /api/v1/saude` sem login). As migrações rodam sozinhas antes da API. O motor sobe em papel com um agente fixo; o agente de IA precisa de `ANTHROPIC_API_KEY` para subir e de `VOYAGE_API_KEY` (ou `EMBEDDINGS_PROVEDOR=ollama`) para o conhecimento. Tudo fica preso em `127.0.0.1`.
+A tela fica em <http://localhost:8088> e a API em `127.0.0.1:8080` (`GET /api/v1/saude` sem login). As migrações rodam sozinhas antes da API. O motor sobe em papel com um agente fixo; o agente de IA precisa de `ANTHROPIC_API_KEY` para subir e de `VOYAGE_API_KEY` (ou `EMBEDDINGS_PROVEDOR=ollama`, ou `nenhum` para a busca só por palavras) para o conhecimento. Tudo fica preso em `127.0.0.1`.
 
 ### Desenvolvimento
 
@@ -124,7 +124,7 @@ O que existe e tem teste automatizado:
 - **Motor**: ciclo de decisão completo em papel, com corretora simulada e testes de ponta a ponta. Depois da compra, o stop e o alvo vão para o livro da corretora (OCO ou stop-limit), trocados quando o stop efetivo sobe e conferidos a cada candle e na partida; o papel simula o livro pela mínima e pela máxima do candle.
 - **Agente**: análise com saída estruturada, ferramentas só de leitura, CLI e MCP, testados com um cliente da Anthropic falso. O "cérebro" é escolhido por pessoa: a API da Anthropic ou o Claude Code do plano dela (`claude -p` travado, só com as ferramentas de leitura pela ponte MCP), com o passo a passo de cada análise ao vivo na tela.
 - **Assistente**: chat com os seus dados (resumo, robôs, decisões, ordens, conhecimento), só leitura, com as fontes consultadas e resposta em streaming.
-- **Conhecimento**: arquivos (PDF, DOCX, MD, TXT, HTML), links (baixados com defesa contra SSRF) e notas, por pessoa, buscáveis na tela.
+- **Conhecimento**: arquivos (PDF, DOCX, MD, TXT, HTML), links (baixados com defesa contra SSRF) e notas, por pessoa, buscáveis na tela; funciona sem embeddings (busca só por palavras, em português sem acento), com comandos para importar uma pasta e calcular os vetores depois.
 - **Risco da conta**: limites somando os robôs de cada rede (perda do dia, exposição, posições abertas, queda do pico e sequência de stops, como as proteções do Freqtrade), que só barram compras; reconciliação periódica da posição com o saldo da Binance (livre + bloqueado), que pausa as compras do ativo e nunca opera para corrigir; orçamento de IA por pessoa; chave real com saque recusada; alertas deduplicados na tela e no Telegram.
 - **Tela**: todas as páginas, com modo de demonstração e testes de componentes.
 - **Docker**: as quatro imagens constroem e o perfil `app` sobe com o motor em papel e o agente fixo.

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { criarEmbeddingsDeterministicos } from "./embeddings/deterministicos.js";
-import { ErroConhecimento, ingerir } from "./ingestao.js";
+import { ErroConhecimento, ingerir, textoParaEmbedding } from "./ingestao.js";
 import type { RepositorioConhecimento, TrechoParaGravar } from "./tipos.js";
 
 const USUARIO = "7b0c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59";
@@ -68,5 +68,18 @@ describe("ingerir", () => {
     await expect(ingerir({ ...doc, fonte: "boato" as never }, deps)).rejects.toThrow(ErroConhecimento);
     await expect(ingerir({ ...doc, usuarioId: "x" }, deps)).rejects.toThrow(/usuarioId/);
     await expect(ingerir({ ...doc, texto: "  \n " }, deps)).rejects.toThrow(/texto/);
+  });
+
+  it("sem embeddings (EMBEDDINGS_PROVEDOR=nenhum): grava os trechos sem vetor", async () => {
+    const { repo, gravados } = repoFalso();
+    const r = await ingerir(doc, { repositorio: repo, embeddings: null });
+    expect(r).toMatchObject({ novo: true, trechos: 2 });
+    expect(gravados[0]!.trechos.map((t) => t.embedding)).toEqual([null, null]);
+  });
+});
+
+describe("textoParaEmbedding", () => {
+  it("põe o título antes do trecho, para o vetor saber de que documento veio", () => {
+    expect(textoParaEmbedding("Taxas", "A taxa é 0,1%.")).toBe("Taxas\nA taxa é 0,1%.");
   });
 });

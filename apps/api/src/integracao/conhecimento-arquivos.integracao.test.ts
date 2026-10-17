@@ -121,6 +121,12 @@ describe("conhecimento por arquivo, link e busca", () => {
     const achados = resposta.json();
     expect(achados.length).toBeGreaterThan(0);
     expect(achados[0]).toHaveProperty("pontuacao");
+    expect(achados[0]).toMatchObject({ modo: "hibrida" });
+    expect((await pedir(ana, "GET", "/conhecimento/estado")).json()).toEqual({
+      busca: "hibrida",
+      trechosSemVetor: 0,
+      motivo: null,
+    });
     expect((await pedir(beto, "GET", "/conhecimento/busca?q=arriscar%20opera%C3%A7%C3%A3o")).json()).toEqual(
       [],
     );

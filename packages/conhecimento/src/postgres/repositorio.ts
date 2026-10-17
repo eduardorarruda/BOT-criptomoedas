@@ -30,6 +30,10 @@ const paraTrecho = (l: LinhaTrecho): TrechoEncontradoBruto => ({
 
 /** pgvector aceita o vetor como texto '[0.1,0.2,…]' com cast ::vector. */
 const literalVetor = (v: readonly number[]): string => `[${v.join(",")}]`;
+const literalVetorOuNulo = (v: readonly number[] | null): string | null => (v ? literalVetor(v) : null);
+
+/** Quanto o título do documento pesa na nota textual, perto do texto do próprio trecho. */
+const PESO_TITULO = 0.5;
 
 /** Repositório do RAG sobre postgres.js, nas tabelas `documentos` e `trechos` do contrato. */
 export function criarRepositorioPostgres(sql: Sql): RepositorioConhecimento {
@@ -60,7 +64,7 @@ export function criarRepositorioPostgres(sql: Sql): RepositorioConhecimento {
         for (const t of trechos) {
           await tx`
             insert into trechos (id, documento_id, usuario_id, ordem, texto, embedding)
-            values (${t.id}, ${doc.id}, ${doc.usuarioId}, ${t.ordem}, ${t.texto}, ${literalVetor(t.embedding)}::vector)`;
+            values (${t.id}, ${doc.id}, ${doc.usuarioId}, ${t.ordem}, ${t.texto}, ${literalVetorOuNulo(t.embedding)}::vector)`;
         }
         return { documentoId: doc.id, novo: true };
       });
@@ -70,19 +74,22 @@ export function criarRepositorioPostgres(sql: Sql): RepositorioConhecimento {
       const linhas = await sql<LinhaTrecho[]>`
         select t.id as trecho_id, t.documento_id, d.fonte, d.titulo, d.url, d.publicado_em, t.texto
         from trechos t join documentos d on d.id = t.documento_id
-        where t.usuario_id = ${f.usuarioId} ${filtroFontes(f)}
+        where t.usuario_id = ${f.usuarioId} and t.embedding is not null ${filtroFontes(f)}
         order by t.embedding <=> ${literalVetor(vetor)}::vector
         limit ${f.limite}`;
       return linhas.map(paraTrecho);
     },
 
+    // OU das palavras (to_tsquery com termos já limpos), não websearch_to_tsquery: ela
+    // exige todas as palavras, e uma pergunta em linguagem natural quase nunca casa inteira.
+    // Duas leituras, como na coluna: 'portuguese' (radical) e zentrade_pt (sem acento).
     async buscarTextual(f, termos) {
       const linhas = await sql<LinhaTrecho[]>`
         select t.id as trecho_id, t.documento_id, d.fonte, d.titulo, d.url, d.publicado_em, t.texto
         from trechos t join documentos d on d.id = t.documento_id,
-             to_tsquery('simple', ${termos}) q
-        where t.usuario_id = ${f.usuarioId} and t.busca @@ q ${filtroFontes(f)}
-        order by ts_rank(t.busca, q) desc, t.id
+             (select to_tsquery('portuguese', ${termos}) || to_tsquery('zentrade_pt', ${termos}) as q) c
+        where t.usuario_id = ${f.usuarioId} and (t.busca @@ c.q or d.busca @@ c.q) ${filtroFontes(f)}
+        order by ts_rank(t.busca, c.q) + ${PESO_TITULO} * ts_rank(d.busca, c.q) desc, t.id
         limit ${f.limite}`;
       return linhas.map(paraTrecho);
     },

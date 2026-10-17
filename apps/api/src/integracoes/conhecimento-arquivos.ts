@@ -9,17 +9,28 @@ import {
   type LinkLido,
   type RepositorioConhecimento,
   type TextoExtraido,
+  type TipoExtraivel,
 } from "@zentrade/conhecimento";
-import type { ArquivoIngerido, FonteDocumento, ResultadoBuscaConhecimento } from "@zentrade/contratos";
+import type {
+  ArquivoIngerido,
+  EstadoConhecimento,
+  FonteDocumento,
+  ResultadoBuscaConhecimento,
+} from "@zentrade/contratos";
 import { ErroApi } from "../erros.js";
-import type { FonteEmbeddings, ServicoConhecimento } from "./conhecimento.js";
+import { estadoDaBusca, type FonteEmbeddings, type ServicoConhecimento } from "./conhecimento.js";
 import { extrairIsolado } from "./extracao-isolada.js";
 
 /** Arquivos e links para a base de conhecimento da pessoa, e a busca nela. */
 export interface ServicoArquivos {
   ingerirArquivo(usuarioId: string, a: ArquivoEnviado): Promise<ArquivoIngerido>;
+  /** As duas metades de ingerirArquivo, para quem decide algo entre elas (importar-conhecimento). */
+  extrairArquivo(nome: string, bytes: Buffer): Promise<ArquivoExtraido>;
+  ingerirExtraido(usuarioId: string, a: ArquivoExtraido, doc: DocumentoDoArquivo): Promise<ArquivoIngerido>;
   ingerirLink(usuarioId: string, l: LinkPedido): Promise<ArquivoIngerido>;
   buscar(usuarioId: string, consulta: string, limite: number): Promise<ResultadoBuscaConhecimento[]>;
+  /** Modo da busca e quantos trechos da pessoa esperam vetor (para a tela avisar). */
+  estado(usuarioId: string): Promise<EstadoConhecimento>;
 }
 
 export interface ArquivoEnviado {
@@ -27,6 +38,19 @@ export interface ArquivoEnviado {
   readonly bytes: Buffer;
   readonly fonte: FonteDocumento;
   readonly titulo?: string;
+}
+
+/** O arquivo já lido: nome seguro, tipo conferido pelo conteúdo e o texto extraído. */
+export interface ArquivoExtraido {
+  readonly nome: string;
+  readonly tipo: TipoExtraivel;
+  readonly bytes: number;
+  readonly texto: TextoExtraido;
+}
+
+export interface DocumentoDoArquivo {
+  readonly fonte: FonteDocumento;
+  readonly titulo: string;
 }
 
 export interface LinkPedido {
@@ -37,7 +61,9 @@ export interface LinkPedido {
 
 export interface DependenciasArquivos {
   readonly conhecimento: ServicoConhecimento;
-  readonly banco: Pick<Banco, "conhecimentoDetalhe">;
+  readonly banco: Pick<Banco, "conhecimentoDetalhe"> & {
+    readonly conhecimento: Pick<Banco["conhecimento"], "contarTrechosSemVetor">;
+  };
   readonly repositorio: RepositorioConhecimento;
   readonly embeddings: FonteEmbeddings;
   readonly agora: () => number;
@@ -77,28 +103,41 @@ async function gravar(
   return { ...r, caracteres: texto.caracteres, truncado: texto.truncado };
 }
 
-async function ingerirArquivo(d: DependenciasArquivos, usuarioId: string, a: ArquivoEnviado) {
-  const nome = nomeSeguro(a.nome);
-  const extraido = await (async () => {
-    const tipo = detectarTipo(nome, a.bytes);
+async function extrairArquivo(nomeBruto: string, bytes: Buffer): Promise<ArquivoExtraido> {
+  const nome = nomeSeguro(nomeBruto);
+  return (async () => {
+    const tipo = detectarTipo(nome, bytes);
     // Numa worker thread com teto de memória e tempo: arquivo hostil não derruba a API.
-    return { tipo, texto: await extrairIsolado(a.bytes, tipo) };
+    return { nome, tipo, bytes: bytes.length, texto: await extrairIsolado(bytes, tipo) };
   })().catch((e: unknown) => {
     throw traduzir(e, "arquivo_invalido");
   });
-  const titulo = (a.titulo ?? extraido.texto.titulo ?? semExtensao(nome)).slice(0, LIMITE_TITULO);
-  return gravar(
-    d,
-    usuarioId,
-    extraido.texto,
-    { titulo, fonte: a.fonte },
-    {
-      origem: "arquivo",
-      nomeArquivo: nome,
-      tipoArquivo: extraido.tipo,
-      bytes: a.bytes.length,
-    },
-  );
+}
+
+/** O título pedido, o do próprio arquivo (HTML) ou o nome sem extensão. */
+export const tituloDoArquivo = (a: ArquivoExtraido, pedido?: string): string =>
+  (pedido ?? a.texto.titulo ?? semExtensao(a.nome)).slice(0, LIMITE_TITULO);
+
+function ingerirExtraido(
+  d: DependenciasArquivos,
+  usuarioId: string,
+  a: ArquivoExtraido,
+  doc: DocumentoDoArquivo,
+): Promise<ArquivoIngerido> {
+  return gravar(d, usuarioId, a.texto, doc, {
+    origem: "arquivo",
+    nomeArquivo: a.nome,
+    tipoArquivo: a.tipo,
+    bytes: a.bytes,
+  });
+}
+
+async function ingerirArquivo(d: DependenciasArquivos, usuarioId: string, a: ArquivoEnviado) {
+  const extraido = await extrairArquivo(a.nome, a.bytes);
+  return ingerirExtraido(d, usuarioId, extraido, {
+    titulo: tituloDoArquivo(extraido, a.titulo),
+    fonte: a.fonte,
+  });
 }
 
 async function ingerirLink(d: DependenciasArquivos, usuarioId: string, l: LinkPedido) {
@@ -124,6 +163,7 @@ async function buscar(d: DependenciasArquivos, usuarioId: string, consulta: stri
   if ("indisponivel" in d.embeddings) {
     throw new ErroApi(503, "conhecimento_indisponivel", `o RAG está desligado: ${d.embeddings.indisponivel}`);
   }
+  // embeddings null (EMBEDDINGS_PROVEDOR=nenhum): a busca roda só por palavras e diz isso.
   const busca = criarBuscaHibrida({ repositorio: d.repositorio, embeddings: d.embeddings.embeddings });
   const achados = await busca.buscar(consulta, { usuarioId, limite }).catch((e: unknown) => {
     if (e instanceof ErroConhecimento) throw new ErroApi(400, "busca_invalida", e.message);
@@ -139,7 +179,16 @@ async function buscar(d: DependenciasArquivos, usuarioId: string, consulta: stri
     publicadoEm: a.publicadoEm.getTime(),
     texto: a.texto,
     pontuacao: a.pontuacao,
+    modo: busca.modo,
   }));
+}
+
+async function estado(d: DependenciasArquivos, usuarioId: string): Promise<EstadoConhecimento> {
+  return {
+    busca: estadoDaBusca(d.embeddings),
+    trechosSemVetor: await d.banco.conhecimento.contarTrechosSemVetor(usuarioId),
+    motivo: "indisponivel" in d.embeddings ? d.embeddings.indisponivel : null,
+  };
 }
 
 /**
@@ -149,7 +198,10 @@ async function buscar(d: DependenciasArquivos, usuarioId: string, consulta: stri
 export function criarServicoArquivos(d: DependenciasArquivos): ServicoArquivos {
   return {
     ingerirArquivo: (usuarioId, a) => ingerirArquivo(d, usuarioId, a),
+    extrairArquivo: (nome, bytes) => extrairArquivo(nome, bytes),
+    ingerirExtraido: (usuarioId, a, doc) => ingerirExtraido(d, usuarioId, a, doc),
     ingerirLink: (usuarioId, l) => ingerirLink(d, usuarioId, l),
     buscar: (usuarioId, consulta, limite) => buscar(d, usuarioId, consulta, limite),
+    estado: (usuarioId) => estado(d, usuarioId),
   };
 }

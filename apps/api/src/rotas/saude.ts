@@ -26,8 +26,10 @@ export const rotasSaude: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (
     ]);
     const motor = motorHa !== null && motorHa <= MOTOR_VIVO_ATE_SEGUNDOS;
     const ok = banco && redis;
-    return reply
-      .code(ok ? 200 : 503)
-      .send({ ok, servicos: { banco, redis, motor, agente: agente ?? false } });
+    return reply.code(ok ? 200 : 503).send({
+      ok,
+      servicos: { banco, redis, motor, agente: agente ?? false },
+      conhecimento: deps.conhecimento.busca,
+    });
   });
 };

@@ -135,3 +135,98 @@ describe("repositório PostgreSQL + pgvector", () => {
     expect(await busca.buscar(extraido.texto, { usuarioId: BETO, limite: 50 })).toEqual([]);
   });
 });
+
+describe("sem embeddings (EMBEDDINGS_PROVEDOR=nenhum) e corpus misto", () => {
+  it("grava os trechos sem vetor e acha pelas palavras, no modo palavras", async () => {
+    const repositorio = criarRepositorioPostgres(sql);
+    const r = await ingerir(doc(ANA, "O mini índice fecha às 18h25 na B3.", { titulo: "Pregão" }), {
+      repositorio,
+      embeddings: null,
+    });
+    expect(r).toMatchObject({ novo: true, trechos: 1 });
+    const [linha] = await sql<
+      { sem: number }[]
+    >`select count(*)::int as sem from trechos where embedding is null`;
+    expect(linha?.sem).toBe(1);
+
+    const busca = criarBuscaHibrida({ repositorio, embeddings: null });
+    expect(busca.modo).toBe("palavras");
+    const achados = await busca.buscar("mini indice", { usuarioId: ANA });
+    expect(achados.map((a) => a.titulo)).toEqual(["Pregão"]);
+    expect(await busca.buscar("mini indice", { usuarioId: BETO })).toEqual([]);
+  });
+
+  it("com vetores e sem vetores misturados, a busca híbrida acha os dois e a vetorial ignora os sem vetor", async () => {
+    const repositorio = criarRepositorioPostgres(sql);
+    await ingerir(doc(ANA, "Stop móvel protege o lucro da operação.", { titulo: "Com vetor" }), {
+      repositorio,
+      embeddings,
+    });
+    await ingerir(doc(ANA, "Stop no fundo anterior para operações de swing.", { titulo: "Sem vetor" }), {
+      repositorio,
+      embeddings: null,
+    });
+    const [vetor] = await embeddings.gerar(["stop"], "consulta");
+    const filtro = { usuarioId: ANA, fontes: null, limite: 10 };
+    expect((await repositorio.buscarVetorial(filtro, vetor!)).map((t) => t.titulo)).toEqual(["Com vetor"]);
+
+    const busca = criarBuscaHibrida({ repositorio, embeddings });
+    const titulos = (await busca.buscar("stop operações", { usuarioId: ANA })).map((a) => a.titulo);
+    expect(titulos.sort()).toEqual(["Com vetor", "Sem vetor"]);
+  });
+});
+
+describe("busca por palavras em português", () => {
+  const textos = {
+    acoes: "Comprei ações da Petrobras na baixa.",
+    acao: "Cada ação do índice tem um peso.",
+    indice: "O mini índice abriu em alta e o dólar caiu.",
+    operacao: "Toda operação precisa de um stop definido.",
+    regras: "As regras da corretora mudaram em outubro.",
+  } as const;
+
+  async function semear() {
+    const repositorio = criarRepositorioPostgres(sql);
+    for (const [titulo, texto] of Object.entries(textos)) {
+      await ingerir(doc(ANA, texto, { titulo }), { repositorio, embeddings: null });
+    }
+    return criarBuscaHibrida({ repositorio, embeddings: null });
+  }
+  const titulos = async (busca: Awaited<ReturnType<typeof semear>>, consulta: string) =>
+    (await busca.buscar(consulta, { usuarioId: ANA, limite: 10 })).map((a) => a.titulo).sort();
+
+  it("ignora acento nos dois sentidos: acoes acha ações, mini indice acha mini índice", async () => {
+    const busca = await semear();
+    expect(await titulos(busca, "acoes")).toEqual(["acao", "acoes"]);
+    expect(await titulos(busca, "ações")).toEqual(["acao", "acoes"]);
+    expect(await titulos(busca, "mini indice")).toEqual(["acao", "indice"]);
+    expect(await titulos(busca, "mini índice")).toEqual(["acao", "indice"]);
+  });
+
+  it("junta singular e plural: operações acha operação, regra acha regras", async () => {
+    const busca = await semear();
+    expect(await titulos(busca, "operações")).toEqual(["operacao"]);
+    expect(await titulos(busca, "operacoes")).toEqual(["operacao"]);
+    expect(await titulos(busca, "regra")).toEqual(["regras"]);
+  });
+
+  it("o título do documento também conta, com peso menor que o texto", async () => {
+    const repositorio = criarRepositorioPostgres(sql);
+    await ingerir(doc(ANA, "Abre às 9h e fecha às 18h.", { titulo: "Horário do mini índice" }), {
+      repositorio,
+      embeddings: null,
+    });
+    await ingerir(doc(ANA, "O mini índice tem tick de 5 pontos.", { titulo: "Ticks" }), {
+      repositorio,
+      embeddings: null,
+    });
+    const busca = criarBuscaHibrida({ repositorio, embeddings: null });
+    const achados = await busca.buscar("mini indice", { usuarioId: ANA });
+    expect(achados.map((a) => a.titulo)).toEqual(["Ticks", "Horário do mini índice"]);
+  });
+
+  it("consulta só com palavras vazias não quebra nem devolve lixo", async () => {
+    const busca = await semear();
+    expect(await titulos(busca, "estava sendo")).toEqual([]);
+  });
+});

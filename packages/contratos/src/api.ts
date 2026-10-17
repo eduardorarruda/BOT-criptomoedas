@@ -120,9 +120,18 @@ export const DocumentoIngeridoEsquema = DocumentoEsquema.extend({
 });
 export type DocumentoIngerido = z.infer<typeof DocumentoIngeridoEsquema>;
 
+/**
+ * Busca no conhecimento: `hibrida` (semântica + palavras), `palavras` (sem embeddings:
+ * EMBEDDINGS_PROVEDOR=nenhum) ou `desligada` (provedor sem chave, ex.: voyage sem VOYAGE_API_KEY).
+ */
+export const EstadoBuscaConhecimento = z.enum(["hibrida", "palavras", "desligada"]);
+export type EstadoBuscaConhecimento = z.infer<typeof EstadoBuscaConhecimento>;
+
 export const SaudeEsquema = z.object({
   ok: z.boolean(),
   servicos: z.object({ banco: z.boolean(), redis: z.boolean(), motor: z.boolean(), agente: z.boolean() }),
+  /** Modo da busca no conhecimento. Não afeta `ok`: a API funciona sem ele. */
+  conhecimento: EstadoBuscaConhecimento.optional(),
 });
 export type Saude = z.infer<typeof SaudeEsquema>;
 

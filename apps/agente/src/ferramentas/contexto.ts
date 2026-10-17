@@ -36,3 +36,18 @@ export interface DependenciasFerramentas {
 
 export const dataCurta = (d: Date | number): string => new Date(d).toISOString().slice(0, 10);
 export const json = (valor: unknown): string => JSON.stringify(valor);
+
+/**
+ * Sem embeddings (EMBEDDINGS_PROVEDOR=nenhum) a busca só casa palavras: o modelo
+ * precisa saber disso para tentar os termos que aparecem no texto, não sinônimos.
+ */
+export function sobreABusca(busca: Pick<BuscaConhecimento, "modo">): Record<string, string> {
+  return busca.modo === "palavras"
+    ? {
+        modoBusca: "palavras",
+        sobreABusca:
+          "busca só por palavras (sem embeddings configurados): procure com os termos que aparecem no " +
+          "texto; sinônimos e paráfrases não são reconhecidos",
+      }
+    : {};
+}

@@ -6,8 +6,10 @@ import {
   ErroConhecimento,
   FonteConhecimento,
   mensagemZod,
+  type FiltroBusca,
   type RepositorioConhecimento,
   type TrechoEncontrado,
+  type TrechoEncontradoBruto,
 } from "./tipos.js";
 
 /**
@@ -43,13 +45,23 @@ export interface OpcoesBusca {
   readonly limite?: number;
 }
 
+/**
+ * `hibrida`: semântica (vetores) + palavras. `palavras`: sem provedor de embeddings
+ * (EMBEDDINGS_PROVEDOR=nenhum), só o full-text — a tela e o agente avisam disso.
+ */
+export const MODOS_BUSCA = ["hibrida", "palavras"] as const;
+export type ModoBusca = (typeof MODOS_BUSCA)[number];
+
 export interface BuscaConhecimento {
+  /** Opcional para dublês de teste; ausente conta como `hibrida`. */
+  readonly modo?: ModoBusca;
   buscar(consulta: string, opcoes: OpcoesBusca): Promise<TrechoEncontrado[]>;
 }
 
 export interface DependenciasBusca {
   readonly repositorio: RepositorioConhecimento;
-  readonly embeddings: Embeddings;
+  /** `null`: busca só por palavras. */
+  readonly embeddings: Embeddings | null;
   readonly pesos?: Readonly<Record<FonteConhecimento, number>>;
   readonly meiaVidaDias?: Readonly<Record<FonteConhecimento, number>>;
   /** Quantos candidatos cada busca traz antes da fusão (por padrão, 4× o limite). */
@@ -57,9 +69,23 @@ export interface DependenciasBusca {
   readonly agora?: () => Date;
 }
 
-/** Busca híbrida: vetorial (cosseno) + textual (ts_rank), fundidas por RRF, com peso por fonte e idade. */
-export function criarBuscaHibrida(deps: DependenciasBusca): BuscaConhecimento {
+async function buscarVetorial(
+  deps: DependenciasBusca,
+  filtro: FiltroBusca,
+  consulta: string,
+): Promise<TrechoEncontradoBruto[] | null> {
+  if (!deps.embeddings) return null;
+  const [vetor] = await deps.embeddings.gerar([consulta], "consulta");
+  return deps.repositorio.buscarVetorial(filtro, vetor ?? []);
+}
+
+/**
+ * Busca híbrida: vetorial (cosseno) + textual (ts_rank), fundidas por RRF, com peso por
+ * fonte e idade. Sem embeddings, a vetorial fica de fora e vale só a textual.
+ */
+export function criarBuscaHibrida(deps: DependenciasBusca): BuscaConhecimento & { readonly modo: ModoBusca } {
   return {
+    modo: deps.embeddings ? "hibrida" : "palavras",
     async buscar(consulta, opcoes) {
       const lido = PedidoBusca.safeParse({ consulta, ...opcoes });
       if (!lido.success) throw new ErroConhecimento(`Busca inválida: ${mensagemZod(lido.error)}`);
@@ -70,12 +96,12 @@ export function criarBuscaHibrida(deps: DependenciasBusca): BuscaConhecimento {
         limite: deps.candidatosPorBusca ?? p.limite * 4,
       };
       const termos = termosDeBusca(p.consulta);
-      const [vetor] = await deps.embeddings.gerar([p.consulta], "consulta");
       const [vetorial, textual] = await Promise.all([
-        deps.repositorio.buscarVetorial(filtro, vetor ?? []),
+        buscarVetorial(deps, filtro, p.consulta),
         termos ? deps.repositorio.buscarTextual(filtro, termos) : Promise.resolve([]),
       ]);
-      const comId = (lista: typeof vetorial) => lista.map((t) => ({ ...t, id: t.trechoId }));
+      const comId = (lista: readonly TrechoEncontradoBruto[] | null) =>
+        lista?.map((t) => ({ ...t, id: t.trechoId })) ?? null;
       return fundirResultados([comId(vetorial), comId(textual)], {
         agora: (deps.agora ?? (() => new Date()))(),
         limite: p.limite,

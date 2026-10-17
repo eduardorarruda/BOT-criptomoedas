@@ -23,7 +23,8 @@ describe("configuração da API", () => {
 
   it("confere o provedor de embeddings e o nível de log unificados", () => {
     expect(lerConfig({ ...valido, EMBEDDINGS_PROVEDOR: "ollama" }).EMBEDDINGS_PROVEDOR).toBe("ollama");
-    expect(() => lerConfig({ ...valido, EMBEDDINGS_PROVEDOR: "openai" })).toThrow(/voyage ou ollama/);
+    expect(lerConfig({ ...valido, EMBEDDINGS_PROVEDOR: "nenhum" }).EMBEDDINGS_PROVEDOR).toBe("nenhum");
+    expect(() => lerConfig({ ...valido, EMBEDDINGS_PROVEDOR: "openai" })).toThrow(/voyage, ollama ou nenhum/);
     expect(lerConfig({ ...valido, LOG_LEVEL: "silent" }).LOG_LEVEL).toBe("silent");
     expect(() => lerConfig({ ...valido, LOG_LEVEL: "verboso" })).toThrow(/LOG_LEVEL/);
   });

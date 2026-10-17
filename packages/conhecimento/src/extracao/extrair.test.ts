@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { docxComParagrafos, pdfComTexto } from "../teste/arquivos.js";
-import { decodificarTexto, detectarTipo, extensaoDe } from "./detectar.js";
+import { decodificarTexto, detectarTipo, extensaoAceita, extensaoDe } from "./detectar.js";
 import { extrairTexto } from "./extrair.js";
 import { textoDoHtml } from "./html.js";
 import { ErroExtracao, LIMITE_CARACTERES_EXTRAIDOS, limitarTexto } from "./tipos.js";
 
 const texto = (t: string) => Buffer.from(t, "utf8");
+
+describe("extensaoAceita", () => {
+  it("aceita as extensões que a extração lê, sem diferenciar maiúsculas", () => {
+    expect(["a.md", "b.MARKDOWN", "c.txt", "d.pdf", "e.Docx", "f.html", "g.htm"].map(extensaoAceita)).toEqual(
+      Array(7).fill(true),
+    );
+    expect(["foto.png", "planilha.xlsx", "sem-extensao", ".bashrc"].map(extensaoAceita)).toEqual(
+      Array(4).fill(false),
+    );
+  });
+});
 
 describe("detectarTipo", () => {
   it("aceita os cinco tipos quando o conteúdo confere com a extensão", () => {

@@ -40,6 +40,20 @@ describe("migrações aplicadas do zero", () => {
     );
   });
 
+  it("0012: trecho sem vetor, busca em português sem acento e índices da busca e da reindexação", async () => {
+    const [coluna] = await sql`
+      select is_nullable from information_schema.columns
+      where table_name = 'trechos' and column_name = 'embedding'`;
+    expect(coluna!.is_nullable).toBe("YES");
+    const [lexemas] = await sql`select to_tsvector('zentrade_pt', 'Ações do mini índice')::text as v`;
+    expect(lexemas!.v).toBe("'aco':1 'indic':4 'min':3");
+    const indices = await sql`
+      select indexname from pg_indexes where tablename in ('trechos', 'documentos')`;
+    expect(indices.map((i) => i.indexname)).toEqual(
+      expect.arrayContaining(["trechos_busca_gin", "documentos_busca_gin", "trechos_sem_vetor"]),
+    );
+  });
+
   it("rodar de novo não faz nada (idempotente)", async () => {
     await expect(migrar(banco.url)).resolves.toBeUndefined();
   });

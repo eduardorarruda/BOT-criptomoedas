@@ -10,4 +10,5 @@ export * from "./fusao.js";
 export * from "./ingestao.js";
 export * from "./normalizar.js";
 export * from "./postgres/repositorio.js";
+export * from "./reindexacao.js";
 export * from "./tipos.js";

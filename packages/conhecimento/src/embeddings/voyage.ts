@@ -34,7 +34,8 @@ export function criarEmbeddingsVoyage(o: OpcoesVoyage): Embeddings {
   if (!o.chave) {
     throw new ErroEmbeddings(
       "VOYAGE_API_KEY não está definida. Crie uma chave em https://dashboard.voyageai.com e ponha no .env, " +
-        "ou use EMBEDDINGS_PROVEDOR=ollama para gerar embeddings localmente.",
+        "use EMBEDDINGS_PROVEDOR=ollama para gerar embeddings localmente, ou EMBEDDINGS_PROVEDOR=nenhum " +
+        "para usar só a busca por palavras (sem embeddings) até ter a chave.",
     );
   }
   const cabecalhos = { authorization: `Bearer ${o.chave}` };

@@ -85,6 +85,13 @@
       "when": 1791804969038,
       "tag": "0011_protecoes_corretora",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792241597735,
+      "tag": "0012_conhecimento_sem_embeddings",
+      "breakpoints": true
     }
   ]
 }

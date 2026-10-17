@@ -29,21 +29,42 @@ export const hashConteudo = (texto: string): string =>
 
 const TAMANHO_MINIMO_TERMO = 3;
 const TERMOS_MAXIMOS = 32;
+/** Os termos da consulta mais as variações de número (ação/ações). */
+const TERMOS_MAXIMOS_COM_VARIACOES = 64;
 
-// O dicionário 'simple' do PostgreSQL não tira stopwords; sem esta lista "com" e
-// "para" casam com quase todo trecho e bagunçam o ranking textual.
+// O dicionário do PostgreSQL só reconhece as stopwords escritas com acento ("não",
+// "você"); esta lista corta as comuns antes, para "com" e "para" não casarem com
+// quase todo trecho e bagunçarem o ranking textual.
 const STOPWORDS = new Set(
   (
     "que com como para por pela pelo pelas pelos uma uns umas dos das nos nas num numa não sim mais menos " +
     "qual quais quando onde quem porque por que isso isto esse essa este esta aquele aquela seu sua seus suas " +
     "ele ela eles elas nós você vocês foi ser são está estão tem têm ter há já também muito muita entre sobre " +
-    "até depois antes ainda então mas nem aos às pra pro dá vai"
+    "até depois antes ainda então mas nem aos às pra pro dá vai " +
+    // As mesmas, como se digita sem acento.
+    "nao voce voces esta estao sao tem ate entao tambem"
   ).split(" "),
 );
 
+// O stemmer do PostgreSQL ('portuguese') não junta ação/ações nem, sem acento,
+// operacao/operacoes: a consulta leva as duas formas. A busca é OU, então a variação
+// que não existir no texto não atrapalha.
+const VARIACOES_NUMERO: readonly (readonly [string, string])[] = [
+  ["ões", "ão"],
+  ["oes", "ao"],
+  ["ão", "ões"],
+  ["ao", "oes"],
+];
+
+function variacaoDeNumero(palavra: string): string | null {
+  const regra = VARIACOES_NUMERO.find(([fim]) => palavra.endsWith(fim));
+  return regra ? palavra.slice(0, -regra[0].length) + regra[1] : null;
+}
+
 /**
- * Consulta OU para to_tsquery('simple', …). Só letras e números entram, então nada
- * do texto do usuário vira operador do tsquery.
+ * Consulta OU para to_tsquery. Só letras e números entram, então nada do texto do
+ * usuário vira operador do tsquery. O banco tira acentos e reduz as palavras ao
+ * radical (configuração zentrade_pt); aqui só entram as variações ão/ões.
  */
 export function termosDeBusca(consulta: string): string | null {
   const palavras =
@@ -53,5 +74,7 @@ export function termosDeBusca(consulta: string): string | null {
   const uteis = [
     ...new Set(palavras.filter((p) => p.length >= TAMANHO_MINIMO_TERMO && !STOPWORDS.has(p))),
   ].slice(0, TERMOS_MAXIMOS);
-  return uteis.length > 0 ? uteis.join(" | ") : null;
+  const variacoes = uteis.map(variacaoDeNumero).filter((v): v is string => v !== null);
+  const termos = [...new Set([...uteis, ...variacoes])].slice(0, TERMOS_MAXIMOS_COM_VARIACOES);
+  return termos.length > 0 ? termos.join(" | ") : null;
 }
