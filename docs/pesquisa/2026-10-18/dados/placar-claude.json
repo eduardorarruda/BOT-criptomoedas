@@ -1,0 +1,1406 @@
+{
+  "total": {
+    "decisoes": 29,
+    "avaliadas": 28,
+    "pendentes": 1,
+    "moeda": "USDT",
+    "aprovacoes": {
+      "acertos": 0,
+      "total": 0,
+      "taxa": null,
+      "intervalo": null
+    },
+    "vetos": {
+      "acertos": 26,
+      "total": 28,
+      "taxa": 0.9285714285714286,
+      "intervalo": {
+        "inferior": 0.7735463743160095,
+        "superior": 0.9801879358846942
+      }
+    },
+    "acuracia": {
+      "acertos": 26,
+      "total": 28,
+      "taxa": 0.9285714285714286,
+      "intervalo": {
+        "inferior": 0.7735463743160095,
+        "superior": 0.9801879358846942
+      }
+    },
+    "dinheiro": {
+      "aprovadas": "0",
+      "seAprovasseTudo": "-21.160556557903061364",
+      "agregado": "21.160556557903061364",
+      "perdasEvitadas": "21.349068823541030664",
+      "ganhosPerdidos": "0.1885122656379693"
+    },
+    "payoff": null,
+    "calibracao": {
+      "brier": 0.23221071428571433,
+      "faixas": [
+        {
+          "de": 0,
+          "ate": 0.5,
+          "decisoes": 8,
+          "confiancaMedia": 0.31875000000000003,
+          "acerto": 0.875
+        },
+        {
+          "de": 0.5,
+          "ate": 0.6,
+          "decisoes": 0,
+          "confiancaMedia": null,
+          "acerto": null
+        },
+        {
+          "de": 0.6,
+          "ate": 0.7,
+          "decisoes": 18,
+          "confiancaMedia": 0.6066666666666666,
+          "acerto": 0.9444444444444444
+        },
+        {
+          "de": 0.7,
+          "ate": 0.8,
+          "decisoes": 2,
+          "confiancaMedia": 0.7,
+          "acerto": 1
+        },
+        {
+          "de": 0.8,
+          "ate": 0.9,
+          "decisoes": 0,
+          "confiancaMedia": null,
+          "acerto": null
+        },
+        {
+          "de": 0.9,
+          "ate": 1,
+          "decisoes": 0,
+          "confiancaMedia": null,
+          "acerto": null
+        }
+      ]
+    },
+    "limites": [
+      {
+        "limite": 0.5,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      },
+      {
+        "limite": 0.55,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      },
+      {
+        "limite": 0.6,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      },
+      {
+        "limite": 0.65,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      },
+      {
+        "limite": 0.7,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      },
+      {
+        "limite": 0.75,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      },
+      {
+        "limite": 0.8,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      },
+      {
+        "limite": 0.85,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      },
+      {
+        "limite": 0.9,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      },
+      {
+        "limite": 0.95,
+        "aprovacoes": 0,
+        "acertos": 0,
+        "precisao": null,
+        "resultado": "0",
+        "retorno": 0
+      }
+    ],
+    "limite": null,
+    "confiavel": false,
+    "aviso": "Só 28 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo).",
+    "resumo": "Nos últimos 28 sinais avaliados, você não aprovou nenhum; vetou 28 e 26 vetos estavam certos (92,9%). Em dinheiro, suas aprovações somaram 0 USDT; aprovar tudo teria dado -21,1606 USDT (você agregou 21,1606 USDT). Calibração (Brier 0,2322; 0 é perfeito, 0,25 é chutar 50%): 0,00–0,50: disse 31,9%, acertou 87,5% (8); 0,60–0,70: disse 60,7%, acertou 94,4% (18); 0,70–0,80: disse 70%, acertou 100% (2). 1 pendente ainda sem desfecho. Só 28 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo)."
+  },
+  "porRobo": [
+    {
+      "chave": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+      "nome": "RSI(2) · BTC 5m",
+      "metricas": {
+        "decisoes": 12,
+        "avaliadas": 11,
+        "pendentes": 1,
+        "moeda": "USDT",
+        "aprovacoes": {
+          "acertos": 0,
+          "total": 0,
+          "taxa": null,
+          "intervalo": null
+        },
+        "vetos": {
+          "acertos": 11,
+          "total": 11,
+          "taxa": 1,
+          "intervalo": {
+            "inferior": 0.7411670330319684,
+            "superior": 1
+          }
+        },
+        "acuracia": {
+          "acertos": 11,
+          "total": 11,
+          "taxa": 1,
+          "intervalo": {
+            "inferior": 0.7411670330319684,
+            "superior": 1
+          }
+        },
+        "dinheiro": {
+          "aprovadas": "0",
+          "seAprovasseTudo": "-2.82604945313338657",
+          "agregado": "2.82604945313338657",
+          "perdasEvitadas": "2.82604945313338657",
+          "ganhosPerdidos": "0"
+        },
+        "payoff": null,
+        "calibracao": {
+          "brier": 0.28022727272727277,
+          "faixas": [
+            {
+              "de": 0,
+              "ate": 0.5,
+              "decisoes": 5,
+              "confiancaMedia": 0.32999999999999996,
+              "acerto": 1
+            },
+            {
+              "de": 0.5,
+              "ate": 0.6,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.6,
+              "ate": 0.7,
+              "decisoes": 4,
+              "confiancaMedia": 0.6,
+              "acerto": 1
+            },
+            {
+              "de": 0.7,
+              "ate": 0.8,
+              "decisoes": 2,
+              "confiancaMedia": 0.7,
+              "acerto": 1
+            },
+            {
+              "de": 0.8,
+              "ate": 0.9,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.9,
+              "ate": 1,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            }
+          ]
+        },
+        "limites": [
+          {
+            "limite": 0.5,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.55,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.6,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.65,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.7,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.75,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.8,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.85,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.9,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.95,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          }
+        ],
+        "limite": null,
+        "confiavel": false,
+        "aviso": "Só 11 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo).",
+        "resumo": "Nos últimos 11 sinais avaliados no robô RSI(2) · BTC 5m, você não aprovou nenhum; vetou 11 e 11 vetos estavam certos (100%). Em dinheiro, suas aprovações somaram 0 USDT; aprovar tudo teria dado -2,826 USDT (você agregou 2,826 USDT). Calibração (Brier 0,2802; 0 é perfeito, 0,25 é chutar 50%): 0,00–0,50: disse 33%, acertou 100% (5); 0,60–0,70: disse 60%, acertou 100% (4); 0,70–0,80: disse 70%, acertou 100% (2). 1 pendente ainda sem desfecho. Só 11 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo)."
+      }
+    },
+    {
+      "chave": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+      "nome": "Donchian · BTC 5m",
+      "metricas": {
+        "decisoes": 12,
+        "avaliadas": 12,
+        "pendentes": 0,
+        "moeda": "USDT",
+        "aprovacoes": {
+          "acertos": 0,
+          "total": 0,
+          "taxa": null,
+          "intervalo": null
+        },
+        "vetos": {
+          "acertos": 11,
+          "total": 12,
+          "taxa": 0.9166666666666666,
+          "intervalo": {
+            "inferior": 0.646120088858883,
+            "superior": 0.9851349055950829
+          }
+        },
+        "acuracia": {
+          "acertos": 11,
+          "total": 12,
+          "taxa": 0.9166666666666666,
+          "intervalo": {
+            "inferior": 0.646120088858883,
+            "superior": 0.9851349055950829
+          }
+        },
+        "dinheiro": {
+          "aprovadas": "0",
+          "seAprovasseTudo": "-14.686180572359271324",
+          "agregado": "14.686180572359271324",
+          "perdasEvitadas": "14.781192684044866624",
+          "ganhosPerdidos": "0.0950121116855953"
+        },
+        "payoff": null,
+        "calibracao": {
+          "brier": 0.20161666666666675,
+          "faixas": [
+            {
+              "de": 0,
+              "ate": 0.5,
+              "decisoes": 3,
+              "confiancaMedia": 0.3,
+              "acerto": 0.6666666666666666
+            },
+            {
+              "de": 0.5,
+              "ate": 0.6,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.6,
+              "ate": 0.7,
+              "decisoes": 9,
+              "confiancaMedia": 0.6133333333333334,
+              "acerto": 1
+            },
+            {
+              "de": 0.7,
+              "ate": 0.8,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.8,
+              "ate": 0.9,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.9,
+              "ate": 1,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            }
+          ]
+        },
+        "limites": [
+          {
+            "limite": 0.5,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.55,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.6,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.65,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.7,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.75,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.8,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.85,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.9,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.95,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          }
+        ],
+        "limite": null,
+        "confiavel": false,
+        "aviso": "Só 12 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo).",
+        "resumo": "Nos últimos 12 sinais avaliados no robô Donchian · BTC 5m, você não aprovou nenhum; vetou 12 e 11 vetos estavam certos (91,7%). Em dinheiro, suas aprovações somaram 0 USDT; aprovar tudo teria dado -14,6862 USDT (você agregou 14,6862 USDT). Calibração (Brier 0,2016; 0 é perfeito, 0,25 é chutar 50%): 0,00–0,50: disse 30%, acertou 66,7% (3); 0,60–0,70: disse 61,3%, acertou 100% (9). Só 12 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo)."
+      }
+    },
+    {
+      "chave": "54e41c92-4348-475a-a2f5-943b9fb20bde",
+      "nome": "MACD · BNB 5m",
+      "metricas": {
+        "decisoes": 5,
+        "avaliadas": 5,
+        "pendentes": 0,
+        "moeda": "USDT",
+        "aprovacoes": {
+          "acertos": 0,
+          "total": 0,
+          "taxa": null,
+          "intervalo": null
+        },
+        "vetos": {
+          "acertos": 4,
+          "total": 5,
+          "taxa": 0.8,
+          "intervalo": {
+            "inferior": 0.3755346297625253,
+            "superior": 0.9637758913675698
+          }
+        },
+        "acuracia": {
+          "acertos": 4,
+          "total": 5,
+          "taxa": 0.8,
+          "intervalo": {
+            "inferior": 0.3755346297625253,
+            "superior": 0.9637758913675698
+          }
+        },
+        "dinheiro": {
+          "aprovadas": "0",
+          "seAprovasseTudo": "-3.64832653241040347",
+          "agregado": "3.64832653241040347",
+          "perdasEvitadas": "3.74182668636277747",
+          "ganhosPerdidos": "0.093500153952374"
+        },
+        "payoff": null,
+        "calibracao": {
+          "brier": 0.2,
+          "faixas": [
+            {
+              "de": 0,
+              "ate": 0.5,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.5,
+              "ate": 0.6,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.6,
+              "ate": 0.7,
+              "decisoes": 5,
+              "confiancaMedia": 0.6,
+              "acerto": 0.8
+            },
+            {
+              "de": 0.7,
+              "ate": 0.8,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.8,
+              "ate": 0.9,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.9,
+              "ate": 1,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            }
+          ]
+        },
+        "limites": [
+          {
+            "limite": 0.5,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.55,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.6,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.65,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.7,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.75,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.8,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.85,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.9,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.95,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          }
+        ],
+        "limite": null,
+        "confiavel": false,
+        "aviso": "Só 5 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo).",
+        "resumo": "Nos últimos 5 sinais avaliados no robô MACD · BNB 5m, você não aprovou nenhum; vetou 5 e 4 vetos estavam certos (80%). Em dinheiro, suas aprovações somaram 0 USDT; aprovar tudo teria dado -3,6483 USDT (você agregou 3,6483 USDT). Calibração (Brier 0,2; 0 é perfeito, 0,25 é chutar 50%): 0,60–0,70: disse 60%, acertou 80% (5). Só 5 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo)."
+      }
+    }
+  ],
+  "porEstrategia": [
+    {
+      "chave": "498b7533-311f-4c49-85c5-1ae3fefd8dc5",
+      "nome": "RSI(2) em tendência de alta",
+      "metricas": {
+        "decisoes": 12,
+        "avaliadas": 11,
+        "pendentes": 1,
+        "moeda": "USDT",
+        "aprovacoes": {
+          "acertos": 0,
+          "total": 0,
+          "taxa": null,
+          "intervalo": null
+        },
+        "vetos": {
+          "acertos": 11,
+          "total": 11,
+          "taxa": 1,
+          "intervalo": {
+            "inferior": 0.7411670330319684,
+            "superior": 1
+          }
+        },
+        "acuracia": {
+          "acertos": 11,
+          "total": 11,
+          "taxa": 1,
+          "intervalo": {
+            "inferior": 0.7411670330319684,
+            "superior": 1
+          }
+        },
+        "dinheiro": {
+          "aprovadas": "0",
+          "seAprovasseTudo": "-2.82604945313338657",
+          "agregado": "2.82604945313338657",
+          "perdasEvitadas": "2.82604945313338657",
+          "ganhosPerdidos": "0"
+        },
+        "payoff": null,
+        "calibracao": {
+          "brier": 0.28022727272727277,
+          "faixas": [
+            {
+              "de": 0,
+              "ate": 0.5,
+              "decisoes": 5,
+              "confiancaMedia": 0.32999999999999996,
+              "acerto": 1
+            },
+            {
+              "de": 0.5,
+              "ate": 0.6,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.6,
+              "ate": 0.7,
+              "decisoes": 4,
+              "confiancaMedia": 0.6,
+              "acerto": 1
+            },
+            {
+              "de": 0.7,
+              "ate": 0.8,
+              "decisoes": 2,
+              "confiancaMedia": 0.7,
+              "acerto": 1
+            },
+            {
+              "de": 0.8,
+              "ate": 0.9,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.9,
+              "ate": 1,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            }
+          ]
+        },
+        "limites": [
+          {
+            "limite": 0.5,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.55,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.6,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.65,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.7,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.75,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.8,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.85,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.9,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.95,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          }
+        ],
+        "limite": null,
+        "confiavel": false,
+        "aviso": "Só 11 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo).",
+        "resumo": "Nos últimos 11 sinais avaliados na estratégia RSI(2) em tendência de alta, você não aprovou nenhum; vetou 11 e 11 vetos estavam certos (100%). Em dinheiro, suas aprovações somaram 0 USDT; aprovar tudo teria dado -2,826 USDT (você agregou 2,826 USDT). Calibração (Brier 0,2802; 0 é perfeito, 0,25 é chutar 50%): 0,00–0,50: disse 33%, acertou 100% (5); 0,60–0,70: disse 60%, acertou 100% (4); 0,70–0,80: disse 70%, acertou 100% (2). 1 pendente ainda sem desfecho. Só 11 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo)."
+      }
+    },
+    {
+      "chave": "22fb4f90-6746-4011-84fd-cfc093273e6f",
+      "nome": "Rompimento de Donchian 20/10",
+      "metricas": {
+        "decisoes": 12,
+        "avaliadas": 12,
+        "pendentes": 0,
+        "moeda": "USDT",
+        "aprovacoes": {
+          "acertos": 0,
+          "total": 0,
+          "taxa": null,
+          "intervalo": null
+        },
+        "vetos": {
+          "acertos": 11,
+          "total": 12,
+          "taxa": 0.9166666666666666,
+          "intervalo": {
+            "inferior": 0.646120088858883,
+            "superior": 0.9851349055950829
+          }
+        },
+        "acuracia": {
+          "acertos": 11,
+          "total": 12,
+          "taxa": 0.9166666666666666,
+          "intervalo": {
+            "inferior": 0.646120088858883,
+            "superior": 0.9851349055950829
+          }
+        },
+        "dinheiro": {
+          "aprovadas": "0",
+          "seAprovasseTudo": "-14.686180572359271324",
+          "agregado": "14.686180572359271324",
+          "perdasEvitadas": "14.781192684044866624",
+          "ganhosPerdidos": "0.0950121116855953"
+        },
+        "payoff": null,
+        "calibracao": {
+          "brier": 0.20161666666666675,
+          "faixas": [
+            {
+              "de": 0,
+              "ate": 0.5,
+              "decisoes": 3,
+              "confiancaMedia": 0.3,
+              "acerto": 0.6666666666666666
+            },
+            {
+              "de": 0.5,
+              "ate": 0.6,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.6,
+              "ate": 0.7,
+              "decisoes": 9,
+              "confiancaMedia": 0.6133333333333334,
+              "acerto": 1
+            },
+            {
+              "de": 0.7,
+              "ate": 0.8,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.8,
+              "ate": 0.9,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.9,
+              "ate": 1,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            }
+          ]
+        },
+        "limites": [
+          {
+            "limite": 0.5,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.55,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.6,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.65,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.7,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.75,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.8,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.85,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.9,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.95,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          }
+        ],
+        "limite": null,
+        "confiavel": false,
+        "aviso": "Só 12 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo).",
+        "resumo": "Nos últimos 12 sinais avaliados na estratégia Rompimento de Donchian 20/10, você não aprovou nenhum; vetou 12 e 11 vetos estavam certos (91,7%). Em dinheiro, suas aprovações somaram 0 USDT; aprovar tudo teria dado -14,6862 USDT (você agregou 14,6862 USDT). Calibração (Brier 0,2016; 0 é perfeito, 0,25 é chutar 50%): 0,00–0,50: disse 30%, acertou 66,7% (3); 0,60–0,70: disse 61,3%, acertou 100% (9). Só 12 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo)."
+      }
+    },
+    {
+      "chave": "81f8b299-c613-4953-8fc7-ff55eed2a632",
+      "nome": "Momento com MACD",
+      "metricas": {
+        "decisoes": 5,
+        "avaliadas": 5,
+        "pendentes": 0,
+        "moeda": "USDT",
+        "aprovacoes": {
+          "acertos": 0,
+          "total": 0,
+          "taxa": null,
+          "intervalo": null
+        },
+        "vetos": {
+          "acertos": 4,
+          "total": 5,
+          "taxa": 0.8,
+          "intervalo": {
+            "inferior": 0.3755346297625253,
+            "superior": 0.9637758913675698
+          }
+        },
+        "acuracia": {
+          "acertos": 4,
+          "total": 5,
+          "taxa": 0.8,
+          "intervalo": {
+            "inferior": 0.3755346297625253,
+            "superior": 0.9637758913675698
+          }
+        },
+        "dinheiro": {
+          "aprovadas": "0",
+          "seAprovasseTudo": "-3.64832653241040347",
+          "agregado": "3.64832653241040347",
+          "perdasEvitadas": "3.74182668636277747",
+          "ganhosPerdidos": "0.093500153952374"
+        },
+        "payoff": null,
+        "calibracao": {
+          "brier": 0.2,
+          "faixas": [
+            {
+              "de": 0,
+              "ate": 0.5,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.5,
+              "ate": 0.6,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.6,
+              "ate": 0.7,
+              "decisoes": 5,
+              "confiancaMedia": 0.6,
+              "acerto": 0.8
+            },
+            {
+              "de": 0.7,
+              "ate": 0.8,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.8,
+              "ate": 0.9,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.9,
+              "ate": 1,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            }
+          ]
+        },
+        "limites": [
+          {
+            "limite": 0.5,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.55,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.6,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.65,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.7,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.75,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.8,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.85,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.9,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.95,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          }
+        ],
+        "limite": null,
+        "confiavel": false,
+        "aviso": "Só 5 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo).",
+        "resumo": "Nos últimos 5 sinais avaliados na estratégia Momento com MACD, você não aprovou nenhum; vetou 5 e 4 vetos estavam certos (80%). Em dinheiro, suas aprovações somaram 0 USDT; aprovar tudo teria dado -3,6483 USDT (você agregou 3,6483 USDT). Calibração (Brier 0,2; 0 é perfeito, 0,25 é chutar 50%): 0,60–0,70: disse 60%, acertou 80% (5). Só 5 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo)."
+      }
+    }
+  ],
+  "porMercado": [
+    {
+      "chave": "cripto",
+      "nome": "Cripto (Binance, à vista)",
+      "metricas": {
+        "decisoes": 29,
+        "avaliadas": 28,
+        "pendentes": 1,
+        "moeda": "USDT",
+        "aprovacoes": {
+          "acertos": 0,
+          "total": 0,
+          "taxa": null,
+          "intervalo": null
+        },
+        "vetos": {
+          "acertos": 26,
+          "total": 28,
+          "taxa": 0.9285714285714286,
+          "intervalo": {
+            "inferior": 0.7735463743160095,
+            "superior": 0.9801879358846942
+          }
+        },
+        "acuracia": {
+          "acertos": 26,
+          "total": 28,
+          "taxa": 0.9285714285714286,
+          "intervalo": {
+            "inferior": 0.7735463743160095,
+            "superior": 0.9801879358846942
+          }
+        },
+        "dinheiro": {
+          "aprovadas": "0",
+          "seAprovasseTudo": "-21.160556557903061364",
+          "agregado": "21.160556557903061364",
+          "perdasEvitadas": "21.349068823541030664",
+          "ganhosPerdidos": "0.1885122656379693"
+        },
+        "payoff": null,
+        "calibracao": {
+          "brier": 0.23221071428571433,
+          "faixas": [
+            {
+              "de": 0,
+              "ate": 0.5,
+              "decisoes": 8,
+              "confiancaMedia": 0.31875000000000003,
+              "acerto": 0.875
+            },
+            {
+              "de": 0.5,
+              "ate": 0.6,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.6,
+              "ate": 0.7,
+              "decisoes": 18,
+              "confiancaMedia": 0.6066666666666666,
+              "acerto": 0.9444444444444444
+            },
+            {
+              "de": 0.7,
+              "ate": 0.8,
+              "decisoes": 2,
+              "confiancaMedia": 0.7,
+              "acerto": 1
+            },
+            {
+              "de": 0.8,
+              "ate": 0.9,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            },
+            {
+              "de": 0.9,
+              "ate": 1,
+              "decisoes": 0,
+              "confiancaMedia": null,
+              "acerto": null
+            }
+          ]
+        },
+        "limites": [
+          {
+            "limite": 0.5,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.55,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.6,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.65,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.7,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.75,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.8,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.85,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.9,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          },
+          {
+            "limite": 0.95,
+            "aprovacoes": 0,
+            "acertos": 0,
+            "precisao": null,
+            "resultado": "0",
+            "retorno": 0
+          }
+        ],
+        "limite": null,
+        "confiavel": false,
+        "aviso": "Só 28 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo).",
+        "resumo": "Nos últimos 28 sinais avaliados no mercado Cripto (Binance, à vista), você não aprovou nenhum; vetou 28 e 26 vetos estavam certos (92,9%). Em dinheiro, suas aprovações somaram 0 USDT; aprovar tudo teria dado -21,1606 USDT (você agregou 21,1606 USDT). Calibração (Brier 0,2322; 0 é perfeito, 0,25 é chutar 50%): 0,00–0,50: disse 31,9%, acertou 87,5% (8); 0,60–0,70: disse 60,7%, acertou 94,4% (18); 0,70–0,80: disse 70%, acertou 100% (2). 1 pendente ainda sem desfecho. Só 28 decisões avaliadas: com menos de 30, as porcentagens ainda mudam muito a cada decisão (veja o intervalo)."
+      }
+    }
+  ],
+  "meta": 0.8,
+  "geradoEm": 1792324050026
+}

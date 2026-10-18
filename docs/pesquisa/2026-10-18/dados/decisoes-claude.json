@@ -1,0 +1,1831 @@
+[
+  {
+    "em": 1792323299999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (4,7138) < 10: sim) e (preço (82.035,75) > SMA(200) (81.699,8224): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custo de 0,34% maior que o movimento típico de 10 velas (ATR 0,06%)",
+        "Preço colado na SMA(200); perda do nível invalida o filtro de tendência",
+        "Stop de 6% muito distante: uma perda no stop seria grande em relação ao ganho provável",
+        "Queda sequencial das últimas velas indica pressão vendedora no curto prazo",
+        "Sem confirmação externa por notícia"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima da SMA(5) com recuperação até cerca de 82.200",
+          "horizonte": 6,
+          "invalidacao": "Fechamento abaixo de 81.700 (SMA(200))",
+          "probabilidade": 0.25,
+          "resultadoEstimado": -0.02
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 81.900 e 82.150 até o tempo máximo",
+          "horizonte": 10,
+          "invalidacao": "Rompimento da faixa de 4h (81.650–82.281)",
+          "probabilidade": 0.5,
+          "resultadoEstimado": -0.3
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.700 com continuidade vendedora",
+          "horizonte": 10,
+          "invalidacao": "Retorno acima de 82.200",
+          "probabilidade": 0.25,
+          "resultadoEstimado": -0.9
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.38,
+        "probabilidadeFavoravel": 0.25
+      },
+      "confianca": 0.3,
+      "justificativa": "O sinal é de reversão à média (RSI(2) 4,7), mas o preço está só 0,41% acima da SMA(200) (81.699,8), e os custos de ida e volta são 0,34%. A volatilidade está baixa (ATR 51,89, percentil 20). O stop de 6% (17,6 custos) é desproporcional ao movimento típico: a operação sairia quase sempre pela regra preço > SMA(5) ou pelo tempo (10 velas), com ganho de poucos pontos-base, abaixo do custo de 0,34%. As cinco decisões anteriores de hoje, no mesmo padrão, foram vetadas com acerto e deram perda simulada de cerca de 0,23 a 0,29. O tempo gráfico maior é levemente altista, mas isso não compensa o custo. Não há notícia, o que é neutro.",
+      "contraArgumento": "A favor da compra: o RSI(2) está em sobrevenda, a tendência em 1h e 4h é de alta e o preço está acima da SMA(200). Reversões à média costumam render um repique rápido. Se o repique vier, aguardar perde o ganho. Mesmo assim, o repique esperado fica abaixo do custo de 0,34%.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "82035.75",
+    "custoIaUsd": "0.0215942",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.3,
+      "fonte": "contrafactual",
+      "situacao": "pendente",
+      "barras": 2,
+      "moeda": "USDT",
+      "avaliadaEm": 1792324010698
+    }
+  },
+  {
+    "em": 1792321199999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (2,6063) < 10: sim) e (preço (82.093,76) > SMA(200) (81.680,8739): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custos de 0,34% superam o ganho típico de saída pela SMA(5)",
+        "Volume baixo (0,4× a média) e fim de semana: movimentos pouco confiáveis",
+        "Preço só 0,5% acima da SMA(200): filtro de tendência frágil",
+        "Preço perto do topo das 24 h (97% da faixa): reversão possível",
+        "Sem confirmação externa por notícias",
+        "Placar com poucas decisões avaliadas (8)"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima de 82.220 com volume crescente; saída pela SMA(5) em ganho pequeno",
+          "horizonte": 4,
+          "invalidacao": "Perda de 81.900 e fechamento abaixo da SMA(5)",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.1
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 81.900 e 82.250 até o limite de 10 velas",
+          "horizonte": 10,
+          "invalidacao": "Rompimento da faixa de 4 h (81.626–82.281)",
+          "probabilidade": 0.45,
+          "resultadoEstimado": -0.34
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.900 e queda rumo a 81.680 (SMA 200)",
+          "horizonte": 10,
+          "invalidacao": "Retomada acima de 82.250",
+          "probabilidade": 0.25,
+          "resultadoEstimado": -0.6
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.333,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.7,
+      "justificativa": "O RSI(2) em 2,6 é só um recuo curto dentro de uma alta de 4 h. O preço está 0,5% acima da SMA(200), margem pequena.\n\nOs custos de ida e volta são 0,34% (≈279), contra um ATR de 56 (0,07%). A saída por preço > SMA(5) tende a ocorrer com ganho de poucas dezenas de pontos, abaixo dos custos. O alvo de +8,22% é inalcançável em 10 velas (50 min). O stop de 6% (87,7 ATR) também não serve de proteção real; na prática a saída vem pelo tempo.\n\nVolume em 0,4× a média, domingo de manhã e faixa de 4 h com amplitude de 0,8%: não há impulso. Os três sinais anteriores foram vetados e acertaram (−0,23 a −0,24 simulado). Não há notícia, o que é neutro.\n\nO valor esperado dos cenários é negativo. Aguardar.",
+      "contraArgumento": "Se a tendência de 1 h e 4 h continuar de alta, o recuo de RSI(2) costuma reverter rápido e o preço voltar acima da SMA(5), com ganho. Aguardar perderia esse ganho. Mesmo assim, o ganho típico seria menor que os 0,34% de custos.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "82093.76",
+    "custoIaUsd": "0.0241682",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.7,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.2482283713347568",
+      "retorno": -0.003072920548097904,
+      "barras": 2,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792322210693
+    }
+  },
+  {
+    "em": 1792320899999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (6,3634) < 10: sim) e (preço (82.127,55) > SMA(200) (81.678,0927): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custos (0,34%) maiores que o movimento típico de 10 velas (ATR 0,07%)",
+        "Volume fraco (0,5× a média) reduz a confiança no movimento",
+        "Stop de 6% implica perda grande se a saída por SMA(5) não ocorrer",
+        "Preço no topo da faixa de 24h: risco de reversão",
+        "Sem confirmação externa por notícias"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima da SMA(5) e retomada de 82.250 com volume maior",
+          "horizonte": 4,
+          "invalidacao": "Fechamento abaixo de 81.900",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.1
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 82.000 e 82.250 até o tempo máximo",
+          "horizonte": 10,
+          "invalidacao": "Rompimento de 81.900 ou 82.300",
+          "probabilidade": 0.5,
+          "resultadoEstimado": -0.3
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.900 com continuação",
+          "horizonte": 8,
+          "invalidacao": "Retomada de 82.250",
+          "probabilidade": 0.2,
+          "resultadoEstimado": -0.6
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.3,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.3,
+      "justificativa": "O sinal é de reversão à média (RSI(2) 6,4 < 10), mas o preço está em 77% da faixa de 4h e a 98% da faixa de 24h, bem acima das médias. Esse \"sobrevendido\" é só um recuo de 82.247 para 82.127 (−0,15%). Os custos de ida e volta são 0,34% (~279), quase 5 ATR (57,86). A saída pela SMA(5) ou pelo tempo máximo (10 velas) deve render movimentos de poucas dezenas de dólares, abaixo dos custos. O stop de 6% (17,6 custos) é muito distante e o alvo de +8,22% é inalcançável em 50 min. Volume em 0,5× a média. Os 5 sinais anteriores no mesmo padrão foram vetados e acertaram (perdas simuladas de ~−0,23 a −0,24). Sem notícias, o que é neutro.",
+      "contraArgumento": "Tendência de alta nos tempos maiores (1h e 4h com EMA(9) subindo), então o recuo pode ser comprado e o preço voltar acima da SMA(5) em poucas velas. Mesmo assim, os ganhos prováveis ficam abaixo dos custos de 0,34%.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "82127.55",
+    "custoIaUsd": "0.0214282",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.3,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.2813960686322721",
+      "retorno": -0.003483500871201172,
+      "barras": 3,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792322210693
+    }
+  },
+  {
+    "em": 1792320599999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (8,667) < 10: sim) e (preço (82.140,01) > SMA(200) (81.675,0188): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custo de 0,34% maior que o movimento esperado em 10 velas (ATR 0,07%).",
+        "Domingo de manhã, com liquidez baixa e risco de movimentos bruscos.",
+        "Preço perto da máxima de 24h; um recuo para 75.600 é possível.",
+        "Stop a 6% implica uma perda grande se o preço cair.",
+        "Sem notícia para confirmar a operação."
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fecha acima da SMA(5) e rompe 82.281",
+          "horizonte": 5,
+          "invalidacao": "Perde 81.626",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.15
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Fica entre 81.900 e 82.281 até o tempo máximo",
+          "horizonte": 10,
+          "invalidacao": "Fecha fora de 81.626–82.281",
+          "probabilidade": 0.5,
+          "resultadoEstimado": -0.3
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perde 81.626 com volume",
+          "horizonte": 10,
+          "invalidacao": "Volta acima de 82.281",
+          "probabilidade": 0.2,
+          "resultadoEstimado": -0.7
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.335,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.6,
+      "justificativa": "O sinal é de reversão à média (RSI(2) 8,7), mas o preço está em 78% da faixa de 4h e 98% da de 24h. O RSI(2) baixo veio de um recuo pequeno, de 82.246 para 82.140. O stop de 6% (77.211) fica a 80 ATR e a 17,6 custos: ele quase nunca seria atingido em 10 velas. Na prática, a saída vem pela regra preço > SMA(5) ou pelo tempo máximo, com ganhos de poucas dezenas de pontos. O custo de ida e volta (0,34%, cerca de 279) é muito maior que o movimento típico de 10 velas (ATR 61). O valor esperado líquido é negativo. As cinco decisões anteriores, com sinais parecidos, foram vetadas e os vetos acertaram (8 de 8). Não há notícia para confirmar a operação, o que é neutro.",
+      "contraArgumento": "O tempo gráfico maior está em alta (1h e 4h com a EMA(9) subindo) e o preço está acima da SMA(200). Se o recuo for apenas uma pausa, a saída por SMA(5) pode render um pequeno ganho. Esse ganho dificilmente cobriria o custo de 0,34%.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "82140.01",
+    "custoIaUsd": "0.038354",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.29361901506592525",
+      "retorno": -0.003634816357760582,
+      "barras": 4,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792322210693
+    }
+  },
+  {
+    "em": 1792316399999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (82.200,86) > topo de Donchian(20) (82.194,86): sim; stop em 82.079,7822 (preço − 2 × ATR(20) de 60,5389)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Stop a 0,4 custo de ida e volta: ruído comum aciona a saída",
+        "Rompimentos de 5m falham com frequência, após a alta de 0,6% em 30 minutos",
+        "Madrugada de domingo com liquidez menor e possíveis varreduras de stop",
+        "Sem notícia: nenhuma confirmação externa",
+        "Sinais repetidos no mesmo movimento, com vetos anteriores certos"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento sustentado acima de 82.300 com volume acima da média, mantendo a tendência do 1h",
+          "horizonte": 24,
+          "invalidacao": "Fechamento abaixo de 82.080",
+          "probabilidade": 0.3,
+          "resultadoEstimado": 0.5
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 82.080 e 82.300 sem seguir o rompimento",
+          "horizonte": 12,
+          "invalidacao": "Fechamento acima de 82.350 ou abaixo de 82.050",
+          "probabilidade": 0.35,
+          "resultadoEstimado": -0.4
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Rompimento falho, com perda de 82.080 e retorno rumo a 81.900",
+          "horizonte": 6,
+          "invalidacao": "Retomada acima de 82.250",
+          "probabilidade": 0.35,
+          "resultadoEstimado": -0.5
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.165,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.6,
+      "justificativa": "Rompimento de Donchian(20) a 82.200,86 após alta de ~0,6% em 30 minutos (de ~81.690), com o preço no topo das faixas de 4h e 24h. O stop em 82.079,78 está a 0,15% do preço, ou 0,4 custo de ida e volta (0,34%, cerca de 279,65 em preço) e 1,8 ATR(14). Ele é muito apertado: um ruído normal o aciona e o custo já consome mais que o risco. A saída por Donchian(10) também fica perto do preço, então o ganho esperado precisa superar 0,34% antes de render algo. O tempo gráfico maior é favorável (1h e 4h com EMA(9) subindo), mas o movimento já está esticado. Nas cinco decisões recentes do robô, os rompimentos seguidos foram vetados e os já apurados falharam (−1,49 e −1,16 simulados). Sem notícia, o que é neutro. Os cenários dão valor esperado negativo, então aguardo.",
+      "contraArgumento": "A favor da compra: tendência de alta no 1h e no 4h, rompimento com volume 1,2× a média e o preço no topo da faixa de 24h; o momentum pode continuar e a saída por Donchian(10) deixaria o lucro correr. Mesmo assim o stop está muito próximo e o custo é alto para ele, de modo que o valor esperado fica negativo.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "82200.86",
+    "custoIaUsd": "0.0226762",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.250240645949454226",
+      "retorno": -0.004168719217783189,
+      "barras": 5,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792318010675
+    }
+  },
+  {
+    "em": 1792316099999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (82.172,58) > topo de Donchian(20) (82.033,16): sim; stop em 82.050,9591 (preço − 2 × ATR(20) de 60,8104)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Stop a 0,4 custo de distância: ruído normal já o atinge",
+        "Entrada esticada após candle de alta forte, no topo da faixa de 24h",
+        "Rompimentos de Donchian em 5m falham com frequência",
+        "Domingo de manhã, com liquidez menor e movimentos que podem reverter",
+        "Sem notícia: não há confirmação externa"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fecha acima de 82.200 e segue subindo, mantendo o fundo de Donchian(10) acima do stop",
+          "horizonte": 24,
+          "invalidacao": "Fechamento abaixo de 82.050",
+          "probabilidade": 0.3,
+          "resultadoEstimado": 0.35
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscila entre 82.050 e 82.200 e perde o fundo de Donchian(10)",
+          "horizonte": 12,
+          "invalidacao": "Fechamento acima de 82.300 ou abaixo de 82.050",
+          "probabilidade": 0.4,
+          "resultadoEstimado": -0.45
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perde 82.050 e devolve o rompimento",
+          "horizonte": 6,
+          "invalidacao": "Recupera 82.250 com volume",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.49
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.222,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.3,
+      "justificativa": "O rompimento do topo de Donchian(20) é real: 82.172,58 contra 82.033,16, com volume 2,3× a média e tendência de 1h e 4h a favor. Mas a vela já subiu cerca de 0,2% de uma vez, e o preço está em 96% da faixa de 4h e no topo da faixa de 24h. Isso favorece uma entrada esticada.\n\nO stop fica a 0,15% (0,4 custo de ida e volta; 1,8 ATR(14)). Uma oscilação normal o atinge, e a perda líquida seria cerca de −0,49% com os custos de 0,34%. Para empatar, o preço precisa subir uns 0,34% e a saída pelo fundo de Donchian(10) tende a ocorrer antes disso numa devolução.\n\nEm velas de 5m, rompimentos falham com frequência. Nas últimas decisões, as entradas parecidas (81.940 a 82.004) foram vetadas e o placar simulado delas foi negativo, com 9 vetos certos em 9. A amostra é pequena, mas não há nada que mostre vantagem aqui. Não há notícia, o que é neutro.\n\nMeus cenários dão valor esperado negativo (cerca de −0,22%), então aguardo.",
+      "contraArgumento": "Se o rompimento for o início de uma alta, com volume 2,3× a média, tendência de 1h e 4h a favor e a máxima de 24h, ficar de fora perde um movimento que pode passar de 0,5%. O stop curto só limita a perda se a entrada estiver errada. Contra isso: com custo de 0,34% e stop de 0,15%, a assimetria é desfavorável em velas de 5m.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "82172.58",
+    "custoIaUsd": "0.026480199999999995",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.3,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.252367895692997384",
+      "retorno": -0.004175817636029798,
+      "barras": 17,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792321610693
+    }
+  },
+  {
+    "em": 1792314599999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (81.983,59) > topo de Donchian(20) (81.789,23): sim; stop em 81.887,0614 (preço − 2 × ATR(20) de 48,2643)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Stop a 0,3 custo e menos de 2 ATR: stop-out por ruído é provável",
+        "Rompimento de baixa volatilidade tende a falhar perto da resistência de 82.000–82.077",
+        "Custos de 0,34% exigem movimento bem maior que o ATR para dar lucro",
+        "Sem notícia: não há confirmação externa",
+        "Domingo de manhã, com liquidez baixa e movimentos bruscos"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento sustentado acima de 82.077 com aumento de volume",
+          "horizonte": 30,
+          "invalidacao": "Fechamento abaixo de 81.887",
+          "probabilidade": 0.25,
+          "resultadoEstimado": 0.5
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 81.800 e 82.050",
+          "horizonte": 20,
+          "invalidacao": "Rompimento de 82.100 ou perda de 81.887",
+          "probabilidade": 0.4,
+          "resultadoEstimado": -0.4
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.887 e devolução do salto",
+          "horizonte": 10,
+          "invalidacao": "Retomada de 82.077",
+          "probabilidade": 0.35,
+          "resultadoEstimado": -0.46
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.196,
+        "probabilidadeFavoravel": 0.25
+      },
+      "confianca": 0.3,
+      "justificativa": "O rompimento de Donchian(20) veio num único salto de uma vela: de 81.789 para 81.983,59 (+0,24%), com volume de só 1,2× a média e volatilidade no percentil 19. O stop está a 81.887, apenas 0,12% abaixo, ou 0,3 custo de ida e volta. Custos de 0,34% (≈279 em preço) são 5,5 vezes o ATR(14) de 50. Um ruído normal derruba o stop antes de qualquer ganho. O preço já está em 99% da faixa de 24 h, perto de 82.000–82.077, uma resistência próxima. Os tempos gráficos maiores são levemente positivos, mas não compensam. Os últimos 8 sinais iguais foram vetados e os vetos acertaram.",
+      "contraArgumento": "Contra aguardar: o rompimento tem tendência de alta nos tempos de 1h e 4h e o preço está no topo de 24 h, e rompimentos fortes podem continuar. Se o preço seguir para 83.000 sem recuar, a espera perde o movimento.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81983.59",
+    "custoIaUsd": "0.0239554",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.3,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.161817849192171779",
+      "retorno": -0.003873890636621703,
+      "barras": 1,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792315010671
+    }
+  },
+  {
+    "em": 1792314299999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (81.789,23) > topo de Donchian(20) (81.774,19): sim; stop em 81.709,8083 (preço − 2 × ATR(20) de 39,7109)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Stop a 0,3 custo de ida e volta: o custo supera a perda máxima no stop",
+        "Rompimento em volatilidade baixa (percentil 8) tende a falhar",
+        "Tempos gráficos de 1h e 4h de lado, sem tendência",
+        "Domingo de manhã, liquidez fina, com risco de movimento brusco",
+        "Preço perto da máxima de 24h (96% da faixa), com resistência próxima em 82.077"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima de 82.077 (máxima de 24h) com volume acima da média",
+          "horizonte": 24,
+          "invalidacao": "Fechamento abaixo de 81.709",
+          "probabilidade": 0.25,
+          "resultadoEstimado": 0.4
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 81.650 e 81.870",
+          "horizonte": 12,
+          "invalidacao": "Fechamento fora da faixa de 81.626–82.077",
+          "probabilidade": 0.4,
+          "resultadoEstimado": -0.3
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.709, que aciona o stop",
+          "horizonte": 6,
+          "invalidacao": "Retomada acima de 81.870 com volume",
+          "probabilidade": 0.35,
+          "resultadoEstimado": -0.44
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.174,
+        "probabilidadeFavoravel": 0.25
+      },
+      "confianca": 0.3,
+      "justificativa": "O stop está a 0,1% do preço (≈80 em preço), ou 0,3 custo de ida e volta (0,34% ≈ 278). Qualquer oscilação normal estoura o stop, e o custo sozinho já supera a distância até ele. O stop fica em 2,1 ATR(14), mas o ATR está no percentil 8 (volatilidade baixa), então o stop é curto em termos absolutos. O rompimento do Donchian(20) acontece numa faixa de 4h de só 0,29%, com preço em 68% dessa faixa: é microrruptura em mercado lateral, que costuma falhar. Tempos maiores estão de lado. As últimas 5 compras foram vetadas e os vetos acertaram (8 de 8). Não há notícia, o que é neutro. O ganho líquido só existiria se a alta passasse de ~0,34%, o que é possível, mas improvável em poucas velas.",
+      "contraArgumento": "Se a proposta de aguardar errar, é porque o rompimento com volume de 1,7× a média foi o início de uma expansão de volatilidade depois de um período comprimido, e a alta passou de 82.077 enquanto eu fiquei de fora. O 4h e o 1h estão levemente positivos. Mesmo assim, o valor esperado dos cenários é negativo.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81789.23",
+    "custoIaUsd": "0.039016",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.3,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "0.0950121116855953",
+      "retorno": 0.000316802010194577,
+      "barras": 23,
+      "acertou": false,
+      "moeda": "USDT",
+      "avaliadaEm": 1792321610693
+    }
+  },
+  {
+    "em": 1792314299999,
+    "roboId": "54e41c92-4348-475a-a2f5-943b9fb20bde",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(MACD(12, 26, 9) (-0,0488) cruzou acima de sinal do MACD(12, 26, 9) (-0,0636): sim) e (preço (720,76) > EMA(50) (720,4837): sim); stop em 720,1812 (preço − 2 × ATR(14) de 0,2894)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Stop a 0,2 custo de ida e volta e a 2 ATR: ruído já o aciona",
+        "Custos de 0,34% superam a amplitude típica de 4 h (0,39%)",
+        "Rompimentos em baixa volatilidade falham muito",
+        "Saída pelo histograma do MACD < 0 pode vir logo e realizar perda após custos",
+        "Sem confirmação externa por notícia"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima de 721,80 (topo da faixa de 4 h) com volume crescente",
+          "horizonte": 24,
+          "invalidacao": "Fechamento abaixo de 720,18",
+          "probabilidade": 0.25,
+          "resultadoEstimado": 0.3
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscila entre 719 e 721,8 e o histograma do MACD vira negativo",
+          "horizonte": 12,
+          "invalidacao": "Rompimento da faixa de 719–721,79",
+          "probabilidade": 0.5,
+          "resultadoEstimado": -0.4
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 720,18",
+          "horizonte": 6,
+          "invalidacao": "Retomada acima de 721,8",
+          "probabilidade": 0.25,
+          "resultadoEstimado": -0.42
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.23,
+        "probabilidadeFavoravel": 0.25
+      },
+      "confianca": 0.6,
+      "justificativa": "O stop está a 0,08% do preço (0,2 custo de ida e volta; 2 ATR de 0,2894). Os custos de 0,34% (≈2,45 em preço) são muito maiores que o stop e que o ATR. Qualquer ruído tira a operação no stop, e um ganho precisaria de mais de 0,34% só para empatar. A faixa de 4 h tem 0,39% de amplitude, então o espaço para lucro líquido é mínimo.\n\nA volatilidade está no percentil 3 e os tempos gráficos de 1h e 4h estão de lado. O cruzamento do MACD ocorre com o MACD ainda negativo, e o preço está só 0,05% acima da EMA(50). É um sinal fraco, típico de mercado parado de domingo de madrugada.\n\nOs 4 sinais anteriores foram vetados e os vetos estavam certos (−0,55 a −1,18 simulado). Não há notícia, o que é neutro. O valor esperado dos cenários é negativo.",
+      "contraArgumento": "Se o mercado sair da calmaria (volatilidade no percentil 3 tende a reverter), um rompimento acima de 721,8 poderia render bem mais que os custos, e a regra de saída deixaria o ganho correr. Aguardar perderia essa expansão. Mas o stop minúsculo e os custos altos tornam o esperado negativo.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "720.76",
+    "custoIaUsd": "0.038942000000000004",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "0.093500153952374",
+      "retorno": 0.0003117606176703,
+      "barras": 21,
+      "acertou": false,
+      "moeda": "USDT",
+      "avaliadaEm": 1792320710692
+    }
+  },
+  {
+    "em": 1792310399999,
+    "roboId": "54e41c92-4348-475a-a2f5-943b9fb20bde",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(MACD(12, 26, 9) (0,0758) cruzou acima de sinal do MACD(12, 26, 9) (0,0756): sim) e (preço (720,86) > EMA(50) (720,5587): sim); stop em 720,1676 (preço − 2 × ATR(14) de 0,3462)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Stop a 0,3 custo de ida e volta e menos de 2 ATR em valor absoluto: o custo domina o resultado.",
+        "Volume zero na última vela: movimento sem confirmação.",
+        "Volatilidade no percentil 5: falsos cruzamentos do MACD são frequentes.",
+        "Mercado lateral em domingo de madrugada, com pouca liquidez.",
+        "Sem notícia: não há confirmação externa."
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fecha acima de 722,52 (topo da faixa de 4h) com volume voltando.",
+          "horizonte": 24,
+          "invalidacao": "Perde 720,17 (stop).",
+          "probabilidade": 0.22,
+          "resultadoEstimado": 0.35
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço fica entre 719 e 722,5, com o histograma do MACD oscilando perto de zero.",
+          "horizonte": 24,
+          "invalidacao": "Fecha fora da faixa de 719–722,5.",
+          "probabilidade": 0.5,
+          "resultadoEstimado": -0.4
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Histograma do MACD negativo ou perda de 720,17.",
+          "horizonte": 12,
+          "invalidacao": "Retoma 721,5 com volume.",
+          "probabilidade": 0.28,
+          "resultadoEstimado": -0.44
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.2462,
+        "probabilidadeFavoravel": 0.22
+      },
+      "confianca": 0.6,
+      "justificativa": "O sinal é fraco. O MACD cruzou por 0,0002 (0,0758 contra 0,0756) e o preço está só 0,30 acima da EMA(50). Isso é ruído, não rompimento. O stop de 2 ATR fica a 0,69 (−0,1%), o que equivale a 0,3 custo de ida e volta (0,34% ≈ 2,45 em preço). Qualquer oscilação normal o atinge e o custo sozinho já supera o risco. A volatilidade está no percentil 5 e a faixa de 4h tem só 0,49%. O volume da última vela é 0× a média, então o movimento não tem confirmação. Os tempos gráficos de 1h e 4h estão de lado. O robô já vetou 3 sinais parecidos hoje, e os 3 vetos estavam certos. Não há notícia, o que é neutro.",
+      "contraArgumento": "A compra poderia acertar se a tendência de 1h, com a EMA(9) acima da EMA(21) e o preço acima da EMA(9), se estendesse e o preço rompesse 722,52 rumo a 724,69. A regra de saída só corta quando o histograma do MACD ficar negativo, então um ganho poderia correr. Mesmo assim, o valor esperado é negativo, porque o stop é curto e o custo é alto.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "720.86",
+    "custoIaUsd": "0.0216822",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.096910044756618438",
+      "retorno": -0.003657462970988238,
+      "barras": 1,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792310810658
+    }
+  },
+  {
+    "em": 1792309199999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (7,3829) < 10: sim) e (preço (81.668,01) > SMA(200) (81.566,1771): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custo de 0,34% maior que o movimento típico de 10 velas com ATR de 0,05%",
+        "Preço colado na SMA(200): o filtro de tendência pode virar a qualquer momento",
+        "Baixa liquidez de domingo de madrugada",
+        "Sinais repetidos de reversão sem repique",
+        "Stop de 6% muito largo: uma perda cheia seria desproporcional ao ganho típico"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Repique e fechamento acima da SMA(5), perto de 81.760 a 81.850",
+          "horizonte": 6,
+          "invalidacao": "Fechamento abaixo de 81.566 (SMA200)",
+          "probabilidade": 0.25,
+          "resultadoEstimado": -0.15
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 81.630 e 81.750 até o tempo máximo",
+          "horizonte": 10,
+          "invalidacao": "Rompimento da faixa de 4h (81.626 ou 82.077)",
+          "probabilidade": 0.5,
+          "resultadoEstimado": -0.36
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.626 e da SMA(200) em 81.566",
+          "horizonte": 10,
+          "invalidacao": "Retorno acima de 81.850",
+          "probabilidade": 0.25,
+          "resultadoEstimado": -0.6
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.3675,
+        "probabilidadeFavoravel": 0.25
+      },
+      "confianca": 0.6,
+      "justificativa": "O sinal é de reversão à média (RSI(2) 7,4), mas o contexto não ajuda. O preço está só 0,10% acima da SMA(200), com filtro de tendência fraco. A volatilidade é baixa (ATR 43,44, percentil 11) e o preço está em 9% da faixa de 4h, em queda gradual. O custo de ida e volta é 0,34% (≈277,83), enquanto o ATR é 0,05% do preço. A saída por preço > SMA(5) tende a render menos que os custos em poucas velas. O stop de 6% fica a 17,6 custos e 112,8 ATR, então na prática a saída vem pela regra ou pelo tempo, não pelo stop. O alvo de +8,22% é inalcançável em 50 min. Os 5 sinais anteriores foram vetados e os vetos acertaram. Não há notícia, o que é neutro.",
+      "contraArgumento": "Reversões com RSI(2) extremo costumam repicar, e uma saída rápida acima da SMA(5) poderia dar ganho pequeno. Se o repique vier forte, aguardar perde esse ganho. Mesmo assim, o repique típico em volatilidade tão baixa mal cobriria o custo de 0,34%.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81668.01",
+    "custoIaUsd": "0.038779999999999995",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.24205369597063116",
+      "retorno": -0.002996469951886953,
+      "barras": 1,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792309610644
+    }
+  },
+  {
+    "em": 1792304099999,
+    "roboId": "54e41c92-4348-475a-a2f5-943b9fb20bde",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(MACD(12, 26, 9) (-0,2648) cruzou acima de sinal do MACD(12, 26, 9) (-0,3148): sim) e (preço (720,62) > EMA(50) (720,2157): sim); stop em 719,725 (preço − 2 × ATR(14) de 0,4475)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Stop a 0,4 custo de ida e volta: stop quase certo por ruído",
+        "Volatilidade baixa e baixa liquidez de madrugada de domingo",
+        "MACD ainda negativo; cruzamento fraco",
+        "4h com EMA(9) caindo",
+        "Sem confirmação externa por notícia",
+        "Amostra do placar muito pequena (2 decisões)"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Rompimento de 724,69 (topo das 24h) com volume acima da média",
+          "horizonte": 24,
+          "invalidacao": "Fechamento abaixo de 719,72",
+          "probabilidade": 0.25,
+          "resultadoEstimado": 0.4
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 719 e 722 até o histograma do MACD ficar negativo",
+          "horizonte": 12,
+          "invalidacao": "Fechamento acima de 724,69 ou abaixo de 719,72",
+          "probabilidade": 0.45,
+          "resultadoEstimado": -0.4
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 719,72 e retorno ao piso de 719",
+          "horizonte": 6,
+          "invalidacao": "Retomada de 722 com volume",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.46
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.218,
+        "probabilidadeFavoravel": 0.25
+      },
+      "confianca": 0.6,
+      "justificativa": "O stop fica a 0,4 custo de ida e volta (−0,12% contra 0,34% de custo) e a cerca de 2 ATR de 0,4475. Isso é ruído puro em velas de 5m. Qualquer ganho precisa superar 2,45 em preço só para empatar, e a saída pelo histograma do MACD<0 tende a ocorrer perto da entrada.\n\nO MACD segue negativo (−0,26), então o cruzamento é fraco, e o preço está só 0,07% acima da EMA(50). A volatilidade está baixa (percentil 12) e o domingo de madrugada tem pouca liquidez. No 4h a EMA(9) cai; o 1h é levemente positivo. Os dois sinais anteriores parecidos foram vetados e os vetos acertaram. Não há notícia, o que é neutro.",
+      "contraArgumento": "Se a compra desse certo: o MACD acabou de cruzar, o preço recuperou a EMA(50) e o 1h está em alta. Um rompimento de 724,69 com a volatilidade baixa pode virar movimento forte, e o stop curto limita a perda. Aguardar perderia essa alta. Mesmo assim, o stop de 0,12% fica menor que os custos e o valor esperado dos cenários é negativo.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "720.62",
+    "custoIaUsd": "0.021104200000000004",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.181146780753979832",
+      "retorno": -0.003938336320618672,
+      "barras": 1,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792304810606
+    }
+  },
+  {
+    "em": 1792302299999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (9,993) < 10: sim) e (preço (81.681,08) > SMA(200) (81.543,2231): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custo de 0,34% equivale a cerca de 5,7 ATR: reversão à média pequena não paga as taxas",
+        "Preço colado na SMA(200); perdê-la invalida o filtro de tendência",
+        "Volume fraco (0,3× a média) e volatilidade baixa, com madrugada de domingo e liquidez fina",
+        "Stop de 6% é muito distante: perda na cauda é grande em relação ao ganho provável",
+        "Sem confirmação externa por notícias"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima da SMA(5), perto de 81.800, e retomada de 82.000",
+          "horizonte": 6,
+          "invalidacao": "Fechamento abaixo de 81.543 (SMA 200)",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.1
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço entre 81.550 e 81.850 até o tempo máximo",
+          "horizonte": 10,
+          "invalidacao": "Rompimento de 81.543 ou de 82.000",
+          "probabilidade": 0.4,
+          "resultadoEstimado": -0.3
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.543 com continuidade para 81.000",
+          "horizonte": 10,
+          "invalidacao": "Retorno acima de 81.850",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.8
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.39,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.3,
+      "justificativa": "O custo de ida e volta é 0,34% (≈277,88). O ATR(14) é 48,86 (0,06% do preço), então o custo equivale a cerca de 5,7 ATR. Com 10 velas de tempo máximo, o movimento típico é de poucos ATRs, e mal cobriria os custos.\n\nO RSI(2) em 9,99 indica sobrevenda de curtíssimo prazo, mas o preço está só 0,17% acima da SMA(200) (81.543). A queda é contínua desde 82.004. Uma perda dessa média anularia o filtro de tendência.\n\nO volume da última vela é 0,3× a média e a volatilidade está no percentil 13. Isso indica falta de convicção. O 1h tem a EMA(9) subindo, mas o preço está 0% acima dela. O 4h está de lado.\n\nO stop de 6% (100 ATR) e o alvo de 8,22% estão muito longe do que 50 minutos permitem. A saída real será pela regra preço > SMA(5) ou pelo tempo. Isso dá um ganho pequeno, perto de zero depois dos custos, contra uma cauda de perda grande.\n\nOs 5 sinais anteriores, quase idênticos, foram vetados e os vetos acertaram. Não há notícia, o que é neutro.",
+      "contraArgumento": "Reversão à média com RSI(2) abaixo de 10 acima da SMA(200) costuma render quando a queda se esgota. Se o preço voltar rápido acima da SMA(5), perder esta entrada seria um erro. Mesmo assim, o ganho esperado é menor que o custo de 0,34%.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81681.08",
+    "custoIaUsd": "0.0231682",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.3,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.22507920599635055",
+      "retorno": -0.002786341806198136,
+      "barras": 1,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792302710589
+    }
+  },
+  {
+    "em": 1792299299999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (1,2873) < 10: sim) e (preço (81.791,83) > SMA(200) (81.531,4375): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custo de 0,34% maior que o movimento esperado em 10 velas",
+        "Volume muito baixo (0,2× a média) e volatilidade no percentil 16",
+        "Stop de 6% longe demais para limitar perdas na prática",
+        "Sinais repetidos em sequência com o preço caindo devagar",
+        "Preço perto do topo da faixa de 24 h (96%)",
+        "Sem notícia para confirmar a direção"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima da SMA(5) e retomada de 81.900-82.000 com volume crescente",
+          "horizonte": 4,
+          "invalidacao": "Fechamento abaixo de 81.700",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.12
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 81.700 e 81.950 sem romper",
+          "horizonte": 10,
+          "invalidacao": "Rompimento de 82.077 ou perda de 81.500",
+          "probabilidade": 0.45,
+          "resultadoEstimado": -0.34
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.531 (SMA 200) e de 81.000",
+          "horizonte": 10,
+          "invalidacao": "Retomada acima de 81.950",
+          "probabilidade": 0.25,
+          "resultadoEstimado": -0.75
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.3765,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.7,
+      "justificativa": "O sinal é de reversão à média (RSI(2) 1,29 com preço acima da SMA(200)), mas o custo de ida e volta é 0,34% (~278 em preço) e o ATR(14) é só 57,5 (0,07%). A saída por preço > SMA(5) tende a render poucas dezenas de pontos, bem menos que os custos. Em 10 velas (50 min) o movimento típico fica abaixo de 0,34%.\n\nO stop de 6% (17,6 custos, 85 ATR) e o alvo de 8,22% são praticamente irrelevantes: a operação deve terminar pela regra de saída ou pelo tempo. O stop distante não protege na prática, e uma queda continuada seria encerrada só no tempo, com perda maior que o ganho típico.\n\nContexto fraco: volume da última vela em 0,2× a média, volatilidade no percentil 16, domingo de madrugada e o preço em 96% da faixa de 24 h. Tendência de 1h é de leve alta, o que ajuda pouco. Os quatro sinais anteriores seguidos foram vetados e o único apurado confirmou o veto. Sem notícia, sem confirmação externa. O valor esperado dos cenários é negativo.",
+      "contraArgumento": "A compra poderia dar certo: o RSI(2) está extremamente baixo, o preço segue acima da SMA(200), a tendência de 1h é de alta e um repique rápido acima da SMA(5) encerraria a operação com ganho. Aguardar pode perder esse repique. Mesmo assim, o repique típico em volatilidade tão baixa raramente supera 0,34% de custos.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81791.83",
+    "custoIaUsd": "0.0246922",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.7,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.23350059319595393",
+      "retorno": -0.002890598764535248,
+      "barras": 4,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792300610560
+    }
+  },
+  {
+    "em": 1792298999999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (1,8174) < 10: sim) e (preço (81.799,06) > SMA(200) (81.530,2612): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custo de 0,34% maior que o repique típico de 10 velas com ATR de 0,08%",
+        "Stop de 6% faz uma perda de cauda ser muito maior que o ganho provável",
+        "Volume baixo (0,6×) e domingo de madrugada: liquidez fina, movimentos bruscos possíveis",
+        "Preço a 96% da faixa de 24 h, com pouco espaço antes da máxima",
+        "Sem notícia para confirmar a direção",
+        "Só 1 decisão avaliada: placar pouco informativo"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima da SMA(5) e rompimento de 82.004 com volume crescente",
+          "horizonte": 10,
+          "invalidacao": "Perda de 81.000 (mínima da faixa de 4 h)",
+          "probabilidade": 0.3,
+          "resultadoEstimado": 0.1
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 81.500 e 82.000, saída pela SMA(5) ou pelo tempo",
+          "horizonte": 10,
+          "invalidacao": "Fechamento fora de 81.000–82.100",
+          "probabilidade": 0.5,
+          "resultadoEstimado": -0.3
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.500 e rompimento da SMA(200) em 81.530",
+          "horizonte": 10,
+          "invalidacao": "Retorno acima de 82.000",
+          "probabilidade": 0.2,
+          "resultadoEstimado": -1.2
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.36,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.3,
+      "justificativa": "Sinal de reversão à média (RSI(2) 1,8 com preço acima da SMA(200)), mas a estrutura da operação é desfavorável. O stop de 6% (76.891) está a 17,6 custos e quase 80 ATR: o risco real é enorme frente ao ganho típico. A saída pela regra (preço > SMA(5)) ou em 10 velas deve render movimentos de poucas dezenas de ATR(61), na ordem de 0,1–0,3%, e os custos de ida e volta são 0,34% (≈278). Ou seja, um repique normal mal cobre os custos. Volume fraco (0,6× a média), volatilidade no percentil 17 e preço a 96% da faixa de 24 h. Três sinais seguidos nos últimos minutos foram vetados e o preço continuou caindo levemente. Sem notícia, sem confirmação externa. O valor esperado líquido é negativo ou próximo de zero com cauda de perda grande.",
+      "contraArgumento": "A favor da compra: RSI(2) extremo em tendência de alta (1h e 4h acima das EMAs, preço acima da SMA(200)) costuma render um repique rápido, e a decisão anterior vetada fechou com resultado simulado de −0,24, o que não prova nada. Se o repique vier, a saída por SMA(5) é rápida. Ainda assim, o repique esperado é menor que os custos de 0,34%, e a cauda de perda do stop de 6% pesa mais.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81799.06",
+    "custoIaUsd": "0.0224542",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.3,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.24062628728322008",
+      "retorno": -0.002978818983336447,
+      "barras": 5,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792300610560
+    }
+  },
+  {
+    "em": 1792298699999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (2,0244) < 10: sim) e (preço (81.802,65) > SMA(200) (81.529,0379): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custo de 0,34% maior que o movimento esperado em 10 velas (ATR de 0,08%)",
+        "Volume fraco (0,4× a média) e preço perto da máxima de 24 h",
+        "Sinais repetidos em sequência indicam queda gradual, não reversão",
+        "Domingo de madrugada: liquidez baixa e risco de movimento brusco",
+        "Sem confirmação externa por notícias"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima da SMA(5) perto de 81.900–82.000 com volume voltando",
+          "horizonte": 4,
+          "invalidacao": "Fechamento abaixo de 81.700",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.1
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 81.700 e 81.950 até o limite de 10 velas",
+          "horizonte": 10,
+          "invalidacao": "Rompimento de 82.080 ou perda de 81.500",
+          "probabilidade": 0.45,
+          "resultadoEstimado": -0.3
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Perda de 81.700 e continuidade de queda rumo a 81.500",
+          "horizonte": 10,
+          "invalidacao": "Retorno e fechamento acima de 81.950",
+          "probabilidade": 0.25,
+          "resultadoEstimado": -0.65
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.3275,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.3,
+      "justificativa": "O RSI(2) em 2,02 com preço acima da SMA(200) é um sinal de reversão à média, mas o custo de ida e volta (0,34% ≈ 278 em preço) é muito maior que o movimento típico. O ATR(14) é 63,29 (0,08%) e a volatilidade está no percentil 18. A saída real é preço > SMA(5) ou 10 velas. Isso encerra a operação com ganho bruto de poucas dezenas de pontos, abaixo dos custos. O alvo de +8,22% e o stop de −6% (77,6 ATR) não vão ser atingidos em 50 min, então não servem de referência. O volume está em 0,4× a média, sem convicção. O preço está em 96% da faixa de 24 h, perto da máxima. As duas decisões anteriores (01:34 e 01:39) também foram de aguardar, e a de 01:09 foi um veto certo (−0,24 simulado). Não há notícia, o que é neutro. O valor esperado líquido é negativo, então aguardo.",
+      "contraArgumento": "Contra aguardar: RSI(2) abaixo de 3 em tendência de alta (preço acima da SMA(200), 1h com EMA(9) acima da EMA(21)) costuma render repique rápido, e a saída pela SMA(5) pode ocorrer em 1–2 velas. Mas esse repique é de poucas dezenas de pontos, bem menos que os 278 de custo, então o ganho líquido seria improvável.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81802.65",
+    "custoIaUsd": "0.0242062",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.3,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.24416517079713",
+      "retorno": -0.003022618249495304,
+      "barras": 6,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792300610560
+    }
+  },
+  {
+    "em": 1792298399999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (5,5251) < 10: sim) e (preço (81.842,6) > SMA(200) (81.527,9664): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Custo de 0,34% maior que o movimento típico de 10 velas (ATR 0,08%)",
+        "Volume fraco (0,5× a média) e madrugada de domingo, com liquidez baixa",
+        "Preço em 96% da faixa de 24h, perto da máxima",
+        "Stop de 6% quase nunca atua e o tempo máximo encerra a operação no prejuízo",
+        "Sem notícia para confirmar a direção"
+      ],
+      "cenarios": [
+        {
+          "nome": "alta",
+          "gatilho": "Fechamento acima de 82.004 com volume crescente",
+          "horizonte": 4,
+          "invalidacao": "Perda de 81.527 (SMA 200)",
+          "probabilidade": 0.3,
+          "resultadoEstimado": -0.1
+        },
+        {
+          "nome": "lateral",
+          "gatilho": "Preço oscilando entre 81.700 e 82.000 e saída pela SMA(5)",
+          "horizonte": 6,
+          "invalidacao": "Rompimento de 82.080 ou perda de 81.500",
+          "probabilidade": 0.5,
+          "resultadoEstimado": -0.3
+        },
+        {
+          "nome": "baixa",
+          "gatilho": "Fechamento abaixo de 81.670 e abaixo da SMA(200)",
+          "horizonte": 10,
+          "invalidacao": "Retomada acima de 82.000",
+          "probabilidade": 0.2,
+          "resultadoEstimado": -0.7
+        }
+      ],
+      "avaliacao": {
+        "limiar": 0.6,
+        "motivo": "a proposta é aguardar: a regra dos cenários só vale para abrir posição",
+        "aplicada": false,
+        "aprovada": true,
+        "favoravel": "alta",
+        "valorEsperado": -0.32,
+        "probabilidadeFavoravel": 0.3
+      },
+      "confianca": 0.6,
+      "justificativa": "O sinal é de reversão à média (RSI(2) 5,5 com preço acima da SMA(200)), mas o preço está só 0,38% acima da SMA(200) e em 96% da faixa de 24h. O ATR é 63,14 (0,08%), percentil 18, e o volume da última vela é 0,5× a média.\n\nOs custos de ida e volta são 0,34% (≈278), cerca de 4,4 ATR. A saída por preço > SMA(5) tende a ocorrer com ganho de poucas dezenas de dólares, abaixo dos custos. O alvo de +8,22% é inalcançável em 10 velas (50 min), e o stop de −6% (77,8 ATR) praticamente não age. O resultado real fica entre o fechamento pela SMA(5) e o tempo máximo, em geral a favor do custo.\n\nO tempo gráfico maior é levemente positivo (1h com EMA9 subindo, 4h de lado), mas isso não paga os custos. As duas decisões anteriores foram vetadas; a que já foi apurada deu −0,24 simulado, e o veto acertou. Não há notícia, o que é neutro. O valor esperado estimado é negativo, então aguardo.",
+      "contraArgumento": "Se o viés de reversão à média se confirmar, o recuo de curto prazo em tendência de alta no 1h pode render um repique acima da SMA(5) e uma saída rápida com lucro. Ainda assim, o ganho típico é menor que o custo de 0,34%, então a compra perde mesmo quando acerta a direção.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81842.6",
+    "custoIaUsd": "0.040737999999999996",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.2835169012959008",
+      "retorno": -0.003509763042071941,
+      "barras": 7,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792300610560
+    }
+  },
+  {
+    "em": 1792298099999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (6,5771) < 10: sim) e (preço (81.849,99) > SMA(200) (81.526,6351): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [
+        {
+          "id": "f241f43a-4418-4d1c-8cdd-c165751f3335",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão f241f43a-4418-4d1c-8cdd-c165751f3335"
+        }
+      ],
+      "riscos": [
+        "Reversão à média pode ocorrer, e aguardar pode perder um repique curto.",
+        "Preço muito próximo da SMA(200); um rompimento para baixo invalida o filtro de tendência.",
+        "Stop e alvo do sinal são largos demais para o intervalo de 5m.",
+        "Sinais repetidos em sequência indicam pressão vendedora persistente.",
+        "Nenhuma notícia ou regra da corretora relevante foi encontrada na base."
+      ],
+      "confianca": 0.6,
+      "justificativa": "O sinal de compra existe: RSI(2) em 6,58 (abaixo de 10) e preço de 81.849,99 acima da SMA(200) de 81.526,64. Mas o contexto não confirma.\n\nO preço está só 0,4% acima da SMA(200), então o filtro de tendência é fraco. O RSI(14) está neutro, em 50,3. A EMA(9), de 81.900,8, e a SMA(20), de 81.893,4, estão acima do preço. A variação em 24 candles é de apenas +0,10%. O RSI(2) baixo vem de uma queda de poucos candles dentro de um movimento lateral, não de uma capitulação.\n\nO stop (76.939) fica a cerca de 6% do preço e o alvo (88.575) a cerca de 8,2%. Esses valores são muito largos para um gráfico de 5 minutos e uma reversão de curto prazo, e a relação retorno/risco é de apenas 1,37. É improvável que o alvo seja atingido antes de o preço devolver o ganho.\n\nO histórico tem uma decisão parecida, de poucos minutos atrás (RSI(2) em 8,87, preço 81.882,98), em que a proposta foi aguardar. Ela ainda não tem desfecho avaliado. A base de conhecimento não trouxe notícia nem regra da corretora relevante para este caso. O orçamento está livre (risco de 5 USDT por operação, folga de exposição de 300 e de perda diária de 25), mas isso não compensa o sinal fraco.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81849.99",
+    "custoIaUsd": "0.039875",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.29079166567657899",
+      "retorno": -0.003599823564389892,
+      "barras": 8,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792300610560
+    }
+  },
+  {
+    "em": 1792296599999,
+    "roboId": "388094a9-dafb-4046-a210-c4d4ba70fdfb",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(RSI(2) (8,8739) < 10: sim) e (preço (81.882,98) > SMA(200) (81.518,9542): sim)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Stop a cerca de 6% do preço, desproporcional para um sinal de 5m.",
+        "Alvo a cerca de 8% dificilmente é atingido numa reversão curta.",
+        "Preço apenas 0,45% acima da SMA(200): o filtro de tendência pode virar rápido.",
+        "Sem histórico de decisões do robô para calibrar a confiança.",
+        "Taxas da corretora não encontradas na base, então não dá para confirmar a cobertura dos custos.",
+        "RSI(2) muito baixo pode anteceder mais queda em um movimento direcional."
+      ],
+      "confianca": 0.45,
+      "justificativa": "O sinal de compra é de reversão à média: RSI(2) em 8,87, abaixo de 10, e preço de 81.882,98 acima da SMA(200) de 81.518,95. O filtro de tendência passa por pouco, com folga de só 0,45%.\n\nO contexto não confirma a ideia de um repique forte. O RSI(14) está em 55,8, neutro. O preço está perto da SMA(20), em 81.856, e abaixo da EMA(9), em 81.910. A queda recente foi pequena, de cerca de 0,15% desde a máxima de 82.004, e o movimento é de ruído de 5 minutos, não de exaustão vendedora clara.\n\nO stop (76.970) fica a cerca de 6% do preço e o alvo (88.610) a cerca de 8,2%. Uma reversão de 5m dificilmente percorre isso, e o stop tão largo não combina com a tese de curto prazo. Também não achei as taxas da corretora na base, então não consigo confirmar que o alvo cobre os custos.\n\nNão há histórico de decisões para calibrar este tipo de sinal. A base de conhecimento não trouxe notícia relevante nem regra da corretora para BTCUSDT. O orçamento está livre (risco de 5 USDT, folga de exposição de 300), mas a vantagem estatística é fraca. Prefiro aguardar um sinal com mais confirmação ou com stop e alvo compatíveis com 5m.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81882.98",
+    "custoIaUsd": "0.0400302",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.45,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.24307247788466691",
+      "retorno": -0.00300909721390344,
+      "barras": 2,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792295399999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (82.004,35) > topo de Donchian(20) (81.982,3): sim; stop em 81.817,0274 (preço − 2 × ATR(20) de 93,6613)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [
+        {
+          "id": "f002ac9b-c520-4ed5-8303-ad4521eda70b",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão f002ac9b-c520-4ed5-8303-ad4521eda70b"
+        },
+        {
+          "id": "5dd3a1ec-50f2-4c72-ba8c-d4e7e3bc20f4",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 5dd3a1ec-50f2-4c72-ba8c-d4e7e3bc20f4"
+        }
+      ],
+      "riscos": [
+        "Rompimento fraco, de apenas 0,03% acima do topo, pode ser falso.",
+        "RSI perto de 70 sugere esticada e risco de correção.",
+        "Resistência perto de 82.700-82.800, onde o preço recuou antes.",
+        "Alvo do sinal (131.469) irrealista, não serve de referência.",
+        "Stop de 2×ATR no 5m é facilmente atingido por ruído.",
+        "Sem notícias relevantes encontradas na base; o contexto externo é desconhecido."
+      ],
+      "confianca": 0.6,
+      "justificativa": "O preço (82.004,35) rompeu o topo de Donchian(20) (81.982,3) por pouco, cerca de 22 USDT, ou 0,03%. Isso é menos que o ATR de 93,66, então pode ser ruído. O RSI(14) está em 69,7, quase sobrecomprado, e o preço está acima da EMA9 (81.895) e da SMA20 (81.812) depois de uma alta seguida de candles. Esse movimento ainda é pequeno perto da queda de 82.836 para 80.831 nas últimas horas. O alvo do sinal (131.469) está a cerca de 60% do preço e não é realista. Os seis sinais de compra anteriores, em preços de 81.472 a 81.975, terminaram todos em aguardar, e nenhum tem desfecho registrado, então não há evidência de que esse padrão funcione neste robô. O orçamento está livre (risco de 5 USDT por operação, 300 de exposição), mas o ponto de entrada é esticado e o stop de 2×ATR é curto para o 5m.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "82004.35",
+    "custoIaUsd": "0.041829",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.492986466500510449",
+      "retorno": -0.004978124158328156,
+      "barras": 9,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792295099999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (81.975,64) > topo de Donchian(20) (81.957,98): sim; stop em 81.789,1815 (preço − 2 × ATR(20) de 93,2293)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [
+        {
+          "id": "5dd3a1ec-50f2-4c72-ba8c-d4e7e3bc20f4",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 5dd3a1ec-50f2-4c72-ba8c-d4e7e3bc20f4"
+        },
+        {
+          "id": "7a5dc58a-03c9-47b0-afa6-2830d3c2e1d1",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 7a5dc58a-03c9-47b0-afa6-2830d3c2e1d1"
+        }
+      ],
+      "riscos": [
+        "Rompimento mínimo de 0,02% pode ser falso e voltar para dentro da faixa",
+        "RSI em 68 indica esticada no curto prazo",
+        "Stop de 0,23% é curto e sujeito a ruído",
+        "Alvo de 131.423 é irreal e distorce a relação risco/retorno",
+        "Taxas da corretora para BTCUSDT não encontradas na base",
+        "Mercado lateralizado entre cerca de 80.800 e 82.800",
+        "Rompimento de alta pode continuar e a espera perder o movimento"
+      ],
+      "confianca": 0.65,
+      "justificativa": "O preço de 81.975,64 rompeu o topo de Donchian(20) em 81.957,98, mas por só 17,66 USDT (cerca de 0,02%). É um rompimento mínimo.\n\nO RSI(14) está em 68,2, perto da sobrecompra. O preço está só um pouco acima da EMA(9), em 81.868, e da SMA(20), em 81.795. Na janela de 24 candles a alta é de 0,14%, ou seja, o movimento é pequeno.\n\nO contexto é de lateralização. Os fechamentos mostram topo perto de 82.836 e fundo perto de 80.831, e o preço voltou a subir dentro dessa faixa. Os últimos 6 sinais de COMPRAR em rompimentos parecidos foram todos registrados como aguardar, e nenhum tem desfecho avaliado. Não há dado que respalde entrar agora.\n\nO alvo do sinal (131.423) fica a cerca de 60% do preço e não é realista para 5 minutos. Não dá para usar como referência. O stop de 2×ATR (81.789) fica a só 0,23% do preço, então um ruído normal o derrubaria.\n\nA busca não trouxe taxas do BTCUSDT nem notícia relevante, só notas genéricas. Sem custos conhecidos, não consigo confirmar que um alvo curto cobriria as taxas. O orçamento está livre (risco de 5 USDT, folga de 300 de exposição), mas isso não compensa a falta de vantagem clara.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81975.64",
+    "custoIaUsd": "0.043597",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.65,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.490072024338489528",
+      "retorno": -0.004968406368895237,
+      "barras": 10,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792293299999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (81.939,95) > topo de Donchian(20) (81.896,51): sim; stop em 81.733,396 (preço − 2 × ATR(20) de 103,277)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [
+        {
+          "id": "7a5dc58a-03c9-47b0-afa6-2830d3c2e1d1",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 7a5dc58a-03c9-47b0-afa6-2830d3c2e1d1"
+        },
+        {
+          "id": "16a7acef-b90a-440b-a81e-5cd01459c37e",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 16a7acef-b90a-440b-a81e-5cd01459c37e"
+        }
+      ],
+      "riscos": [
+        "Rompimento de Donchian pode ser falso e voltar para dentro do canal",
+        "RSI em 72 indica sobrecompra e risco de realização",
+        "Stop de 0,25% é curto para a volatilidade do 5m",
+        "Alvo do sinal irrealista (~60% acima), não confiável",
+        "Se o preço seguir subindo, a oportunidade de alta será perdida",
+        "Sem notícias ou regras da corretora relevantes na base para este momento"
+      ],
+      "confianca": 0.62,
+      "justificativa": "O preço (81.939,95) rompeu o topo de Donchian(20) de 81.896,51, mas por apenas cerca de 43 USDT, o que é pouco.\n\nO RSI(14) está em 72,4, em sobrecompra. O preço está acima da EMA(9), de 81.814,86, e da SMA(20), de 81.755,11. Veio de uma alta rápida nos últimos candles, então a entrada seria tardia.\n\nO alvo do sinal (131.366) fica quase 60% acima do preço. Não é realista para um 5m e não serve de referência. O stop (81.733,40) fica só 0,25% abaixo do preço, dentro do ruído normal de um candle de 5m. Isso aumenta a chance de ser estopado e deixa as taxas pesadas em relação ao risco.\n\nOs últimos 5 sinais de compra parecidos, rompimentos fracos em sequência, foram todos respondidos com aguardar. Ainda não têm desfecho avaliado, então não há evidência a favor. A busca não trouxe notícia nem regra da corretora relevante para o momento.\n\nO orçamento está livre: risco por operação de 5, folga de exposição de 300 e folga de perda diária de 25. Mesmo assim, a relação entre risco e retorno não compensa a entrada agora. É melhor esperar um recuo ou uma confirmação com folga maior.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81939.95",
+    "custoIaUsd": "0.0425668",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.62,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.563749225314859596",
+      "retorno": -0.005214060354546042,
+      "barras": 2,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792292699999,
+    "roboId": "54e41c92-4348-475a-a2f5-943b9fb20bde",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(MACD(12, 26, 9) (0,6496) cruzou acima de sinal do MACD(12, 26, 9) (0,5801): sim) e (preço (721,92) > EMA(50) (719,002): sim); stop em 720,1942 (preço − 2 × ATR(14) de 0,8629)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [
+        {
+          "id": "52cbf20c-638e-4690-b9c9-d13eb1a72494",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 52cbf20c-638e-4690-b9c9-d13eb1a72494"
+        }
+      ],
+      "riscos": [
+        "Entrada perto do topo da faixa lateral, com RSI próximo de 70",
+        "Alvo de 868,04 irrealista para o intervalo de 5m",
+        "Stop curto (2×ATR) pode ser atingido pelo ruído normal",
+        "Taxas da corretora não encontradas na base, então não dá para validar a cobertura delas",
+        "Sem notícias sobre BNB na base, então o contexto de eventos é desconhecido",
+        "Cruzamento do MACD em mercado lateral costuma dar falso sinal"
+      ],
+      "confianca": 0.6,
+      "justificativa": "O sinal de compra tem base técnica: o MACD (0,6496) cruzou acima da linha de sinal (0,5801) e o preço (721,92) está acima da EMA(50) (719,00). Mesmo assim, prefiro aguardar.\n\nO alvo do sinal (868,04) fica cerca de 20% acima do preço. Num gráfico de 5 minutos isso é irrealista, e o stop está só 1,73 abaixo, a 2×ATR. Essa relação risco/retorno não é confiável.\n\nO RSI(14) está em 68,9, perto da sobrecompra. O preço acabou de subir de 719,5 para 721,92 em poucos candles e está no topo de uma faixa lateral de cerca de 718 a 723 que dura horas. O cruzamento do MACD pode ser só ruído dentro dessa faixa, e o risco de entrar no topo é alto.\n\nMeu histórico mostra um sinal quase idêntico, hoje a 718,41, em que também propus aguardar. Não há resultado avaliado, então não serve de evidência. A base de conhecimento não trouxe regras de taxas da corretora nem notícias sobre BNB, e não consigo confirmar se um alvo realista cobre as taxas. O orçamento está livre (risco de 5 por operação, folga de exposição de 300), então ele não é o problema.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "721.92",
+    "custoIaUsd": "0.048258800000000004",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.91122714534310848",
+      "retorno": -0.003038334460757789,
+      "barras": 12,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792287899999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (81.862,25) > topo de Donchian(20) (81.750): sim; stop em 81.713,6969 (preço − 2 × ATR(20) de 74,2766)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [
+        {
+          "id": "16a7acef-b90a-440b-a81e-5cd01459c37e",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 16a7acef-b90a-440b-a81e-5cd01459c37e"
+        },
+        {
+          "id": "55162c22-fbd9-42e2-8b3e-0b6239fb96a9",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 55162c22-fbd9-42e2-8b3e-0b6239fb96a9"
+        }
+      ],
+      "riscos": [
+        "RSI acima de 70 aumenta a chance de devolução do movimento",
+        "Stop muito curto (~0,18%) pode ser ativado por ruído",
+        "Alvo do sinal (131.241) é irrealista e não cobre uma análise de custo/benefício",
+        "Rompimento pode ser falso dentro de um intervalo com resistência perto de 82.800",
+        "Sem notícias ou regras específicas encontradas na base para este ativo",
+        "Os sinais anteriores parecidos não têm desfecho avaliado"
+      ],
+      "confianca": 0.6,
+      "justificativa": "O preço de 81.862,25 rompeu o topo de Donchian(20) em 81.750, mas o rompimento é fraco. O RSI(14) está em 73,2, sobrecomprado, e o último candle subiu cerca de 0,19% de uma vez, o que sugere esticamento. O preço também está acima da EMA9 (81.660) e da SMA20 (81.557). Ainda assim, ele continua abaixo da máxima recente perto de 82.836, então o rompimento pode ser só um repique dentro de um intervalo.\n\nO stop proposto fica em 81.713,70, a apenas cerca de 0,18% do preço (2×ATR de 74). É muito curto para o 5m e pode ser ativado só por ruído. O alvo de 131.241 fica cerca de 60% acima do preço, o que é irrealista para esta operação e não serve como referência.\n\nO orçamento está livre (risco de 5 USDT, folga de exposição de 300 e folga de perda diária de 25), sem posição aberta. Nas 4 decisões anteriores com sinais parecidos, a proposta foi aguardar, e nenhuma delas tem desfecho avaliado. Por isso não há evidência de que esse padrão funcione neste robô. A busca não trouxe notícia nem regra de corretora relevante para BTCUSDT.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81862.25",
+    "custoIaUsd": "0.0407764",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.352480197918361166",
+      "retorno": -0.00450962106616495,
+      "barras": 2,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792286399999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (81.666) > topo de Donchian(20) (81.613,57): sim; stop em 81.529,7365 (preço − 2 × ATR(20) de 68,1318)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [
+        {
+          "id": "55162c22-fbd9-42e2-8b3e-0b6239fb96a9",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 55162c22-fbd9-42e2-8b3e-0b6239fb96a9"
+        },
+        {
+          "id": "982ee420-38ee-434f-8a40-8e6bbb7a9bd9",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 982ee420-38ee-434f-8a40-8e6bbb7a9bd9"
+        },
+        {
+          "id": "6d63ea29-f64d-4d50-9bb7-317f1a4a27d1",
+          "data": "2026-10-17",
+          "tipo": "diario",
+          "titulo": "Decisão 6d63ea29-f64d-4d50-9bb7-317f1a4a27d1"
+        }
+      ],
+      "riscos": [
+        "Rompimento falso: o preço pode voltar para dentro da faixa lateral de 81.200 a 81.800.",
+        "Stop de apenas 0,17% pode ser atingido por ruído normal do 5m.",
+        "Taxas de compra e venda comem boa parte de um ganho pequeno.",
+        "O alvo do sinal (130.927) é irreal e não serve de referência.",
+        "Se o rompimento seguir adiante, a espera perde a alta.",
+        "Base de conhecimento sem notícias relevantes sobre o BTC; o contexto de notícias é desconhecido."
+      ],
+      "confianca": 0.6,
+      "justificativa": "O sinal de compra vem de um rompimento mínimo. O preço é 81.666 e o topo de Donchian(20) é 81.613,57, uma diferença de cerca de 52 pontos (0,06%). Na prática é ruído, porque o ATR(20) é 68.\n\nO alvo do sinal (130.927) fica quase 60% acima do preço e não é realista para um candle de 5m. Não dá para usar como referência. O stop (81.529,7) fica a 0,17% do preço, curto o bastante para as taxas de ida e volta e o ruído do 5m consumirem boa parte do ganho possível.\n\nO contexto é lateral. Nas últimas horas o preço oscilou entre cerca de 81.200 e 81.800. A variação em 24 candles é só +0,38%. O RSI(14) está em 67,3, perto da sobrecompra, e o preço está acima da SMA20 (81.492) e da EMA9 (81.560), então não há exaustão clara, mas também não há espaço evidente.\n\nOs três sinais parecidos anteriores (17 e 18/10) também resultaram em aguardar e não têm desfecho avaliado, então não há evidência a favor. A posição está zerada e o orçamento está livre (risco de 5 por operação, folga de exposição de 300 e de perda diária de 25). O orçamento não é o obstáculo. O que pesa é a qualidade do sinal. Não encontrei notícia relevante na base.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81666",
+    "custoIaUsd": "0.0421092",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.308758100643170356",
+      "retorno": -0.004363846195989696,
+      "barras": 2,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792285499999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (81.600,58) > topo de Donchian(20) (81.588,85): sim; stop em 81.473,2621 (preço − 2 × ATR(20) de 63,659)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [
+        {
+          "id": "982ee420-38ee-434f-8a40-8e6bbb7a9bd9",
+          "data": "2026-10-18",
+          "tipo": "diario",
+          "titulo": "Decisão 982ee420-38ee-434f-8a40-8e6bbb7a9bd9"
+        },
+        {
+          "id": "6d63ea29-f64d-4d50-9bb7-317f1a4a27d1",
+          "data": "2026-10-17",
+          "tipo": "diario",
+          "titulo": "Decisão 6d63ea29-f64d-4d50-9bb7-317f1a4a27d1"
+        }
+      ],
+      "riscos": [
+        "Rompimento marginal pode ser falso e devolver o preço para dentro da faixa.",
+        "Stop muito curto (0,16%) sujeito a ruído e derrapagem.",
+        "Alvo de 130.822 irrealista, cerca de 60% acima do preço.",
+        "Resistência da faixa perto de 82.800.",
+        "Sem notícias ou regras específicas encontradas na base para BTC.",
+        "Se o preço seguir subindo, a alta pode ser perdida ao aguardar."
+      ],
+      "confianca": 0.6,
+      "justificativa": "O sinal é um rompimento mínimo: o preço de 81.600,58 está só cerca de 12 USDT (0,015%) acima do topo de Donchian(20), de 81.588,85. Isso é ruído de 5m, não uma quebra clara.\n\nO contexto não ajuda. O preço está dentro de uma faixa de aproximadamente 80.900 a 82.800 nas últimas horas e ainda abaixo das máximas recentes, perto de 82.836. O RSI(14) está em 65 e o preço está acima da EMA9 (81.519) e da SMA20 (81.448). Há alguma força, mas sem espaço claro até a resistência da faixa.\n\nO stop sugerido (81.473,26) fica a só 0,16% do preço, ou 2×ATR de 63,7. Em 5m isso é fácil de ser tocado por ruído, e as taxas de ida e volta consomem boa parte do ganho possível.\n\nO alvo de 130.822 está cerca de 60% acima do preço. É irrealista para este intervalo e não serve como referência. Não proponho um alvo próprio porque a assimetria não me convence.\n\nOs dois sinais anteriores de COMPRAR, com o mesmo tipo de rompimento marginal, também terminaram em aguardar. Não há posição aberta e o orçamento está folgado (risco 5, exposição livre 300). A base de conhecimento não trouxe notícia relevante nem regra da corretora para BTC. Na dúvida, aguardar.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81600.58",
+    "custoIaUsd": "0.0399976",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.27636183135235636",
+      "retorno": -0.004255816859288083,
+      "barras": 2,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792284899999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (81.561,92) > topo de Donchian(20) (81.520,77): sim; stop em 81.431,8569 (preço − 2 × ATR(20) de 65,0315)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [
+        {
+          "id": "6d63ea29-f64d-4d50-9bb7-317f1a4a27d1",
+          "data": "2026-10-17",
+          "tipo": "diario",
+          "titulo": "Decisão 6d63ea29-f64d-4d50-9bb7-317f1a4a27d1"
+        }
+      ],
+      "riscos": [
+        "Falso rompimento em mercado lateral",
+        "Stop muito curto, sujeito a ser atingido por ruído",
+        "Alvo do sinal irrealista (+60%), sem utilidade para medir risco/retorno",
+        "Taxas da corretora não encontradas na base; custo de ida e volta pode superar o stop",
+        "Se o BTC seguir subindo, a oportunidade de alta pode ser perdida"
+      ],
+      "confianca": 0.65,
+      "justificativa": "O rompimento é fraco. O preço (81.561,92) está só ~41 USDT acima do topo de Donchian(20) (81.520,77). Nas últimas horas o BTC andou de lado, entre ~81.200 e ~81.800. Houve um rompimento parecido no dia anterior (81.472 contra 81.458) e a decisão registrada foi aguardar.\n\nO stop sugerido (81.431,86) fica a só ~130 USDT (0,16%) do preço, cerca de 2 ATR de 5m. Isso é ruído normal do mercado e dá alta chance de ser atingido. O alvo de 130.760 (+60%) é irrealista e não serve de referência. Se as taxas forem de ~0,1% por lado (não encontrei a tabela de taxas da corretora na base), o custo de ida e volta seria de ~160 USDT, maior que a distância do stop.\n\nIndicadores: RSI 63 (momentum moderado, sem sobrecompra), preço acima da SMA20 (81.422) e da EMA9 (81.488), e variação de apenas +0,19% em 24 candles. Isso mostra leve viés de alta, mas sem força que sustente o rompimento. O orçamento está livre (risco 5 USDT por operação, folga de exposição 300, folga de perda diária 25), então não é o limitante. Aguardar uma confirmação melhor é mais prudente.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81561.92",
+    "custoIaUsd": "0.037382399999999996",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.65,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.28665272437887424",
+      "retorno": -0.004290131159662236,
+      "barras": 26,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792284899999,
+    "roboId": "54e41c92-4348-475a-a2f5-943b9fb20bde",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "(MACD(12, 26, 9) (0,3865) cruzou acima de sinal do MACD(12, 26, 9) (0,3691): sim) e (preço (718,41) > EMA(50) (717,0583): sim); stop em 717,1187 (preço − 2 × ATR(14) de 0,6457)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Alvo irrealista (cerca de +20%) distorce a relação risco/retorno do sinal.",
+        "Stop de 0,18% dentro do ruído do ATR, com grande chance de ser stopado.",
+        "Cruzamento do MACD marginal, possível falso sinal em mercado lateral.",
+        "Queda recente de 722 para 711,5 mostra volatilidade e pressão vendedora.",
+        "Sem notícias ou histórico de decisões para confirmar o sinal."
+      ],
+      "confianca": 0.6,
+      "justificativa": "O sinal de compra tem base técnica fraca. O MACD cruzou para cima (0,3865 contra 0,3691), mas a diferença é mínima. O preço de 718,41 está só 1,35 acima da EMA(50) de 717,06. Esse tipo de cruzamento costuma ser ruído em 5m.\n\nO contexto é lateral e de baixa. Nas últimas horas o preço caiu de cerca de 722 para 711,5 e se recuperou só em parte. O RSI de 60 e o preço acima da SMA(20) de 717,46 mostram um repique, não uma tendência de alta confirmada. A variação de 24 candles é de apenas +0,17%.\n\nO alvo de 863,82 fica cerca de 20% acima do preço. Isso não é realista para um sinal de 5m e distorce a relação risco/retorno. O stop de 717,12 está a apenas 1,29 (0,18%) do preço, dentro do ruído normal do ATR. A chance de ser stopado antes de qualquer movimento útil é alta.\n\nO orçamento está livre (risco de 5 por operação, sem posição aberta) e não há histórico de decisões. Também não achei notícia ou regra da corretora relevante para BNB. Sem vantagem clara, aguardar é mais prudente.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "718.41",
+    "custoIaUsd": "0.035205",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "regra",
+      "resultado": "-0.55254271550907072",
+      "retorno": -0.001842361209474327,
+      "barras": 15,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  },
+  {
+    "em": 1792281299999,
+    "roboId": "947f8a7c-7308-444c-b9ea-3f590b86024d",
+    "sinal": {
+      "acao": "COMPRAR",
+      "explicacao": "preço (81.472,71) > topo de Donchian(20) (81.458,01): sim; stop em 81.326,7081 (preço − 2 × ATR(20) de 73,001)"
+    },
+    "proposta": {
+      "acao": "aguardar",
+      "fontes": [],
+      "riscos": [
+        "Rompimento pode ser falso e o preço voltar ao range 81.200–81.600.",
+        "Stop de 2×ATR muito curto, sujeito a ser acionado por ruído.",
+        "Alvo do sinal (130.617) irreal, distorce a relação risco/retorno.",
+        "Taxas (suposição de ~0,2% ida e volta) consomem boa parte de um ganho de curto prazo.",
+        "Sem histórico de decisões nem notícias para calibrar o sinal.",
+        "Se o preço continuar subindo, a espera pode perder o movimento."
+      ],
+      "confianca": 0.6,
+      "justificativa": "O rompimento é marginal. O preço de 81.472,71 passou o topo de Donchian(20) (81.458,01) por apenas 15 USDT, cerca de 0,02%. Isso pode ser ruído de um único candle de 5m. O RSI está em 60 e o preço está acima da SMA20 (81.343) e da EMA9 (81.364), então há viés de alta leve. Mas o preço segue abaixo da faixa de 82.000–82.800 de algumas horas atrás e vem lateralizando entre 81.200 e 81.700.\n\nO alvo do sinal (130.617) está 60% acima do preço e não é realista para um 5m. Não serve de referência. O stop de 81.326,7 fica só 0,18% abaixo, dentro do ruído normal. Com taxas de ida e volta que supus em cerca de 0,2%, um alvo plausível de 0,4% deixaria ganho líquido de cerca de 0,2% contra risco de cerca de 0,38%. A relação risco/retorno fica desfavorável.\n\nO orçamento está livre (risco de 5 USDT, folga de exposição de 300, folga de perda diária de 25) e não há posição aberta. Não há histórico de decisões nem notícia relevante na base: as buscas só trouxeram notas gerais sem relação com BTC. Por isso, prefiro esperar uma confirmação, como um fechamento sustentado acima do topo.",
+      "tamanhoRelativo": 0
+    },
+    "estado": "registrada",
+    "preco": "81472.71",
+    "custoIaUsd": "0.0497952",
+    "avaliacao": {
+      "claude": "vetou",
+      "confianca": 0.6,
+      "fonte": "contrafactual",
+      "situacao": "concluida",
+      "motivo": "stop",
+      "resultado": "-1.34570572276362154",
+      "retorno": -0.004487037869800044,
+      "barras": 38,
+      "acertou": true,
+      "moeda": "USDT",
+      "avaliadaEm": 1792298210540
+    }
+  }
+]
