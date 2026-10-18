@@ -17,6 +17,15 @@
   justify-content: space-between;
   gap: var(--espaco-3);
 }
+.construtor__direcao {
+  display: grid;
+  gap: var(--espaco-2);
+}
+.construtor__interruptores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-3);
+}
 .construtor__parametros {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -80,7 +89,8 @@
   border-radius: var(--raio);
   background: var(--fundo);
 }
-.modelos__item .botao {
+.modelos__item .botao,
+.modelos__item .selo {
   justify-self: start;
 }
 .modelos__nome {

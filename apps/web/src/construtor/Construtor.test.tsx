@@ -1,9 +1,10 @@
-import { MODELOS, validarEstrategia, validarRegra } from "@zentrade/dominio";
+import { MODELOS, MODELOS_WIN, TODOS_OS_MODELOS, validarEstrategia, validarRegra } from "@zentrade/dominio";
 import { createEvent, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { NovaEstrategia } from "../api/fonte";
 import { criarFonteDemo } from "../demo/fonteDemo";
+import { paraDominio } from "../lib/estrategia";
 import { renderizar } from "../teste/renderizar";
 import { Construtor } from "./Construtor";
 import { estadoVazio } from "./estado";
@@ -206,5 +207,90 @@ describe("Construtor de estratégias", () => {
     await usuario.clear(screen.getByLabelText("Quantos ATR de risco"));
     expect(screen.getByText(/O múltiplo do ATR do tamanho precisa ser um número/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Criar estratégia" })).toBeDisabled();
+  });
+
+  it("escolhe a direção: o lado vendido ganha as abas dele e a prévia descreve a venda", async () => {
+    const { aoSalvar } = montar();
+    const usuario = userEvent.setup();
+    const direcao = screen.getByRole("group", { name: "Direção" });
+    expect(within(direcao).getByRole("radio", { name: "Só comprado" })).toBeChecked();
+    expect(screen.getByText(/só existe no backtest do mini índice \(WIN\)/)).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Entrada vendida (quando vender)" })).toBeNull();
+
+    await usuario.type(screen.getByLabelText("Nome da estratégia"), "Dois lados");
+    await usuario.click(within(direcao).getByRole("radio", { name: "Os dois sentidos" }));
+    const abas = screen.getByRole("group", { name: "Regra em edição" });
+    expect(within(abas).getByRole("radio", { name: "Entrada (quando comprar)" })).toBeInTheDocument();
+    expect(within(abas).getByRole("radio", { name: "Entrada vendida (quando vender)" })).toBeChecked();
+    expect(screen.getByText(/Vende quando/).parentElement).toHaveTextContent(
+      "Vende quando RSI(14) acima de 70.",
+    );
+    expect(screen.getByText(/Recompra quando/).parentElement).toHaveTextContent(
+      "Recompra quando o preço chegar ao stop ou ao alvo.",
+    );
+
+    await usuario.click(screen.getByRole("checkbox", { name: /saída antecipada da venda/ }));
+    expect(within(abas).getByRole("radio", { name: "Saída vendida (quando recomprar antes)" })).toBeChecked();
+
+    await usuario.click(within(direcao).getByRole("radio", { name: "Só vendido" }));
+    expect(within(abas).queryByRole("radio", { name: "Entrada (quando comprar)" })).toBeNull();
+    expect(screen.queryByText(/Compra quando/)).toBeNull();
+
+    await usuario.click(screen.getByRole("button", { name: "Criar estratégia" }));
+    const [, estrategia] = aoSalvar.mock.calls[0]!;
+    expect(estrategia).toMatchObject({
+      direcao: "vendido",
+      entradaVendida: { tipo: "e" },
+      saidaVendida: { tipo: "ou" },
+    });
+    expect(validarEstrategia(paraDominio(estrategia))).toEqual([]);
+  });
+
+  it("lista os modelos de cripto e do mini índice, com o selo e a regra de venda", async () => {
+    montar();
+    const usuario = userEvent.setup();
+    expect(screen.getByText(new RegExp(`${TODOS_OS_MODELOS.length} exemplos`))).toBeInTheDocument();
+    await usuario.click(screen.getByText("Começar de um modelo"));
+    expect(screen.getAllByRole("heading", { level: 2 }).length).toBeGreaterThanOrEqual(
+      TODOS_OS_MODELOS.length,
+    );
+    const lista = within(document.querySelector<HTMLElement>(".modelos__lista")!);
+    expect(lista.getAllByText("Mini índice (WIN) · 5 min · nos dois sentidos")).toHaveLength(
+      MODELOS_WIN.length,
+    );
+    expect(lista.getAllByText("Vende quando")).toHaveLength(MODELOS_WIN.length);
+    expect(lista.getAllByText("Compra quando")).toHaveLength(TODOS_OS_MODELOS.length);
+  });
+
+  it("começa de um modelo do mini índice e salva com os dois sentidos", async () => {
+    const { aoSalvar } = montar();
+    const usuario = userEvent.setup();
+    await usuario.click(screen.getByText("Começar de um modelo"));
+    const modelo = MODELOS_WIN[0]!;
+    await usuario.click(screen.getByRole("button", { name: `Usar este modelo: ${modelo.nome}` }));
+    expect(screen.getByRole("radio", { name: "Os dois sentidos" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Saída vendida (quando recomprar antes)" })).toBeInTheDocument();
+    expect(screen.getByText(/Sai da compra quando/)).toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "Criar estratégia" }));
+    const [id, estrategia] = aoSalvar.mock.calls[0]!;
+    expect(id).toBeNull();
+    expect(estrategia).toEqual({ nome: modelo.nome, ...modelo.estrategia });
+    expect(estrategia.direcao).toBe("ambos");
+    expect(estrategia.entradaVendida).toBeDefined();
+  });
+
+  it("VWAP aparece no grupo do pregão, sem parênteses vazios", async () => {
+    montar();
+    const usuario = userEvent.setup();
+    const tipo = screen.getByLabelText("Lado esquerdo: tipo");
+    expect(within(tipo).getByRole("group", { name: "Pregão (sessão)" })).toBeInTheDocument();
+    await usuario.selectOptions(tipo, "vwap");
+    expect(screen.getByText(/Compra quando/).parentElement).toHaveTextContent(
+      /^Compra quando VWAP do dia abaixo de 30\.$/,
+    );
+    const separadores = [...tipo.closest(".operando")!.querySelectorAll(".operando__sep")];
+    expect(separadores.map((x) => x.textContent?.trim())).toEqual([]);
+    await usuario.selectOptions(tipo, "faixaAbertura");
+    expect(screen.getByLabelText("Lado esquerdo: minutos de faixa de abertura")).toHaveValue("30");
   });
 });

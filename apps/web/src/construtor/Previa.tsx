@@ -8,15 +8,15 @@ import {
   validarRegra,
 } from "@zentrade/dominio";
 import { CircleCheck, CircleDashed, TriangleAlert } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Segmentado } from "../componentes/Segmentado";
 import { Selo } from "../componentes/Selo";
 import { useCandles } from "../ganchos/consultas";
 import { contextoDeVelas, paraDominio } from "../lib/estrategia";
 import { formatarPercentual, formatarPreco } from "../lib/formatar";
-import { contarNos, paraRegra } from "./arvore";
-import { frase, frasesSaidas, linhas } from "./descrever";
-import { fracaoDe, type EstadoConstrutor, type Montagem } from "./estado";
+import { contarNos, paraRegra, type NoEditor } from "./arvore";
+import { fraseDirecao, frasesLados, frasesSaidas, linhas } from "./descrever";
+import { fracaoDe, nosUsados, type EstadoConstrutor, type Montagem } from "./estado";
 import { lerSaidas } from "./saidas";
 
 /**
@@ -29,28 +29,41 @@ const PARES = ["BTCUSDT", "ETHUSDT", "SOLUSDT"] as const;
 
 const primeiraMaiuscula = (t: string): string => `${t[0]?.toUpperCase() ?? ""}${t.slice(1)}`;
 
+function Linhas({ no }: { readonly no: NoEditor | null }) {
+  return (
+    <ul role="list" className="previa__linhas">
+      {linhas(no).map((l, i) => (
+        <li key={`${i}-${l.nivel}-${l.texto}`} style={{ paddingInlineStart: `${l.nivel * 14}px` }}>
+          {l.texto}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function EmPalavras({ estado }: { readonly estado: EstadoConstrutor }) {
-  const protecao = frasesSaidas({ stop: fracaoDe(estado.stop), ...lerSaidas(estado.saidas).campos });
+  const protecao = frasesSaidas(
+    { stop: fracaoDe(estado.stop), ...lerSaidas(estado.saidas).campos },
+    estado.direcao,
+  );
   return (
     <section className="previa__bloco" aria-labelledby="previa-palavras">
       <h2 id="previa-palavras" className="previa__titulo">
         Em palavras
       </h2>
-      <p className="previa__frase">
-        <strong>Compra quando</strong> {frase(estado.entrada)}.
-      </p>
-      <ul role="list" className="previa__linhas">
-        {linhas(estado.entrada).map((l, i) => (
-          <li key={`${i}-${l.nivel}-${l.texto}`} style={{ paddingInlineStart: `${l.nivel * 14}px` }}>
-            {l.texto}
-          </li>
-        ))}
-      </ul>
-      <p className="previa__frase">
-        <strong>Vende quando</strong>{" "}
-        {estado.saida ? `${frase(estado.saida)}, ou no stop ou no alvo` : "o preço chegar ao stop ou ao alvo"}
-        .
-      </p>
+      {estado.direcao !== "comprado" ? (
+        <p className="previa__frase">
+          <strong>Direção:</strong> {fraseDirecao(estado.direcao)}.
+        </p>
+      ) : null}
+      {frasesLados(estado).map((f) => (
+        <Fragment key={f.arvore}>
+          <p className="previa__frase">
+            <strong>{f.verbo}</strong> {f.texto}.
+          </p>
+          {f.arvore === "entrada" || f.arvore === "entradaVendida" ? <Linhas no={estado[f.arvore]} /> : null}
+        </Fragment>
+      ))}
       {protecao.length ? (
         <ul role="list" className="previa__linhas previa__saidas" aria-label="Proteção e saídas">
           {protecao.map((f) => (
@@ -86,11 +99,29 @@ function SeFosseAgora({
         ? stopDeEntrada(paraDominio(montagem.estrategia), dec(ultimo), ctx)
         : { stop: precoStop(dec(ultimo), stop), explicacao: null }
       : null;
+  if (estado.direcao === "vendido")
+    return (
+      <section className="previa__bloco" aria-labelledby="previa-agora">
+        <h2 id="previa-agora" className="previa__titulo">
+          Se fosse agora
+        </h2>
+        <p className="apagado">
+          Esta prévia usa candles de cripto, onde só se compra. Para ver a venda a descoberto, rode o backtest
+          do mini índice (WIN).
+        </p>
+      </section>
+    );
   return (
     <section className="previa__bloco" aria-labelledby="previa-agora">
       <h2 id="previa-agora" className="previa__titulo">
         Se fosse agora
       </h2>
+      {estado.direcao === "ambos" ? (
+        <p className="apagado">
+          Candles de cripto: só o lado comprado. A venda a descoberto aparece no backtest do mini índice
+          (WIN).
+        </p>
+      ) : null}
       <Segmentado
         rotulo="Par para testar"
         ocultarRotulo
@@ -131,7 +162,7 @@ function SeFosseAgora({
 }
 
 function Validacao({ estado, montagem }: { readonly estado: EstadoConstrutor; readonly montagem: Montagem }) {
-  const partes = contarNos(estado.entrada) + (estado.saida ? contarNos(estado.saida) : 0);
+  const partes = nosUsados(estado).reduce((soma, no) => soma + contarNos(no), 0);
   return (
     <section className="previa__bloco" aria-labelledby="previa-validacao">
       <h2 id="previa-validacao" className="previa__titulo">
