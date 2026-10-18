@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  avaliacaoDeLinha,
   decisaoDeLinha,
   decimalOpcional,
   decimalTexto,
@@ -129,5 +130,53 @@ describe("conversão de linhas do banco para o contrato", () => {
     };
     expect(estrategiaDeLinha(linha)).toEqual({ id: "e1", nome: "Donchian", versao: 1, ...campos });
     expect(estrategiaDominio(linha)).toEqual(campos);
+  });
+
+  it("avaliação do placar: concluída traz resultado e se acertou; pendente não traz", () => {
+    const base = {
+      decisaoId: "d1",
+      usuarioId: "u1",
+      claude: "vetou" as const,
+      confianca: "0.650000000000000000",
+      fonte: "contrafactual" as const,
+      quantidade: "0.01",
+      precoEntrada: "100",
+      precoSaida: "98",
+      moeda: "USDT",
+      avaliadaEm: em,
+    };
+    const concluida = avaliacaoDeLinha({
+      ...base,
+      situacao: "concluida",
+      motivo: "stop",
+      resultado: "-0.020000000000000000",
+      retorno: "-0.02",
+      barras: 4,
+    });
+    expect(concluida).toEqual({
+      claude: "vetou",
+      confianca: 0.65,
+      fonte: "contrafactual",
+      situacao: "concluida",
+      motivo: "stop",
+      resultado: "-0.02",
+      retorno: -0.02,
+      barras: 4,
+      acertou: true,
+      moeda: "USDT",
+      avaliadaEm: em.getTime(),
+    });
+    const pendente = avaliacaoDeLinha({
+      ...base,
+      situacao: "pendente",
+      motivo: null,
+      resultado: null,
+      retorno: null,
+      barras: 1,
+    });
+    expect(pendente).not.toHaveProperty("acertou");
+    expect(pendente).not.toHaveProperty("resultado");
+    expect(pendente).not.toHaveProperty("motivo");
+    expect(pendente).not.toHaveProperty("retorno");
   });
 });
