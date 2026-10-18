@@ -3,7 +3,7 @@ import { and, desc, eq, lt, sql, type SQL } from "drizzle-orm";
 import { comoUsuario, type Db, type Tx } from "../cliente.js";
 import { decisaoDeLinha, iso } from "../conversao.js";
 import { ErroDados } from "../erros.js";
-import { decisoes, ordens, robos } from "../esquema/index.js";
+import { avaliacoesDecisao, decisoes, ordens, robos } from "../esquema/index.js";
 import { auditar } from "./auditoria.js";
 import { limitar } from "./lista.js";
 import { ordensComExecucoes } from "./ordens.js";
@@ -33,10 +33,14 @@ export interface DadosProposta {
 }
 
 async function obterNa(tx: Tx, id: string): Promise<DecisaoComOrdem | null> {
-  const [linha] = await tx.select().from(decisoes).where(eq(decisoes.id, id));
+  const [linha] = await tx
+    .select({ d: decisoes, a: avaliacoesDecisao })
+    .from(decisoes)
+    .leftJoin(avaliacoesDecisao, eq(avaliacoesDecisao.decisaoId, decisoes.id))
+    .where(eq(decisoes.id, id));
   if (!linha) return null;
   const [ordem] = await ordensComExecucoes(tx, eq(ordens.decisaoId, id), 1);
-  return { ...decisaoDeLinha(linha, ordem?.id), ...(ordem ? { ordem } : {}) };
+  return { ...decisaoDeLinha(linha.d, ordem?.id, linha.a), ...(ordem ? { ordem } : {}) };
 }
 
 /**
@@ -95,13 +99,14 @@ export function repositorioDecisoes(db: Db) {
         if (f.estado) condicoes.push(eq(decisoes.estado, f.estado));
         if (f.antes !== undefined) condicoes.push(lt(decisoes.em, new Date(f.antes)));
         const linhas = await tx
-          .select({ d: decisoes, ordemId: ordens.id })
+          .select({ d: decisoes, ordemId: ordens.id, a: avaliacoesDecisao })
           .from(decisoes)
           .leftJoin(ordens, eq(ordens.decisaoId, decisoes.id))
+          .leftJoin(avaliacoesDecisao, eq(avaliacoesDecisao.decisaoId, decisoes.id))
           .where(and(...condicoes))
           .orderBy(desc(decisoes.em))
           .limit(limitar(f.limite));
-        return linhas.map((l) => decisaoDeLinha(l.d, l.ordemId ?? undefined));
+        return linhas.map((l) => decisaoDeLinha(l.d, l.ordemId ?? undefined, l.a));
       }),
 
     obter: (usuarioId: string, id: string): Promise<DecisaoComOrdem | null> =>

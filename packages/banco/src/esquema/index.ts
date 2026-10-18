@@ -7,3 +7,4 @@ export * from "./operacao.js";
 export * from "./renda-fixa.js";
 export * from "./imobiliario.js";
 export * from "./risco-conta.js";
+export * from "./placar.js";

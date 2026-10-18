@@ -258,8 +258,9 @@ export function metricasDoPlacar(decisoes: readonly DecisaoPlacar[]): MetricasPl
       : [{ ...d, resultado: d.resultado, retorno: d.retorno, certa: acertou(d.claude, d.resultado) }],
   );
   const aprovadas = avaliadas.filter((d) => d.claude === "aprovou");
-  const moedas = new Set(decisoes.map((d) => d.moeda));
-  const moeda = moedas.size === 1 ? (decisoes[0] as DecisaoPlacar).moeda : null;
+  // A moeda vem das avaliadas: as pendentes ainda não têm dinheiro para somar.
+  const moedas = new Set(avaliadas.map((d) => d.moeda));
+  const moeda = moedas.size === 1 ? (avaliadas[0] as Avaliada).moeda : null;
   const comDinheiro = moeda !== null && avaliadas.length > 0;
   const limites = linhasLimite(aprovadas, moeda !== null);
   return {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Estrategia } from "../estrategia.js";
 import type { Regra } from "../regras.js";
-import { MERCADOS, problemasNoMercado } from "./mercado.js";
+import { MERCADOS, mercadoDoSimbolo, problemasNoMercado } from "./mercado.js";
 
 const sempre: Regra = {
   tipo: "comparar",
@@ -23,5 +23,13 @@ describe("o que cada mercado aceita", () => {
       expect(p[0]).toMatch(/à vista de cripto só opera comprado/);
       expect(problemasNoMercado({ ...comprada, direcao, entradaVendida: sempre }, "win")).toEqual([]);
     }
+  });
+});
+
+describe("mercado do símbolo", () => {
+  it("WIN e WIN-IBOV são o mini índice; pares da Binance são cripto", () => {
+    expect(mercadoDoSimbolo("WIN")).toBe("win");
+    expect(mercadoDoSimbolo("WIN-IBOV")).toBe("win");
+    expect(mercadoDoSimbolo("BTCUSDT")).toBe("cripto");
   });
 });

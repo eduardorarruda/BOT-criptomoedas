@@ -1,6 +1,7 @@
 import type { Estrategia } from "@zentrade/dominio";
 import { z } from "zod";
 import { Fracao, Id, Instante, Intervalo, Lado, ModoRobo, Rede, TextoDecimal } from "./comum.js";
+import { AvaliacaoDecisaoEsquema } from "./placar.js";
 import { PropostaAgenteEsquema } from "./proposta.js";
 import { RegraEsquema } from "./regra.js";
 
@@ -116,6 +117,8 @@ export const DecisaoEsquema = z.object({
   ordemId: Id.optional(),
   custoIaUsd: TextoDecimal.optional(),
   desfecho: z.object({ resultado: TextoDecimal, avaliadoEm: Instante }).optional(),
+  /** O placar do Claude nesta decisão: o que ele decidiu e como terminou (real ou contrafactual). */
+  avaliacao: AvaliacaoDecisaoEsquema.optional(),
 });
 export type DecisaoDTO = z.infer<typeof DecisaoEsquema>;
 
