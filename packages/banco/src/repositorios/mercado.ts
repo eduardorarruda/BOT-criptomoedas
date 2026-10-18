@@ -177,6 +177,25 @@ export function repositorioMercado(db: Db) {
       }));
     },
 
+    /**
+     * Para os importadores da B3: apaga os candles de [inicio, fim) de um símbolo e
+     * intervalo (antes de gravar de novo um pregão inteiro). Devolve quantos apagou.
+     */
+    async apagar(simbolo: string, intervalo: Intervalo, inicio: number, fim: number): Promise<number> {
+      const apagados = await db
+        .delete(candles)
+        .where(
+          and(
+            eq(candles.simbolo, simbolo),
+            eq(candles.intervalo, intervalo),
+            gte(candles.abertura, new Date(inicio)),
+            lt(candles.abertura, new Date(fim)),
+          ),
+        )
+        .returning({ abertura: candles.abertura });
+      return apagados.length;
+    },
+
     /** Para o motor: grava (ou corrige) candles fechados. */
     async gravar(simbolo: string, intervalo: Intervalo, lista: readonly Candle[]): Promise<void> {
       if (lista.length === 0) return;
