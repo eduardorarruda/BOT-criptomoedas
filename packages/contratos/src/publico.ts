@@ -1,6 +1,6 @@
 import { FUSO_PADRAO } from "@zentrade/dominio";
 import { z } from "zod";
-import { FusoEsquema } from "./fuso.js";
+import { NomeFusoEsquema } from "./fuso.js";
 
 /**
  * `GET /publico/config`: o que qualquer pessoa pode saber da instância sem entrar.
@@ -19,6 +19,6 @@ export const ConfigPublicaEsquema = z.object({
   encarregado: ContatoLgpdEsquema.nullable(),
   versao: z.string().min(1).max(40),
   /** O fuso da instância (ZENTRADE_FUSO): o "hoje" da tela é o mesmo do motor e da API. */
-  fuso: FusoEsquema.default(FUSO_PADRAO),
+  fuso: NomeFusoEsquema.default(FUSO_PADRAO),
 });
 export type ConfigPublica = z.infer<typeof ConfigPublicaEsquema>;

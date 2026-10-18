@@ -119,7 +119,14 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     log: silencioso,
     agora,
   });
-  hub.aoEvento(criarTradutorAlertas({ central: alertas, consultas: banco.sistema, log: silencioso }));
+  hub.aoEvento(
+    criarTradutorAlertas({
+      central: alertas,
+      consultas: banco.sistema,
+      log: silencioso,
+      fuso: "America/Sao_Paulo",
+    }),
+  );
   await assinarEventos(assinante, hub);
   const conhecimento = criarServicoConhecimento({
     repositorio: repositorioRag(banco),

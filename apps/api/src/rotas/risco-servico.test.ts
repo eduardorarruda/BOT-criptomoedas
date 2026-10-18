@@ -6,6 +6,7 @@ import { afrouxa, ajustesDaFalta, orcamentoIaDTO, situacaoDaConta } from "./risc
 
 const HORA = 3_600_000;
 const AGORA = Date.UTC(2026, 9, 12, 15);
+const SP = "America/Sao_Paulo";
 
 const retrato = (r: Partial<RetratoConta> = {}): RetratoConta => ({
   rede: "testnet",
@@ -31,7 +32,7 @@ const dados = (limites: Partial<LimitesContaDTO>, r: Partial<RetratoConta> = {})
 
 describe("situação da conta", () => {
   it("sem limites: números da rede e nenhuma pausa", () => {
-    const s = situacaoDaConta(dados({}), [], AGORA);
+    const s = situacaoDaConta(dados({}), [], AGORA, SP);
     expect(s.pausas).toEqual([]);
     expect(s.redes[0]).toMatchObject({ rede: "testnet", robos: 2, exposicao: "50", posicoesAbertas: 1 });
     expect(s.orcamentoIa).toEqual({
@@ -44,17 +45,32 @@ describe("situação da conta", () => {
     });
   });
 
-  it("perda do dia no limite pausa até 00:00 UTC, sem liberar à mão", () => {
-    const s = situacaoDaConta(dados({ perdaDiariaMaxima: "100" }, { realizadoDoDia: dec(-120) }), [], AGORA);
+  it("perda do dia no limite pausa até a meia-noite de Brasília (03:00 UTC), sem liberar à mão", () => {
+    const s = situacaoDaConta(
+      dados({ perdaDiariaMaxima: "100" }, { realizadoDoDia: dec(-120) }),
+      [],
+      AGORA,
+      SP,
+    );
     expect(s.pausas).toEqual([
       expect.objectContaining({
         codigo: "conta_perda_diaria",
         rede: "testnet",
-        ate: Date.UTC(2026, 9, 13),
+        ate: Date.parse("2026-10-13T03:00:00Z"),
         liberavel: false,
       }),
     ]);
+    expect(s.pausas[0]?.motivo).not.toMatch(/UTC/);
     expect(s.redes[0]?.perdaDoDia).toBe("-120");
+  });
+
+  it("às 22:52 de Brasília (já amanhã em UTC) a pausa vai até a meia-noite seguinte de Brasília", () => {
+    const noite = Date.parse("2026-10-18T01:52:00Z");
+    const d = dados({ perdaDiariaMaxima: "100" }, { realizadoDoDia: dec(-120) });
+    expect(situacaoDaConta(d, [], noite, SP).pausas[0]?.ate).toBe(Date.parse("2026-10-18T03:00:00Z"));
+    expect(situacaoDaConta(d, [], noite, "America/New_York").pausas[0]?.ate).toBe(
+      Date.parse("2026-10-18T04:00:00Z"),
+    );
   });
 
   it("queda do pico e sequência de stops (conta e robô) pausam e podem ser liberadas", () => {
@@ -76,6 +92,7 @@ describe("situação da conta", () => {
       ),
       [],
       AGORA,
+      SP,
     );
     expect(s.pausas.map((p) => [p.codigo, p.roboId, p.ate, p.liberavel])).toEqual([
       ["conta_queda", null, AGORA + 19 * HORA, true],
@@ -94,8 +111,8 @@ describe("situação da conta", () => {
         saidasComPerda: [{ em: AGORA - 3 * HORA, roboId: "r1" }],
       },
     );
-    expect(situacaoDaConta(base, [], AGORA).pausas.length).toBeGreaterThan(0);
-    expect(situacaoDaConta({ ...base, liberadaEm: AGORA - HORA }, [], AGORA).pausas).toEqual([]);
+    expect(situacaoDaConta(base, [], AGORA, SP).pausas.length).toBeGreaterThan(0);
+    expect(situacaoDaConta({ ...base, liberadaEm: AGORA - HORA }, [], AGORA, SP).pausas).toEqual([]);
   });
 
   it("divergência aberta e orçamento de IA esgotado aparecem como pausas", () => {
@@ -116,10 +133,10 @@ describe("situação da conta", () => {
       ...dados({}),
       orcamento: { gastoMes: dec(12), gastoDia: dec(1), limiteMensal: dec(10), limiteDiario: null },
     };
-    const s = situacaoDaConta(d, [divergencia, { ...divergencia, id: "d2", estado: "aceita" }], AGORA);
+    const s = situacaoDaConta(d, [divergencia, { ...divergencia, id: "d2", estado: "aceita" }], AGORA, SP);
     expect(s.pausas.map((p) => [p.codigo, p.rede, p.ate])).toEqual([
       ["divergencia_saldo", "testnet", null],
-      ["orcamento_ia", null, Date.UTC(2026, 10, 1)],
+      ["orcamento_ia", null, Date.parse("2026-11-01T03:00:00Z")],
     ]);
     expect(s.orcamentoIa).toMatchObject({ uso: 1.2, esgotado: true });
   });

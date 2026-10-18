@@ -158,7 +158,15 @@ describe("eventos que viram alerta", () => {
 
   function tradutor() {
     const m = montar();
-    return { ...m, traduzir: criarTradutorAlertas({ central: m.central, consultas, log: m.log }) };
+    return {
+      ...m,
+      traduzir: criarTradutorAlertas({
+        central: m.central,
+        consultas,
+        log: m.log,
+        fuso: "America/Sao_Paulo",
+      }),
+    };
   }
 
   const risco = (codigo: string, em = 1): Evento => ({
@@ -168,14 +176,22 @@ describe("eventos que viram alerta", () => {
     em,
   });
 
-  it("perda do dia: um aviso por robô e dia, com a mensagem da barreira", async () => {
+  it("perda do dia: um aviso por robô e dia (de Brasília), com a mensagem da barreira", async () => {
     const t = tradutor();
     await t.traduzir(risco("perda_diaria", Date.UTC(2026, 9, 12, 10)));
     await t.traduzir(risco("perda_diaria", Date.UTC(2026, 9, 12, 11)));
+    // 22:00 de 12/10 em Brasília (já 13/10 em UTC): ainda o mesmo dia, sem aviso novo
     await t.traduzir(risco("perda_diaria", Date.UTC(2026, 9, 13, 1)));
+    expect(t.avisos.lista).toHaveLength(1);
+    // 01:00 de 13/10 em Brasília: dia novo
+    await t.traduzir(risco("perda_diaria", Date.UTC(2026, 9, 13, 4)));
     expect(t.avisos.lista.map((a) => [a.tipo, a.titulo])).toEqual([
       ["perda_diaria_robo", "Perda do dia no limite: BTC devagar"],
       ["perda_diaria_robo", "Perda do dia no limite: BTC devagar"],
+    ]);
+    expect(t.enviados.map((a) => a.chave)).toEqual([
+      `perda_diaria:${ROBO}:2026-10-12`,
+      `perda_diaria:${ROBO}:2026-10-13`,
     ]);
     expect(t.avisos.lista[0]?.mensagem).toBe("mensagem de perda_diaria");
   });
