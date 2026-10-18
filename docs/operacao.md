@@ -203,17 +203,17 @@ Depois de cada compra executada, o motor deixa no livro da corretora a proteçã
 
 Além dos limites de cada robô, a tela **Risco → Limites da conta** define limites que somam **todos os robôs da pessoa na mesma rede** (papel, testnet e real são contas separadas e não se somam). Como os do robô, eles **só barram compras**: vendas, saídas pela regra e stops sempre passam. Vazio = sem limite.
 
-| Limite               | O que conta                                                                                                                     | Quando volta                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Perda máxima do dia  | resultado realizado desde 00:00 UTC (21h de Brasília), somando os robôs; opcionalmente com o não realizado das posições abertas | na virada do dia UTC                                      |
-| Exposição máxima     | valor das posições abertas (ao último preço de 1 min; sem preço recente, ao preço médio) + a compra                             | quando a exposição cair                                   |
-| Posições abertas     | robôs com posição; só barra a compra que abriria mais uma                                                                       | quando uma posição fechar                                 |
-| Queda máxima do pico | resultado realizado acumulado dentro da janela (padrão 72 h), partindo de zero: pico − atual (com o não realizado, se marcado)  | quando o pico sair da janela, ou **Liberar agora**        |
-| Sequência de stops   | N saídas com perda em X horas (StoplossGuard), por robô, pela conta ou os dois                                                  | quando a mais antiga sair da janela, ou **Liberar agora** |
+| Limite               | O que conta                                                                                                                           | Quando volta                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Perda máxima do dia  | resultado realizado desde a meia-noite no fuso da instância, somando os robôs; opcionalmente com o não realizado das posições abertas | na virada do dia (meia-noite local)                       |
+| Exposição máxima     | valor das posições abertas (ao último preço de 1 min; sem preço recente, ao preço médio) + a compra                                   | quando a exposição cair                                   |
+| Posições abertas     | robôs com posição; só barra a compra que abriria mais uma                                                                             | quando uma posição fechar                                 |
+| Queda máxima do pico | resultado realizado acumulado dentro da janela (padrão 72 h), partindo de zero: pico − atual (com o não realizado, se marcado)        | quando o pico sair da janela, ou **Liberar agora**        |
+| Sequência de stops   | N saídas com perda em X horas (StoplossGuard), por robô, pela conta ou os dois                                                        | quando a mais antiga sair da janela, ou **Liberar agora** |
 
 Detalhes que importam:
 
-- **O dia é UTC**, igual ao limite do robô e ao relatório: 00:00 UTC são 21h em Brasília.
+- **O dia é o do fuso da instância** (`ZENTRADE_FUSO`, padrão `America/Sao_Paulo`), igual ao limite do robô, ao resumo e ao relatório: começa à meia-noite local, não às 21h de Brasília (00:00 UTC). Os dados continuam gravados em UTC; com horário de verão, o dia pode ter 23 ou 25 horas.
 - **Saída com perda** é qualquer venda que realizou prejuízo (stop ou regra de saída), contada pela execução, não pelo motivo da decisão: assim conta também a saída registrada a partir de um stop na própria corretora.
 - **O pico vem do realizado** (como o MaxDrawdown do Freqtrade): oscilações não realizadas de uma posição não criam pico; o não realizado entra só no ponto de agora, se marcado.
 - **Liberar agora** pede reautenticação e grava o instante: pico e perdas anteriores deixam de contar. Não mexe na perda do dia, nas divergências nem no orçamento de IA.
@@ -237,7 +237,7 @@ A reconciliação usa a mesma chave de leitura da carteira, o disjuntor da Binan
 
 ## Orçamento de IA
 
-Em **Risco → Orçamento de IA**, cada pessoa define um teto mensal (e, se quiser, diário) em US$ para o que a IA gasta: análises dos robôs e respostas do assistente, nos dois provedores. O agente confere **antes** de chamar o modelo e grava o gasto de cada chamada (tabela `gastos_ia`). Mês e dia são UTC. No Claude Code do seu plano, o custo é a estimativa que o próprio CLI informa.
+Em **Risco → Orçamento de IA**, cada pessoa define um teto mensal (e, se quiser, diário) em US$ para o que a IA gasta: análises dos robôs e respostas do assistente, nos dois provedores. O agente confere **antes** de chamar o modelo e grava o gasto de cada chamada (tabela `gastos_ia`). Mês e dia são os do fuso da instância (`ZENTRADE_FUSO`, padrão horário de Brasília). No Claude Code do seu plano, o custo é a estimativa que o próprio CLI informa.
 
 - **No teto:** a análise volta como `aguardar` com o motivo "orçamento de IA do mês atingido" e o modelo nem é chamado; o assistente responde que parou e por quê.
 - **Robôs:** com `MOTOR_AGENTE_OBRIGATORIO=true`, sem orçamento é como agente fora do ar: **compras param**; stops seguem (o stop nunca pergunta ao agente). Com o agente opcional, o robô segue sem a análise.

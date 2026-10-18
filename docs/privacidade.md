@@ -24,7 +24,7 @@ ZENTRADE_ENCARREGADO_EMAIL=dpo@seu-dominio.com
 
 Nome e e-mail andam em par: preencher só um derruba a API na partida, com a explicação. Reinicie a API depois de mudar.
 
-A tela lê esses valores em `GET /api/v1/publico/config`, uma rota pública, com limite de pedidos e cache de 5 minutos. Ela devolve só o nome, o e-mail e a versão; está descrita em [contrato-api.md](contrato-api.md).
+A tela lê esses valores em `GET /api/v1/publico/config`, uma rota pública, com limite de pedidos e cache de 5 minutos. Ela devolve só o nome, o e-mail, a versão e o fuso da instância (`ZENTRADE_FUSO`); está descrita em [contrato-api.md](contrato-api.md).
 
 **Por que na API, e não no build da tela:** trocar o contato não exige reconstruir a imagem `web`, basta mudar o `.env` e reiniciar. O modo de exemplo (`VITE_DEMO=1`) não tem API; nele a política explica que nada sai do navegador.
 
