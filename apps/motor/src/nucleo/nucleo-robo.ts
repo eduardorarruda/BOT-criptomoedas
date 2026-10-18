@@ -25,9 +25,10 @@ import type { Plano } from "./plano.js";
 import { PosicaoAberta, type ProtecaoEfetiva } from "./posicao-aberta.js";
 import { conferirOrdemIncerta, type OrdemIncerta } from "./reconciliacao.js";
 import { conferirProtecao, StopNaCorretora } from "./stop-corretora.js";
+import { velasDoPedido } from "./contexto-operacao.js";
 import type { AprovacaoPendente, Dependencias, EntradaCiclo, ResultadoCiclo } from "./tipos.js";
 
-type Contexto = Omit<EntradaCiclo, "fechamentos">;
+type Contexto = Omit<EntradaCiclo, "fechamentos" | "velas">;
 
 /**
  * O robô sem rede: recebe candles fechados e decide. É o mesmo código ao vivo e no
@@ -188,7 +189,13 @@ export class NucleoRobo {
   private async seguir(e: Contexto): Promise<ResultadoCiclo | null> {
     // Com uma aprovação pendente, só a proteção (stop e alvo) passa: o resto espera a pessoa.
     if (this.aprovacao && !ehProtecao(e.sinal)) return null;
-    const r = await processarSinal(this.deps, this.robo, { ...e, fechamentos: this.buffer.fechamentos() });
+    const mercado = this.buffer.contexto();
+    const velas = velasDoPedido(mercado);
+    const r = await processarSinal(this.deps, this.robo, {
+      ...e,
+      fechamentos: mercado.fechamentos,
+      ...(velas ? { velas } : {}),
+    });
     await this.bloqueio.registrar(e.sinal, r, e.posicao);
     if (r.pendente) this.esperarAprovacao(r.pendente);
     if (r.ordem && r.plano && r.decisaoId) await this.aposOrdem(r.ordem, r.plano, r.decisaoId);

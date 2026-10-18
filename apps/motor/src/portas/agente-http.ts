@@ -50,6 +50,9 @@ export function pedidoNoFio(p: PedidoAnalise) {
     ...(p.usuarioId && p.usuarioId !== USUARIO_LOCAL ? { usuarioId: p.usuarioId } : {}),
     // Liga os eventos "analise" que o agente publica a este pedido (tela Ao vivo).
     ...(p.analiseId ? { analiseId: p.analiseId } : {}),
+    // Como a operação sai e quanto custa, e as velas: números puros, vão como estão.
+    ...(p.operacao ? { operacao: p.operacao } : {}),
+    ...(p.velas ? { velas: p.velas } : {}),
     ...(o
       ? {
           orcamento: {

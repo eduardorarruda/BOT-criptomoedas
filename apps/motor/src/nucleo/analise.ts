@@ -1,6 +1,13 @@
-import type { OrcamentoAnalise, PropostaAgente, RespostaAnalise, RoboConfig } from "@zentrade/contratos";
+import type {
+  OrcamentoAnalise,
+  PropostaAgente,
+  RespostaAnalise,
+  RoboConfig,
+  VelasPedido,
+} from "@zentrade/contratos";
 import type { Posicao, Sinal, Valor } from "@zentrade/dominio";
 import { concluirAnalise, iniciarAnalise } from "./aovivo.js";
+import { custosCriptoDoPedido, operacaoDoPedido } from "./contexto-operacao.js";
 import { exposicao, inicioDoDia } from "./estado-risco.js";
 import type { Dependencias } from "./tipos.js";
 
@@ -12,6 +19,7 @@ export interface PedidoDoCiclo {
   readonly sinal: Sinal;
   readonly preco: Valor;
   readonly fechamentos: readonly number[];
+  readonly velas?: VelasPedido;
   readonly posicao: Posicao;
 }
 
@@ -72,6 +80,9 @@ async function pedirAoAgente(
       usuarioId: robo.usuarioId,
       analiseId,
       ...(orc ? { orcamento: orc } : {}),
+      // O robô ao vivo é o à vista de cripto: só comprado (a venda é a saída da compra).
+      operacao: operacaoDoPedido(robo.estrategia, custosCriptoDoPedido(robo.estrategia), "comprado"),
+      ...(p.velas ? { velas: p.velas } : {}),
     });
     // Sem orçamento de IA o agente não analisou: vale a regra do agente fora do ar
     // (obrigatório barra; opcional segue sem ele). Stop nem pergunta ao agente.
