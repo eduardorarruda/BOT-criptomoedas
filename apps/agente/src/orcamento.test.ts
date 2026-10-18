@@ -21,6 +21,7 @@ import { AnalistaPorPessoa } from "./provedores/analista-por-pessoa.js";
 import { anthropicFalso, emStreaming, mensagemFalsa, texto } from "./teste/anthropic-falso.js";
 import { investimentosFalsos } from "./teste/investimentos-falsos.js";
 import { pedidoExemplo, USUARIO_TESTE } from "./teste/pedido.js";
+import { comProbabilidades, PROPOSTA_GERADA } from "./teste/proposta.js";
 
 const AGORA = Date.UTC(2026, 9, 12, 15);
 
@@ -69,14 +70,8 @@ function portao(fonte: FonteOrcamento) {
   return { p, alertas, log: l };
 }
 
-const propostaValida = {
-  acao: "comprar",
-  confianca: 0.7,
-  tamanhoRelativo: 0.5,
-  justificativa: "ok",
-  riscos: [],
-  fontes: [],
-};
+/** A proposta no formato novo, aprovada pela regra dos cenários (alta com 65%). */
+const propostaValida = { ...PROPOSTA_GERADA, confianca: 0.6, cenarios: comProbabilidades(0.65, 0.2, 0.15) };
 
 const deps = () => ({
   busca: { buscar: vi.fn(async () => []) },

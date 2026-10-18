@@ -1,12 +1,14 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import type { BetaMessage } from "@anthropic-ai/sdk/resources/beta/messages/messages";
+import type { BetaMessage, BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import {
-  PropostaAgenteEsquema,
+  PropostaGeradaEsquema,
   type PedidoAnalise,
   type PropostaAgente,
+  type PropostaGerada,
   type RespostaAnalise,
 } from "@zentrade/contratos";
+import { aplicarRegraDosCenarios, LIMIAR_PADRAO } from "./cenarios.js";
 import { custoUsd } from "./custo.js";
 import {
   criarFerramentas,
@@ -15,12 +17,14 @@ import {
   type AoUsarFerramenta,
   type DependenciasFerramentas,
 } from "./ferramentas/index.js";
+import { buscarContextoPrevio } from "./pedido/previo.js";
 import { mensagemDoPedido, SYSTEM_PROMPT } from "./prompt.js";
 import type { OrcamentoRisco } from "./serializacao.js";
 
 export const MODELO_PADRAO = "claude-opus-5";
 const BETA_FALLBACK = "server-side-fallback-2026-07-01";
-const FORMATO_PROPOSTA = betaZodOutputFormat(PropostaAgenteEsquema);
+/** A geração nova: com os três cenários e o contra-argumento (Zod valida a soma e os nomes). */
+const FORMATO_PROPOSTA = betaZodOutputFormat(PropostaGeradaEsquema);
 
 export class ErroPropostaInvalida extends Error {
   override name = "ErroPropostaInvalida";
@@ -36,6 +40,10 @@ export interface OpcoesAnalista {
   readonly agora?: () => Date;
   /** Ferramenta que lançou: o detalhe vai para o log; o modelo lê só uma frase curta. */
   readonly aoFalharFerramenta?: AoFalharFerramenta;
+  /** Probabilidade mínima do cenário favorável para abrir posição (AGENTE_CENARIO_LIMIAR). */
+  readonly limiarCenarios?: number;
+  /** Fuso da hora no pedido (ZENTRADE_FUSO). */
+  readonly fuso?: string;
 }
 
 export interface OpcoesAnalise {
@@ -85,18 +93,42 @@ function motivoDaParada(final: BetaMessage): string | null {
   }
 }
 
-function lerProposta(final: BetaMessage): PropostaAgente {
-  const textoFinal = final.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
+const textoDe = (final: BetaMessage): string =>
+  final.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
+
+type Lida =
+  { readonly ok: true; readonly proposta: PropostaGerada } | { readonly ok: false; readonly erro: string };
+
+function lerProposta(final: BetaMessage): Lida {
   try {
-    return FORMATO_PROPOSTA.parse(textoFinal);
+    return { ok: true, proposta: FORMATO_PROPOSTA.parse(textoDe(final)) };
   } catch (e) {
     const causa = e instanceof Error ? e.message : String(e);
-    throw new ErroPropostaInvalida(`O modelo devolveu uma proposta fora do esquema PropostaAgente: ${causa}`);
+    return { ok: false, erro: causa.slice(0, 1500) };
   }
 }
 
+/** O pedido de correção da segunda (e última) tentativa, com o erro da validação. */
+export const correcaoDoFormato = (erro: string): string =>
+  `A sua resposta anterior foi recusada pela validação do formato: ${erro}\n` +
+  "Devolva a proposta completa de novo, no mesmo formato, corrigindo isso (três cenários distintos — alta, lateral e baixa — com probabilidades que somam 1, e o contraArgumento).";
+
+/** Duas propostas fora do formato: não opera. */
+export const motivoFormatoInvalido = (erro: string): string =>
+  `O modelo devolveu a proposta fora do formato duas vezes (${erro.slice(0, 600)}). Sem proposta válida, aguardar.`;
+
+/** Fonte inventada fora, depois a regra determinística dos cenários. */
+export function finalizarProposta(
+  gerada: PropostaGerada,
+  pedido: PedidoAnalise,
+  registro: RegistroFontes,
+  limiar: number = LIMIAR_PADRAO,
+): PropostaAgente {
+  return aplicarRegraDosCenarios(semFontesInventadas(gerada, registro), pedido, limiar);
+}
+
 /** Fonte citada que nenhuma ferramenta devolveu é descartada, com aviso nos riscos. */
-export function semFontesInventadas(p: PropostaAgente, registro: RegistroFontes): PropostaAgente {
+export function semFontesInventadas<P extends PropostaAgente>(p: P, registro: RegistroFontes): P {
   const { fontes, removidas } = registro.filtrar(p.fontes);
   if (removidas === 0) return p;
   const aviso = `${removidas} fonte(s) citada(s) sem ter sido consultada(s) foram descartadas.`;
@@ -116,6 +148,51 @@ export class Analista {
 
   async analisar(pedido: PedidoAnalise, opcoes: OpcoesAnalise): Promise<RespostaAnalise> {
     const registro = new RegistroFontes();
+    const agora = (this.#o.agora ?? (() => new Date()))();
+    const previo = await buscarContextoPrevio(pedido, opcoes.usuarioId, this.#o.dependencias, agora);
+    const pergunta: BetaMessageParam = {
+      role: "user",
+      content: mensagemDoPedido(pedido, agora, { previo, ...(this.#o.fuso ? { fuso: this.#o.fuso } : {}) }),
+    };
+    const primeira = await this.#rodar(pedido, opcoes, registro, [pergunta]);
+    const final = primeira.at(-1);
+    if (!final) throw new ErroPropostaInvalida("A API não devolveu nenhuma mensagem; não há proposta.");
+    const parada = motivoDaParada(final);
+    if (parada) return { proposta: aguardar(parada), custoUsd: custoUsd(primeira) };
+    const lida = lerProposta(final);
+    if (lida.ok) return this.#resposta(lida.proposta, pedido, registro, primeira);
+
+    // Uma nova tentativa, com o erro da validação; se falhar de novo, aguardar.
+    const anterior: BetaMessageParam = { role: "assistant", content: textoDe(final) || "(sem texto)" };
+    const correcao: BetaMessageParam = { role: "user", content: correcaoDoFormato(lida.erro) };
+    const segunda = await this.#rodar(pedido, opcoes, registro, [pergunta, anterior, correcao]);
+    const todas = [...primeira, ...segunda];
+    const final2 = segunda.at(-1);
+    const parada2 = final2 ? motivoDaParada(final2) : "A segunda tentativa não devolveu mensagem.";
+    if (!final2 || parada2) return { proposta: aguardar(parada2 ?? ""), custoUsd: custoUsd(todas) };
+    const lida2 = lerProposta(final2);
+    if (lida2.ok) return this.#resposta(lida2.proposta, pedido, registro, todas);
+    return { proposta: aguardar(motivoFormatoInvalido(lida2.erro)), custoUsd: custoUsd(todas) };
+  }
+
+  #resposta(
+    gerada: PropostaGerada,
+    pedido: PedidoAnalise,
+    registro: RegistroFontes,
+    mensagens: readonly BetaMessage[],
+  ): RespostaAnalise {
+    return {
+      proposta: finalizarProposta(gerada, pedido, registro, this.#o.limiarCenarios),
+      custoUsd: custoUsd(mensagens),
+    };
+  }
+
+  async #rodar(
+    pedido: PedidoAnalise,
+    opcoes: OpcoesAnalise,
+    registro: RegistroFontes,
+    messages: BetaMessageParam[],
+  ): Promise<BetaMessage[]> {
     const contexto = {
       pedido,
       usuarioId: opcoes.usuarioId,
@@ -138,19 +215,12 @@ export class Analista {
           this.#o.aoFalharFerramenta,
         ),
         output_config: { format: FORMATO_PROPOSTA },
-        messages: [
-          { role: "user", content: mensagemDoPedido(pedido, (this.#o.agora ?? (() => new Date()))()) },
-        ],
+        messages,
       },
       opcoes.signal ? { signal: opcoes.signal } : {},
     );
     const mensagens: BetaMessage[] = [];
     for await (const mensagem of runner) mensagens.push(mensagem);
-    const final = mensagens.at(-1);
-    if (!final) throw new ErroPropostaInvalida("A API não devolveu nenhuma mensagem; não há proposta.");
-
-    const motivo = motivoDaParada(final);
-    const proposta = motivo ? aguardar(motivo) : semFontesInventadas(lerProposta(final), registro);
-    return { proposta, custoUsd: custoUsd(mensagens) };
+    return mensagens;
   }
 }

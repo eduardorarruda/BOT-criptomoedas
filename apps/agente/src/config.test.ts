@@ -107,4 +107,14 @@ describe("chave mestra no agente (token do Claude Code de cada pessoa)", () => {
       expect((e as Error).message).not.toContain(curta);
     }
   });
+
+  it("prévias de futuro: limiar do cenário favorável (padrão 0,6, de 0,5 a 0,95) e fuso do pedido", () => {
+    expect(configDoAgente(valido)).toMatchObject({ limiarCenarios: 0.6, fuso: "America/Sao_Paulo" });
+    expect(configDoAgente({ ...valido, AGENTE_CENARIO_LIMIAR: "0.7" }).limiarCenarios).toBe(0.7);
+    expect(() => configDoAgente({ ...valido, AGENTE_CENARIO_LIMIAR: "0.3" })).toThrow(
+      /AGENTE_CENARIO_LIMIAR/,
+    );
+    expect(configDoAgente({ ...valido, ZENTRADE_FUSO: "Europe/Lisbon" }).fuso).toBe("Europe/Lisbon");
+    expect(() => configDoAgente({ ...valido, ZENTRADE_FUSO: "Marte/Olimpo" })).toThrow(/ZENTRADE_FUSO.*IANA/);
+  });
 });

@@ -134,11 +134,21 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
           cliente,
           dependencias,
           modelo: config.modelo,
+          limiarCenarios: config.limiarCenarios,
+          fuso: config.fuso,
           aoFalharFerramenta: (erro, ferramenta) =>
             logger.error({ err: erro, ferramenta }, "ferramenta do analista falhou"),
         })
       : null,
-    cli: executor ? new AnalistaCli({ executor, dependencias, tempoMs: config.timeoutMs }) : null,
+    cli: executor
+      ? new AnalistaCli({
+          executor,
+          dependencias,
+          tempoMs: config.timeoutMs,
+          limiarCenarios: config.limiarCenarios,
+          fuso: config.fuso,
+        })
+      : null,
     config: configDaPessoa,
   });
   const analista = new AnalistaComOrcamento(porPessoa, orcamento);

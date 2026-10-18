@@ -2,7 +2,9 @@ import { lerChaveMestra } from "@zentrade/banco";
 import { PROVEDORES_EMBEDDINGS, type ProvedorEmbeddings } from "@zentrade/conhecimento";
 import { z } from "zod";
 import { MODELO_PADRAO } from "./analista.js";
+import { LIMIAR_PADRAO } from "./cenarios.js";
 import { lerContas, type ContaClaude } from "./claude-cli/contas.js";
+import { FUSO_PADRAO, fusoValido } from "./pedido/hora.js";
 
 const inteiro = (min: number, max: number, padrao: number) =>
   z.coerce.number().int().min(min).max(max).default(padrao);
@@ -33,6 +35,13 @@ const Ambiente = z.object({
   AGENTE_CLAUDE_CONTAS: z.string().optional(),
   AGENTE_CLI_MAX_TURNOS: inteiro(1, 50, 8),
   AGENTE_CLI_TETO_USD: z.coerce.number().min(0.01).max(50).default(1),
+  // Prévias de futuro: probabilidade mínima do cenário favorável para abrir posição.
+  AGENTE_CENARIO_LIMIAR: z.coerce.number().min(0.5).max(0.95).default(LIMIAR_PADRAO),
+  // Fuso da hora que vai no pedido ao modelo (a hora de quem opera, além do UTC).
+  ZENTRADE_FUSO: z
+    .string()
+    .refine(fusoValido, "fuso desconhecido; use um nome da IANA, ex.: America/Sao_Paulo")
+    .default(FUSO_PADRAO),
   // Assistente (chat): prazo de uma resposta e teto de respostas.
   AGENTE_CHAT_TIMEOUT_MS: inteiro(10_000, 1_800_000, 300_000),
   AGENTE_CHAT_MAX_SIMULTANEAS: inteiro(1, 64, 4),
@@ -68,6 +77,10 @@ export interface ConfigAgente {
   readonly maxPorMinuto: number;
   readonly usuarioIdPadrao?: string;
   readonly cli: ConfigCliDoAgente;
+  /** Probabilidade mínima do cenário favorável para a proposta abrir posição. */
+  readonly limiarCenarios: number;
+  /** Fuso da hora no pedido ao modelo (IANA). */
+  readonly fuso: string;
   readonly provedorEmbeddings: ProvedorEmbeddings;
   readonly chat: {
     readonly timeoutMs: number;
@@ -126,6 +139,8 @@ export function configDoAgente(env: Readonly<Record<string, string | undefined>>
     maxSimultaneas: a.AGENTE_MAX_SIMULTANEAS,
     maxPorMinuto: a.AGENTE_MAX_POR_MINUTO,
     nivelLog: a.LOG_LEVEL,
+    limiarCenarios: a.AGENTE_CENARIO_LIMIAR,
+    fuso: a.ZENTRADE_FUSO,
     provedorEmbeddings: a.EMBEDDINGS_PROVEDOR,
     cli: {
       caminho: a.AGENTE_CLAUDE_CAMINHO,

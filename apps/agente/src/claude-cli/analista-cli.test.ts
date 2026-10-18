@@ -8,9 +8,9 @@ import { SessoesPonte } from "../ponte/sessoes.js";
 import { SYSTEM_PROMPT } from "../prompt.js";
 import { criarClaudeFalso, resultadoCli, type ClaudeFalso } from "../teste/claude-falso.js";
 import { pedidoExemplo, USUARIO_TESTE } from "../teste/pedido.js";
-import { AnalistaCli, ESQUEMA_PROPOSTA, ErroClaudeCli, propostaDoResultado } from "./analista-cli.js";
+import { comProbabilidades, PROPOSTA_GERADA } from "../teste/proposta.js";
+import { AnalistaCli, ESQUEMA_PROPOSTA, ErroClaudeCli, lerPropostaCli } from "./analista-cli.js";
 import { ExecutorClaude } from "./executor.js";
-import { RegistroFontes } from "../ferramentas/registro.js";
 
 const achado = {
   trechoId: "t1",
@@ -23,16 +23,9 @@ const achado = {
   pontuacao: 0.03,
 };
 
-const proposta = {
-  acao: "comprar",
-  confianca: 0.7,
-  tamanhoRelativo: 0.5,
-  stop: "58800",
-  alvo: "61000",
-  justificativa: "Preço abaixo da média; a taxa cabe no alvo.",
-  riscos: ["mercado em queda"],
-  fontes: [{ tipo: "regra_corretora", id: "doc-taxas", titulo: "Taxas da corretora", data: "2026-09-01" }],
-};
+/** Valor esperado positivo e alta com 65%: passa pela regra dos cenários. */
+const proposta = { ...PROPOSTA_GERADA, confianca: 0.6, cenarios: comProbabilidades(0.65, 0.2, 0.15) };
+const torta = { ...proposta, cenarios: comProbabilidades(0.9, 0.3, 0.3) };
 
 let app: FastifyInstance;
 let url: string;
@@ -95,7 +88,8 @@ describe("AnalistaCli (claude -p de mentira, ponte de verdade)", () => {
       modelo: "sonnet",
       aoUsarFerramenta: aoUsarFerramenta!,
     });
-    expect(r.proposta).toEqual(proposta);
+    expect(r.proposta).toMatchObject(proposta);
+    expect(r.proposta.avaliacao).toMatchObject({ aplicada: true, aprovada: true });
     expect(r.custoUsd.toFixed()).toBe("0.0123");
     expect(eventos.map((e) => e.etapa?.ferramenta)).toEqual(["retrato_mercado", "buscar_conhecimento"]);
     expect(eventos[1]!.etapa?.descricao).toMatch(/taxa/);
@@ -121,6 +115,8 @@ describe("AnalistaCli (claude -p de mentira, ponte de verdade)", () => {
     expect(valor("--tools")).toBe("");
     expect(recebido.instrucoes).toBe(SYSTEM_PROMPT);
     expect(recebido.entrada).toContain("BTCUSDT");
+    expect(recebido.entrada).toContain("America/Sao_Paulo; UTC 2026-10-10T12:00Z");
+    expect(JSON.stringify(ESQUEMA_PROPOSTA)).toContain("cenarios");
     expect(recebido.env["CLAUDE_CONFIG_DIR"]).toBe("/dados/claude/pessoal");
     expect(recebido.env["ANTHROPIC_API_KEY"]).toBeUndefined();
     const ponte = recebido.mcp.mcpServers["zentrade"]!;
@@ -129,13 +125,27 @@ describe("AnalistaCli (claude -p de mentira, ponte de verdade)", () => {
     expect(recebido.args.join(" ")).not.toContain(ponte.env["ZT_PONTE_ACESSO"]!);
   });
 
-  it("saída fora do esquema ou parada por limite viram 'aguardar' com o motivo", async () => {
+  it("fora do esquema: nova tentativa com o erro na entrada; a segunda vale e o custo soma", async () => {
+    const { a } = await analista(`
+      const r = entrada.includes("## Correção")
+        ? ${JSON.stringify(resultadoCli({ structured_output: proposta }))}
+        : ${JSON.stringify(resultadoCli({ structured_output: torta }))};
+      sair(r);`);
+    const r = await a.analisar(pedidoExemplo(), { usuarioId: USUARIO_TESTE });
+    expect(r.proposta.acao).toBe("comprar");
+    expect(r.custoUsd.toFixed()).toBe("0.0246");
+    const recebido = await falso!.recebido();
+    expect(recebido.entrada).toMatch(/## Correção/);
+    expect(recebido.entrada).toMatch(/somar 1/);
+  });
+
+  it("fora do esquema duas vezes ou parada por limite viram 'aguardar' com o motivo", async () => {
     const { a } = await analista(
       `sair(${JSON.stringify(resultadoCli({ structured_output: { acao: "comprar" } }))});`,
     );
     const r = await a.analisar(pedidoExemplo(), { usuarioId: USUARIO_TESTE });
     expect(r.proposta).toMatchObject({ acao: "aguardar", confianca: 0, tamanhoRelativo: 0 });
-    expect(r.proposta.justificativa).toMatch(/fora do esquema/);
+    expect(r.proposta.justificativa).toMatch(/fora do formato duas vezes/);
     await falso!.apagar();
     const { a: a2 } = await analista(
       `sair(${JSON.stringify(resultadoCli({ subtype: "error_max_turns", is_error: true }))}, 1);`,
@@ -170,29 +180,27 @@ describe("AnalistaCli (claude -p de mentira, ponte de verdade)", () => {
   });
 });
 
-describe("propostaDoResultado", () => {
-  const registro = new RegistroFontes();
-  it("sem resultado, com erro, teto de custo ou sem saída estruturada: aguardar", () => {
-    expect(propostaDoResultado(null, registro).justificativa).toMatch(/legível/);
-    expect(
-      propostaDoResultado({ type: "result", subtype: "error_max_budget_usd" }, registro).justificativa,
-    ).toMatch(/teto/);
-    expect(
-      propostaDoResultado({ type: "result", subtype: "error_during_execution" }, registro).justificativa,
-    ).toMatch(/error_during_execution/);
-    expect(
-      propostaDoResultado({ type: "result", subtype: "error_max_structured_output_retries" }, registro)
-        .justificativa,
-    ).toMatch(/formato/);
+describe("lerPropostaCli", () => {
+  it("sem resultado, com erro, teto de custo ou sem saída estruturada: recusa sem nova tentativa", () => {
+    const motivo = (r: Parameters<typeof lerPropostaCli>[0]) => {
+      const l = lerPropostaCli(r);
+      return l.ok ? "" : `${l.motivo}${l.erroDeFormato === undefined ? "" : " [retenta]"}`;
+    };
+    expect(motivo(null)).toMatch(/legível/);
+    expect(motivo({ type: "result", subtype: "error_max_budget_usd" })).toMatch(/teto/);
+    expect(motivo({ type: "result", subtype: "error_during_execution" })).toMatch(/error_during_execution/);
+    expect(motivo({ type: "result", subtype: "error_max_structured_output_retries" })).toMatch(/formato/);
+    expect(motivo({ type: "result", subtype: "error_max_budget_usd" })).not.toMatch(/retenta/);
   });
 
-  it("aceita a proposta no texto do result quando não vem saída estruturada e descarta fonte inventada", () => {
-    const p = propostaDoResultado(
-      { type: "result", subtype: "success", result: JSON.stringify(proposta) },
-      registro,
-    );
-    expect(p.acao).toBe("comprar");
-    expect(p.fontes).toEqual([]);
-    expect(p.riscos.at(-1)).toMatch(/1 fonte/);
+  it("aceita a proposta no texto do result quando não vem saída estruturada", () => {
+    const l = lerPropostaCli({ type: "result", subtype: "success", result: JSON.stringify(proposta) });
+    expect(l.ok && l.proposta.acao).toBe("comprar");
+  });
+
+  it("fora do esquema (soma das probabilidades): recusa com o erro, para a nova tentativa", () => {
+    const l = lerPropostaCli({ type: "result", subtype: "success", structured_output: torta });
+    expect(l.ok).toBe(false);
+    if (!l.ok) expect(l.erroDeFormato).toMatch(/somar 1/);
   });
 });

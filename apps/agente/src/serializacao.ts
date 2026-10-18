@@ -1,4 +1,11 @@
-import { Id, Intervalo, TextoDecimal, type PedidoAnalise } from "@zentrade/contratos";
+import {
+  Id,
+  Intervalo,
+  OperacaoPedidoEsquema,
+  TextoDecimal,
+  VelasPedidoEsquema,
+  type PedidoAnalise,
+} from "@zentrade/contratos";
 import { dec, paraTexto, type Posicao, type Sinal, type Valor } from "@zentrade/dominio";
 import { z } from "zod";
 
@@ -37,6 +44,10 @@ export const PedidoAnaliseJson = z.object({
   posicao: PosicaoJson,
   /** Liga os eventos "analise" (passo a passo ao vivo) à decisão que o motor está tomando. */
   analiseId: Id.optional(),
+  /** Como a operação sai e quanto custa (motor novo); números puros. */
+  operacao: OperacaoPedidoEsquema.optional(),
+  /** Máximas, mínimas, volumes e instantes alinhados com os fechamentos. */
+  velas: VelasPedidoEsquema.optional(),
 });
 export type PedidoAnaliseJson = z.infer<typeof PedidoAnaliseJson>;
 
@@ -51,6 +62,9 @@ const OrcamentoJson = z.object({
 const CorpoAnalise = PedidoAnaliseJson.extend({
   usuarioId: z.uuid().optional(),
   orcamento: OrcamentoJson.optional(),
+}).refine((c) => !c.velas || c.velas.instantes.length === c.fechamentos.length, {
+  message: "as velas precisam ter o mesmo tamanho dos fechamentos",
+  path: ["velas"],
 });
 
 /** Orçamento de risco do robô, em decimal exato (moeda de cotação). */
@@ -103,6 +117,8 @@ export function pedidoParaJson(p: PedidoAnalise): PedidoAnaliseJson {
       taxasPagas: paraTexto(p.posicao.taxasPagas),
     },
     ...(p.analiseId ? { analiseId: p.analiseId } : {}),
+    ...(p.operacao ? { operacao: p.operacao } : {}),
+    ...(p.velas ? { velas: p.velas } : {}),
   };
 }
 
@@ -114,6 +130,8 @@ export function pedidoDeJson(j: PedidoAnaliseJson): PedidoAnalise {
     fechamentos: j.fechamentos,
     posicao: posicaoDeJson(j.posicao),
     ...(j.analiseId ? { analiseId: j.analiseId } : {}),
+    ...(j.operacao ? { operacao: j.operacao } : {}),
+    ...(j.velas ? { velas: j.velas } : {}),
   };
 }
 
