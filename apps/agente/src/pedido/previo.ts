@@ -1,5 +1,7 @@
 import type { PedidoAnalise } from "@zentrade/contratos";
-import type { DecisaoPassada, DependenciasFerramentas } from "../ferramentas/index.js";
+import { metricasDoPlacar, resumoDoPlacar } from "@zentrade/dominio";
+import type { AvaliacaoPassada, DecisaoPassada, DependenciasFerramentas } from "../ferramentas/contexto.js";
+import { DECISOES_DO_PLACAR } from "../ferramentas/historico-decisoes.js";
 import { num, preco as fmtPreco } from "./formato.js";
 
 /** Quantas decisões do robô vão no pedido (a ferramenta historico_decisoes busca mais). */
@@ -27,9 +29,6 @@ export function ativoDoSimbolo(simbolo: string): string {
   return nome && nome !== base ? `${base} ${nome}` : base;
 }
 
-/** O desfecho que o placar grava (quando existir): lido de forma genérica, sem depender do formato. */
-type ComDesfecho = DecisaoPassada & { readonly desfecho?: unknown };
-
 export interface FrescorDaBase {
   readonly consulta: string;
   readonly recentes: number;
@@ -38,8 +37,16 @@ export interface FrescorDaBase {
 
 /** `null` = a fonte falhou agora (o pedido segue sem ela e diz isso). */
 export interface ContextoPrevio {
-  readonly decisoes: readonly ComDesfecho[] | null;
+  readonly decisoes: readonly DecisaoPassada[] | null;
   readonly base: FrescorDaBase | null;
+  /** O placar do Claude neste robô em frases (precisão, vetos, calibração); `null` sem placar. */
+  readonly placar?: string | null;
+}
+
+async function placarDoRobo(pedido: PedidoAnalise, deps: DependenciasFerramentas): Promise<string | null> {
+  if (!deps.historico.placar) return null;
+  const lista = await deps.historico.placar(pedido.robo.id, DECISOES_DO_PLACAR);
+  return resumoDoPlacar(metricasDoPlacar(lista), "neste robô");
 }
 
 async function frescor(
@@ -65,7 +72,8 @@ async function frescor(
 
 /**
  * O que o pedido leva antes de o modelo abrir qualquer ferramenta: as últimas decisões
- * do MESMO robô com o resultado, e se a base tem notícia recente sobre o ativo. Só
+ * do MESMO robô com o resultado e a avaliação do placar, o placar do Claude neste robô
+ * e se a base tem notícia recente sobre o ativo. Só
  * contagens e datas da base vão no texto — trecho de terceiros só pela ferramenta,
  * marcado como dado. Falha aqui não derruba a análise.
  */
@@ -75,13 +83,15 @@ export async function buscarContextoPrevio(
   deps: DependenciasFerramentas,
   agora: Date,
 ): Promise<ContextoPrevio> {
-  const [decisoes, base] = await Promise.allSettled([
+  const [decisoes, base, placar] = await Promise.allSettled([
     deps.historico.recentes(pedido.robo.id, LIMITE_DECISOES_PREVIAS),
     frescor(pedido, usuarioId, deps, agora),
+    placarDoRobo(pedido, deps),
   ]);
   return {
     decisoes: decisoes.status === "fulfilled" ? decisoes.value : null,
     base: base.status === "fulfilled" ? base.value : null,
+    placar: placar.status === "fulfilled" ? placar.value : null,
   };
 }
 
@@ -101,12 +111,21 @@ const dataHora = (ms: number | Date, fuso: string): string => {
   return `${p.day}/${p.month} ${p.hour}:${p.minute}`;
 };
 
-function linhaDecisao(d: ComDesfecho, fuso: string): string {
+function textoDaAvaliacao(a: AvaliacaoPassada): string {
+  const fonte = a.fonte === "real" ? "real" : "simulado";
+  if (a.situacao === "pendente" || a.acertou === null) return `placar: ${a.claude}, pendente`;
+  const resultado = a.resultado
+    ? `, ${a.resultado.isNegative() ? "−" : "+"}${num(a.resultado.abs().toNumber())} ${fonte}`
+    : "";
+  return `placar: ${a.claude}, ${a.acertou ? "acertou" : "errou"}${resultado}`;
+}
+
+function linhaDecisao(d: DecisaoPassada, fuso: string): string {
   const resultado = d.resultado
     ? `resultado ${d.resultado.isNegative() ? "−" : "+"}${num(d.resultado.abs().toNumber())}`
     : "resultado ainda não apurado";
-  const desfecho = d.desfecho !== undefined ? `; desfecho: ${JSON.stringify(d.desfecho).slice(0, 160)}` : "";
-  return `  ${dataHora(d.em, fuso)} ${d.sinal} a ${fmtPreco(d.preco.toNumber())} → agente: ${d.acaoProposta ?? "não consultado"}; ${d.estado}; ${resultado}${desfecho}.`;
+  const avaliacao = d.avaliacao ? `; ${textoDaAvaliacao(d.avaliacao)}` : "";
+  return `  ${dataHora(d.em, fuso)} ${d.sinal} a ${fmtPreco(d.preco.toNumber())} → agente: ${d.acaoProposta ?? "não consultado"}; ${d.estado}; ${resultado}${avaliacao}.`;
 }
 
 export function linhasDoPrevio(previo: ContextoPrevio, fuso: string): string[] {
@@ -127,5 +146,6 @@ export function linhasDoPrevio(previo: ContextoPrevio, fuso: string): string[] {
       : base.recentes === 0
         ? `Base de conhecimento: nenhuma notícia sobre ${base.consulta} nas últimas ${JANELA_NOTICIAS_H} h; ${neutra}`
         : `Base de conhecimento: ${base.recentes} notícia${base.recentes > 1 ? "s" : ""} sobre ${base.consulta} nas últimas ${JANELA_NOTICIAS_H} h (a mais recente: ${dataHora(base.maisRecente ?? 0, fuso)}); leia com buscar_conhecimento antes de pesar.`;
-  return [...historico, conhecimento];
+  const placar = previo.placar ? [`Placar do Claude neste robô: ${previo.placar}`] : [];
+  return [...historico, ...placar, conhecimento];
 }

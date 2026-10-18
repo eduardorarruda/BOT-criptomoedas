@@ -42,6 +42,10 @@ describe("system prompt", () => {
     expect(SYSTEM_PROMPT).toMatch(/confiança .*reflet/);
   });
 
+  it("usa o placar do robô para calibrar as probabilidades", () => {
+    expect(SYSTEM_PROMPT).toMatch(/placar do robô/);
+  });
+
   it("ausência de notícia é neutra", () => {
     expect(SYSTEM_PROMPT).toMatch(/Ausência de notícia .* é neutra/);
   });
