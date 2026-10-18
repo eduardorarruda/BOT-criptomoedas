@@ -1,4 +1,5 @@
-import type { EstrategiaDTO, LimitesRiscoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
+import type { CoberturaWin, EstrategiaDTO, LimitesRiscoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
+import { MODELOS_WIN } from "@zentrade/dominio";
 import type { Automacao, ContaCorretora, Documento, TokenApi, Usuario } from "../api/esquemas";
 
 /** Dados fixos do modo de demonstração. Tudo é fictício. */
@@ -29,7 +30,7 @@ export const VOLATILIDADE: Record<SimboloDemo, number> = {
   BNBUSDT: 0.0018,
 };
 
-export const ESTRATEGIAS: readonly EstrategiaDTO[] = [
+const ESTRATEGIAS_CRIPTO: readonly EstrategiaDTO[] = [
   {
     id: "e-rsi",
     nome: "Retorno à média com RSI",
@@ -132,6 +133,46 @@ export const ESTRATEGIAS: readonly EstrategiaDTO[] = [
     tamanhoPorVolatilidade: { periodo: 14, multiplo: 2 },
   },
 ];
+
+function modeloWin(id: string) {
+  const modelo = MODELOS_WIN.find((m) => m.id === id);
+  if (!modelo) throw new Error(`modelo do mini índice ${id} não existe`);
+  return modelo.estrategia;
+}
+
+/** A estratégia do mini índice do exemplo: o modelo da faixa de abertura, nos dois sentidos. */
+export const ESTRATEGIA_WIN: EstrategiaDTO = {
+  id: "e-win-faixa",
+  nome: "Faixa de abertura no mini índice",
+  versao: 1,
+  ...modeloWin("win-faixa-abertura-30"),
+};
+
+export const ESTRATEGIAS: readonly EstrategiaDTO[] = [...ESTRATEGIAS_CRIPTO, ESTRATEGIA_WIN];
+
+/**
+ * Candles do mini índice "gravados" no exemplo: 2 anos de WIN importado de um CSV do
+ * MetaTrader 5 (até 3 dias atrás) e 60 dias corridos do Ibovespa (WIN-IBOV), como a
+ * brapi entrega.
+ */
+export function coberturaWinDemo(agora: number): CoberturaWin[] {
+  const ate = Math.floor(agora / DIA) * DIA;
+  const faixa = (simbolo: CoberturaWin["simbolo"], dias: number, atras: number, porDia: number) =>
+    (
+      [
+        ["5m", 1],
+        ["15m", 3],
+        ["1h", 12],
+      ] as const
+    ).map(([intervalo, cincos]) => ({
+      simbolo,
+      intervalo,
+      primeiro: ate - (dias + atras) * DIA + 12 * HORA,
+      ultimo: ate - atras * DIA + 21 * HORA,
+      candles: Math.round((dias * 5 * porDia) / 7 / cincos),
+    }));
+  return [...faixa("WIN", 730, 3, 113), ...faixa("WIN-IBOV", 60, 1, 84)];
+}
 
 export const LIMITES_PADRAO: LimitesRiscoDTO = {
   perdaDiariaMaxima: "25",

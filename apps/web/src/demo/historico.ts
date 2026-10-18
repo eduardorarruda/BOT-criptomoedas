@@ -1,6 +1,7 @@
 import type { DecisaoDTO, OrdemDTO, PropostaAgente } from "@zentrade/contratos/esquemas";
 import { dec, precoAlvo, precoStop } from "@zentrade/dominio";
 import { ConfiguracaoBacktestEsquema, type ConfiguracaoBacktestEntrada } from "@zentrade/contratos/esquemas";
+import { resultadoDemoWin } from "./backtestDemoWin";
 import type { Backtest, PontoCurvaBacktest, PontoPatrimonio } from "../api/esquemas";
 import { metricasDaCurva } from "../lib/metricas";
 import { criarAleatorio, escolher, normal, type Aleatorio } from "./aleatorio";
@@ -443,7 +444,44 @@ function validado(
 }
 
 /**
- * Quatro backtests: um robusto (BTC, 1 ano, limites do robô), um frágil que decorou o
+ * O mini índice no exemplo: a faixa de abertura no Ibovespa (WIN-IBOV, a aproximação)
+ * em 5 minutos por 60 dias, com o modelo do WIN padrão. Os custos comem boa parte do
+ * ganho bruto, como costuma acontecer em day trade.
+ */
+function win(id: string, criadoEm: number): Backtest {
+  const fim = Math.floor(criadoEm / DIA) * DIA;
+  const pedido = {
+    estrategiaId: "e-win-faixa",
+    versao: 1,
+    simbolo: "WIN-IBOV",
+    intervalo: "5m" as const,
+    inicio: fim - 60 * DIA,
+    fim,
+  };
+  const configuracao = ConfiguracaoBacktestEsquema.parse({ mercado: "win", win: {} });
+  const perfil = {
+    semente: 7,
+    vantagemPontos: 30,
+    vantagemDepois: 18,
+    ateFracao: 0.7,
+    volatilidadePontos: 160,
+    derivaDia: 0,
+    operacoesPorDia: 3,
+  };
+  return {
+    id,
+    estado: "concluido",
+    ...pedido,
+    configuracao,
+    ...resultadoDemoWin(pedido, perfil, configuracao),
+    erro: null,
+    criadoEm,
+    concluidoEm: criadoEm,
+  };
+}
+
+/**
+ * Quatro backtests de cripto e um do mini índice: um robusto (BTC, 1 ano, limites do robô), um frágil que decorou o
  * começo do período (SOL, sem limites), uma versão anterior da estratégia do RSI e um
  * antigo, de antes da validação — a tela precisa continuar mostrando os antigos.
  */
@@ -504,5 +542,6 @@ function gerarBacktestsIniciais(fim: number): Backtest[] {
       barras: 1500,
     }),
     antigo("b-0", { ...rsi, versao: 1, simbolo: "ETHUSDT", inicio: fim - 90 * DIA }, fim - 10 * DIA),
+    win("b-win", fim - 3 * HORA),
   ];
 }

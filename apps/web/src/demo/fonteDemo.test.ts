@@ -275,7 +275,8 @@ describe("fonte demo: backtests", () => {
     expect(pronto.curva?.[0]?.buyHold).toBeDefined();
     // Mais duas rodadas da e-rsi concluídas antes desta (a antiga não tem Sharpe, mas conta).
     expect(pronto.tentativas).toMatchObject({ total: 4, daVersao: 2 });
-    expect((await fonte.backtests()).length).toBe(5);
+    // os cinco do exemplo (quatro de cripto e um do mini índice) e este
+    expect((await fonte.backtests()).length).toBe(6);
     await expect(fonte.backtest("x")).rejects.toMatchObject({ codigo: "nao_encontrado" });
   });
 });

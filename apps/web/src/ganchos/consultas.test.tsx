@@ -36,7 +36,7 @@ describe("consultas", () => {
     expect(r.resumo.data?.robosAtivos).toBe(3);
     expect(r.patrimonio.data).toHaveLength(120);
     expect(r.saude.data?.ok).toBe(true);
-    expect(r.estrategias.data).toHaveLength(3);
+    expect(r.estrategias.data).toHaveLength(4);
     expect(r.robos.data).toHaveLength(4);
     expect(r.posicoes.map((p) => p.data?.roboId)).toEqual(["r-sol", "r-btc"]);
     expect(r.decisoes.data?.every((d) => d.estado === "barrada")).toBe(true);
@@ -45,7 +45,7 @@ describe("consultas", () => {
     expect(r.candles.data).toHaveLength(240);
     expect(r.contas.data).toHaveLength(1);
     expect(r.tokens.data).toHaveLength(2);
-    expect(r.backtests.data).toHaveLength(4);
+    expect(r.backtests.data).toHaveLength(5);
     expect(r.documentos.data).toHaveLength(8);
   });
 });

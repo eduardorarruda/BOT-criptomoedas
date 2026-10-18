@@ -293,6 +293,7 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
     }),
 
     backtests: comAtraso(() => comTentativasDemo(estado.backtests)),
+    dadosWin: comAtraso(() => [...estado.dadosWin]),
     criarBacktest: comAtraso((p) => {
       const b: Backtest = {
         id: novoId("b"),

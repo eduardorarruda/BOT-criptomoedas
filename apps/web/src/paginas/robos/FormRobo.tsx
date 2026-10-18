@@ -1,4 +1,5 @@
 import type { EstrategiaDTO, Intervalo, Rede } from "@zentrade/contratos/esquemas";
+import { direcaoDe } from "@zentrade/dominio";
 import { Eye, Plus, TriangleAlert } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Botao } from "../../componentes/Botao";
@@ -28,7 +29,7 @@ function resumoSaidas(e: EstrategiaDTO): string {
 
 /** Criar robô. Ele nasce sempre observando; os limites já vêm prudentes. */
 export function FormRobo({
-  estrategias,
+  estrategias: todas,
   enviando,
   aoCriar,
   aoCancelar,
@@ -38,6 +39,9 @@ export function FormRobo({
   readonly aoCriar: (r: NovoRobo) => void;
   readonly aoCancelar: () => void;
 }) {
+  // O robô opera o à vista de cripto, que só compra: estratégia que vende fica de fora.
+  const estrategias = todas.filter((x) => direcaoDe(x) === "comprado");
+  const deFora = todas.length - estrategias.length;
   const [nome, setNome] = useState("");
   const [simbolo, setSimbolo] = useState(PARES[0] ?? "BTCUSDT");
   const [intervalo, setIntervalo] = useState<Intervalo>("1h");
@@ -68,7 +72,7 @@ export function FormRobo({
   if (estrategias.length === 0) {
     return (
       <p className="apagado">
-        Antes, crie uma estratégia na tela Estratégias: o robô precisa de regras para seguir.
+        Antes, crie uma estratégia que só compra na tela Estratégias: o robô precisa de regras para seguir.
       </p>
     );
   }
@@ -79,6 +83,14 @@ export function FormRobo({
         <Eye size={16} aria-hidden="true" /> O robô nasce no modo <strong>Observar</strong>: só registra o que
         faria. Você muda o modo depois.
       </p>
+      {deFora > 0 ? (
+        <p className="apagado">
+          {deFora === 1
+            ? "Uma estratégia que vende não aparece"
+            : `${deFora} estratégias que vendem não aparecem`}{" "}
+          aqui: o robô opera o à vista de cripto, que só compra. Elas rodam no backtest do mini índice.
+        </p>
+      ) : null}
       <div className="grade-campos">
         <CampoTexto
           rotulo="Nome"

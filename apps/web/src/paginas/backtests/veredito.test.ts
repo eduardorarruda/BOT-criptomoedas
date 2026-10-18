@@ -71,3 +71,40 @@ describe("veredito do backtest", () => {
     ).toBe("2 verificações: 1 verde, 0 amarelas, 1 vermelha.");
   });
 });
+
+describe("veredito do mini índice (WIN)", () => {
+  const win = comTentativasDemo(backtestsIniciais(AGORA)).find((b) => b.simbolo === "WIN-IBOV")!;
+  const comWin = (mudanca: Partial<NonNullable<NonNullable<Backtest["metricas"]>["win"]>>): Backtest => ({
+    ...win,
+    metricas: { ...win.metricas!, win: { ...win.metricas!.win!, ...mudanca } },
+  });
+
+  it("checagens do WIN: IR, custos sobre o bruto, sessão e a aproximação", () => {
+    const ids = veredito(win).map((c) => c.id);
+    expect(ids.slice(0, 5)).toEqual(["lucro", "ir", "custos", "buy_hold", "dados"]);
+    expect(tons(win)).toMatchObject({ dados: "amarelo" });
+    const sessao = veredito(win).find((c) => c.id === "buy_hold");
+    expect(sessao?.titulo).toMatch(/sempre comprado na sessão/);
+    expect(veredito(win).find((c) => c.id === "lucro")?.detalhe).toMatch(/ficar de fora daria R\$ 0,00/);
+  });
+
+  it("custos consomem X% do ganho bruto: verde, amarelo, vermelho e sem bruto", () => {
+    const custos = (f: number | null) =>
+      veredito(comWin({ custosSobreBruto: f })).find((c) => c.id === "custos");
+    expect(custos(0.2)).toMatchObject({ tom: "verde", titulo: "Custos consomem 20% do ganho bruto" });
+    expect(custos(0.45)?.tom).toBe("amarelo");
+    expect(custos(0.8)?.tom).toBe("vermelho");
+    expect(custos(null)).toMatchObject({
+      tom: "vermelho",
+      titulo: "Sem ganho bruto: os custos só aumentaram a perda",
+    });
+  });
+
+  it("depois do IR, dados reais e sinais sem espaço no risco", () => {
+    expect(tons(comWin({ liquidoDepoisDoIr: "-1" })).ir).toBe("vermelho");
+    expect(tons(comWin({ liquidoDepoisDoIr: "10" })).ir).toBe("verde");
+    expect(tons(comWin({ aproximacao: false })).dados).toBe("verde");
+    expect(tons(comWin({ semEspacoNoRisco: 3 })).sem_espaco).toBe("amarelo");
+    expect(tons(comWin({ semEspacoNoRisco: 0 })).sem_espaco).toBeUndefined();
+  });
+});

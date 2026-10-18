@@ -8,12 +8,16 @@ import { dec, type Valor } from "@zentrade/dominio";
 export const TRACO = "—";
 const MENOS = "−"; // U+2212, o sinal de menos tipográfico
 const MOEDA = "US$";
+/** O mini índice (WIN) é cotado em reais. */
+export type Moeda = "US$" | "R$";
 
 export type Sinal = "ganho" | "perda" | "neutro";
 
 export interface OpcoesDinheiro {
   readonly casas?: number;
   readonly sinal?: boolean;
+  /** Padrão: US$ (o cripto). */
+  readonly moeda?: Moeda;
 }
 
 function lerDecimal(texto: string | number): Valor | null {
@@ -50,7 +54,7 @@ export function formatarDinheiro(texto: string, opcoes: OpcoesDinheiro = {}): st
   if (!v) return TRACO;
   const casas = opcoes.casas ?? 2;
   const arredondado = comCasas(v, casas);
-  return `${prefixoSinal(arredondado, opcoes.sinal ?? false)}${MOEDA} ${absolutoPtBr(arredondado, casas)}`;
+  return `${prefixoSinal(arredondado, opcoes.sinal ?? false)}${opcoes.moeda ?? MOEDA} ${absolutoPtBr(arredondado, casas)}`;
 }
 
 /** Custo de IA costuma ser frações de centavo: 4 casas. */

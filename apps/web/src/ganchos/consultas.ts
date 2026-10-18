@@ -95,6 +95,11 @@ export function useBacktests() {
   });
 }
 
+export function useDadosWin() {
+  const fonte = useFonte();
+  return useQuery({ queryKey: chaves.dadosWin, queryFn: () => fonte.dadosWin() });
+}
+
 export function useDocumentos() {
   const fonte = useFonte();
   return useQuery({ queryKey: chaves.documentos, queryFn: () => fonte.documentos() });

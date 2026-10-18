@@ -1,5 +1,5 @@
 import type { Backtest } from "../../api/esquemas";
-import { formatarPercentual } from "../../lib/formatar";
+import { formatarDinheiro, formatarPercentual } from "../../lib/formatar";
 import { anos } from "./formato";
 
 /**
@@ -38,7 +38,9 @@ function lucro(b: Backtest): Checagem | null {
   const m = b.metricas;
   if (!m) return null;
   const r = m.resultadoPercentual;
-  const quanto = r === undefined ? "" : ` (${pct(r)})`;
+  const quanto =
+    (r === undefined ? "" : ` (${pct(r)})`) +
+    (m.win ? "; ficar de fora daria R$ 0,00, sem custo nenhum" : "");
   return Number(m.resultadoLiquido) > 0
     ? checagem(
         "lucro",
@@ -57,6 +59,8 @@ function lucro(b: Backtest): Checagem | null {
 function buyHold(b: Backtest): Checagem | null {
   const m = b.metricas;
   if (m?.excessoSobreBuyHold === undefined || m.buyHoldResultadoPercentual === undefined) return null;
+  if (m.win)
+    return sessaoWin(m.resultadoPercentual ?? 0, m.buyHoldResultadoPercentual, m.excessoSobreBuyHold);
   const detalhe = `A estratégia fez ${pct(m.resultadoPercentual ?? 0)}; comprar e segurar fez ${pct(m.buyHoldResultadoPercentual)}, com os mesmos custos.`;
   if (m.excessoSobreBuyHold > 0)
     return checagem("buy_hold", "verde", "Bate o buy and hold depois dos custos", detalhe);
@@ -179,14 +183,85 @@ function limites(b: Backtest): Checagem {
     "limites",
     "verde",
     "Com os limites de risco do robô",
-    "Perda diária, exposição, frequência e pausa após perda valeram.",
+    b.metricas?.win
+      ? "Perda diária, frequência e pausa após perda valeram; no mini índice, a margem faz o papel da exposição."
+      : "Perda diária, exposição, frequência e pausa após perda valeram.",
+  );
+}
+
+/* ---------- mini índice (WIN) ---------- */
+
+const CUSTOS_LEVES = 0.3;
+const CUSTOS_PESADOS = 0.6;
+
+function sessaoWin(estrategia: number, sessao: number, excesso: number): Checagem {
+  const detalhe = `A estratégia fez ${pct(estrategia)}; ficar comprado com 1 contrato em toda sessão fez ${pct(sessao)}, com os mesmos custos. Ficar de fora fez 0%.`;
+  if (excesso > 0)
+    return checagem("buy_hold", "verde", "Bate o sempre comprado na sessão depois dos custos", detalhe);
+  if (excesso > -EMPATE_BUY_HOLD)
+    return checagem("buy_hold", "amarelo", "Praticamente empata com o sempre comprado na sessão", detalhe);
+  return checagem("buy_hold", "vermelho", "Perde para o sempre comprado na sessão", detalhe);
+}
+
+/** Quanto do ganho bruto a tarifa, a corretagem e o deslizamento levaram. */
+function custosWin(b: Backtest): Checagem | null {
+  const w = b.metricas?.win;
+  if (!w) return null;
+  const quanto = `Tarifas e corretagem de ${formatarDinheiro(String(Number(w.custosB3) + Number(w.corretagem)), { moeda: "R$" })} e ${formatarDinheiro(w.deslizamentoPago, { moeda: "R$" })} de deslizamento.`;
+  if (w.custosSobreBruto === null)
+    return checagem("custos", "vermelho", "Sem ganho bruto: os custos só aumentaram a perda", quanto);
+  const titulo = `Custos consomem ${formatarPercentual(w.custosSobreBruto, { casas: 0 })} do ganho bruto`;
+  if (w.custosSobreBruto < CUSTOS_LEVES) return checagem("custos", "verde", titulo, quanto);
+  if (w.custosSobreBruto < CUSTOS_PESADOS) return checagem("custos", "amarelo", titulo, quanto);
+  return checagem("custos", "vermelho", titulo, quanto);
+}
+
+function irWin(b: Backtest): Checagem | null {
+  const w = b.metricas?.win;
+  if (!w) return null;
+  const detalhe = `IR estimado de ${formatarDinheiro(w.irEstimado, { moeda: "R$" })} (20% do lucro de cada mês, prejuízo compensado). Estimativa, não é parecer tributário.`;
+  return Number(w.liquidoDepoisDoIr) > 0
+    ? checagem("ir", "verde", "Continua no lucro depois do IR estimado", detalhe)
+    : checagem("ir", "vermelho", "Não sobra lucro depois do IR estimado", detalhe);
+}
+
+function dadosWin(b: Backtest): Checagem | null {
+  const w = b.metricas?.win;
+  if (!w) return null;
+  if (w.aproximacao)
+    return checagem(
+      "dados",
+      "amarelo",
+      "Rodou na aproximação pelo Ibovespa, não no WIN",
+      "O índice à vista não tem a base do futuro nem o horário completo do WIN; valide com dados reais do WIN.",
+    );
+  return checagem(
+    "dados",
+    "verde",
+    "Rodou com candles do WIN de verdade",
+    "Dados importados do próprio contrato.",
+  );
+}
+
+function semEspacoWin(b: Backtest): Checagem | null {
+  const w = b.metricas?.win;
+  if (!w || w.semEspacoNoRisco === 0) return null;
+  return checagem(
+    "sem_espaco",
+    "amarelo",
+    `${w.semEspacoNoRisco} sinal(is) não couberam no risco`,
+    "Nem 1 contrato cabia no risco por operação ou na margem: a estratégia operou menos que os sinais pediam.",
   );
 }
 
 export function veredito(b: Backtest): Checagem[] {
   return [
     lucro(b),
+    irWin(b),
+    custosWin(b),
     buyHold(b),
+    dadosWin(b),
+    semEspacoWin(b),
     operacoes(b),
     foraDaAmostra(b),
     walkForward(b),

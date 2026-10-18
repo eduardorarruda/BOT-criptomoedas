@@ -1,5 +1,6 @@
 import type {
   ConfigPublica,
+  CoberturaWin,
   ConfiguracaoBacktestEntrada,
   DecisaoDTO,
   EstadoDecisao,
@@ -142,6 +143,8 @@ export interface Fonte {
   backtests(): Promise<Backtest[]>;
   criarBacktest(p: PedidoBacktest): Promise<Backtest>;
   backtest(id: string): Promise<Backtest>;
+  /** Que candles do mini índice (WIN, WIN-IBOV) estão gravados, por intervalo. */
+  dadosWin(): Promise<CoberturaWin[]>;
 
   documentos(): Promise<Documento[]>;
   criarNota(n: NovaNota): Promise<DocumentoIngerido>;
