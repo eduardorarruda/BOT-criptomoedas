@@ -18,6 +18,8 @@ O estudo completo que deu origem a elas está em [`docs/mini-indice-e-jev.md`](.
 | [10-plataformas-para-automatizar-win.md](10-plataformas-para-automatizar-win.md)       | Profit, ProfitDLL, MetaTrader 5 e APIs de terceiros                        |
 | [11-regulacao-de-robos-no-brasil.md](11-regulacao-de-robos-no-brasil.md)               | Uso próprio, oferta a terceiros, exigências de corretoras                  |
 | [12-glossario-de-trading.md](12-glossario-de-trading.md)                               | Termos usados no ZenTrade e no day trade de mini índice                    |
+| [13-taxas-binance-a-vista.md](13-taxas-binance-a-vista.md)                             | Taxas maker/taker da Binance, desconto com BNB, níveis VIP, ida e volta    |
+| [14-custo-por-operacao-no-zentrade.md](14-custo-por-operacao-no-zentrade.md)           | Como o ZenTrade conta o custo; stop em custos; por que o alvo fica longe   |
 
 ## Como importar
 

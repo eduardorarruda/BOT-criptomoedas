@@ -85,6 +85,17 @@ Os itens abaixo aparecem de forma consistente em B3 [1], Nelogica [4], CM Capita
 
 **Como isso aparece no ZenTrade:** a IA propõe, explica e pode vetar ou reduzir. Execução e limites são determinísticos e ficam fora do alcance do modelo. Há aprovação humana e botão de parada.
 
+## Decisões calibradas com modelos de linguagem
+
+- **Probabilidade se mede, não se declara.** Uma previsão em probabilidade só vale se for calibrada: o que é dito com 70% deve acontecer perto de 70% das vezes. O escore de Brier (erro quadrático médio entre a probabilidade dita e o que aconteceu) é a régua clássica para isso [49].
+- **Modelos de linguagem exageram a confiança.** Quando se pede ao modelo que diga a própria confiança em palavras, ele tende a superestimá-la, imitando o jeito humano de falar com segurança; a calibração melhora com modelos maiores, mas nenhuma técnica resolve sozinha [51].
+- **Pre-mortem.** Imaginar que a decisão já deu errado e listar por quê faz aparecer riscos que ninguém diria no planejamento [50]. Pedir ao modelo o melhor argumento contra a própria proposta é a versão automática dessa ideia.
+- **Várias linhas de raciocínio ajudam, mas custam.** Amostrar vários raciocínios e ficar com a resposta mais frequente (self-consistency) [52] ou explorar uma árvore de alternativas (Tree of Thoughts) [53] melhora o resultado, ao preço de várias chamadas ao modelo. Uma resposta só que já descreve três cenários (alta, lateral, baixa) captura parte desse ganho pelo custo de uma chamada.
+- **A IA como segundo filtro.** Na meta-rotulagem de López de Prado, uma regra primária escolhe o lado e um segundo modelo decide só se vale agir e com que tamanho. Na tripla barreira, cada operação é rotulada pela primeira barreira que o preço tocar: alvo, stop ou tempo [54].
+- **Texto recuperado é dado, não instrução.** Notícias e documentos buscados pelo sistema podem trazer comandos escondidos para o modelo (injeção indireta de prompt) [55].
+
+**Como isso aparece no ZenTrade:** o analista devolve três cenários com probabilidade, horizonte em candles, gatilho, invalidação e resultado estimado líquido de custos. O código, não o modelo, calcula o valor esperado e só deixa propor operação se ele for positivo e se o cenário favorável passar do limiar. O modelo escreve o argumento contra a própria proposta e a confiança precisa refletir esse argumento. A IA filtra o sinal da regra; a saída real continua sendo stop, regra de saída ou tempo. Trechos da base de conhecimento e notícias entram como dados de terceiros.
+
 ## O que se sabe sobre resultados
 
 - Chague, De-Losso e Giovannetti (FGV/USP, dados da CVM) [11]:
@@ -167,3 +178,10 @@ O estado de cada item está em [`README.md`](../README.md) e nos documentos [`es
 46. Protos — [LLM crypto trading contest finds LLMs can't trade crypto](https://protos.com/llm-crypto-trading-contest-finds-llms-cant-trade-crypto/)
 47. Correio Braziliense — [CVM multa pirâmide Atlas Quantum](https://www.correiobraziliense.com.br/economia/2024/05/6862309-cvm-aplica-multa-milionaria-em-caso-de-piramide-financeira-de-criptomoedas.html)
 48. APIMEC — [Recomendação CCA nº 06/2023: lâminas de estratégias automatizadas](https://www.apimecbrasil.com.br/noticias_comite/recomendacao-cca-no-06-2023-melhores-praticas-para-a-elaboracao-das-laminas-relativas-as-estrategias-automatizadas/)
+49. Brier — [Verification of Forecasts Expressed in Terms of Probability (Monthly Weather Review, 1950)](https://journals.ametsoc.org/view/journals/mwre/78/1/1520-0493_1950_078_0001_vofeit_2_0_co_2.xml)
+50. Klein — [Performing a Project Premortem (Harvard Business Review, 2007)](https://hbr.org/2007/09/performing-a-project-premortem)
+51. Xiong et al. — [Can LLMs Express Their Uncertainty? An Empirical Evaluation of Confidence Elicitation in LLMs (ICLR 2024)](https://arxiv.org/abs/2306.13063)
+52. Wang et al. — [Self-Consistency Improves Chain of Thought Reasoning in Language Models (ICLR 2023)](https://arxiv.org/abs/2203.11171)
+53. Yao et al. — [Tree of Thoughts: Deliberate Problem Solving with Large Language Models (NeurIPS 2023)](https://arxiv.org/abs/2305.10601)
+54. López de Prado — [Advances in Financial Machine Learning (Wiley, 2018), cap. 3: tripla barreira e meta-rotulagem](https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086)
+55. Greshake et al. — [Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection (2023)](https://arxiv.org/abs/2302.12173)
