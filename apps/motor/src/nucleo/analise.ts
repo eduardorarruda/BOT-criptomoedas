@@ -25,7 +25,8 @@ async function orcamento(
   p: PedidoDoCiclo,
 ): Promise<OrcamentoAnalise | undefined> {
   try {
-    const resultadoDoDia = await deps.ordens.resultadoDesde(robo.id, inicioDoDia(deps.relogio.agora()));
+    const desde = inicioDoDia(deps.relogio.agora(), deps.opcoes.fuso);
+    const resultadoDoDia = await deps.ordens.resultadoDesde(robo.id, desde);
     return {
       riscoPorOperacao: robo.riscoPorOperacao,
       exposicaoMaxima: robo.limites.exposicaoMaxima,

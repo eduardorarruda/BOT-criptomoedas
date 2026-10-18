@@ -1,5 +1,5 @@
 import { ConfigBancoEsquema } from "@zentrade/banco";
-import { TextoDecimal } from "@zentrade/contratos";
+import { FusoInstanciaEsquema, TextoDecimal } from "@zentrade/contratos";
 import { z } from "zod";
 
 const Booleano = z.enum(["true", "false", "1", "0"]).transform((v) => v === "true" || v === "1");
@@ -56,6 +56,8 @@ export const EsquemaConfig = z
      */
     MOTOR_BACKTEST_RISCO: z.coerce.number().gt(0).max(0.1).default(0.01),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+    /** O fuso da instância: onde começa o dia da perda diária (padrão: America/Sao_Paulo). */
+    ZENTRADE_FUSO: FusoInstanciaEsquema,
   })
   .superRefine((c, ctx) => {
     if (c.MOTOR_REDE === "testnet") conferirChavesDaTestnet(c, ctx);

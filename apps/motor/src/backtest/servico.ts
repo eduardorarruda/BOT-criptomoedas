@@ -31,6 +31,8 @@ export interface OpcoesBacktest {
   readonly saldoInicial: Valor;
   /** Fração do saldo arriscada por operação no modo "sem limites" (0,01 = 1%). */
   readonly riscoPorOperacao: number;
+  /** O fuso da instância: onde começa o dia da perda diária no backtest (como ao vivo). */
+  readonly fuso?: string;
 }
 
 const AQUECIMENTO = 200;
@@ -80,6 +82,7 @@ async function rodar(d: DependenciasBacktest, o: OpcoesBacktest, p: BacktestPara
     aquecimento: AQUECIMENTO,
     custos: config.custos,
     ...(minutos ? { minutos } : {}),
+    ...(o.fuso ? { fuso: o.fuso } : {}),
   });
   const porAno = barrasPorAno(p.intervalo);
   const contexto = { saldoInicial: saldo, riscoPorOperacao, porAno, inicio: p.inicio, fim: p.fim };

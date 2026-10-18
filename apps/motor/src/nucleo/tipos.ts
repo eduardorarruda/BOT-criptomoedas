@@ -13,7 +13,7 @@ import type {
   Relogio,
   ResultadoOrdem,
 } from "@zentrade/contratos";
-import type { Posicao, Sinal, Valor } from "@zentrade/dominio";
+import { FUSO_PADRAO, type Posicao, type Sinal, type Valor } from "@zentrade/dominio";
 import type { DecisaoRegistrada } from "./diario.js";
 import type { Plano } from "./plano.js";
 
@@ -38,6 +38,8 @@ export interface OpcoesNucleo {
    * cancela e vende a mercado no fechamento do minuto.
    */
   readonly stopLimiteBps: number;
+  /** O fuso da instância (ZENTRADE_FUSO): onde começa o dia da perda diária. */
+  readonly fuso: string;
 }
 
 export const OPCOES_PADRAO: OpcoesNucleo = {
@@ -46,6 +48,7 @@ export const OPCOES_PADRAO: OpcoesNucleo = {
   consultaAprovacaoMs: 2_000,
   tamanhoHistorico: 500,
   stopLimiteBps: 100,
+  fuso: FUSO_PADRAO,
 };
 
 /** O que o ciclo recebe do robô: o sinal da regra e o contexto em que ele saiu. */
