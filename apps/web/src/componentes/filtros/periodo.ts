@@ -1,6 +1,10 @@
+import { horaNoFuso, inicioDoDiaDaData, inicioDoProximoDiaNoFuso } from "@zentrade/dominio";
+import { fusoDaInstancia } from "../../lib/fuso";
+
 /**
  * Período dos filtros: atalhos (7, 30, 90 dias, no ano, 12 meses, tudo) e um
- * intervalo escolhido à mão. Datas de calendário no horário local da pessoa.
+ * intervalo escolhido à mão. Datas de calendário no fuso da instância (o mesmo "dia"
+ * do motor e da API), não no do navegador.
  */
 export const PERIODOS = ["7d", "30d", "90d", "ano", "12m", "tudo", "personalizado"] as const;
 export type Periodo = (typeof PERIODOS)[number];
@@ -29,16 +33,11 @@ export const ROTULO_PERIODO: Readonly<Record<Periodo, string>> = {
 const DIA = 86_400_000;
 const DIAS: Partial<Record<Periodo, number>> = { "7d": 7, "30d": 30, "90d": 90 };
 
-/** "2026-10-01" → meia-noite local daquele dia. */
-function inicioDoDia(dia: string): number {
-  const [a, m, d] = dia.split("-").map(Number);
-  return new Date(a ?? 1970, (m ?? 1) - 1, d ?? 1).getTime();
-}
+/** "2026-10-01" → meia-noite daquele dia no fuso da instância. */
+const inicioDoDia = (dia: string): number => inicioDoDiaDaData(dia, fusoDaInstancia());
 
-const fimDoDia = (dia: string): number => {
-  const [a, m, d] = dia.split("-").map(Number);
-  return new Date(a ?? 1970, (m ?? 1) - 1, (d ?? 1) + 1).getTime() - 1;
-};
+/** O último milissegundo do dia (o dia pode ter 23 ou 25 horas no horário de verão). */
+const fimDoDia = (dia: string): number => inicioDoProximoDiaNoFuso(inicioDoDia(dia), fusoDaInstancia()) - 1;
 
 function personalizado(de: string | undefined, ate: string | undefined): Intervalo | null {
   if (!de && !ate) return null;
@@ -56,10 +55,12 @@ export function intervaloDoPeriodo(e: EscolhaPeriodo, agora: number = Date.now()
   if (p === "personalizado") return personalizado(e.de, e.ate);
   const dias = DIAS[p];
   if (dias) return { inicio: agora - dias * DIA, fim: agora };
-  const hoje = new Date(agora);
-  if (p === "ano") return { inicio: new Date(hoje.getFullYear(), 0, 1).getTime(), fim: agora };
+  if (p === "ano") {
+    const ano = horaNoFuso(agora, fusoDaInstancia()).ano;
+    return { inicio: inicioDoDia(`${String(ano).padStart(4, "0")}-01-01`), fim: agora };
+  }
   const umAnoAtras = new Date(agora);
-  umAnoAtras.setFullYear(hoje.getFullYear() - 1);
+  umAnoAtras.setUTCFullYear(umAnoAtras.getUTCFullYear() - 1);
   return { inicio: umAnoAtras.getTime(), fim: agora };
 }
 

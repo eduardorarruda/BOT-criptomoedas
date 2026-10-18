@@ -21,6 +21,7 @@ import { createRoot } from "react-dom/client";
 import type { Fonte } from "./api/fonte";
 import { criarFonteApi } from "./api/fonteApi";
 import { App } from "./App";
+import { carregarFusoDaInstancia } from "./lib/fuso";
 
 /**
  * VITE_DEMO=1 liga o modo de demonstração: dados fictícios e mercado simulado no
@@ -51,7 +52,17 @@ async function escolherFonte(): Promise<Fonte> {
 const elemento = document.getElementById("raiz");
 if (!elemento) throw new Error("elemento #raiz não encontrado no index.html");
 
-void escolherFonte().then((fonte) => {
+/**
+ * O fuso da instância (ZENTRADE_FUSO) vem da config pública antes de desenhar: o "hoje"
+ * da tela é o mesmo do motor. Sem resposta da API, vale o horário de Brasília.
+ */
+async function iniciar(): Promise<Fonte> {
+  const fonte = await escolherFonte();
+  await carregarFusoDaInstancia(() => fonte.configPublica());
+  return fonte;
+}
+
+void iniciar().then((fonte) => {
   createRoot(elemento).render(
     <StrictMode>
       <App fonte={fonte} />

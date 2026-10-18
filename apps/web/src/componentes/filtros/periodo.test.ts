@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import { dentroDoPeriodo, descreverPeriodo, intervaloDoPeriodo } from "./periodo";
 
 const DIA = 86_400_000;
-// 11/10/2026 15:00 no horário local do teste.
-const AGORA = new Date(2026, 9, 11, 15, 0, 0).getTime();
+// 11/10/2026 15:00 em Brasília (o fuso da instância, não o do navegador).
+const AGORA = Date.parse("2026-10-11T15:00:00-03:00");
+const BRT = (iso: string) => Date.parse(`${iso}-03:00`);
 
 describe("período", () => {
   it("sem período (ou 'tudo') não corta nada", () => {
@@ -17,26 +18,26 @@ describe("período", () => {
   });
 
   it("no ano começa em 1º de janeiro; 12 meses volta um ano", () => {
-    expect(intervaloDoPeriodo({ periodo: "ano" }, AGORA)?.inicio).toBe(new Date(2026, 0, 1).getTime());
-    expect(intervaloDoPeriodo({ periodo: "12m" }, AGORA)?.inicio).toBe(new Date(2025, 9, 11, 15).getTime());
+    expect(intervaloDoPeriodo({ periodo: "ano" }, AGORA)?.inicio).toBe(BRT("2026-01-01T00:00:00"));
+    expect(intervaloDoPeriodo({ periodo: "12m" }, AGORA)?.inicio).toBe(BRT("2025-10-11T15:00:00"));
   });
 
   it("personalizado vai do começo do dia inicial ao fim do dia final", () => {
     const i = intervaloDoPeriodo({ periodo: "personalizado", de: "2026-10-01", ate: "2026-10-05" }, AGORA);
-    expect(i?.inicio).toBe(new Date(2026, 9, 1).getTime());
-    expect(i?.fim).toBe(new Date(2026, 9, 6).getTime() - 1);
+    expect(i?.inicio).toBe(BRT("2026-10-01T00:00:00"));
+    expect(i?.fim).toBe(BRT("2026-10-06T00:00:00") - 1);
   });
 
   it("personalizado com só uma ponta deixa a outra aberta; datas trocadas são desvirada", () => {
     expect(intervaloDoPeriodo({ periodo: "personalizado", de: "2026-10-01" }, AGORA)).toEqual({
-      inicio: new Date(2026, 9, 1).getTime(),
+      inicio: BRT("2026-10-01T00:00:00"),
       fim: Number.POSITIVE_INFINITY,
     });
     const trocado = intervaloDoPeriodo(
       { periodo: "personalizado", de: "2026-10-05", ate: "2026-10-01" },
       AGORA,
     );
-    expect(trocado?.inicio).toBe(new Date(2026, 9, 1).getTime());
+    expect(trocado?.inicio).toBe(BRT("2026-10-01T00:00:00"));
     expect(intervaloDoPeriodo({ periodo: "personalizado" }, AGORA)).toBeNull();
   });
 

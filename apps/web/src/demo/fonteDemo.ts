@@ -1,5 +1,5 @@
 import { ConfiguracaoBacktestEsquema, type DecisaoDTO, type RoboDTO } from "@zentrade/contratos/esquemas";
-import { validarEstrategia } from "@zentrade/dominio";
+import { FUSO_PADRAO, validarEstrategia } from "@zentrade/dominio";
 import { ErroApi } from "../api/erros";
 import type { Backtest } from "../api/esquemas";
 import type { Fonte, OuvintesTempoReal } from "../api/fonte";
@@ -196,7 +196,12 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
     patrimonio: comAtraso(() => [...estado.patrimonio]),
     saude: comAtraso(() => ({ ok: true, servicos: { banco: true, redis: true, motor: true, agente: true } })),
     // No exemplo não há quem opere: nada sai do navegador, então não há controlador a mostrar.
-    configPublica: comAtraso(() => ({ controlador: null, encarregado: null, versao: __ZENTRADE_VERSAO__ })),
+    configPublica: comAtraso(() => ({
+      controlador: null,
+      encarregado: null,
+      versao: __ZENTRADE_VERSAO__,
+      fuso: FUSO_PADRAO,
+    })),
 
     estrategias: comAtraso(() => [...estado.estrategias]),
     criarEstrategia: comAtraso((nova) => {
