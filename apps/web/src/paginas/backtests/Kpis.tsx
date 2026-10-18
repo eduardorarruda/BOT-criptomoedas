@@ -4,6 +4,7 @@ import { CartaoKpi, GradeKpi, type TomKpi } from "../../componentes/Kpi";
 import { formatarDinheiro } from "../../lib/formatar";
 import { capitalInicial, fracaoSobre } from "../../lib/metricas";
 import { duracao, pct, pctSinal, razao } from "./formato";
+import { KpisWin } from "./ResultadoWin";
 
 type Metricas = NonNullable<Backtest["metricas"]>;
 
@@ -102,6 +103,7 @@ function Avancados({ m }: { readonly m: Metricas }) {
 export function KpisBacktest({ b }: { readonly b: Backtest }) {
   const m = b.metricas;
   if (!m) return null;
+  if (m.win) return <KpisWin m={m} w={m.win} />;
   return (
     <GradeKpi rotulo="Indicadores do backtest" className="bt-kpis">
       <Basicos m={m} capital={capitalInicial(m, b.curva)} />

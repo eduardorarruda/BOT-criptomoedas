@@ -1,4 +1,4 @@
-import type { Candle, ContextoMercado } from "@zentrade/dominio";
+import { duracaoDoCandle, type Candle, type ContextoMercado } from "@zentrade/dominio";
 
 /** O candle já em número, convertido uma vez só ao entrar (as regras pedem o contexto a cada decisão). */
 interface VelaNumerica {
@@ -77,15 +77,19 @@ export class BufferCandles {
     return this.emOrdem().map((v) => v.fecha);
   }
 
-  /** Contexto completo (abertura, máxima, mínima, fechamento e volume) para as regras. */
+  /** Contexto completo (abertura, máxima, mínima, fechamento, volume e instantes) para as regras. */
   contexto(): ContextoMercado {
     const v = this.emOrdem();
+    const velas = this.lista();
+    const primeiro = velas[0];
     return {
       fechamentos: v.map((x) => x.fecha),
       aberturas: v.map((x) => x.abre),
       maximas: v.map((x) => x.maxima),
       minimas: v.map((x) => x.minima),
       volumes: v.map((x) => x.volume),
+      instantes: velas.map((c) => c.abertura),
+      ...(primeiro ? { intervaloMs: duracaoDoCandle(primeiro) } : {}),
     };
   }
 }

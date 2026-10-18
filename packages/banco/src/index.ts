@@ -68,7 +68,12 @@ export type { DadosEstrategia, DetalheEstrategia } from "./repositorios/estrateg
 export { validarDadosEstrategia } from "./repositorios/estrategias.js";
 export { LIMITE_MAXIMO_LISTA } from "./repositorios/lista.js";
 export type { RegistroImobiliario, ValidarRegistro } from "./repositorios/imobiliario.js";
-export type { CandleDTO, ConsultaCandles, UltimoFechamento } from "./repositorios/mercado.js";
+export type {
+  CandleDTO,
+  CoberturaCandles,
+  ConsultaCandles,
+  UltimoFechamento,
+} from "./repositorios/mercado.js";
 export type {
   ContagemSincronizacao,
   DadosItem,

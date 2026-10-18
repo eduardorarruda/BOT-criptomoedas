@@ -1,5 +1,6 @@
 import {
   ConfiguracaoBacktestEsquema,
+  mercadoDo,
   MS_POR_INTERVALO,
   type ConfiguracaoBacktest,
   type MetricasBacktest,
@@ -8,6 +9,7 @@ import { avaliarTentativas, momentos } from "@zentrade/financas";
 import type { Backtest, PontoCurvaBacktest } from "../api/esquemas";
 import { criarAleatorio, normal } from "./aleatorio";
 import { maiorQuedaDe, retornosDe, sharpeDe, validacaoDemo, type SerieDemo } from "./backtestDemoValidacao";
+import { perfilWinDoPedido, resultadoDemoWin } from "./backtestDemoWin";
 
 /**
  * Backtests do modo de demonstração: um mercado sintético, uma estratégia que entra e
@@ -209,16 +211,15 @@ function perfilDoPedido(b: Backtest): PerfilDemo {
   };
 }
 
-/** Resultado simulado de um backtest pedido na tela do exemplo. */
+/** Resultado simulado de um backtest pedido na tela do exemplo (cripto ou mini índice). */
 export function simularBacktest(pedido: Backtest, agora: number): Backtest {
   const configuracao = pedido.configuracao ?? ConfiguracaoBacktestEsquema.parse({});
-  return {
-    ...pedido,
-    estado: "concluido",
-    configuracao,
-    ...resultadoDemo(pedido, perfilDoPedido(pedido), configuracao),
-    concluidoEm: agora,
-  };
+  const perfil = perfilDoPedido(pedido);
+  const resultado =
+    mercadoDo(configuracao) === "win"
+      ? resultadoDemoWin(pedido, perfilWinDoPedido(perfil.semente), configuracao)
+      : resultadoDemo(pedido, perfil, configuracao);
+  return { ...pedido, estado: "concluido", configuracao, ...resultado, concluidoEm: agora };
 }
 
 /** As tentativas de cada backtest, como a API calcula (todas as versões da estratégia, até ele). */

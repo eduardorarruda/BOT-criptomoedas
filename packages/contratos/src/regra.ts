@@ -48,6 +48,13 @@ const IndicadorEsquema = z.union([
     periodo: Inteiro,
     saida: z.enum(["adx", "maisDI", "menosDI"]),
   }),
+  z.object({ tipo: z.literal("indicador"), nome: z.literal("vwap") }),
+  z.object({
+    tipo: z.literal("indicador"),
+    nome: z.literal("faixaAbertura"),
+    periodo: Inteiro,
+    saida: z.enum(["superior", "inferior", "meio"]),
+  }),
 ]);
 
 export const OperandoEsquema: z.ZodType<Operando> = z.lazy(() =>

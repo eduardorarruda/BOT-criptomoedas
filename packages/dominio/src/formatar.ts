@@ -9,3 +9,6 @@ export const formatarNumero = (n: number | Valor): string =>
 
 /** Valores em dólar das mensagens de risco. */
 export const formatarDolar = (v: Valor): string => `US$ ${moeda.format(v.toNumber())}`;
+
+/** Valores em reais (mini índice). */
+export const formatarReais = (v: Valor): string => `R$ ${moeda.format(v.toNumber())}`;

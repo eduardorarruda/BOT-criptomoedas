@@ -1,4 +1,5 @@
 import {
+  CoberturaWinEsquema,
   DecisaoEsquema,
   EstrategiaEsquema,
   OrdemEsquema,
@@ -111,6 +112,7 @@ export function criarFonteApi(cliente: ClienteApi = criarCliente()): Fonte {
     backtests: () => pedir("GET", "/backtests", lista(BacktestEsquema)),
     criarBacktest: (p) => pedir("POST", "/backtests", BacktestEsquema, p),
     backtest: (id) => pedir("GET", `/backtests/${encodeURIComponent(id)}`, BacktestEsquema),
+    dadosWin: () => pedir("GET", "/backtests/dados-win", lista(CoberturaWinEsquema)),
 
     documentos: () => pedir("GET", "/conhecimento/documentos", lista(DocumentoEsquema)),
     criarNota: (n) => pedir("POST", "/conhecimento/notas", DocumentoIngeridoEsquema, n),

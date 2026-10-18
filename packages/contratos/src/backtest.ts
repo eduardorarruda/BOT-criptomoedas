@@ -1,4 +1,4 @@
-import { dec } from "@zentrade/dominio";
+import { dec, problemasSessao } from "@zentrade/dominio";
 import { z } from "zod";
 import { Fracao, Id, Instante, Intervalo, TextoDecimal } from "./comum.js";
 import { LimitesRiscoEsquema, type LimitesRiscoDTO } from "./dados.js";
@@ -85,6 +85,60 @@ export const ValidacaoPedidoEsquema = z.object({
 });
 export type ValidacaoPedido = z.infer<typeof ValidacaoPedidoEsquema>;
 
+/**
+ * O mercado simulado. `cripto` (o de sempre): à vista na Binance, só comprado.
+ * `win`: o mini índice da B3, nos dois sentidos, com custos por contrato, sessão,
+ * zeragem e IR estimado. Backtests sem o campo são de cripto.
+ */
+export const MercadoBacktest = z.enum(["cripto", "win"]);
+export type MercadoBacktest = z.infer<typeof MercadoBacktest>;
+
+/** O Ibovespa à vista como aproximação do WIN (outro horário, sem a base do futuro). */
+export const SIMBOLO_WIN_IBOV = "WIN-IBOV";
+/** O WIN de verdade, de um CSV importado (série contínua). */
+export const SIMBOLO_WIN = "WIN";
+export const SIMBOLOS_WIN = [SIMBOLO_WIN_IBOV, SIMBOLO_WIN] as const;
+/** Os intervalos gravados para o mini índice. */
+export const INTERVALOS_WIN = ["5m", "15m", "1h"] as const;
+/** Capital simulado do WIN quando o pedido não traz um (em reais). */
+export const SALDO_PADRAO_WIN = "5000";
+
+const Reais = (maximo: number) =>
+  TextoDecimal.refine((v) => Number(v) >= 0 && Number(v) <= maximo, `valor em reais entre 0 e ${maximo}`);
+const ReaisPositivos = (maximo: number) =>
+  TextoDecimal.refine(
+    (v) => Number(v) > 0 && Number(v) <= maximo,
+    `valor em reais maior que 0 e até ${maximo}`,
+  );
+const Horario = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "horário como 09:15");
+
+/**
+ * O modelo do mini índice. Custos por contrato e por lado (entrada e saída), em
+ * reais; deslizamento em ticks de 5 pontos contra quem opera em toda execução;
+ * horários de Brasília; risco por operação em reais. Os padrões são as hipóteses
+ * da nota 03 da base de conhecimento: tarifa da B3 de day trade para quem opera
+ * pouco (R$ 0,25), corretagem zero, 1 tick por lado, margem de day trade da B3
+ * (R$ 155; a corretora pode exigir mais).
+ */
+export const ConfiguracaoWinEsquema = z
+  .object({
+    tarifaB3PorContrato: Reais(100).default("0.25"),
+    corretagemPorContrato: Reais(100).default("0"),
+    deslizamentoTicks: z.number().int().min(0).max(20).default(1),
+    inicioEntradas: Horario.default("09:15"),
+    fimEntradas: Horario.default("17:30"),
+    zeragem: Horario.default("18:15"),
+    pularLeilaoAbertura: z.boolean().default(true),
+    margemPorContrato: ReaisPositivos(100_000).default("155"),
+    contratosMaximos: z.number().int().min(1).max(500).default(5),
+    riscoPorOperacao: ReaisPositivos(10_000_000).default("100"),
+  })
+  .superRefine((w, ctx) => {
+    for (const message of problemasSessao(w)) ctx.addIssue({ code: "custom", path: ["zeragem"], message });
+  });
+export type ConfiguracaoWin = z.infer<typeof ConfiguracaoWinEsquema>;
+export type ConfiguracaoWinEntrada = z.input<typeof ConfiguracaoWinEsquema>;
+
 const SaldoPositivo = TextoDecimal.refine(
   (v) => Number(v) > 0 && Number(v) <= 100_000_000,
   "o saldo inicial precisa ser maior que zero",
@@ -98,15 +152,45 @@ export const ConfiguracaoBacktestEsquema = z.object({
   /** Usa candles de 1 minuto para saber o que veio primeiro dentro do candle (até 31 dias). */
   precisaoMinuto: z.boolean().default(false),
   validacao: ValidacaoPedidoEsquema.prefault({}),
+  /** Sem ele, cripto (todos os backtests de antes do mini índice). */
+  mercado: MercadoBacktest.optional(),
+  /** Só no mercado `win`. Quem grava preenche os padrões (`comPadroesDoMercado`). */
+  win: ConfiguracaoWinEsquema.optional(),
 });
 export type ConfiguracaoBacktest = z.infer<typeof ConfiguracaoBacktestEsquema>;
 export type ConfiguracaoBacktestEntrada = z.input<typeof ConfiguracaoBacktestEsquema>;
+
+export const mercadoDo = (c: Pick<ConfiguracaoBacktest, "mercado">): MercadoBacktest => c.mercado ?? "cripto";
+
+/** A configuração do WIN que vale: a gravada ou os padrões. */
+export const configuracaoWin = (c: Pick<ConfiguracaoBacktest, "win">): ConfiguracaoWin =>
+  c.win ?? ConfiguracaoWinEsquema.parse({});
+
+/** No WIN, grava a configuração do mercado com os padrões aplicados: o resultado diz com o que rodou. */
+export function comPadroesDoMercado(c: ConfiguracaoBacktest): ConfiguracaoBacktest {
+  return mercadoDo(c) === "win" ? { ...c, win: configuracaoWin(c) } : c;
+}
+
+const SIMBOLO_CRIPTO = /^[A-Z0-9]{5,20}$/;
+
+/**
+ * Que candles do mini índice estão gravados, por símbolo e intervalo: a tela oferece
+ * "WIN (dados reais importados)" e "WIN-IBOV" só quando há candles para testar.
+ */
+export const CoberturaWinEsquema = z.object({
+  simbolo: z.enum(SIMBOLOS_WIN),
+  intervalo: z.enum(INTERVALOS_WIN),
+  primeiro: Instante,
+  ultimo: Instante,
+  candles: z.number().int().nonnegative(),
+});
+export type CoberturaWin = z.infer<typeof CoberturaWinEsquema>;
 
 export const PedidoBacktestEsquema = z
   .object({
     estrategiaId: z.uuid("estrategiaId precisa ser o id de uma estratégia"),
     versao: z.number().int().positive(),
-    simbolo: z.string().regex(/^[A-Z0-9]{5,20}$/, "símbolo como BTCUSDT"),
+    simbolo: z.string().regex(/^[A-Z0-9-]{3,20}$/, "símbolo como BTCUSDT ou WIN-IBOV"),
     intervalo: Intervalo,
     inicio: z.number().int().nonnegative(),
     fim: z.number().int().nonnegative(),
@@ -119,8 +203,36 @@ export const PedidoBacktestEsquema = z
         path: ["configuracao", "precisaoMinuto"],
         message: `a precisão de 1 minuto vale para períodos de até ${DIAS_MAXIMOS_PRECISAO_MINUTO} dias; encurte o período ou desligue a opção`,
       });
+    for (const [path, message] of problemasDoMercado(p))
+      ctx.addIssue({ code: "custom", path: [...path], message });
   });
 export type PedidoBacktestDTO = z.infer<typeof PedidoBacktestEsquema>;
+
+type Problema = readonly [readonly (string | number)[], string];
+
+/** Símbolo, intervalo e opções que o mercado escolhido aceita. */
+function problemasDoMercado(p: {
+  readonly simbolo: string;
+  readonly intervalo: string;
+  readonly configuracao: ConfiguracaoBacktest;
+}): Problema[] {
+  if (mercadoDo(p.configuracao) === "cripto")
+    return SIMBOLO_CRIPTO.test(p.simbolo) ? [] : [[["simbolo"], "símbolo como BTCUSDT"]];
+  const problemas: Problema[] = [];
+  if (!(SIMBOLOS_WIN as readonly string[]).includes(p.simbolo))
+    problemas.push([
+      ["simbolo"],
+      `no mini índice, o símbolo é ${SIMBOLO_WIN_IBOV} (aproximação pelo Ibovespa) ou ${SIMBOLO_WIN} (dados reais importados)`,
+    ]);
+  if (!(INTERVALOS_WIN as readonly string[]).includes(p.intervalo))
+    problemas.push([["intervalo"], `no mini índice, os intervalos são ${INTERVALOS_WIN.join(", ")}`]);
+  if (p.configuracao.precisaoMinuto)
+    problemas.push([
+      ["configuracao", "precisaoMinuto"],
+      "no mini índice não há candles de 1 minuto: desligue a precisão de 1 minuto",
+    ]);
+  return problemas;
+}
 
 /**
  * Patrimônio simulado (cotação + base a preço de fechamento) ao fim de cada candle e,
@@ -134,6 +246,64 @@ export const PontoCurvaBacktestEsquema = z.object({
 export type PontoCurvaBacktest = z.infer<typeof PontoCurvaBacktestEsquema>;
 
 const Razao = z.number().nullable().optional();
+
+export const MesIrEsquema = z.object({
+  /** "AAAA-MM". */
+  mes: z.string(),
+  resultado: TextoDecimal,
+  prejuizoAntes: TextoDecimal,
+  compensado: TextoDecimal,
+  base: TextoDecimal,
+  ir: TextoDecimal,
+  irrf: TextoDecimal,
+  prejuizoDepois: TextoDecimal,
+});
+export type MesIr = z.infer<typeof MesIrEsquema>;
+
+/**
+ * O que só o mini índice tem. Dinheiro em reais (texto); pontos = reais ÷ R$ 0,20 por
+ * contrato. "Bruto" = antes de tarifa, corretagem e deslizamento.
+ */
+export const MetricasWinEsquema = z.object({
+  simbolo: z.string(),
+  /** Rodou no Ibovespa à vista (WIN-IBOV), não no WIN de verdade. */
+  aproximacao: z.boolean(),
+  /** Soma dos contratos de todas as operações (cada um com entrada e saída). */
+  contratosNegociados: z.number().int().nonnegative(),
+  operacoesCompradas: z.number().int().nonnegative(),
+  operacoesVendidas: z.number().int().nonnegative(),
+  resultadoComprado: TextoDecimal,
+  resultadoVendido: TextoDecimal,
+  pontosBrutos: TextoDecimal,
+  pontosLiquidos: TextoDecimal,
+  /** Resultado líquido ÷ contratos negociados. */
+  resultadoPorContrato: TextoDecimal,
+  pontosPorContrato: TextoDecimal,
+  custosB3: TextoDecimal,
+  corretagem: TextoDecimal,
+  /** Deslizamento em reais (inclui o arredondamento ao tick) e em pontos. */
+  deslizamentoPago: TextoDecimal,
+  deslizamentoPontos: TextoDecimal,
+  /** (tarifa + corretagem + deslizamento) ÷ resultado bruto; `null` se o bruto não foi positivo. */
+  custosSobreBruto: z.number().nullable(),
+  irEstimado: TextoDecimal,
+  /** IRRF de 1% dos dias positivos: antecipação do IR, só informativa. */
+  irrfInformativo: TextoDecimal,
+  prejuizoACompensar: TextoDecimal,
+  liquidoDepoisDoIr: TextoDecimal,
+  meses: z.array(MesIrEsquema),
+  /** Posições fechadas pela zeragem do fim do dia. */
+  zeragens: z.number().int().nonnegative(),
+  /** Sinais de entrada que não couberam no risco por operação ou na margem. */
+  semEspacoNoRisco: z.number().int().nonnegative(),
+  /** Entradas barradas pelos limites (perda diária, ordens por hora, pausa após perda). */
+  barradasPelosLimites: z.number().int().nonnegative(),
+  /** Pregões no período. */
+  dias: z.number().int().nonnegative(),
+  /** Referência: 1 contrato comprado na abertura e zerado no fechamento de cada pregão. */
+  sessao: z.object({ resultado: TextoDecimal, resultadoPercentual: z.number() }),
+});
+export type MetricasWin = z.infer<typeof MetricasWinEsquema>;
 
 export const MetricasBacktestEsquema = z.object({
   /** Patrimônio final menos o inicial, já com as taxas descontadas. */
@@ -198,6 +368,8 @@ export const MetricasBacktestEsquema = z.object({
   alvosIntrabar: z.number().int().nonnegative().optional(),
   candlesAmbiguos: z.number().int().nonnegative().optional(),
   precisaoMinuto: z.boolean().optional(),
+  /** Só nos backtests do mini índice. */
+  win: MetricasWinEsquema.optional(),
 });
 export type MetricasBacktest = z.infer<typeof MetricasBacktestEsquema>;
 

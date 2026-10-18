@@ -1,10 +1,10 @@
 import type { LimitesRiscoDTO, ModoRobo, PosicaoDTO, RoboDTO } from "@zentrade/contratos";
-import { paraTexto, posicaoDe } from "@zentrade/dominio";
-import { asc, count, desc, eq } from "drizzle-orm";
+import { direcaoDe, paraTexto, posicaoDe, type Direcao } from "@zentrade/dominio";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 import { comoUsuario, type Db, type Tx } from "../cliente.js";
 import { roboDeLinha } from "../conversao.js";
 import { codigoPostgres, ErroDados, umaLinha, VIOLACAO_CHAVE_ESTRANGEIRA } from "../erros.js";
-import { protecoesCorretora, robos } from "../esquema/index.js";
+import { estrategiaVersoes, protecoesCorretora, robos } from "../esquema/index.js";
 import { protecaoCorretoraDTO } from "../conversao.js";
 import { auditar } from "./auditoria.js";
 import { execucoesDoRobo } from "./execucoes.js";
@@ -32,9 +32,32 @@ async function obterNa(tx: Tx, id: string): Promise<RoboDTO | null> {
   return linha ? roboDeLinha(linha) : null;
 }
 
+/**
+ * O robô opera o à vista de cripto, que só compra: estratégia vendida ou nos dois
+ * sentidos (feita para o backtest do mini índice) não vira robô. Versão inexistente
+ * fica para a chave estrangeira, que dá a mensagem de sempre.
+ */
+async function exigirComprada(tx: Tx, r: NovoRobo): Promise<void> {
+  const [versao] = await tx
+    .select({ regra: estrategiaVersoes.regra })
+    .from(estrategiaVersoes)
+    .where(
+      and(
+        eq(estrategiaVersoes.estrategiaId, r.estrategiaId),
+        eq(estrategiaVersoes.versao, r.estrategiaVersao),
+      ),
+    );
+  if (versao && direcaoDe(versao.regra as { direcao?: Direcao }) !== "comprado")
+    throw new ErroDados(
+      "invalido",
+      "o robô opera o mercado à vista de cripto, que só compra; esta estratégia vende a descoberto e roda só no backtest do mini índice",
+    );
+}
+
 export function repositorioRobos(db: Db) {
   async function inserir(usuarioId: string, r: NovoRobo): Promise<RoboDTO> {
     return comoUsuario(db, usuarioId, async (tx) => {
+      await exigirComprada(tx, r);
       const linha = umaLinha(
         await tx
           .insert(robos)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { novoComparar, novoGrupo, novoNao, type NoComparar } from "./arvore";
-import { frase, fraseComparador, frasesSaidas, linhas } from "./descrever";
+import { frase, fraseComparador, fraseDirecao, frasesLados, frasesSaidas, linhas } from "./descrever";
 
 const preco = (comparador: NoComparar["comparador"]): NoComparar => ({
   ...novoComparar(),
@@ -83,5 +83,92 @@ describe("prévia em linguagem natural", () => {
       direita: { tipo: "indicador", nome: "bollinger", periodo: 20, desvios: 2, saida: "inferior" },
     };
     expect(frase(no)).toBe("preço abaixo de banda inferior de Bollinger(20, 2)");
+  });
+
+  it("VWAP sem parâmetros e faixa de abertura em minutos", () => {
+    const no: NoComparar = {
+      ...novoComparar(),
+      esquerda: { tipo: "preco" },
+      comparador: ">",
+      direita: { tipo: "indicador", nome: "vwap" },
+    };
+    expect(frase(no)).toMatch(/^preço acima de VWAP/);
+    expect(frase(no)).not.toContain("undefined");
+  });
+
+  it("descreve a direção", () => {
+    expect(fraseDirecao("comprado")).toBe("só compra (ganha quando o preço sobe)");
+    expect(fraseDirecao("vendido")).toBe(
+      "só vende a descoberto (ganha quando o preço cai); só no backtest do mini índice",
+    );
+    expect(fraseDirecao("ambos")).toBe(
+      "compra ou vende a descoberto, conforme a regra que valer; o lado vendido só no backtest do mini índice",
+    );
+  });
+
+  it("descreve os dois lados: compra, venda e recompra", () => {
+    const entrada = novoComparar();
+    const vende = {
+      ...novoComparar(),
+      comparador: ">" as const,
+      direita: { tipo: "numero" as const, valor: 70 },
+    };
+    expect(
+      frasesLados({ direcao: "comprado", entrada, saida: null, entradaVendida: vende, saidaVendida: null }),
+    ).toEqual([
+      { arvore: "entrada", verbo: "Compra quando", texto: "RSI(14) abaixo de 30" },
+      { arvore: "saida", verbo: "Vende quando", texto: "o preço chegar ao stop ou ao alvo" },
+    ]);
+    expect(
+      frasesLados({
+        direcao: "ambos",
+        entrada,
+        saida: entrada,
+        entradaVendida: vende,
+        saidaVendida: entrada,
+      }),
+    ).toEqual([
+      { arvore: "entrada", verbo: "Compra quando", texto: "RSI(14) abaixo de 30" },
+      {
+        arvore: "saida",
+        verbo: "Sai da compra quando",
+        texto: "RSI(14) abaixo de 30, ou no stop ou no alvo",
+      },
+      { arvore: "entradaVendida", verbo: "Vende quando", texto: "RSI(14) acima de 70" },
+      {
+        arvore: "saidaVendida",
+        verbo: "Recompra quando",
+        texto: "RSI(14) abaixo de 30, ou no stop ou no alvo",
+      },
+    ]);
+    expect(
+      frasesLados({ direcao: "vendido", entrada, saida: entrada, entradaVendida: vende, saidaVendida: null }),
+    ).toEqual([
+      { arvore: "entradaVendida", verbo: "Vende quando", texto: "RSI(14) acima de 70" },
+      { arvore: "saidaVendida", verbo: "Recompra quando", texto: "o preço chegar ao stop ou ao alvo" },
+    ]);
+  });
+
+  it("no vendido, as saídas são o espelho", () => {
+    expect(
+      frasesSaidas(
+        {
+          stop: 0.003,
+          stopAtr: { periodo: 14, multiplo: 2 },
+          stopMovel: { tipo: "percentual", distancia: 0.01 },
+        },
+        "vendido",
+      ),
+    ).toEqual([
+      "stop a 2 × ATR(14) acima da entrada, no máximo 0,3%",
+      "stop móvel 1% acima da menor mínima desde a entrada (só desce)",
+    ]);
+    expect(
+      frasesSaidas({ stop: 0.01, stopMovel: { tipo: "atr", periodo: 14, multiplo: 3 } }, "ambos"),
+    ).toEqual([
+      "stop 1% abaixo da entrada",
+      "stop móvel a 3 × ATR(14) da maior máxima desde a entrada (só sobe)",
+      "na venda, o espelho: stop acima da entrada e stop móvel pela menor mínima (só desce)",
+    ]);
   });
 });

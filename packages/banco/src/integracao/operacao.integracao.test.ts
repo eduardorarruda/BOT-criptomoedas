@@ -179,6 +179,61 @@ describe("repositórios da API: decisões, ordens, mercado, backtests, conhecime
     ]);
   });
 
+  it("cobertura dos candles do mini índice: primeiro, último e quantos, por intervalo", async () => {
+    const base = Date.UTC(2026, 6, 1, 13, 0);
+    const vela = (i: number, ms: number) => ({
+      abertura: base + i * ms,
+      fechamento: base + (i + 1) * ms - 1,
+      abre: dec("128000"),
+      maxima: dec("128010"),
+      minima: dec("127990"),
+      fecha: dec("128005"),
+      volume: dec("0"),
+    });
+    expect(await c.banco.mercado.cobertura(["WIN", "WIN-IBOV"])).toEqual([]);
+    await c.banco.mercado.gravar(
+      "WIN",
+      "5m",
+      [0, 1, 2, 3].map((i) => vela(i, 300_000)),
+    );
+    await c.banco.mercado.gravar("WIN", "15m", [vela(0, 900_000)]);
+    await c.banco.mercado.gravar("WIN-IBOV", "5m", [vela(0, 300_000)]);
+    expect(await c.banco.mercado.cobertura(["WIN", "WIN-IBOV"])).toEqual([
+      { simbolo: "WIN", intervalo: "15m", primeiro: base, ultimo: base, candles: 1 },
+      { simbolo: "WIN", intervalo: "5m", primeiro: base, ultimo: base + 900_000, candles: 4 },
+      { simbolo: "WIN-IBOV", intervalo: "5m", primeiro: base, ultimo: base, candles: 1 },
+    ]);
+    expect(await c.banco.mercado.cobertura([])).toEqual([]);
+  });
+
+  it("robô não aceita estratégia vendida (o à vista de cripto só compra)", async () => {
+    // Uma pessoa só para isto: as outras contas do cenário contam as estratégias que têm.
+    const caio = await c.banco.usuarios.criar({ email: "caio@exemplo.com", nome: "caio", senhaHash: "x" });
+    const vendida = await c.banco.estrategias.criar(caio.id, {
+      ...ESTRATEGIA,
+      nome: "Vende no mini índice",
+      direcao: "ambos",
+      entradaVendida: ESTRATEGIA.entrada,
+    });
+    const robo = {
+      nome: "não pode",
+      simbolo: "BTCUSDT",
+      intervalo: "1h" as const,
+      modo: "observar" as const,
+      rede: "papel" as const,
+      estrategiaId: vendida.id,
+      estrategiaVersao: 1,
+      limites: c.ana.robo.limites,
+    };
+    await expect(c.banco.robos.criar(caio.id, robo)).rejects.toMatchObject({
+      codigo: "invalido",
+      message: expect.stringMatching(/só compra/),
+    });
+    expect((await c.banco.estrategias.obter(caio.id, vendida.id))?.estrategia).toMatchObject({
+      direcao: "ambos",
+    });
+  });
+
   it("candles: 1h sem esperar a materialização; 15m, 4h e 1d agregados a partir de 1m", async () => {
     const base = Date.UTC(2026, 1, 1, 0, 0);
     const minutos = 5 * 60;

@@ -1,4 +1,4 @@
-import type { AvisoBacktest } from "@zentrade/contratos/esquemas";
+import { configuracaoWin, mercadoDo, type AvisoBacktest } from "@zentrade/contratos/esquemas";
 import { ListChecks } from "lucide-react";
 import type { Backtest } from "../../api/esquemas";
 import { Painel } from "../../componentes/Cabecalho";
@@ -26,6 +26,60 @@ const casasDaTaxa = (taxa: number) => (Number.isInteger(Math.round(taxa * 1e6) /
 
 const bps = (v: number) => `${v.toLocaleString("pt-BR")} ponto${v === 1 ? "" : "s"}-base`;
 
+const reais = (v: string) => formatarDinheiro(v, { moeda: "R$" });
+
+/** O modelo do mini índice com que o backtest rodou. */
+function PremissasWin({ b, c }: { readonly b: Backtest; readonly c: NonNullable<Backtest["configuracao"]> }) {
+  const w = configuracaoWin(c);
+  const ambiguos = b.metricas?.candlesAmbiguos;
+  return (
+    <ul className="bt-premissas" role="list">
+      <li>
+        <strong>Contrato:</strong> mini índice (WIN), R$ 0,20 por ponto por contrato, tick de 5 pontos,
+        contratos inteiros.
+      </li>
+      <li>
+        <strong>Custos por contrato, em cada lado:</strong> tarifa da B3 de {reais(w.tarifaB3PorContrato)} e
+        corretagem de {reais(w.corretagemPorContrato)}; deslizamento de {w.deslizamentoTicks} tick(s) contra
+        você em toda execução (entrada, stop, alvo e zeragem), com o preço levado ao tick contra você.
+      </li>
+      <li>
+        <strong>Sessão (Brasília):</strong> entradas das {w.inicioEntradas} às {w.fimEntradas}
+        {w.pularLeilaoAbertura ? ", fora o candle do leilão de abertura" : ""}; zeragem às {w.zeragem} (no
+        fechamento desse candle) ou no último candle do dia. Nada dorme posicionado.
+      </li>
+      <li>
+        <strong>Tamanho:</strong> risco de {reais(w.riscoPorOperacao)} por operação; contratos = risco ÷
+        (pontos do stop × R$ 0,20 + custos de ida e volta), arredondado para baixo, até {w.contratosMaximos} e
+        até o capital dividido pela margem de {reais(w.margemPorContrato)} por contrato (a corretora pode
+        exigir mais).
+      </li>
+      <li>
+        <strong>Stop e alvo:</strong> vigiados dentro do candle no pior caso: comprado, o stop é tocado pela
+        mínima; vendido, pela máxima. Se stop e alvo cabem no mesmo candle, conta o stop
+        {ambiguos ? ` (aconteceu em ${ambiguos} candle(s))` : ""}.
+      </li>
+      <li>
+        <strong>Limites de risco:</strong>{" "}
+        {c.risco.modo === "sem_limites"
+          ? "nenhum (menos realista: o robô de verdade operaria menos)."
+          : "perda diária de 2% do capital, 4 ordens por hora e pausa de 60 min depois de uma perda."}
+      </li>
+      <li>
+        <strong>Referências:</strong> ficar de fora (zero) e sempre comprado na sessão (1 contrato da abertura
+        à zeragem, todo pregão, com os mesmos custos). Comprar e segurar não faz sentido num futuro de day
+        trade.
+      </li>
+      {b.metricas?.saldoInicial ? (
+        <li>
+          <strong>Capital simulado:</strong> {reais(b.metricas.saldoInicial)}; Sharpe anualizado pelos candles
+          do pregão, sem taxa livre de risco.
+        </li>
+      ) : null}
+    </ul>
+  );
+}
+
 /** Com que custos, limites e regras o backtest rodou, e os avisos de amostra. */
 export function Premissas({ b }: { readonly b: Backtest }) {
   const c = b.configuracao;
@@ -33,7 +87,9 @@ export function Premissas({ b }: { readonly b: Backtest }) {
   const avisos = [...(b.validacao?.avisos ?? []), ...avisoDeTentativas(b)];
   return (
     <Painel titulo="Premissas e avisos" id={`premissas-${b.id}`} icone={ListChecks}>
-      {c ? (
+      {c && mercadoDo(c) === "win" ? (
+        <PremissasWin b={b} c={c} />
+      ) : c ? (
         <ul className="bt-premissas" role="list">
           <li>
             <strong>Taxa:</strong> {pct(c.custos.taxaPorLado, casasDaTaxa(c.custos.taxaPorLado))} por ponta

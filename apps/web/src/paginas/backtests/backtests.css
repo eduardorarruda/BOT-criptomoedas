@@ -125,3 +125,19 @@
     grid-column: auto;
   }
 }
+.bt-aviso-aproximacao {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--raio);
+  border-left: 3px solid var(--atencao);
+  background: var(--fundo);
+  font-size: var(--t-pequeno);
+}
+.bt-aviso-aproximacao > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--atencao);
+}

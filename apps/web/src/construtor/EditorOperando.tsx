@@ -34,6 +34,7 @@ const GRUPOS: readonly { grupo: GrupoIndicador; rotulo: string }[] = [
   { grupo: "momento", rotulo: "Momento" },
   { grupo: "volatilidade", rotulo: "Volatilidade" },
   { grupo: "volume", rotulo: "Volume" },
+  { grupo: "sessao", rotulo: "Pregão (sessão)" },
 ];
 const POR_GRUPO = GRUPOS.map(({ grupo, rotulo }) => ({
   rotulo,
@@ -90,7 +91,7 @@ function NumeroLivre({
   );
 }
 
-/** Parâmetros e linha do indicador: "Bollinger ( 20 ; 2 ) [banda inferior]". */
+/** Parâmetros e linha do indicador: "Bollinger ( 20 ; 2 ) [banda inferior]"; sem parâmetros, só o nome. */
 function ParametrosIndicador({
   operando,
   rotulo,
@@ -103,11 +104,15 @@ function ParametrosIndicador({
   const definicao = INDICADORES[operando.nome];
   const nome = nomeIndicador(operando.nome);
   const valores = operando as unknown as Record<ParametroIndicador, number> & { saida?: string };
+  // Sem parâmetros (VWAP do dia), nada de "( )" vazio.
+  const temParametros = definicao.parametros.length > 0;
   return (
     <>
-      <span className="operando__sep" aria-hidden="true">
-        (
-      </span>
+      {temParametros ? (
+        <span className="operando__sep" aria-hidden="true">
+          (
+        </span>
+      ) : null}
       {definicao.parametros.map((p, i) => (
         <span key={`${operando.nome}-${p.campo}`} className="operando__parametro">
           {i > 0 ? (
@@ -123,9 +128,11 @@ function ParametrosIndicador({
           />
         </span>
       ))}
-      <span className="operando__sep" aria-hidden="true">
-        )
-      </span>
+      {temParametros ? (
+        <span className="operando__sep" aria-hidden="true">
+          )
+        </span>
+      ) : null}
       {definicao.saidas.length ? (
         <select
           className="operando__saida"

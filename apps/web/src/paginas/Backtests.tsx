@@ -71,7 +71,14 @@ export function Backtests() {
                     {b.simbolo} · {b.intervalo}
                   </span>
                   <Selo tom={ESTADO[b.estado].tom}>{ESTADO[b.estado].texto}</Selo>
-                  {b.metricas ? <Dinheiro valor={b.metricas.resultadoLiquido} sinal colorir /> : null}
+                  {b.metricas ? (
+                    <Dinheiro
+                      valor={b.metricas.resultadoLiquido}
+                      sinal
+                      colorir
+                      {...(b.metricas.win ? { moeda: "R$" as const } : {})}
+                    />
+                  ) : null}
                   {b.estado === "concluido" && !b.configuracao ? (
                     <span className="apagado backtests__antigo">antigo, sem validação</span>
                   ) : null}

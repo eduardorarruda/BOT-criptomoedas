@@ -123,6 +123,125 @@ describe("tela Backtests", () => {
   });
 });
 
+describe("mini índice (WIN)", () => {
+  const resultadoWin = async () => {
+    await resultado();
+    await userEvent.click(screen.getByRole("button", { name: /WIN-IBOV · 5m/ }));
+    return screen.findByRole("region", { name: /v1 · WIN-IBOV 5m/ });
+  };
+
+  it("resultado em reais e pontos, IR estimado, referência da sessão e o aviso da aproximação", async () => {
+    montar();
+    const r = await resultadoWin();
+    expect(within(r).getByRole("note")).toHaveTextContent(
+      "Aproximação: o índice à vista não tem a base do futuro nem o horário completo do WIN; valide com dados reais do WIN antes de operar.",
+    );
+    const kpis = within(r).getByLabelText("Indicadores do backtest");
+    for (const rotulo of [
+      "Resultado líquido",
+      "Depois do IR (estimado)",
+      "Por contrato",
+      "Custos do mini índice",
+    ])
+      expect(within(kpis).getByText(rotulo)).toBeInTheDocument();
+    expect(within(kpis).getAllByText(/R\$/).length).toBeGreaterThan(3);
+    expect(within(kpis).getAllByText(/pontos/).length).toBeGreaterThan(0);
+    expect(within(kpis).getByText(/ficar de fora: R\$ 0,00/)).toBeInTheDocument();
+    expect(within(r).getByRole("table", { name: "IR estimado por mês" })).toBeInTheDocument();
+    expect(within(r).getByText(/não é parecer tributário\. Day trade paga 20%/)).toBeInTheDocument();
+    const veredito = within(r).getByRole("region", { name: "Veredito" });
+    expect(within(veredito).getByText(/Custos consomem \d+% do ganho bruto/)).toBeInTheDocument();
+    expect(within(veredito).getByText(/depois do IR estimado/)).toBeInTheDocument();
+    expect(within(veredito).getByText("Rodou na aproximação pelo Ibovespa, não no WIN")).toBeInTheDocument();
+    expect(within(veredito).getByText(/sempre comprado na sessão/)).toBeInTheDocument();
+    expect(within(r).getByText(/R\$ 0,20 por ponto por contrato, tick de 5 pontos/)).toBeInTheDocument();
+    expect(within(r).getByText(/vendido, pela máxima/)).toBeInTheDocument();
+  });
+
+  it("pede o backtest do WIN com o modelo do mercado (custos, sessão, tamanho)", async () => {
+    const fonte = criarFonteDemo({ latenciaMs: [0, 0] });
+    const criar = vi.spyOn(fonte, "criarBacktest");
+    montar(fonte);
+    await resultado();
+    await userEvent.selectOptions(screen.getByLabelText("Mercado"), "WIN-IBOV");
+    expect(screen.getByText(/^Aproximação: o índice à vista/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Par")).not.toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText("Estratégia"), "e-win-faixa");
+    await userEvent.click(screen.getByText(/Custos, sessão, tamanho e validação/));
+    await userEvent.clear(screen.getByLabelText("Deslizamento (ticks)"));
+    await userEvent.type(screen.getByLabelText("Deslizamento (ticks)"), "2");
+    await userEvent.clear(screen.getByLabelText("Risco por operação (R$)"));
+    await userEvent.type(screen.getByLabelText("Risco por operação (R$)"), "80");
+    await userEvent.selectOptions(screen.getByLabelText(/^Limites de risco/), "sem");
+    await userEvent.click(screen.getByRole("button", { name: "Rodar backtest" }));
+    await waitFor(() => expect(criar).toHaveBeenCalled());
+    const pedido = criar.mock.calls[0]![0];
+    expect(pedido).toMatchObject({ estrategiaId: "e-win-faixa", simbolo: "WIN-IBOV", intervalo: "5m" });
+    expect(pedido.configuracao).toEqual({
+      mercado: "win",
+      saldoInicial: "5000",
+      risco: { modo: "sem_limites" },
+      validacao: { fracaoDentroDaAmostra: 0.7, janelas: 5, modoJanelas: "rolante", limiteRuina: 0.3 },
+      win: {
+        tarifaB3PorContrato: "0.25",
+        corretagemPorContrato: "0",
+        deslizamentoTicks: 2,
+        inicioEntradas: "09:15",
+        fimEntradas: "17:30",
+        zeragem: "18:15",
+        pularLeilaoAbertura: true,
+        margemPorContrato: "155",
+        contratosMaximos: 5,
+        riscoPorOperacao: "80",
+      },
+    });
+    // o período acaba no último candle gravado, não hoje
+    expect(pedido.fim).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("WIN de verdade sem candles importados: explica como importar do MetaTrader 5 e não deixa rodar", async () => {
+    const fonte = criarFonteDemo({ latenciaMs: [0, 0] });
+    vi.spyOn(fonte, "dadosWin").mockResolvedValue([]);
+    montar(fonte);
+    await resultado();
+    expect(within(screen.getByLabelText("Mercado")).queryByText(/aproximação pelo Ibovespa/)).toBeNull();
+    await userEvent.selectOptions(screen.getByLabelText("Mercado"), "WIN");
+    expect(screen.getByText("Ainda não há candles do WIN importados")).toBeInTheDocument();
+    expect(screen.getByText(/Exportar barras/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rodar backtest" })).toBeDisabled();
+  });
+
+  it("estratégia que vende não roda no cripto: explica e não deixa rodar", async () => {
+    montar();
+    await resultado();
+    await userEvent.selectOptions(screen.getByLabelText("Estratégia"), "e-win-faixa");
+    expect(
+      screen.getByText("Esta estratégia vende a descoberto: só roda no mini índice."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rodar backtest" })).toBeDisabled();
+  });
+
+  it("campos do WIN inválidos: explica e não deixa rodar", async () => {
+    montar();
+    await resultado();
+    await userEvent.selectOptions(screen.getByLabelText("Mercado"), "WIN");
+    await userEvent.click(screen.getByText(/Custos, sessão, tamanho e validação/));
+    await userEvent.clear(screen.getByLabelText("Margem por contrato (R$)"));
+    await userEvent.type(screen.getByLabelText("Margem por contrato (R$)"), "0");
+    expect(screen.getAllByRole("alert").some((a) => /maior que zero/.test(a.textContent ?? ""))).toBe(true);
+    expect(screen.getByRole("button", { name: "Rodar backtest" })).toBeDisabled();
+  });
+
+  it("acessível (axe): resultado do WIN e o formulário do WIN aberto", async () => {
+    const { container } = montar();
+    await resultadoWin();
+    await userEvent.selectOptions(screen.getByLabelText("Mercado"), "WIN-IBOV");
+    await userEvent.click(screen.getByText(/Custos, sessão, tamanho e validação/));
+    const r = await axe.run(container, OPCOES_AXE);
+    expect(r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.html).join(" | ")}`)).toEqual([]);
+  });
+});
+
 describe("configuração do formulário", () => {
   it("pontos-base aceitam vírgula e recusam fora de 0–100", () => {
     expect(lerBps("2,5")).toBe(2.5);

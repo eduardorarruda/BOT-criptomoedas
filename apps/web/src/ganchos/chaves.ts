@@ -22,6 +22,8 @@ export const chaves = {
   tokens: ["tokens"] as const,
   backtests: ["backtests"] as const,
   backtest: (id: string) => ["backtest", id] as const,
+  /** Candles do mini índice gravados no banco (o que dá para testar no WIN). */
+  dadosWin: ["dados-win"] as const,
   documentos: ["documentos"] as const,
   automacoes: ["automacoes"] as const,
   aoVivo: (roboId?: string) => ["aovivo", roboId ?? "todos"] as const,

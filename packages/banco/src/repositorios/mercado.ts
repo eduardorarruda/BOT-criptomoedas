@@ -53,6 +53,15 @@ const REAGRUPADOS: Partial<Record<Intervalo, { readonly passo: string; readonly 
   "1d": { passo: "1 day", fonte: "1h" },
 };
 
+/** Que candles de um símbolo da B3 estão no banco, por intervalo. */
+export interface CoberturaCandles {
+  readonly simbolo: string;
+  readonly intervalo: Intervalo;
+  readonly primeiro: number;
+  readonly ultimo: number;
+  readonly candles: number;
+}
+
 export interface ConsultaCandles {
   readonly simbolo: string;
   readonly intervalo: Intervalo;
@@ -137,6 +146,35 @@ export function repositorioMercado(db: Db) {
         )
         .orderBy(candles.simbolo, desc(candles.abertura));
       return new Map(linhas.map((l) => [l.simbolo, { preco: decimalTexto(l.fecha), em: ms(l.fechamento) }]));
+    },
+
+    /**
+     * O que há gravado dos símbolos pedidos (o mini índice: WIN e WIN-IBOV), por
+     * intervalo: o primeiro e o último candle e quantos são. A tela usa para oferecer
+     * só o que dá para testar.
+     */
+    async cobertura(simbolos: readonly string[]): Promise<CoberturaCandles[]> {
+      if (simbolos.length === 0) return [];
+      const linhas = await db
+        .select({
+          simbolo: candles.simbolo,
+          intervalo: candles.intervalo,
+          primeiro: sql<Date>`min(${candles.abertura})`,
+          ultimo: sql<Date>`max(${candles.abertura})`,
+          candles: sql<number>`count(*)::int`,
+        })
+        .from(candles)
+        .where(inArray(candles.simbolo, [...simbolos]))
+        .groupBy(candles.simbolo, candles.intervalo)
+        .orderBy(asc(candles.simbolo), asc(candles.intervalo));
+      return linhas.map((l) => ({
+        simbolo: l.simbolo,
+        // A coluna é texto livre (os da Binance e os da B3); só intervalos válidos são gravados.
+        intervalo: l.intervalo as Intervalo,
+        primeiro: new Date(l.primeiro).getTime(),
+        ultimo: new Date(l.ultimo).getTime(),
+        candles: Number(l.candles),
+      }));
     },
 
     /** Para o motor: grava (ou corrige) candles fechados. */

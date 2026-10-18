@@ -1,4 +1,11 @@
-import type { DecisaoDTO, EstrategiaDTO, OrdemDTO, PosicaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
+import type {
+  CoberturaWin,
+  DecisaoDTO,
+  EstrategiaDTO,
+  OrdemDTO,
+  PosicaoDTO,
+  RoboDTO,
+} from "@zentrade/contratos/esquemas";
 import { aplicarExecucao, dec, POSICAO_ZERADA, type Posicao } from "@zentrade/dominio";
 import type {
   Automacao,
@@ -13,6 +20,7 @@ import type {
 import { maiorQueda, somar } from "../lib/metricas";
 import {
   automacoesIniciais,
+  coberturaWinDemo,
   contasIniciais,
   documentosIniciais,
   ESTRATEGIAS,
@@ -36,6 +44,8 @@ export interface EstadoDemo {
   readonly tokens: readonly TokenApi[];
   readonly contas: readonly ContaCorretora[];
   readonly automacoes: readonly Automacao[];
+  /** Candles do mini índice "importados" (no exemplo vazio, nenhum). */
+  readonly dadosWin: readonly CoberturaWin[];
 }
 
 /** Resultado já realizado hoje antes do que acontecer ao vivo. */
@@ -57,6 +67,7 @@ export function estadoInicialDemo(agora: number): EstadoDemo {
     tokens: tokensIniciais(agora),
     contas: contasIniciais(agora),
     automacoes: automacoesIniciais(agora),
+    dadosWin: coberturaWinDemo(agora),
   };
 }
 
@@ -76,6 +87,7 @@ export function estadoVazioDemo(): EstadoDemo {
     tokens: [],
     contas: [],
     automacoes: [],
+    dadosWin: [],
   };
 }
 

@@ -4,6 +4,7 @@ import type { Estrategia } from "./estrategia.js";
 import { formatarNumero } from "./formatar.js";
 import type { Posicao } from "./posicao.js";
 import { precoEmpate, precoStop } from "./precos.js";
+import { aFavor, melhorPara, type Sentido } from "./sentido.js";
 import { atr } from "./volatilidade.js";
 
 /**
@@ -21,6 +22,10 @@ import { atr } from "./volatilidade.js";
  *
  * O stop efetivo só sobe: é o maior entre o stop atual e os candidatos (stop móvel
  * e empate). Nunca passa da maior máxima desde a entrada.
+ *
+ * Na posição vendida (mini índice), tudo é o espelho: o stop fica acima da entrada e
+ * só desce, a marca d'água é a MENOR mínima desde a entrada e o empate vale depois de
+ * uma queda do tamanho do gatilho.
  */
 export interface StopAtr {
   readonly periodo: number;
@@ -47,21 +52,25 @@ export interface Acompanhamento {
   readonly entrada: Valor;
   /** Stop efetivo agora. */
   readonly stop: Valor;
-  /** Maior máxima desde a entrada (a marca d'água do stop móvel). */
+  /**
+   * A marca d'água do stop móvel: a maior máxima desde a entrada no comprado; no
+   * vendido, a MENOR mínima.
+   */
   readonly maxima: Valor;
   /** Candles do intervalo fechados desde a entrada (para a saída por tempo). */
   readonly candles: number;
+  /** Sem ele, comprado (o único lado do à vista de cripto). */
+  readonly sentido?: Sentido;
 }
 
 export interface AtualizacaoStop {
   readonly acompanhamento: Acompanhamento;
-  /** O stop novo, só quando ele subiu; `null` = a ordem de stop na corretora fica como está. */
+  /** O stop novo, só quando ele andou a favor; `null` = a ordem de stop na corretora fica como está. */
   readonly novoStop: Valor | null;
   readonly explicacao: string | null;
 }
 
 const pct = (fracao: number): string => `${formatarNumero(fracao * 100)}%`;
-const maior = (a: Valor, b: Valor): Valor => (a.gte(b) ? a : b);
 
 /** ATR(n) do último candle como decimal, ou `null` se faltar dado ou ele for zero. */
 function atrDe(ctx: ContextoMercado, periodo: number): Valor | null {
@@ -71,16 +80,18 @@ function atrDe(ctx: ContextoMercado, periodo: number): Valor | null {
 }
 
 /**
- * Stop da compra. Sem `stopAtr`, é o percentual de sempre. Com ele, é
- * entrada − k × ATR(n) do candle da entrada, mas nunca mais longe que o stop
- * percentual, que vira o teto da distância (e o plano B se faltar ATR).
+ * Stop da entrada. Sem `stopAtr`, é o percentual de sempre. Com ele, é
+ * entrada − k × ATR(n) do candle da entrada (entrada + k × ATR no vendido), mas nunca
+ * mais longe que o stop percentual, que vira o teto da distância (e o plano B se
+ * faltar ATR).
  */
 export function stopDeEntrada(
   e: Estrategia,
   preco: Valor,
   ctx: ContextoMercado,
+  sentido: Sentido = "comprado",
 ): { readonly stop: Valor; readonly explicacao: string | null } {
-  const fixo = precoStop(preco, e.stop);
+  const fixo = precoStop(preco, e.stop, sentido);
   if (!e.stopAtr) return { stop: fixo, explicacao: null };
   const { periodo, multiplo } = e.stopAtr;
   const valor = atrDe(ctx, periodo);
@@ -89,15 +100,16 @@ export function stopDeEntrada(
       stop: fixo,
       explicacao: `sem dados para ATR(${periodo}): stop fixo de ${pct(e.stop)} (${formatarNumero(fixo)})`,
     };
-  const porAtr = preco.minus(valor.times(multiplo));
-  if (porAtr.lt(fixo))
+  const comprado = sentido === "comprado";
+  const porAtr = comprado ? preco.minus(valor.times(multiplo)) : preco.plus(valor.times(multiplo));
+  if (!aFavor(porAtr, fixo, sentido))
     return {
       stop: fixo,
       explicacao: `stop em ${formatarNumero(fixo)} (${formatarNumero(multiplo)} × ATR(${periodo}) passaria do stop máximo de ${pct(e.stop)})`,
     };
   return {
     stop: porAtr,
-    explicacao: `stop em ${formatarNumero(porAtr)} (preço − ${formatarNumero(multiplo)} × ATR(${periodo}) de ${formatarNumero(valor)})`,
+    explicacao: `stop em ${formatarNumero(porAtr)} (preço ${comprado ? "−" : "+"} ${formatarNumero(multiplo)} × ATR(${periodo}) de ${formatarNumero(valor)})`,
   };
 }
 
@@ -112,10 +124,20 @@ export function distanciaDeRisco(e: Estrategia, ctx: ContextoMercado): Valor | n
   return valor && valor.times(e.tamanhoPorVolatilidade.multiplo);
 }
 
-/** Acompanhamento de uma posição que acabou de abrir: o stop da estratégia (já ajustado pela compra). */
-export function iniciarAcompanhamento(e: Estrategia, posicao: Posicao): Acompanhamento {
+/** Acompanhamento de uma posição que acabou de abrir: o stop da estratégia (já ajustado pela entrada). */
+export function iniciarAcompanhamento(
+  e: Estrategia,
+  posicao: Pick<Posicao, "precoMedio">,
+  sentido: Sentido = "comprado",
+): Acompanhamento {
   const entrada = posicao.precoMedio;
-  return { entrada, stop: precoStop(entrada, e.stop), maxima: entrada, candles: 0 };
+  return {
+    entrada,
+    stop: precoStop(entrada, e.stop, sentido),
+    maxima: entrada,
+    candles: 0,
+    ...(sentido === "vendido" ? { sentido } : {}),
+  };
 }
 
 interface Candidato {
@@ -123,51 +145,65 @@ interface Candidato {
   readonly motivo: string;
 }
 
-function candidatos(e: Estrategia, a: Acompanhamento, maxima: Valor, ctx: ContextoMercado): Candidato[] {
+function candidatos(
+  e: Estrategia,
+  a: Acompanhamento,
+  extremo: Valor,
+  ctx: ContextoMercado,
+  sentido: Sentido,
+): Candidato[] {
+  const comprado = sentido === "comprado";
   const lista: Candidato[] = [];
-  if (e.empate && maxima.gte(a.entrada.times(1 + e.empate.gatilho)))
+  const gatilho = e.empate && a.entrada.times(comprado ? 1 + e.empate.gatilho : 1 - e.empate.gatilho);
+  if (e.empate && gatilho && aFavor(extremo, gatilho, sentido))
     lista.push({
-      stop: precoEmpate(a.entrada, e.taxa),
-      motivo: `o preço subiu ${pct(e.empate.gatilho)} e o stop foi para o empate`,
+      stop: precoEmpate(a.entrada, e.taxa, sentido),
+      motivo: `o preço ${comprado ? "subiu" : "caiu"} ${pct(e.empate.gatilho)} e o stop foi para o empate`,
     });
+  const nome = comprado ? "máxima" : "mínima";
   const movel = e.stopMovel;
   if (movel?.tipo === "percentual")
     lista.push({
-      stop: maxima.times(dec(1).minus(movel.distancia)),
-      motivo: `stop móvel: ${pct(movel.distancia)} abaixo da máxima ${formatarNumero(maxima)}`,
+      stop: extremo.times(comprado ? dec(1).minus(movel.distancia) : dec(1).plus(movel.distancia)),
+      motivo: `stop móvel: ${pct(movel.distancia)} ${comprado ? "abaixo" : "acima"} da ${nome} ${formatarNumero(extremo)}`,
     });
   if (movel?.tipo === "atr") {
     const valor = atrDe(ctx, movel.periodo);
-    if (valor)
+    if (valor) {
+      const distancia = valor.times(movel.multiplo);
       lista.push({
-        stop: maxima.minus(valor.times(movel.multiplo)),
-        motivo: `stop móvel: máxima ${formatarNumero(maxima)} − ${formatarNumero(movel.multiplo)} × ATR(${movel.periodo}) de ${formatarNumero(valor)}`,
+        stop: comprado ? extremo.minus(distancia) : extremo.plus(distancia),
+        motivo: `stop móvel: ${nome} ${formatarNumero(extremo)} ${comprado ? "−" : "+"} ${formatarNumero(movel.multiplo)} × ATR(${movel.periodo}) de ${formatarNumero(valor)}`,
       });
+    }
   }
   return lista;
 }
 
 /**
- * Um candle do intervalo fechou com a posição aberta: guarda a nova máxima, conta
- * o candle e sobe o stop se o stop móvel ou o empate pedirem. Nunca desce.
- * O último candle do contexto é o que acabou de fechar.
+ * Um candle do intervalo fechou com a posição aberta: guarda a nova marca d'água,
+ * conta o candle e anda o stop a favor se o stop móvel ou o empate pedirem. Nunca
+ * volta. O último candle do contexto é o que acabou de fechar.
  */
 export function atualizarStop(e: Estrategia, a: Acompanhamento, ctx: ContextoMercado): AtualizacaoStop {
   const ultimo = ctx.fechamentos.length - 1;
   if (ultimo < 0) return { acompanhamento: a, novoStop: null, explicacao: null };
-  const topo = serieDe(ctx, "maximas")?.[ultimo] ?? (ctx.fechamentos[ultimo] as number);
-  const maxima = maior(a.maxima, dec(topo));
-  const melhor = candidatos(e, a, maxima, ctx).reduce<Candidato | null>(
-    (m, c) => (m === null || c.stop.gt(m.stop) ? c : m),
+  const sentido = a.sentido ?? "comprado";
+  const comprado = sentido === "comprado";
+  const serie = serieDe(ctx, comprado ? "maximas" : "minimas");
+  const ponta = serie?.[ultimo] ?? (ctx.fechamentos[ultimo] as number);
+  const extremo = melhorPara(a.maxima, dec(ponta), sentido);
+  const melhor = candidatos(e, a, extremo, ctx, sentido).reduce<Candidato | null>(
+    (m, c) => (m === null || !aFavor(m.stop, c.stop, sentido) ? c : m),
     null,
   );
-  const subiu = melhor !== null && melhor.stop.gt(a.stop);
-  const stop = subiu ? melhor.stop : a.stop;
+  const andou = melhor !== null && !aFavor(a.stop, melhor.stop, sentido);
+  const stop = andou ? melhor.stop : a.stop;
   return {
-    acompanhamento: { entrada: a.entrada, stop, maxima, candles: a.candles + 1 },
-    novoStop: subiu ? stop : null,
-    explicacao: subiu
-      ? `stop subiu de ${formatarNumero(a.stop)} para ${formatarNumero(stop)} (${melhor.motivo})`
+    acompanhamento: { ...a, stop, maxima: extremo, candles: a.candles + 1 },
+    novoStop: andou ? stop : null,
+    explicacao: andou
+      ? `stop ${comprado ? "subiu" : "desceu"} de ${formatarNumero(a.stop)} para ${formatarNumero(stop)} (${melhor.motivo})`
       : null,
   };
 }

@@ -1,18 +1,17 @@
 import type { BacktestParaRodar, ResultadoBacktestGravado } from "@zentrade/banco";
-import {
-  ConfiguracaoBacktestEsquema,
-  limitesPadraoDoBacktest,
-  type ConfiguracaoBacktest,
-  type LimitesRiscoDTO,
-  type PontoCurvaBacktest,
-} from "@zentrade/contratos";
-import { dec, paraTexto, type LimitesRisco, type Valor } from "@zentrade/dominio";
+import { ConfiguracaoBacktestEsquema, mercadoDo, type PontoCurvaBacktest } from "@zentrade/contratos";
+import { dec, paraTexto, type Valor } from "@zentrade/dominio";
 import type { Registro } from "../nucleo/tipos.js";
 import { candlesHistoricos, type FontesCandles } from "./candles-historicos.js";
+import { limitesDoBacktest } from "./limites.js";
 import { metricasGravadas } from "./metricas-gravadas.js";
 import { barrasPorAno } from "./metricas-retorno.js";
-import { rodarBacktest, type ResultadoBacktest } from "./rodar.js";
+import type { PontoCurva } from "./metricas.js";
+import { rodarBacktest } from "./rodar.js";
 import { validarBacktest } from "./validacao/index.js";
+import { rodarWin } from "./win/servico.js";
+
+export { limitesDoBacktest } from "./limites.js";
 
 /** O pedaço do repositório de backtests (packages/banco) que o motor usa. */
 export interface RepositorioBacktestsDoMotor {
@@ -44,42 +43,10 @@ export function reduzirCurva<T>(curva: readonly T[], maximo: number): T[] {
   return Array.from({ length: maximo }, (_, i) => curva[Math.round(i * passo)] as T);
 }
 
-const doDTO = (l: LimitesRiscoDTO): LimitesRisco => ({
-  perdaDiariaMaxima: dec(l.perdaDiariaMaxima),
-  exposicaoMaxima: dec(l.exposicaoMaxima),
-  ordensPorHoraMax: l.ordensPorHoraMax,
-  pausaAposPerdaMs: l.pausaAposPerdaMin * 60_000,
-  confiancaMinima: l.confiancaMinima,
-});
-
-/**
- * `robo` (padrão): os limites do robô de verdade — os informados ou os de um robô novo
- * proporcionais ao saldo. `sem_limites`: só a estratégia, sem freio de perda diária,
- * frequência ou pausa após perda (menos realista); risco por operação do ambiente.
- */
-export function limitesDoBacktest(
-  c: ConfiguracaoBacktest,
-  saldo: Valor,
-  riscoSemLimites: number,
-): { limites: LimitesRisco; riscoPorOperacao: Valor } {
-  if (c.risco.modo === "sem_limites")
-    return {
-      limites: {
-        perdaDiariaMaxima: saldo,
-        exposicaoMaxima: saldo,
-        ordensPorHoraMax: 1_000,
-        pausaAposPerdaMs: 0,
-        confiancaMinima: 0,
-      },
-      riscoPorOperacao: saldo.times(riscoSemLimites),
-    };
-  const l = c.risco.limites ?? limitesPadraoDoBacktest(paraTexto(saldo));
-  return { limites: doDTO(l), riscoPorOperacao: dec(l.riscoPorOperacao) };
-}
-
-function curvaGravada(r: ResultadoBacktest): PontoCurvaBacktest[] {
-  const pontos = r.curva.map((p, i) => {
-    const bh = r.buyHold.curva[i];
+/** A curva e a referência (buy and hold no cripto; sempre comprado na sessão no WIN), reduzidas. */
+function curvaGravada(curva: readonly PontoCurva[], referencia: readonly PontoCurva[]): PontoCurvaBacktest[] {
+  const pontos = curva.map((p, i) => {
+    const bh = referencia[i];
     return {
       em: p.em,
       patrimonio: paraTexto(p.patrimonio),
@@ -91,6 +58,10 @@ function curvaGravada(r: ResultadoBacktest): PontoCurvaBacktest[] {
 
 async function rodar(d: DependenciasBacktest, o: OpcoesBacktest, p: BacktestParaRodar) {
   const config = ConfiguracaoBacktestEsquema.parse(p.configuracao ?? {});
+  if (mercadoDo(config) === "win") {
+    const w = await rodarWin(d.fontes, p, config);
+    return { metricas: w.metricas, curva: curvaGravada(w.curva, w.referencia.curva), validacao: w.validacao };
+  }
   const saldo = config.saldoInicial ? dec(config.saldoInicial) : o.saldoInicial;
   const { limites, riscoPorOperacao } = limitesDoBacktest(config, saldo, o.riscoPorOperacao);
   const consulta = { simbolo: p.simbolo, intervalo: p.intervalo, inicio: p.inicio, fim: p.fim };
@@ -123,7 +94,7 @@ async function rodar(d: DependenciasBacktest, o: OpcoesBacktest, p: BacktestPara
       precisaoMinuto: Boolean(minutos?.length),
     },
   );
-  return { metricas, curva: curvaGravada(r), validacao };
+  return { metricas, curva: curvaGravada(r.curva, r.buyHold.curva), validacao };
 }
 
 /**

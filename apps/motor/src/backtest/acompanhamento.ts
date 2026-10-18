@@ -79,11 +79,14 @@ export function contextoEntre(ctx: ContextoMercado, de: number, ate: number): Co
   const maximas = cortar(ctx.maximas);
   const minimas = cortar(ctx.minimas);
   const volumes = cortar(ctx.volumes);
+  const instantes = cortar(ctx.instantes);
   return {
     fechamentos: ctx.fechamentos.slice(de, ate),
     ...(aberturas ? { aberturas } : {}),
     ...(maximas ? { maximas } : {}),
     ...(minimas ? { minimas } : {}),
     ...(volumes ? { volumes } : {}),
+    ...(instantes ? { instantes } : {}),
+    ...(ctx.intervaloMs !== undefined ? { intervaloMs: ctx.intervaloMs } : {}),
   };
 }

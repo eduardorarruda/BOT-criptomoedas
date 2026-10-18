@@ -92,3 +92,74 @@ describe("níveis da posição", () => {
     expect(n.alvo.toNumber()).toBeCloseTo((100 * 1.001 * 1.01) / 0.999, 10);
   });
 });
+
+describe("posição vendida: o espelho (o stop é tocado pela MÁXIMA)", () => {
+  const vendida: NiveisSaida = { stop: dec(102), alvo: dec(97) };
+
+  it("máxima acima do stop: sai no stop; mínima abaixo do alvo: sai no alvo", () => {
+    expect(saidaNoCandle(vela(100, 103, 99, 99.5), vendida, "vendido")).toEqual({
+      preco: dec(102),
+      motivo: "stop",
+      ambiguo: false,
+    });
+    expect(saidaNoCandle(vela(100, 101, 96, 100), vendida, "vendido")).toEqual({
+      preco: dec(97),
+      motivo: "alvo",
+      ambiguo: false,
+    });
+    expect(saidaNoCandle(vela(100, 101.5, 97.5, 100), vendida, "vendido")).toBeNull();
+  });
+
+  it("stop E alvo no mesmo candle: pior caso, conta o stop", () => {
+    expect(saidaNoCandle(vela(100, 104, 95, 96), vendida, "vendido")).toEqual({
+      preco: dec(102),
+      motivo: "stop",
+      ambiguo: true,
+    });
+  });
+
+  it("salto de abertura acima do stop sai na abertura (pior); abaixo do alvo, na abertura", () => {
+    expect(saidaNoCandle(vela(105, 106, 104, 105), vendida, "vendido")).toMatchObject({
+      preco: dec(105),
+      motivo: "stop",
+    });
+    expect(saidaNoCandle(vela(95, 96, 94, 95), vendida, "vendido")).toMatchObject({
+      preco: dec(95),
+      motivo: "alvo",
+    });
+  });
+
+  it("caminho de 1 minuto também no vendido", () => {
+    const minutos = [vela(100, 101, 99, 100, 0), vela(100, 102.5, 99, 102, 60_000)];
+    expect(saidaNoCaminho(minutos, vendida, "vendido")).toMatchObject({ motivo: "stop", em: 119_999 });
+  });
+
+  it("propriedade: o vendido num candle espelhado sai igual ao comprado no original", () => {
+    const C = 1000;
+    const espelho = (c: Candle): Candle => ({
+      ...c,
+      abre: dec(C).minus(c.abre),
+      maxima: dec(C).minus(c.minima),
+      minima: dec(C).minus(c.maxima),
+      fecha: dec(C).minus(c.fecha),
+    });
+    const n: NiveisSaida = { stop: dec(490), alvo: dec(515) };
+    const nv: NiveisSaida = { stop: dec(C - 490), alvo: dec(C - 515) };
+    let semente = 11;
+    const sorteio = () => {
+      semente = (semente * 1103515245 + 12345) % 2147483648;
+      return semente / 2147483648;
+    };
+    for (let i = 0; i < 500; i++) {
+      const abre = 480 + Math.round(sorteio() * 40);
+      const max = abre + Math.round(sorteio() * 30);
+      const min = abre - Math.round(sorteio() * 30);
+      const c = vela(abre, max, min, min + Math.round(sorteio() * (max - min)));
+      const comprado = saidaNoCandle(c, n);
+      const vendido = saidaNoCandle(espelho(c), nv, "vendido");
+      expect(vendido?.motivo).toBe(comprado?.motivo);
+      expect(vendido?.ambiguo).toBe(comprado?.ambiguo);
+      if (comprado && vendido) expect(vendido.preco.equals(dec(C).minus(comprado.preco))).toBe(true);
+    }
+  });
+});
