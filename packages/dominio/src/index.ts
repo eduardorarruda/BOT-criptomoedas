@@ -5,6 +5,7 @@ export * from "./dimensionamento.js";
 export * from "./dinheiro.js";
 export * from "./estrategia.js";
 export * from "./formatar.js";
+export * from "./fuso.js";
 export * from "./indicadores.js";
 export * from "./indicadores-sessao.js";
 export * from "./livro.js";
