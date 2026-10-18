@@ -270,3 +270,108 @@
     flex: 1;
   }
 }
+
+/* ---------- prévias de futuro (cenários) ---------- */
+.cenarios__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--espaco-2);
+}
+.cenario {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: var(--espaco-3);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+}
+.cenario--favoravel {
+  border-color: color-mix(in oklab, var(--marca) 55%, transparent);
+  background: var(--marca-tenue);
+}
+.cenario__topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cenario__nome {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-ui);
+  font-weight: 650;
+}
+.cenario__horizonte {
+  font-size: var(--t-pequeno);
+  margin-left: auto;
+}
+.cenario .medidor__rotulo {
+  min-width: 0;
+}
+.cenario .medidor__barra {
+  flex: 1 1 auto;
+}
+.cenario__detalhes {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--t-pequeno);
+}
+.cenario__detalhes dt {
+  font-size: var(--t-legenda);
+  color: var(--apagado);
+}
+.cenario__detalhes dd {
+  margin: 0;
+}
+.cenarios__avaliacao {
+  display: grid;
+  gap: 8px;
+}
+.cenarios__regra {
+  display: grid;
+  gap: 4px;
+  font-size: var(--t-ui);
+}
+.cenarios__regra p:first-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cenarios__regra--ganho svg {
+  color: var(--ganho);
+}
+.cenarios__regra--atencao svg {
+  color: var(--atencao);
+}
+.cenarios__regra--neutro svg {
+  color: var(--apagado);
+}
+.cenarios__motivo {
+  padding-left: 22px;
+}
+.cenarios__nota {
+  font-size: var(--t-legenda);
+  max-width: 78ch;
+}
+.cenarios__contra {
+  display: grid;
+  gap: 4px;
+  padding: var(--espaco-2) var(--espaco-3);
+  border-left: 2px solid var(--atencao);
+  font-size: var(--t-ui);
+}
+.cenarios__contra-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-pequeno);
+  font-weight: 600;
+}
+.cenarios__contra-titulo svg {
+  color: var(--atencao);
+}
+.cenarios__contra p {
+  max-width: 78ch;
+}

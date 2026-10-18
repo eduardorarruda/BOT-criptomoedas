@@ -24,7 +24,25 @@ describe("CartaoDecisao", () => {
     expect(screen.getByText(/RSI\(14\) caiu para 28/)).toBeInTheDocument();
     expect(screen.getByText(/passou por todas as barreiras/i)).toBeInTheDocument();
     expect(screen.getByText("US$ 0,0162")).toBeInTheDocument();
-    expect(screen.getByRole("meter", { name: /confiança/i })).toHaveAttribute("aria-valuenow", "72");
+    expect(screen.getByRole("meter", { name: /confiança/i })).toHaveAttribute("aria-valuenow", "64");
+  });
+
+  it("mostra as prévias de futuro da proposta com cenários", async () => {
+    const { fonte, decisao, robo } = await preparar();
+    renderizar(<CartaoDecisao decisao={decisao} robo={robo} />, fonte);
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Prévias de futuro (cenários)" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Valor esperado líquido")).toBeInTheDocument();
+    expect(screen.getByText("Principal argumento contra")).toBeInTheDocument();
+  });
+
+  it("proposta anterior aos cenários aparece como antes, sem o bloco", async () => {
+    const { fonte, decisao, robo } = await preparar();
+    const { cenarios: _c, contraArgumento: _a, avaliacao: _v, ...antiga } = decisao.proposta!;
+    renderizar(<CartaoDecisao decisao={{ ...decisao, proposta: antiga }} robo={robo} />, fonte);
+    expect(screen.getByText("O que a IA argumentou")).toBeInTheDocument();
+    expect(screen.queryByText("Prévias de futuro (cenários)")).toBeNull();
   });
 
   it("aprova a decisão que aguarda e avisa que a ordem vai sair", async () => {

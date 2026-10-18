@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatarDinheiro,
   formatarPercentual,
+  formatarPorcento,
   formatarPreco,
   formatarQuantidade,
   formatarCustoIa,
@@ -77,6 +78,19 @@ describe("formatarPercentual", () => {
 
   it("devolve traço para valor inválido", () => {
     expect(formatarPercentual(Number.NaN)).toBe("—");
+  });
+});
+
+describe("formatarPorcento", () => {
+  it("formata um valor que já está em % (0,31 → 0,31%), com sinal quando pedido", () => {
+    expect(formatarPorcento(0.31, { casas: 2, sinal: true })).toBe("+0,31%");
+    expect(formatarPorcento(-2.7, { casas: 2, sinal: true })).toBe("−2,70%");
+    expect(formatarPorcento(0, { casas: 2, sinal: true })).toBe("0,00%");
+    expect(formatarPorcento(12.5)).toBe("12,5%");
+  });
+
+  it("devolve traço para valor inválido", () => {
+    expect(formatarPorcento(Number.NaN)).toBe("—");
   });
 });
 

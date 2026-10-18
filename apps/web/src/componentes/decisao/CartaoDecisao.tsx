@@ -16,6 +16,7 @@ import { useAvisos } from "../Avisos";
 import { Botao } from "../Botao";
 import { Dinheiro } from "../Dinheiro";
 import { Selo } from "../Selo";
+import { Cenarios } from "./Cenarios";
 import { Proposta } from "./Proposta";
 
 /**
@@ -203,6 +204,7 @@ export function CartaoDecisao({ decisao: d, robo, compacto = false }: Props) {
             <p className="decisao__explicacao">{d.sinal.explicacao}</p>
           </section>
           {d.proposta ? <Proposta proposta={d.proposta} /> : null}
+          {d.proposta ? <Cenarios proposta={d.proposta} /> : null}
           <section className="decisao__bloco">
             <h3 className="decisao__subtitulo">O que o risco decidiu</h3>
             <Risco decisao={d} />
