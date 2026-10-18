@@ -11,6 +11,8 @@ const Booleano = z.enum(["true", "false", "1", "0"]).transform((v) => v === "tru
 export const EsquemaConfig = z
   .object({
     MOTOR_REDE: z.enum(["papel", "testnet"]).default("papel"),
+    /** "robos", "backtests" ou "tudo" (os dois no mesmo processo). Ver funcao.ts. */
+    MOTOR_FUNCAO: z.enum(["tudo", "robos", "backtests"]).default("tudo"),
     MOTOR_PAPEL_DADOS: z.enum(["testnet", "real"]).default("testnet"),
     MOTOR_ROBOS_ARQUIVO: z.string().min(1).default("robos.exemplo.json"),
     MOTOR_AGENTE_OBRIGATORIO: Booleano.default(true),

@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import type { Logger } from "pino";
 import { consumirBacktests, type ConsumidorBacktests } from "./backtest/fila.js";
 import { cacheDeCandlesDoBacktest, criarDadosHistoricos, redeDosDadosAoVivo } from "./dados-backtest.js";
+import { papeisDoMotor } from "./funcao.js";
 import { processarBacktest } from "./backtest/servico.js";
 import { montarMotor } from "./composicao.js";
 import { lerConfig, type Config } from "./config.js";
@@ -57,6 +58,8 @@ function ligarBacktests(config: Config, infra: Infra, registro: Logger): Consumi
   return consumirBacktests(redis, (id) => processarBacktest(deps, opcoes, id), registro);
 }
 
+const motorDe = (m: ReturnType<typeof montarMotor>) => [m.deps, m.opcoesMotor] as const;
+
 /** Liga o motor: configuração validada, banco (ou arquivo), Redis, fila e desligamento gracioso. */
 async function principal(): Promise<void> {
   const config = lerConfig(process.env);
@@ -79,17 +82,24 @@ async function principal(): Promise<void> {
     ...(infra.redis ? { redis: infra.redis } : {}),
     ...(arquivo ? { arquivo } : {}),
   };
-  const { deps, opcoesMotor } = montarMotor(config, fontes, registro);
-  const motor = new Motor(deps, opcoesMotor);
-  const { ligados, falharam } = await motor.iniciar();
-  const backtests = ligarBacktests(config, infra, registro);
+  const papeis = papeisDoMotor(config.MOTOR_FUNCAO);
+  const motor = papeis.robos ? new Motor(...motorDe(montarMotor(config, fontes, registro))) : undefined;
+  const { ligados, falharam } = motor ? await motor.iniciar() : { ligados: 0, falharam: 0 };
+  const backtests = papeis.backtests ? ligarBacktests(config, infra, registro) : undefined;
   registro.info(
-    { rede: config.MOTOR_REDE, ligados, falharam, banco: Boolean(infra.banco), redis: Boolean(infra.redis) },
+    {
+      funcao: config.MOTOR_FUNCAO,
+      rede: config.MOTOR_REDE,
+      ligados,
+      falharam,
+      banco: Boolean(infra.banco),
+      redis: Boolean(infra.redis),
+    },
     "motor no ar",
   );
   aoDesligar(registro, async () => {
     await backtests?.fechar();
-    await motor.parar();
+    await motor?.parar();
     await infra.redis?.quit();
     await infra.banco?.fechar();
   });

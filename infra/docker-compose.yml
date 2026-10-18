@@ -156,8 +156,11 @@ services:
     build: { context: .., dockerfile: infra/docker/motor.Dockerfile }
     image: ${ZENTRADE_IMAGEM:-zentrade}-motor:local
     restart: unless-stopped
-    environment:
+    environment: &ambiente-motor
       <<: *ambiente-comum
+      # Este processo só roda os robôs; os backtests ficam no motor-backtests, para um
+      # backtest pesado (CPU por minutos) não atrasar velas, stops e decisões ao vivo.
+      MOTOR_FUNCAO: robos
       # Dinheiro real não liga por aqui: papel (simulado) ou testnet.
       MOTOR_REDE: ${MOTOR_REDE:-papel}
       MOTOR_PAPEL_DADOS: ${MOTOR_PAPEL_DADOS:-testnet}
@@ -183,6 +186,19 @@ services:
     depends_on:
       migrar: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
+
+  # A mesma imagem do motor, só consumindo a fila de backtests.
+  motor-backtests:
+    profiles: ["app"]
+    image: ${ZENTRADE_IMAGEM:-zentrade}-motor:local
+    restart: unless-stopped
+    environment:
+      <<: *ambiente-motor
+      MOTOR_FUNCAO: backtests
+    depends_on:
+      migrar: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+      motor: { condition: service_started }
 
   agente:
     profiles: ["app"]
