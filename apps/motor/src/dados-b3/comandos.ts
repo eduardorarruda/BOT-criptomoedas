@@ -46,7 +46,7 @@ const DataB3 = (nome: string) =>
 const Intervalo = z.enum(INTERVALOS_B3, { error: `--intervalo aceita ${INTERVALOS_B3.join(", ")}` });
 
 /** 00:00 de Brasília do dia `AAAA-MM-DD`. */
-function meiaNoiteB3(texto: string): number {
+export function meiaNoiteB3(texto: string): number {
   const [ano, mes, dia] = texto.split("-").map(Number);
   return instanteLocal({ ano: ano ?? 0, mes: mes ?? 1, dia: dia ?? 1, hora: 0, minuto: 0 }, SAO_PAULO);
 }
@@ -57,7 +57,7 @@ const hojeB3 = (agora: number) => {
 };
 
 /** "2026-07-01 10:00", no horário de Brasília. */
-function quando(instante: number): string {
+export function quando(instante: number): string {
   const h = horaLocal(instante, SAO_PAULO);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${h.ano}-${p(h.mes)}-${p(h.dia)} ${p(h.hora)}:${p(h.minuto)}`;
@@ -70,7 +70,7 @@ function linhaGravados(simbolo: string, r: ResumoGravacao): string {
   return `gravados em ${simbolo}: ${partes.join(" · ")} (fora do pregão: ${r.foraDoPregao}; em formação: ${r.emFormacao})`;
 }
 
-function avisarRetencao(desde: number, agora: number, escrever: (l: string) => void): void {
+export function avisarRetencao(desde: number, agora: number, escrever: (l: string) => void): void {
   if (agora - desde > RETENCAO_MS)
     escrever(
       "aviso: o banco apaga candles com mais de 3 anos (política de retenção da tabela candles); o que for mais antigo some na próxima limpeza",
@@ -172,7 +172,7 @@ function argumentosCsv(argv: readonly string[]): z.infer<typeof ArgsCsv> & { fus
   return { ...lido.data, fusoLido: lerFuso(lido.data.fuso) };
 }
 
-function escreverIgnoradas(ignoradas: readonly LinhaIgnorada[], escrever: (l: string) => void): void {
+export function escreverIgnoradas(ignoradas: readonly LinhaIgnorada[], escrever: (l: string) => void): void {
   ignoradas.slice(0, MAXIMO_LINHAS_IGNORADAS).forEach((l) => escrever(`  linha ${l.linha}: ${l.motivo}`));
   if (ignoradas.length > MAXIMO_LINHAS_IGNORADAS)
     escrever(`  … e mais ${ignoradas.length - MAXIMO_LINHAS_IGNORADAS}`);
