@@ -302,6 +302,55 @@ Falhas de conexão, ordens recusadas pela corretora, liquidez fina (o deslizamen
 
 Hoje o backtest decide a saída intrabar em [`intrabar.ts`](../apps/motor/src/backtest/intrabar.ts) e a envia como ordem a mercado pelo ciclo do robô. Quando a corretora de papel ganhar ordens de stop/OCO em repouso (`packages/corretora/src/papel.ts`), o caminho é: na compra, colocar a OCO (stop + alvo) na corretora de papel; a cada candle, `alimentar` o candle completo para a corretora executar as ordens em repouso pela mínima e pela máxima (com a mesma regra de pior caso); trocar a ordem quando `atualizarStop` devolver `novoStop`; e trocar `vigiarDentroDoCandle` em [`rodar.ts`](../apps/motor/src/backtest/rodar.ts) por conferir as execuções da corretora. Os testes de `intrabar.test.ts` e de `rodar.test.ts` (stop, alvo, ambíguo, 1 minuto, stop móvel) servem de contrato para a troca.
 
+## Backtest no mini índice
+
+O backtest também simula o **mini índice (WIN)** da B3, a fase 1 de [Mini índice e Jev](mini-indice-e-jev.md#fases-e-critérios-de-avanço): só backtest, sem robô ao vivo e sem corretora. Na tela Backtests, escolha o mercado:
+
+- **Mini índice — WIN (dados reais importados):** o histórico do próprio WIN, exportado do MetaTrader 5 e importado por CSV ([dados da B3](dados-b3.md)). É o caminho recomendado. Sem candles importados, a tela explica como exportar e importar.
+- **Mini índice — WIN (aproximação pelo Ibovespa):** o índice à vista (`WIN-IBOV`), quando há candles dele. O resultado vem com o aviso: "Aproximação: o índice à vista não tem a base do futuro nem o horário completo do WIN; valide com dados reais do WIN antes de operar."
+
+Intervalos: 5m, 15m e 1h. Não há candles de 1 minuto da B3, então a precisão de 1 minuto não vale no WIN.
+
+### Comprado, vendido ou os dois
+
+O WIN se opera nos dois sentidos. A estratégia ganha uma **direção** (`comprado`, `vendido` ou `ambos`; sem ela, `comprado`) e, para vender a descoberto, uma **regra de entrada vendida** e, opcional, uma **regra de saída vendida** (recompra). Tudo do lado vendido é o espelho do comprado: o stop fica acima da entrada e só desce; o alvo fica abaixo; o stop por ATR é entrada + k × ATR; o stop móvel acompanha a **menor mínima**; o empate vale depois de uma queda do tamanho do gatilho. Se as regras de compra e de venda dizem sim no mesmo candle, a estratégia fica de fora. Testes de propriedade conferem a simetria: o vendido no gráfico espelhado faz exatamente o mesmo que o comprado no original.
+
+O à vista de cripto só compra: estratégia vendida ou nos dois sentidos não roda no backtest de cripto e não vira robô (a API recusa e a tela explica).
+
+### O modelo do contrato
+
+| Item              | Como é simulado (padrão)                                                                                                                                                                      |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contrato          | R$ 0,20 por ponto por contrato; tick de 5 pontos; contratos inteiros                                                                                                                          |
+| Execução          | no fechamento do candle da decisão, levado ao tick **contra** você (compra para cima, venda para baixo) e mais o deslizamento                                                                 |
+| Deslizamento      | 1 tick por lado, em toda execução (entrada, stop, alvo, zeragem)                                                                                                                              |
+| Tarifa da B3      | R$ 0,25 por contrato por lado (emolumentos + registro de day trade de quem opera pouco); configurável                                                                                         |
+| Corretagem        | R$ 0 por contrato por lado; configurável                                                                                                                                                      |
+| Stop e alvo       | dentro do candle, no pior caso: comprado, o stop é tocado pela mínima; vendido, pela **máxima**; os dois no mesmo candle, conta o stop; salto de abertura além do stop sai na abertura        |
+| Sessão (Brasília) | entradas das 09:15 às 17:30; o candle do leilão de abertura (o primeiro do dia) não abre posição                                                                                              |
+| Zeragem           | no fechamento do candle que termina às 18:15 ou depois, ou no último candle do dia: nada dorme posicionado                                                                                    |
+| Tamanho           | contratos = ⌊risco ÷ (pontos do stop × 0,20 + custos de ida e volta)⌋; risco padrão de R$ 100 por operação                                                                                    |
+| Limites           | no máximo 5 contratos e no máximo capital ÷ margem (R$ 155 por contrato, a margem de day trade da B3; a corretora pode exigir mais); perda diária, ordens por hora e pausa após perda do robô |
+| Capital           | R$ 5.000, se o pedido não disser outro                                                                                                                                                        |
+
+Exemplo da nota 04: risco de R$ 50 e stop de 150 pontos: 150 × 0,20 + 2,50 = R$ 32,50 por contrato, e 50 ÷ 32,50 = 1,5, logo 1 contrato. Se o resultado for zero, a operação não cabe e não é feita (o relatório conta esses sinais).
+
+### O que o resultado mostra
+
+- **Reais e pontos:** resultado líquido, bruto (antes de tarifa, corretagem e deslizamento), por contrato, contratos negociados, tarifas da B3, corretagem e deslizamento (em reais e em pontos), resultado das compras e das vendas, maior queda em reais e em % do pico.
+- **IR estimado:** 20% do lucro líquido de cada mês em day trade, com o prejuízo de day trade levado adiante sem prazo, e o **resultado depois do IR (estimado)**. O IRRF de 1% ("dedo-duro") aparece só como informação: é antecipação e abate o DARF. **Não é parecer tributário.**
+- **Referências:** comprar e segurar não faz sentido num futuro de day trade. As referências são **ficar de fora** (zero, sem custo) e **sempre comprado na sessão** (1 contrato da abertura à zeragem, todo pregão, com os mesmos custos). A segunda entra nos gráficos onde o cripto mostra o buy and hold.
+- **Validação:** a mesma do cripto (dentro e fora da amostra, walk-forward, Monte Carlo, tentativas e Sharpe deflacionado), com o Sharpe anualizado pelos candles do pregão, não por 365 × 24 h.
+- **Veredito:** além das verificações de sempre, "custos consomem X% do ganho bruto", lucro depois do IR estimado, comparação com sempre comprado na sessão, dados reais ou aproximação e sinais que não couberam no risco.
+
+### Modelos do mini índice
+
+Quatro modelos em 5 minutos, nos dois sentidos e com taxa zero (os custos vêm do modelo do contrato): **rompimento da faixa de abertura** (30 min), **tendência EMA 9/21 com ADX**, **volta à média com Bollinger no pregão** e **Donchian 20/10 com stop por ATR**. Para eles, a árvore de regras ganhou dois indicadores do pregão, que recomeçam a cada dia de Brasília e não olham candle de depois: o **VWAP do dia** (sem volume, como no índice à vista, não tem valor) e a **faixa de abertura** (máxima e mínima dos primeiros N minutos; só existe depois que eles passam). São exemplos para estudar, não recomendação.
+
+### O que este backtest ainda não mostra
+
+Rolagem e vencimento (a série é contínua como veio do CSV), leilões e túneis de preço, circuit breaker, deslizamento maior na abertura e em notícias (configure mais ticks para ver o efeito), margem que muda com a volatilidade e o DARF abaixo de R$ 10, que fica para o mês seguinte. A fase 1 só avança se o resultado fora da amostra, depois dos custos, passar nos critérios escritos antes (veja o estudo).
+
 ## Aviso, de novo
 
 Este projeto é software de apoio à decisão. Ele não sabe o futuro, e nenhuma combinação de média, RSI e IA sabe. Use só dinheiro que você pode perder.
