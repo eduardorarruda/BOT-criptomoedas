@@ -7,6 +7,7 @@ import { CartaoDecisao } from "../componentes/decisao/CartaoDecisao";
 import { Dinheiro } from "../componentes/Dinheiro";
 import { ErroCarregar, Esqueleto, EstadoVazio } from "../componentes/Estados";
 import { ProximoPasso } from "../componentes/ProximoPasso";
+import { PlacarClaude } from "../componentes/placar/PlacarClaude";
 import { CartaoKpi, GradeKpi } from "../componentes/Kpi";
 import {
   AlternarDensidade,
@@ -308,6 +309,7 @@ export function Decisoes() {
         </BarraFiltros>
       )}
       <AnalisesAoVivo robos={robos} roboId={roboUnico} />
+      {nadaAinda ? null : <PlacarClaude roboId={roboUnico} />}
       {consulta.isPending ? <Esqueleto forma="lista" quantidade={6} rotulo="Carregando as decisões" /> : null}
       {consulta.error ? (
         <ErroCarregar erro={consulta.error} tentarDeNovo={() => void consulta.refetch()} />

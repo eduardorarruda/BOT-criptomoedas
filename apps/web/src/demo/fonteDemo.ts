@@ -11,6 +11,7 @@ import { USUARIO_DEMO } from "./dados";
 import { comTentativasDemo, simularBacktest } from "./backtestDemo";
 import { paraDominio } from "../lib/estrategia";
 import { gerarVelas } from "./velas";
+import { placarDemo } from "./placar";
 
 /**
  * Modo de demonstração (VITE_DEMO=1): a tela inteira roda no navegador com dados
@@ -245,6 +246,7 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
     ),
     aprovarDecisao: comAtraso((id) => decidirAprovacao(id, true)),
     recusarDecisao: comAtraso((id) => decidirAprovacao(id, false)),
+    placar: comAtraso((f = {}) => placarDemo(estado, f, agora())),
 
     ordens: comAtraso((roboId) => {
       const daquele = roboId

@@ -1,6 +1,6 @@
 import type { BuscaConhecimento } from "@zentrade/conhecimento";
 import type { PedidoAnalise } from "@zentrade/contratos";
-import type { Valor } from "@zentrade/dominio";
+import type { DecisaoPlacar, Valor } from "@zentrade/dominio";
 import type { OrcamentoRisco } from "../serializacao.js";
 import type { RegistroFontes } from "./registro.js";
 
@@ -22,11 +22,24 @@ export interface DecisaoPassada {
   /** Resultado líquido da operação, quando já avaliado. */
   readonly resultado: Valor | null;
   readonly explicacao: string;
+  /** O placar do Claude nesta entrada: o que ele decidiu e como terminou (real ou contrafactual). */
+  readonly avaliacao?: AvaliacaoPassada | null;
+}
+
+export interface AvaliacaoPassada {
+  readonly claude: "aprovou" | "vetou";
+  readonly situacao: "concluida" | "pendente";
+  readonly fonte: "real" | "contrafactual";
+  readonly resultado: Valor | null;
+  /** Aprovação certa = resultado > 0; veto certo = contrafactual ≤ 0; `null` enquanto pendente. */
+  readonly acertou: boolean | null;
 }
 
 /** Decisões anteriores do robô. A implementação SQL está em postgres/historico.ts. */
 export interface PortaHistoricoDecisoes {
   recentes(roboId: string, limite: number): Promise<DecisaoPassada[]>;
+  /** As últimas `limite` entradas do robô que passaram pelo Claude, para o placar. */
+  placar?(roboId: string, limite: number): Promise<DecisaoPlacar[]>;
 }
 
 export interface DependenciasFerramentas {

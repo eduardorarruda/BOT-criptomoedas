@@ -3,6 +3,7 @@ import {
   DecisaoEsquema,
   EstrategiaEsquema,
   OrdemEsquema,
+  PlacarEsquema,
   PosicaoEsquema,
   RoboEsquema,
 } from "@zentrade/contratos/esquemas";
@@ -88,6 +89,7 @@ export function criarFonteApi(cliente: ClienteApi = criarCliente()): Fonte {
     decisoes: (f = {}) => pedir("GET", "/decisoes", lista(DecisaoEsquema), undefined, { ...f }),
     aprovarDecisao: (id) => pedir("POST", `/decisoes/${encodeURIComponent(id)}/aprovar`, DecisaoEsquema),
     recusarDecisao: (id) => pedir("POST", `/decisoes/${encodeURIComponent(id)}/recusar`, DecisaoEsquema),
+    placar: (f = {}) => pedir("GET", "/decisoes/placar", PlacarEsquema, undefined, { ...f }),
 
     ordens: (roboId) => pedir("GET", "/ordens", lista(OrdemEsquema), undefined, { roboId }),
     candles: (simbolo, intervalo) =>

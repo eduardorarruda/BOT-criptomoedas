@@ -9,6 +9,8 @@ import { cacheDeCandlesDoBacktest, criarDadosHistoricos, redeDosDadosAoVivo } fr
 import { papeisDoMotor } from "./funcao.js";
 import { processarBacktest } from "./backtest/servico.js";
 import { montarMotor } from "./composicao.js";
+import { ligarAvaliador, type AvaliadorLigado } from "./placar/avaliador.js";
+import { RelogioSistema } from "./relogio.js";
 import { lerConfig, type Config } from "./config.js";
 import { Motor } from "./motor.js";
 import { criarRegistro } from "./registro.js";
@@ -60,6 +62,25 @@ function ligarBacktests(config: Config, infra: Infra, registro: Logger): Consumi
   return consumirBacktests(redis, (id) => processarBacktest(deps, opcoes, id), registro);
 }
 
+/** O avaliador do placar do Claude: só no processo dos robôs, com banco (lê candles e decisões dele). */
+function ligarPlacar(config: Config, infra: Infra, registro: Logger): AvaliadorLigado | undefined {
+  if (!config.MOTOR_PLACAR || !infra.banco) return undefined;
+  return ligarAvaliador(
+    { placar: infra.banco.placar, candles: infra.banco.mercado, relogio: new RelogioSistema(), registro },
+    {
+      lote: config.MOTOR_PLACAR_LOTE,
+      janelaDias: config.MOTOR_PLACAR_DIAS,
+      revisarMs: config.MOTOR_PLACAR_MINUTOS * 60_000,
+      intervaloMs: config.MOTOR_PLACAR_MINUTOS * 60_000,
+      placar: {
+        horizonte: config.MOTOR_PLACAR_HORIZONTE,
+        bpsContra: config.MOTOR_PLACAR_BPS,
+        aquecimento: 300,
+      },
+    },
+  );
+}
+
 const motorDe = (m: ReturnType<typeof montarMotor>) => [m.deps, m.opcoesMotor] as const;
 
 /** Liga o motor: configuração validada, banco (ou arquivo), Redis, fila e desligamento gracioso. */
@@ -88,6 +109,7 @@ async function principal(): Promise<void> {
   const motor = papeis.robos ? new Motor(...motorDe(montarMotor(config, fontes, registro))) : undefined;
   const { ligados, falharam } = motor ? await motor.iniciar() : { ligados: 0, falharam: 0 };
   const backtests = papeis.backtests ? ligarBacktests(config, infra, registro) : undefined;
+  const placar = papeis.robos ? ligarPlacar(config, infra, registro) : undefined;
   registro.info(
     {
       funcao: config.MOTOR_FUNCAO,
@@ -96,11 +118,13 @@ async function principal(): Promise<void> {
       falharam,
       banco: Boolean(infra.banco),
       redis: Boolean(infra.redis),
+      placar: Boolean(placar),
     },
     "motor no ar",
   );
   aoDesligar(registro, async () => {
     await backtests?.fechar();
+    await placar?.parar();
     await motor?.parar();
     await infra.redis?.quit();
     await infra.banco?.fechar();

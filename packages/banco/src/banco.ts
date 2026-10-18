@@ -4,6 +4,7 @@ import { conectar, type Conexao } from "./cliente.js";
 import { portaCredenciais } from "./portas/credenciais.js";
 import { portaDecisoes } from "./portas/decisoes.js";
 import { portaOrdens } from "./portas/ordens.js";
+import { portaPlacar } from "./portas/placar.js";
 import { portaProtecoes } from "./portas/protecoes.js";
 import { portaRiscoConta, type AtivoDoSimbolo } from "./portas/risco-conta.js";
 import { portaRobos } from "./portas/robos.js";
@@ -25,6 +26,7 @@ import { repositorioImobiliario } from "./repositorios/imobiliario.js";
 import { repositorioLimitesConta } from "./repositorios/limites-conta.js";
 import { repositorioMercado } from "./repositorios/mercado.js";
 import { repositorioOrdens } from "./repositorios/ordens.js";
+import { repositorioPlacar } from "./repositorios/placar.js";
 import { repositorioPluggy } from "./repositorios/pluggy.js";
 import { repositorioIndicadores, repositorioRendaFixa } from "./repositorios/renda-fixa.js";
 import { repositorioResumo } from "./repositorios/resumo.js";
@@ -104,6 +106,7 @@ export function criarBancoDoMotor(opcoes: OpcoesBancoDoMotor) {
       : null,
     mercado: repositorioMercado(conexao.db),
     backtests: repositorioBacktests(conexao.db),
+    placar: portaPlacar(conexao.db),
     fechar: () => conexao.fechar(),
   };
 }
@@ -133,6 +136,7 @@ export function criarBanco(opcoes: OpcoesBanco) {
     estrategias: repositorioEstrategias(db),
     robos: repositorioRobos(db),
     decisoes: repositorioDecisoes(db),
+    placar: repositorioPlacar(db),
     ordens: repositorioOrdens(db),
     mercado: repositorioMercado(db),
     backtests: repositorioBacktests(db),

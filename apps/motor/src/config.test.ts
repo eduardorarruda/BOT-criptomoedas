@@ -109,4 +109,20 @@ describe("configuração do motor (variáveis de ambiente)", () => {
     expect(() => lerConfig({ REDIS_URL: "http://x" })).toThrow(/REDIS_URL/);
     expect(() => lerConfig({ MOTOR_BACKTEST_RISCO: "0.9" })).toThrow(/MOTOR_BACKTEST_RISCO/);
   });
+
+  it("placar do Claude: ligado, a cada 5 min, 500 candles de horizonte e 7 pontos-base; tudo ajustável", () => {
+    expect(lerConfig({})).toMatchObject({
+      MOTOR_PLACAR: true,
+      MOTOR_PLACAR_MINUTOS: 5,
+      MOTOR_PLACAR_HORIZONTE: 500,
+      MOTOR_PLACAR_BPS: 7,
+      MOTOR_PLACAR_DIAS: 30,
+      MOTOR_PLACAR_LOTE: 50,
+    });
+    expect(lerConfig({ MOTOR_PLACAR: "false", MOTOR_PLACAR_HORIZONTE: "100" })).toMatchObject({
+      MOTOR_PLACAR: false,
+      MOTOR_PLACAR_HORIZONTE: 100,
+    });
+    expect(() => lerConfig({ MOTOR_PLACAR_HORIZONTE: "5000" })).toThrow(/MOTOR_PLACAR_HORIZONTE/);
+  });
 });

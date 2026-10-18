@@ -13,6 +13,7 @@ export * from "./comum.js";
 export * from "./dados.js";
 export * from "./eventos.js";
 export * from "./fuso.js";
+export * from "./placar.js";
 export * from "./proposta.js";
 export * from "./regra.js";
 export * from "./risco-conta.js";

@@ -251,6 +251,74 @@ describe("ferramentas do analista", () => {
       expect(recentes).toHaveBeenCalledWith("robo-1", 10);
       expect(dados.decisoes[0].resultado).toBeNull();
     });
+
+    it("traz a avaliação de cada entrada e o placar do robô em frases", async () => {
+      const recentes = vi.fn(async () => [
+        {
+          id: "dec-1",
+          em: 0,
+          sinal: "COMPRAR" as const,
+          acaoProposta: "aguardar" as const,
+          estado: "registrada",
+          preco: dec("100"),
+          resultado: null,
+          explicacao: "rompeu",
+          avaliacao: {
+            claude: "vetou" as const,
+            situacao: "concluida" as const,
+            fonte: "contrafactual" as const,
+            resultado: dec("-2.5"),
+            acertou: true,
+          },
+        },
+      ]);
+      const placar = vi.fn(async () => [
+        {
+          id: "dec-1",
+          em: 0,
+          claude: "vetou" as const,
+          confianca: 0.7,
+          fonte: "contrafactual" as const,
+          resultado: dec("-2.5"),
+          retorno: -0.025,
+          moeda: "USDT",
+          roboId: "robo-1",
+          roboNome: "robo-1",
+          estrategiaId: "",
+          estrategiaNome: "",
+          mercado: "cripto" as const,
+        },
+      ]);
+      const { dados } = await rodar("historico_decisoes", {}, {}, deps({ historico: { recentes, placar } }));
+      expect(placar).toHaveBeenCalledWith("robo-1", 200);
+      expect(dados.decisoes[0].avaliacao).toEqual({
+        claude: "vetou",
+        situacao: "concluida",
+        fonte: "contrafactual",
+        resultado: "-2.5",
+        acertou: true,
+      });
+      expect(dados.placar).toContain("Nos últimos 1 sinais avaliados neste robô");
+      expect(dados.placar).toContain("vetou 1 e 1 veto estava certo");
+    });
+
+    it("sem placar na porta: placar null e avaliação null", async () => {
+      const recentes = vi.fn(async () => [
+        {
+          id: "d",
+          em: 0,
+          sinal: "COMPRAR" as const,
+          acaoProposta: "comprar" as const,
+          estado: "registrada",
+          preco: dec("1"),
+          resultado: null,
+          explicacao: "",
+        },
+      ]);
+      const { dados } = await rodar("historico_decisoes", {}, {}, deps({ historico: { recentes } }));
+      expect(dados.placar).toBeNull();
+      expect(dados.decisoes[0].avaliacao).toBeNull();
+    });
   });
 });
 

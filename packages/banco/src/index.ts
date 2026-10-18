@@ -87,4 +87,6 @@ export type { Escopo, TokenApi } from "./repositorios/tokens.js";
 export type { Usuario, UsuarioComSenha } from "./repositorios/usuarios.js";
 export type { VerificacaoAuditoria } from "./repositorios/auditoria.js";
 export { VALIDADE_APROVACAO_PADRAO_MS } from "./portas/decisoes.js";
+export { portaPlacar } from "./portas/placar.js";
+export { LIMITE_PLACAR, type FiltroPlacarBanco, type RepositorioPlacar } from "./repositorios/placar.js";
 export * as esquema from "./esquema/index.js";
