@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DECISOES } from "../teste/api-falsa.js";
+import { CENARIOS } from "../teste/proposta.js";
 import { explicarDecisao, formatarBacktest, formatarDecisoes, formatarResumo } from "./formatar.js";
 
 describe("formatação para gente", () => {
@@ -87,5 +88,34 @@ describe("formatação para gente", () => {
       "Backtest b: na_fila — BTCUSDT 1h, 1970-01-01 00:00 UTC a 1970-01-01 01:00 UTC",
     );
     expect(formatarBacktest({ ...b, estado: "falhou", erro: "sem candles" })).toMatch(/Erro: sem candles/);
+  });
+
+  it("mostra as prévias de futuro, a avaliação do código e o contra-argumento", () => {
+    const base = DECISOES[0]!;
+    const t = explicarDecisao({
+      ...base,
+      proposta: {
+        ...base.proposta!,
+        cenarios: CENARIOS,
+        contraArgumento: "o volume não confirma",
+        avaliacao: {
+          valorEsperado: 0.345,
+          favoravel: "alta",
+          probabilidadeFavoravel: 0.5,
+          limiar: 0.6,
+          aplicada: true,
+          aprovada: false,
+          motivo: "probabilidade do cenário de alta 50% < limiar de 60%",
+        },
+      },
+    } as never);
+    expect(t).toMatch(/Cenários:/);
+    expect(t).toMatch(
+      /alta 50%, em até 12 velas: \+1,2% — confirma: fechar acima de 60\.600; invalida: fechar abaixo de 60\.200/,
+    );
+    expect(t).toMatch(
+      /Valor esperado \(código\): \+0,345% — barrada: probabilidade do cenário de alta 50% < limiar de 60%/,
+    );
+    expect(t).toMatch(/Contra-argumento: o volume não confirma/);
   });
 });
