@@ -3,3 +3,6 @@
 *.ico binary
 # A fixture do MetaTrader 5 tem fim de linha CRLF de propósito (é o que o terminal exporta).
 apps/motor/src/teste/fixtures/*.csv -text
+# A fixture de negócios da B3 do dia 14 tem fim de linha CRLF de propósito; os .zip são binários.
+apps/motor/src/teste/fixtures/negocios-drv-*.txt -text
+apps/motor/src/teste/fixtures/*.zip binary
