@@ -23,6 +23,7 @@ import { investimentosFalsos } from "./teste/investimentos-falsos.js";
 import { pedidoExemplo, USUARIO_TESTE } from "./teste/pedido.js";
 
 const AGORA = Date.UTC(2026, 9, 12, 15);
+const SP = "America/Sao_Paulo";
 
 const uso = (u: Partial<UsoOrcamento>): UsoOrcamento => ({
   gastoMes: dec(0),
@@ -124,14 +125,15 @@ describe("orçamento de IA: regras", () => {
 
   it("avisa ao atravessar 80% e 100%, uma vez por marco e período", () => {
     const u = uso({ gastoMes: dec("8.5"), limiteMensal: dec(10) });
-    const [a80] = marcosAtravessados(USUARIO_TESTE, u, dec(1), AGORA);
+    const [a80] = marcosAtravessados(USUARIO_TESTE, u, dec(1), AGORA, SP);
     expect(a80).toMatchObject({ tipo: "orcamento_ia_80", chave: `orcamento_ia_80:${USUARIO_TESTE}:2026-10` });
-    expect(marcosAtravessados(USUARIO_TESTE, u, dec("0.1"), AGORA)).toEqual([]); // já estava acima de 80%
+    expect(marcosAtravessados(USUARIO_TESTE, u, dec("0.1"), AGORA, SP)).toEqual([]); // já estava acima de 80%
     const salto = marcosAtravessados(
       USUARIO_TESTE,
       uso({ gastoMes: dec(12), limiteMensal: dec(10) }),
       dec(5),
       AGORA,
+      SP,
     );
     expect(salto.map((a) => a.tipo)).toEqual(["orcamento_ia_80", "orcamento_ia_100"]);
     const diario = marcosAtravessados(
@@ -139,11 +141,38 @@ describe("orçamento de IA: regras", () => {
       uso({ gastoDia: dec(1), limiteDiario: dec(1) }),
       dec("0.5"),
       AGORA,
+      SP,
     );
     expect(diario.map((a) => a.chave)).toEqual([
       `orcamento_ia_80:${USUARIO_TESTE}:2026-10-12`,
       `orcamento_ia_100:${USUARIO_TESTE}:2026-10-12`,
     ]);
+  });
+
+  it("o dia e o mês do orçamento são os do fuso da instância: às 22:52 de Brasília ainda é 17/10", () => {
+    const noite = Date.parse("2026-10-18T01:52:00Z"); // 17/10 22:52 em Brasília
+    const diario = marcosAtravessados(
+      USUARIO_TESTE,
+      uso({ gastoDia: dec(1), limiteDiario: dec(1) }),
+      dec("0.5"),
+      noite,
+      SP,
+    );
+    expect(diario.map((a) => a.chave)).toEqual([
+      `orcamento_ia_80:${USUARIO_TESTE}:2026-10-17`,
+      `orcamento_ia_100:${USUARIO_TESTE}:2026-10-17`,
+    ]);
+    expect(diario[1]?.mensagem).not.toMatch(/UTC/);
+    expect(diario[1]?.mensagem).toMatch(/meia-noite \(horário de Brasília\)/);
+    // 31/10 22:00 em Brasília (já novembro em UTC): o mês ainda é outubro
+    const [mes] = marcosAtravessados(
+      USUARIO_TESTE,
+      uso({ gastoMes: dec("8.5"), limiteMensal: dec(10) }),
+      dec(1),
+      Date.parse("2026-11-01T01:00:00Z"),
+      SP,
+    );
+    expect(mes?.chave).toBe(`orcamento_ia_80:${USUARIO_TESTE}:2026-10`);
   });
 
   it("sem conseguir ler o orçamento, não libera; erro ao gravar só vai para o log", async () => {

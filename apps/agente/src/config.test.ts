@@ -17,6 +17,14 @@ describe("configDoAgente", () => {
     });
   });
 
+  it("fuso da instância: Brasília por padrão; inválido derruba a partida explicando", () => {
+    expect(configDoAgente(valido).fuso).toBe("America/Sao_Paulo");
+    expect(configDoAgente({ ...valido, ZENTRADE_FUSO: "America/New_York" }).fuso).toBe("America/New_York");
+    expect(() => configDoAgente({ ...valido, ZENTRADE_FUSO: "Sao_Paulo" })).toThrow(
+      /ZENTRADE_FUSO: fuso desconhecido: "Sao_Paulo"/,
+    );
+  });
+
   it("lista tudo o que falta, sem ecoar valores secretos", () => {
     const erro = (() => {
       try {

@@ -1,8 +1,8 @@
 import type { Fonte } from "@zentrade/contratos";
-import { paraTexto } from "@zentrade/dominio";
+import { diaNoFuso, FUSO_PADRAO, paraTexto } from "@zentrade/dominio";
 import { z } from "zod";
 import { definirFerramenta } from "./definicao.js";
-import { dataCurta, json, type ContextoAnalise, type DependenciasFerramentas } from "./contexto.js";
+import { json, type ContextoAnalise, type DependenciasFerramentas } from "./contexto.js";
 
 const Entrada = z.object({ limite: z.number().int().min(1).max(20).default(10) });
 
@@ -17,7 +17,8 @@ export function historicoDecisoes(ctx: ContextoAnalise, deps: DependenciasFerram
       const decisoes = await deps.historico.recentes(ctx.pedido.robo.id, e.limite);
       return json({
         decisoes: decisoes.map((d) => {
-          const fonte: Fonte = { tipo: "diario", id: d.id, titulo: `Decisão ${d.id}`, data: dataCurta(d.em) };
+          const data = diaNoFuso(d.em, deps.fuso ?? FUSO_PADRAO);
+          const fonte: Fonte = { tipo: "diario", id: d.id, titulo: `Decisão ${d.id}`, data };
           ctx.registro.registrar(fonte);
           return {
             fonte,

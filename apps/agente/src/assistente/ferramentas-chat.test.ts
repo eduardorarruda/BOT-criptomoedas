@@ -4,6 +4,7 @@ import { investimentosFalsos } from "../teste/investimentos-falsos.js";
 import { USUARIO_TESTE } from "../teste/pedido.js";
 import { RegistroCitacoes } from "./citacoes.js";
 import { ferramentasDoChat, type DadosDaPessoa } from "./ferramentas-chat.js";
+import { linhaDoAgora } from "../agora.js";
 import { promptComHistorico, SYSTEM_CHAT, turnosAlternados } from "./prompt-chat.js";
 
 const DECISAO = "3f1c8a52-1d2e-4c3b-9a8f-0e1d2c3b4a59";
@@ -21,6 +22,7 @@ function montar(
   dados: Partial<DadosDaPessoa> = {},
   achados: unknown[] = [],
   modo: "hibrida" | "palavras" = "hibrida",
+  agora = 99,
 ) {
   const citacoes = new RegistroCitacoes();
   const d: DadosDaPessoa = {
@@ -33,7 +35,7 @@ function montar(
     ...dados,
   };
   const lista = ferramentasDoChat(
-    { usuarioId: USUARIO_TESTE, citacoes, agora: () => 99 },
+    { usuarioId: USUARIO_TESTE, citacoes, agora: () => agora, fuso: "America/Sao_Paulo" },
     { dados: d, busca: { modo, buscar: vi.fn(async () => achados as never) } },
   );
   const rodar = async (nome: string, entrada: unknown = {}) => {
@@ -65,7 +67,7 @@ describe("ferramentas do assistente", () => {
       resumo: vi.fn(async () => ({ robosAtivos: 2 }) as never),
       robos: vi.fn(async () => [robo] as never),
     });
-    expect((await rodar("resumo_da_conta")).dados).toEqual({ robosAtivos: 2 });
+    expect((await rodar("resumo_da_conta")).dados).toMatchObject({ robosAtivos: 2 });
     expect(d.resumo).toHaveBeenCalledWith(USUARIO_TESTE, 99);
     const [r] = (await rodar("listar_robos")).dados as Record<string, unknown>[];
     expect(r).toEqual({
@@ -80,6 +82,24 @@ describe("ferramentas do assistente", () => {
     });
   });
 
+  it("resumo de hoje: o dia local (às 22:52 de Brasília é 17/10, não o dia UTC 18/10)", async () => {
+    const noite = Date.parse("2026-10-18T01:52:00Z");
+    const { rodar, d } = montar(
+      { resumo: vi.fn(async () => ({ robosAtivos: 0 }) as never) },
+      [],
+      "hibrida",
+      noite,
+    );
+    const r = await rodar("resumo_da_conta");
+    expect(r.dados).toMatchObject({
+      hoje: "hoje (17/10)",
+      desde: "17/10/2026 00:00 (horário de Brasília)",
+      robosAtivos: 0,
+    });
+    expect(r.texto).not.toMatch(/UTC|18\/10/);
+    expect(d.resumo).toHaveBeenCalledWith(USUARIO_TESTE, noite);
+  });
+
   it("explicar_decisao valida o id, cita a decisão e avisa quando não acha", async () => {
     const { rodar, citacoes } = montar({
       decisao: vi.fn(async (_u: string, id: string) => (id === DECISAO ? decisao : null)),
@@ -87,7 +107,7 @@ describe("ferramentas do assistente", () => {
     expect((await rodar("explicar_decisao", { decisaoId: "1; drop table" })).ok).toBe(false);
     const r = await rodar("explicar_decisao", { decisaoId: DECISAO });
     expect(r.dados).toMatchObject({
-      quando: "2026-10-09 14:30 UTC",
+      quando: "09/10/2026 11:30 (horário de Brasília)",
       estado: "barrada",
       risco: { barreiras: ["exposição acima do limite"] },
     });
@@ -111,7 +131,8 @@ describe("ferramentas do assistente", () => {
     });
     const ordens = await rodar("ordens_recentes", { limite: 3 });
     expect(d.ordens).toHaveBeenCalledWith(USUARIO_TESTE, { limite: 3 });
-    expect(ordens.dados).toEqual([{ id: "o1", criadaEm: "2026-01-02 03:04 UTC" }]);
+    // 03:04 UTC de 2/1 ainda é 1º/1 em Brasília
+    expect(ordens.dados).toEqual([{ id: "o1", criadaEm: "02/01/2026 00:04 (horário de Brasília)" }]);
     expect((await rodar("decisoes_recentes", { limite: 500 })).ok).toBe(false);
   });
 
@@ -164,6 +185,7 @@ describe("RegistroCitacoes", () => {
 
 describe("prompts do chat", () => {
   const agora = new Date("2026-10-10T12:00:00Z");
+  const SP = "America/Sao_Paulo";
   it("instruções citam os investimentos e mantêm a regra de não recomendar compra nem venda", () => {
     expect(SYSTEM_CHAT).toMatch(/carteira de cripto/);
     expect(SYSTEM_CHAT).toMatch(/renda fixa/);
@@ -184,15 +206,31 @@ describe("prompts do chat", () => {
         pergunta: "d",
       },
       agora,
+      SP,
     );
     expect(turnos.map((t) => t.role)).toEqual(["user", "assistant", "user"]);
     expect(turnos[0]!.content).toBe("a\n\nb");
-    expect(turnos[2]!.content).toBe("Agora (UTC): 2026-10-10T12:00:00.000Z\n\nd");
+    expect(turnos[2]!.content).toBe(
+      "Agora: sábado, 10/10/2026 09:00 (America/Sao_Paulo; UTC 2026-10-10T12:00Z)\n\nd",
+    );
   });
 
   it("CLI: sem histórico, só a data e a pergunta", () => {
-    expect(promptComHistorico({ historico: [], pergunta: "oi" }, agora)).toBe(
-      "Agora (UTC): 2026-10-10T12:00:00.000Z\n\nPergunta atual da pessoa:\n\noi",
+    expect(promptComHistorico({ historico: [], pergunta: "oi" }, agora, SP)).toBe(
+      "Agora: sábado, 10/10/2026 09:00 (America/Sao_Paulo; UTC 2026-10-10T12:00Z)\n\nPergunta atual da pessoa:\n\noi",
+    );
+  });
+
+  it("o agora do print: 22:52 de sábado, 17/10, em Brasília (já 18/10 em UTC)", () => {
+    const noite = new Date("2026-10-18T01:52:00Z");
+    expect(linhaDoAgora(noite, SP)).toBe(
+      "Agora: sábado, 17/10/2026 22:52 (America/Sao_Paulo; UTC 2026-10-18T01:52Z)",
+    );
+    expect(promptComHistorico({ historico: [], pergunta: "oi" }, noite, SP)).toMatch(
+      /^Agora: sábado, 17\/10\/2026 22:52/,
+    );
+    expect(linhaDoAgora(noite.getTime(), "America/New_York")).toBe(
+      "Agora: sábado, 17/10/2026 21:52 (America/New_York; UTC 2026-10-18T01:52Z)",
     );
   });
 });

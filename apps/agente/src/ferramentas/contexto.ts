@@ -32,8 +32,14 @@ export interface PortaHistoricoDecisoes {
 export interface DependenciasFerramentas {
   readonly busca: BuscaConhecimento;
   readonly historico: PortaHistoricoDecisoes;
+  /** O fuso da instância (ZENTRADE_FUSO): o dia das decisões passadas. Padrão: Brasília. */
+  readonly fuso?: string;
 }
 
+/**
+ * "AAAA-MM-DD" como foi gravado (UTC): para datas de calendário, como a de publicação de
+ * um documento. Para o dia de um instante do robô (uma decisão), use `diaNoFuso`.
+ */
 export const dataCurta = (d: Date | number): string => new Date(d).toISOString().slice(0, 10);
 export const json = (valor: unknown): string => JSON.stringify(valor);
 

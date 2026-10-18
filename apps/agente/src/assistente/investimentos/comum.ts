@@ -8,7 +8,7 @@ import type {
   UltimoFechamento,
 } from "@zentrade/banco";
 import type { RedeConta, SerieIndicador } from "@zentrade/contratos";
-import { dec, paraTexto } from "@zentrade/dominio";
+import { dec, diaNoFuso, formatarDataHoraNoFuso, FUSO_B3, nomeDoFuso, paraTexto } from "@zentrade/dominio";
 import { z } from "zod";
 
 /**
@@ -30,21 +30,20 @@ export interface LeituraInvestimentos {
 export interface ContextoInvestimentos {
   readonly usuarioId: string;
   readonly agora: () => number;
+  /** O fuso da instância: as horas que o modelo lê são as locais. */
+  readonly fuso: string;
 }
 
 export const json = (v: unknown): string => JSON.stringify(v);
-export const quando = (ms: number): string =>
-  new Date(ms).toISOString().slice(0, 16).replace("T", " ") + " UTC";
+/** "11/10/2026 08:55 (horário de Brasília)": hora local, com o nome do fuso. */
+export const quando = (ms: number, fuso: string): string =>
+  `${formatarDataHoraNoFuso(ms, fuso)} (${nomeDoFuso(fuso)})`;
 
-const DIA_NO_BRASIL = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "America/Sao_Paulo",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-/** "Hoje" da renda fixa e do imobiliário é o dia em Brasília (AAAA-MM-DD), como na tela. */
-export const hojeNoBrasil = (ms: number): string => DIA_NO_BRASIL.format(new Date(ms));
+/**
+ * "Hoje" da renda fixa e do imobiliário é o dia em Brasília (AAAA-MM-DD), como na tela:
+ * o calendário dos títulos e dos índices é o brasileiro, qualquer que seja o fuso.
+ */
+export const hojeNoBrasil = (ms: number): string => diaNoFuso(ms, FUSO_B3);
 
 /** Fração em texto (0,0523) → percentual com 2 casas ("5.23"); null segue null. */
 export const fracaoEmPct = (fracao: string | number | null): string | null =>
