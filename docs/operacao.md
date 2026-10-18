@@ -345,10 +345,11 @@ O `llms.txt` (em `apps/web/public/` e na raiz do repositório) resume o projeto 
 
 ## Dados da B3 (mini índice)
 
-Os candles do mini índice para o backtest não vêm da Binance: são importados para a tabela `candles` por dois comandos do motor, `importar-candles-b3` (Ibovespa intradiário pela brapi, gravado como `WIN-IBOV`; exige `BRAPI_TOKEN` de um plano com intradiário) e `importar-candles-csv` (o WIN exportado do MetaTrader 5, ou um CSV genérico). Uso, opções, Docker, fontes avaliadas e limites em [dados-b3.md](dados-b3.md).
+Os candles do mini índice para o backtest não vêm da Binance: são importados para a tabela `candles` por três comandos do motor: `importar-negocios-b3` (o WIN de verdade, dos arquivos "Negócio a negócio" de derivativos que a pessoa baixa no BDI da B3), `importar-candles-b3` (Ibovespa intradiário pela brapi, gravado como `WIN-IBOV`; exige `BRAPI_TOKEN` de um plano com intradiário) e `importar-candles-csv` (o WIN exportado do MetaTrader 5, ou um CSV genérico). Uso, opções, Docker, fontes avaliadas e limites em [dados-b3.md](dados-b3.md).
 
 ```bash
 corepack pnpm --filter "@zentrade/motor..." build
+corepack pnpm --filter @zentrade/motor importar-negocios-b3 -- --arquivos ~/Downloads/*_NEGOCIOSAVISTA_DRV.zip
 corepack pnpm --filter @zentrade/motor importar-candles-csv -- --simbolo WIN --intervalo 5m --arquivo WIN_M5.csv
 ```
 
