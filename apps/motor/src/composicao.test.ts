@@ -106,7 +106,7 @@ describe("composição do motor", () => {
       registroDeTeste().registro,
     );
     expect(deps.opcoes.agenteObrigatorio).toBe(false);
-    expect(deps.opcoes.tamanhoHistorico).toBe(500);
+    expect(deps.opcoes.tamanhoHistorico).toBe(1000);
     expect(deps.opcoes.expiracaoAprovacaoMs).toBe(3 * 60_000);
     expect(await deps.robos.ativos()).toEqual([robo]);
     expect(await deps.robos.pausado("r1")).toBe(true);
