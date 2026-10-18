@@ -106,6 +106,13 @@
       "when": 1792288947290,
       "tag": "0014_placar_claude",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792321588856,
+      "tag": "0015_importacoes_b3",
+      "breakpoints": true
     }
   ]
 }

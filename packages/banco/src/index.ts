@@ -25,6 +25,11 @@ export type {
 } from "./repositorios/backtests.js";
 export type { Documento, DocumentoParaGravar, Fonte, TrechoParaGravar } from "./repositorios/conhecimento.js";
 export type {
+  ImportacaoB3,
+  ImportacaoB3ParaProcessar,
+  RepositorioImportacoesB3,
+} from "./repositorios/importacoes-b3.js";
+export type {
   EstadoSincronizacaoGravado,
   NegociacaoCarteiraGravada,
   NegociacaoCarteiraLida,

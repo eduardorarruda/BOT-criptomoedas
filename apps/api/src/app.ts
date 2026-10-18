@@ -27,6 +27,7 @@ import { rotasClaudeToken } from "./rotas/claude-token.js";
 import { rotasConhecimento } from "./rotas/conhecimento.js";
 import { rotasConhecimentoArquivos } from "./rotas/conhecimento-arquivos.js";
 import { rotasContas } from "./rotas/contas.js";
+import { rotasDadosB3 } from "./rotas/dados-b3.js";
 import { rotasDecisoes } from "./rotas/decisoes.js";
 import { rotasEstrategias } from "./rotas/estrategias.js";
 import { rotasImobiliario } from "./rotas/imobiliario.js";
@@ -119,6 +120,7 @@ export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger):
         rotasContas,
         rotasTokens,
         rotasBacktests,
+        rotasDadosB3,
         rotasConhecimento,
         rotasConhecimentoArquivos,
         rotasAssistente,

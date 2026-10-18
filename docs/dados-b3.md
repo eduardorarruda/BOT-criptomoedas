@@ -7,7 +7,7 @@ Esta página cobre a parte de **dados** da fase 1 de [Mini índice e Jev](mini-i
 ## Resumo
 
 - **Não achamos fonte gratuita que permita, com clareza, baixar por programa candles intradiários do Ibovespa.** A brapi.dev permite e já é usada no projeto, mas candles intradiários só saem no plano **Pro** (pago). O Yahoo Finance proíbe coleta automatizada nos termos de uso. A B3 só publica de graça a série **diária** (COTAHIST) e proíbe coleta automatizada nas páginas de consulta.
-- **O que foi implementado:** a fonte **brapi** (o Ibovespa, `^BVSP`, gravado como `WIN-IBOV`), atrás de uma porta que aceita outras fontes; a **importação de CSV**, pensada para a exportação de barras do **MetaTrader 5**; e a **importação dos arquivos oficiais "Negócio a negócio" da B3** (`importar-negocios-b3`), baixados à mão no BDI, que dão o **próprio WIN** negócio a negócio, de graça, para os últimos 20 pregões. Arquivo da B3 e MT5 dão o WIN de verdade, melhor do que qualquer aproximação; são o caminho recomendado para a fase 1.
+- **O que foi implementado:** a fonte **brapi** (o Ibovespa, `^BVSP`, gravado como `WIN-IBOV`), atrás de uma porta que aceita outras fontes; a **importação de CSV**, pensada para a exportação de barras do **MetaTrader 5**; e a **importação dos arquivos oficiais "Negócio a negócio" da B3** (`importar-negocios-b3`), baixados à mão no BDI, que dão o **próprio WIN** negócio a negócio, de graça, para os últimos 20 pregões — agora também **pela tela** (arrastar o `.zip` em Backtests; veja "Pela tela" abaixo), sem precisar do terminal. Arquivo da B3 e MT5 dão o WIN de verdade, melhor do que qualquer aproximação; são o caminho recomendado para a fase 1.
 - **Quanto histórico de 5 minutos:** a FAQ da brapi fala em intradiário "de até 7 dias"; num teste nosso (outubro de 2026, com um ticker de teste que a brapi libera sem token), `interval=5m` com `range=3mo` devolveu **41 pregões, cerca de 60 dias corridos**. Não deu para conferir com o `^BVSP`, que exige token. Como a brapi só guarda essa janela, rode a importação de tempos em tempos: o que já está no banco fica (até a retenção de 3 anos, abaixo).
 
 ## O contrato com o backtest
@@ -109,7 +109,18 @@ docker compose --env-file .env -f infra/docker-compose.yml --profile app run --r
 
 A B3 publica no BDI, de graça, o arquivo com **todos os negócios do dia** de cada derivativo, inclusive o WIN, para os **últimos 20 dias úteis**. O ZenTrade monta as velas a partir dele.
 
-**Onde baixar (à mão):** BDI → **Derivativos** → **Derivativos de bolsa** → tabela **"Negócio a negócio"** → **"Histórico dos últimos 20 dias úteis"** → um arquivo por pregão, `DD-MM-AAAA_NEGOCIOSAVISTA_DRV.zip` (~60 MB, com um `.txt` de ~560 MB dentro). **O sistema não baixa nada sozinho:** a B3 proíbe a coleta automatizada nas páginas de consulta, então quem baixa é a pessoa, e o comando só lê os arquivos que ela já tem. Como a B3 só guarda 20 pregões, baixe de tempos em tempos (por exemplo, toda semana) e importe: o que já está no banco fica (até a retenção de 3 anos).
+**Onde baixar (à mão):** BDI → **Derivativos** → **Derivativos de bolsa** → tabela **"Negócio a negócio"** → **"Histórico dos últimos 20 dias úteis"** → um arquivo por pregão, `DD-MM-AAAA_NEGOCIOSAVISTA_DRV.zip` (~60 MB, com um `.txt` de ~560 MB dentro). **O sistema não baixa nada sozinho:** a B3 proíbe a coleta automatizada nas páginas de consulta, então quem baixa é a pessoa. Como a B3 só guarda 20 pregões, baixe de tempos em tempos (por exemplo, toda semana) e importe: o que já está no banco fica (até a retenção de 3 anos).
+
+### Pela tela (recomendado): arrastar o .zip em Backtests
+
+Em **Backtests**, ao escolher o mercado "Mini índice — WIN" sem candles gravados, a tela mostra uma área para **arrastar (ou escolher) os .zip** baixados do BDI. Cada arquivo sobe com barra de progresso; depois a tela acompanha o motor processar e mostra o resumo (pregões, contrato, velas gravadas) ou o erro. Por baixo:
+
+1. `POST /api/v1/dados-b3/importacoes?nome=<arquivo>.zip` recebe o `.zip` cru (`Content-Type: application/octet-stream`, até 150 MB, limite de 10 por minuto por pessoa), confere a extensão e a assinatura do zip (`PK\x03\x04`), grava numa pasta temporária compartilhada com o motor e enfileira (BullMQ, fila `importacoes-b3`) — a API nunca descompacta nem lê o conteúdo.
+2. Quem processa é o **motor-backtests** (mesmo processo dos backtests, CPU por minutos): reusa `executarImportacaoNegocios`/`substituirCandlesB3` de `apps/motor/src/dados-b3` — a mesma leitura em stream, com a mesma defesa contra zip bomba (até 4 GB descompactados, um `.txt` só dentro do zip) — grava as velas e o resumo na tabela `importacoes_b3`, e sempre apaga o arquivo temporário ao terminar (com sucesso ou não).
+3. `GET /api/v1/dados-b3/importacoes` e `GET /api/v1/dados-b3/importacoes/:id` mostram o estado (`na_fila` → `lendo` → `concluida`/`falhou`) e o resumo. Dados de mercado são globais (sem RLS, como `candles`), mas cada pessoa só vê as próprias importações (linha com `usuario_id`, RLS); só quem está autenticado importa.
+4. No Docker, a API e o `motor-backtests` compartilham o volume `importacoes-b3` (pasta `/dados/importacoes-b3`, variável `ZENTRADE_IMPORTACOES_B3_DIR`); fora do Docker, o padrão é `/tmp/zentrade-importacoes-b3`.
+
+Em modo de demonstração (`VITE_DEMO=1`) a área de envio fica desligada (precisa da API de verdade); a tela avisa.
 
 ```bash
 corepack pnpm --filter "@zentrade/motor..." build

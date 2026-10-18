@@ -65,6 +65,10 @@ const EsquemaApi = z.object({
     .min(8, "BRAPI_TOKEN parece curto demais; copie o token do painel da brapi.dev")
     .optional(),
   APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(1440).default(15),
+  // Pasta compartilhada com o motor (motor-backtests): a API só grava o .zip aqui e
+  // enfileira; quem processa (CPU e memória do arquivo de 560 MB descompactado) é o
+  // motor. No Docker, as duas imagens montam o mesmo volume nesta pasta.
+  ZENTRADE_IMPORTACOES_B3_DIR: z.string().min(1).default("/tmp/zentrade-importacoes-b3"),
   // De quantos em quantos minutos a API importa a carteira da Binance de cada pessoa (0 = só sob demanda).
   CARTEIRA_SINCRONIZAR_MIN: z.coerce.number().int().min(0).max(1440).default(30),
   // De quantos em quantos minutos a API confere a posição dos robôs com o saldo da Binance (0 = só pelo botão).

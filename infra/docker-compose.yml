@@ -145,11 +145,16 @@ services:
       ZENTRADE_CONTROLADOR_EMAIL: ${ZENTRADE_CONTROLADOR_EMAIL:-}
       ZENTRADE_ENCARREGADO_NOME: ${ZENTRADE_ENCARREGADO_NOME:-}
       ZENTRADE_ENCARREGADO_EMAIL: ${ZENTRADE_ENCARREGADO_EMAIL:-}
+      # Pasta do volume "importacoes-b3" (abaixo): a API só grava o .zip aqui; quem lê e
+      # descompacta (até 560 MB) é o motor-backtests, pelo mesmo volume.
+      ZENTRADE_IMPORTACOES_B3_DIR: /dados/importacoes-b3
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:${API_PORTA_HOST:-8080}:8080"
     # Healthcheck na imagem (infra/docker/api.Dockerfile): GET /api/v1/saude.
+    volumes:
+      - importacoes-b3:/dados/importacoes-b3
     depends_on:
       migrar: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
@@ -190,7 +195,7 @@ services:
       migrar: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
 
-  # A mesma imagem do motor, só consumindo a fila de backtests.
+  # A mesma imagem do motor, só consumindo a fila de backtests (e a de importações da B3).
   motor-backtests:
     profiles: ["app"]
     image: ${ZENTRADE_IMAGEM:-zentrade}-motor:local
@@ -198,6 +203,8 @@ services:
     environment:
       <<: *ambiente-motor
       MOTOR_FUNCAO: backtests
+    volumes:
+      - importacoes-b3:/dados/importacoes-b3
     depends_on:
       migrar: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
@@ -270,3 +277,6 @@ volumes:
   redis:
   n8n:
   claude-contas:
+  # .zip da B3 entre o upload (API) e o processamento (motor-backtests); a API apaga o
+  # arquivo ao terminar, então o volume não cresce sem limite.
+  importacoes-b3:

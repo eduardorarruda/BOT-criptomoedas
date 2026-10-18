@@ -18,6 +18,10 @@ export interface FilaBacktests {
   adicionar(backtestId: string): Promise<void>;
 }
 
+export interface FilaImportacoesB3 {
+  adicionar(importacaoId: string): Promise<void>;
+}
+
 /** Checagens de saúde que dependem de Redis e de outros serviços. */
 export interface VerificadorSaude {
   redis(): Promise<boolean>;
@@ -32,6 +36,9 @@ export interface Dependencias {
   readonly config: Config;
   readonly banco: Banco;
   readonly fila: FilaBacktests;
+  readonly filaImportacoesB3: FilaImportacoesB3;
+  /** Pasta compartilhada com o motor onde o .zip da B3 fica até ser processado. */
+  readonly diretorioImportacoesB3: string;
   readonly n8n: ClienteN8n;
   readonly conhecimento: ServicoConhecimento;
   readonly automacoes: RegistroAutomacoes;

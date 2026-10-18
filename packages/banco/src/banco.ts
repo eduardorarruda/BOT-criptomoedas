@@ -23,6 +23,7 @@ import { repositorioDivergencias } from "./repositorios/divergencias.js";
 import { repositorioEstrategias } from "./repositorios/estrategias.js";
 import { repositorioGastosIa } from "./repositorios/gastos-ia.js";
 import { repositorioImobiliario } from "./repositorios/imobiliario.js";
+import { repositorioImportacoesB3 } from "./repositorios/importacoes-b3.js";
 import { repositorioLimitesConta } from "./repositorios/limites-conta.js";
 import { repositorioMercado } from "./repositorios/mercado.js";
 import { repositorioOrdens } from "./repositorios/ordens.js";
@@ -106,6 +107,7 @@ export function criarBancoDoMotor(opcoes: OpcoesBancoDoMotor) {
       : null,
     mercado: repositorioMercado(conexao.db),
     backtests: repositorioBacktests(conexao.db),
+    importacoesB3: repositorioImportacoesB3(conexao.db),
     placar: portaPlacar(conexao.db),
     fechar: () => conexao.fechar(),
   };
@@ -140,6 +142,7 @@ export function criarBanco(opcoes: OpcoesBanco) {
     ordens: repositorioOrdens(db),
     mercado: repositorioMercado(db),
     backtests: repositorioBacktests(db),
+    importacoesB3: repositorioImportacoesB3(db),
     conhecimento: repositorioConhecimento(db),
     conhecimentoDetalhe: repositorioConhecimentoDetalhe(db),
     assistente: repositorioAssistente(db),
