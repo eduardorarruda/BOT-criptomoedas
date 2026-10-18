@@ -20,7 +20,13 @@ export function fonteDeInstancia(config: Partial<ConfigPublica> = {}): Fonte {
   return {
     ...criarFonteDemo({ latenciaMs: [0, 0] }),
     demo: false,
-    configPublica: async () => ({ controlador: null, encarregado: null, versao: "0.1.0", ...config }),
+    configPublica: async () => ({
+      controlador: null,
+      encarregado: null,
+      versao: "0.1.0",
+      fuso: "America/Sao_Paulo",
+      ...config,
+    }),
   };
 }
 

@@ -7,6 +7,7 @@ import { Botao } from "../../componentes/Botao";
 import { CampoSelecao, CampoTexto } from "../../componentes/Campo";
 import { useSalvarLimites } from "./ganchos";
 import { lerFormulario, paraFormulario, type FormularioLimites } from "./formulario";
+import { nomeDoFusoDaInstancia } from "../../lib/fuso";
 
 const ESCOPOS: readonly { readonly valor: EscopoSequencia; readonly texto: string }[] = [
   { valor: "ambos", texto: "Em cada robô e na conta" },
@@ -56,7 +57,7 @@ export function FormLimites({ limites }: { readonly limites: LimitesContaDTO }) 
         <CampoTexto
           rotulo="Perda máxima do dia (US$)"
           inputMode="decimal"
-          dica="Somando os robôs da mesma rede. O dia vai de 00:00 a 23:59 UTC (21h às 20h59 de Brasília). Vazio = sem limite."
+          dica={`Somando os robôs da mesma rede. O dia vai de 00:00 a 23:59 (${nomeDoFusoDaInstancia()}). Vazio = sem limite.`}
           {...campo("perdaDiariaMaxima")}
         />
         <label className="caixa">

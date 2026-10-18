@@ -26,6 +26,7 @@ function abrirInfra(config: Config, registro: Logger): Infra {
     ? criarBancoDoMotor({
         url: config.DATABASE_URL,
         validadeAprovacaoMs: config.APROVACAO_VALIDADE_MIN * 60_000,
+        fuso: config.ZENTRADE_FUSO,
         ...(config.ZENTRADE_CHAVE_MESTRA ? { chaveMestra: config.ZENTRADE_CHAVE_MESTRA } : {}),
         ativoDoSimbolo: (simbolo) => ativosDoSimbolo(simbolo).base,
         aoAviso: (mensagem) => registro.debug({ mensagem }, "aviso do PostgreSQL"),
@@ -56,6 +57,7 @@ function ligarBacktests(config: Config, infra: Infra, registro: Logger): Consumi
   const opcoes = {
     saldoInicial: dec(config.MOTOR_BACKTEST_SALDO),
     riscoPorOperacao: config.MOTOR_BACKTEST_RISCO,
+    fuso: config.ZENTRADE_FUSO,
   };
   return consumirBacktests(redis, (id) => processarBacktest(deps, opcoes, id), registro);
 }

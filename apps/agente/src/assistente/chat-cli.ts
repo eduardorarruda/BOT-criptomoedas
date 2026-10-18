@@ -1,4 +1,4 @@
-import { dec, type Valor } from "@zentrade/dominio";
+import { dec, FUSO_PADRAO, type Valor } from "@zentrade/dominio";
 import { ErroClaudeCli } from "../claude-cli/analista-cli.js";
 import type { ExecutorClaude } from "../claude-cli/executor.js";
 import { lerJson } from "../claude-cli/resultado.js";
@@ -54,15 +54,19 @@ export class ChatCli {
   readonly #executor: ExecutorClaude;
   readonly #tempoMs: number;
   readonly #agora: () => Date;
+  readonly #fuso: string;
 
   constructor(o: {
     readonly executor: ExecutorClaude;
     readonly tempoMs: number;
     readonly agora?: () => Date;
+    /** O fuso da instância: o "agora" vai ao modelo na hora local (padrão: Brasília). */
+    readonly fuso?: string;
   }) {
     this.#executor = o.executor;
     this.#tempoMs = o.tempoMs;
     this.#agora = o.agora ?? (() => new Date());
+    this.#fuso = o.fuso ?? FUSO_PADRAO;
   }
 
   /** Transmite a resposta e devolve o custo que o CLI informou (no plano, é estimativa). */
@@ -74,7 +78,7 @@ export class ChatCli {
       usuarioId: p.usuarioId,
       ferramentas: p.ferramentas,
       instrucoes: SYSTEM_CHAT,
-      entrada: promptComHistorico(p, this.#agora()),
+      entrada: promptComHistorico(p, this.#agora(), this.#fuso),
       modelo: p.modelo,
       contaId: p.contaId,
       tempoMs: this.#tempoMs,

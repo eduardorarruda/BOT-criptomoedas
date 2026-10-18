@@ -23,12 +23,13 @@ export function lerVersao(caminho: URL = new URL("../../package.json", import.me
 const contato = (nome: string | undefined, email: string | undefined): ContatoLgpd | null =>
   nome && email ? { nome, email } : null;
 
-/** Só o que a política de privacidade precisa mostrar a quem ainda não entrou. */
+/** O que a política de privacidade precisa mostrar a quem ainda não entrou, e o fuso da instância. */
 export function configPublica(config: Config, versao: string): ConfigPublica {
   return {
     controlador: contato(config.ZENTRADE_CONTROLADOR_NOME, config.ZENTRADE_CONTROLADOR_EMAIL),
     encarregado: contato(config.ZENTRADE_ENCARREGADO_NOME, config.ZENTRADE_ENCARREGADO_EMAIL),
     versao,
+    fuso: config.ZENTRADE_FUSO,
   };
 }
 

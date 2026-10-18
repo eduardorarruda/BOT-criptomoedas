@@ -1,3 +1,4 @@
+import { exigirFuso, FUSO_PADRAO } from "@zentrade/dominio";
 import { conectar } from "../cliente.js";
 import { repositorioAssistente } from "./assistente.js";
 import { repositorioCredenciaisClaude } from "./credenciais-claude.js";
@@ -17,6 +18,8 @@ export interface OpcoesBancoDoAgente {
   readonly aoAviso?: (mensagem: string) => void;
   /** Só para o token do Claude Code de cada pessoa. Sem ela, `credenciaisClaude` é null. */
   readonly chaveMestra?: Buffer;
+  /** O fuso da instância (ZENTRADE_FUSO): o "hoje" do resumo e do orçamento de IA. */
+  readonly fuso?: string;
 }
 
 /**
@@ -36,13 +39,14 @@ export function criarBancoDoAgente(opcoes: OpcoesBancoDoAgente) {
   });
   const { db } = conexao;
   const assistente = repositorioAssistente(db);
-  const resumo = repositorioResumo(db);
+  const fuso = exigirFuso(opcoes.fuso ?? FUSO_PADRAO);
+  const resumo = repositorioResumo(db, fuso);
   const robos = repositorioRobos(db);
   const decisoes = repositorioDecisoes(db);
   const ordens = repositorioOrdens(db);
   const carteira = repositorioCarteira(db);
   const rendaFixa = repositorioRendaFixa(db);
-  const gastosIa = repositorioGastosIa(db);
+  const gastosIa = repositorioGastosIa(db, fuso);
   return {
     conexao,
     config: assistente.config,

@@ -1,7 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { BetaMessage } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import type { PedidoRespostaAgente } from "@zentrade/contratos";
-import type { Valor } from "@zentrade/dominio";
+import { FUSO_PADRAO, type Valor } from "@zentrade/dominio";
 import { MODELO_PADRAO } from "../analista.js";
 import { custoUsd } from "../custo.js";
 import { paraAnthropic, type AoFalharFerramenta, type FerramentaLeitura } from "../ferramentas/index.js";
@@ -44,17 +44,21 @@ export class ChatApi {
   readonly #modeloPadrao: string;
   readonly #maxIteracoes: number;
   readonly #agora: () => Date;
+  readonly #fuso: string;
 
   constructor(o: {
     readonly cliente: Anthropic;
     readonly modeloPadrao?: string;
     readonly maxIteracoes?: number;
     readonly agora?: () => Date;
+    /** O fuso da instância: o "agora" vai ao modelo na hora local (padrão: Brasília). */
+    readonly fuso?: string;
   }) {
     this.#cliente = o.cliente;
     this.#modeloPadrao = o.modeloPadrao ?? MODELO_PADRAO;
     this.#maxIteracoes = o.maxIteracoes ?? 10;
     this.#agora = o.agora ?? (() => new Date());
+    this.#fuso = o.fuso ?? FUSO_PADRAO;
   }
 
   /** Transmite a resposta e devolve quanto ela custou (US$, todas as voltas do laço). */
@@ -72,7 +76,7 @@ export class ChatApi {
           ...paraAnthropic(f, p.aoFalharFerramenta),
           eager_input_streaming: true,
         })),
-        messages: turnosAlternados(p, this.#agora()),
+        messages: turnosAlternados(p, this.#agora(), this.#fuso),
         stream: true,
       },
       { signal: p.sinal },

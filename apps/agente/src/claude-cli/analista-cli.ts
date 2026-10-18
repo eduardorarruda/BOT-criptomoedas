@@ -126,7 +126,7 @@ export class AnalistaCli {
     const registro = new RegistroFontes();
     const agora = this.#agora();
     const previo = await buscarContextoPrevio(pedido, opcoes.usuarioId, this.#deps, agora);
-    const entrada = mensagemDoPedido(pedido, agora, { previo, ...(this.#fuso ? { fuso: this.#fuso } : {}) });
+    const entrada = mensagemDoPedido(pedido, agora, { previo, fuso: this.#fuso ?? this.#deps.fuso });
     const primeira = await this.#executar(pedido, opcoes, registro, entrada);
     const lida = lerPropostaCli(primeira.resultado);
     if (lida.ok) return this.#resposta(lida.proposta, pedido, registro, primeira);

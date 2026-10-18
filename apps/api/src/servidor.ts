@@ -73,6 +73,7 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
     chaveMestra: config.ZENTRADE_CHAVE_MESTRA,
     validadeAprovacaoMs: config.APROVACAO_VALIDADE_MIN * 60_000,
     aoAviso: (m) => log.debug({ aviso: m }, "aviso do PostgreSQL"),
+    fuso: config.ZENTRADE_FUSO,
   });
   const fila = criarFilaBacktests(redis);
   const automacoes = criarRegistroAutomacoes({ armazem: armazemRedis(redis), agora, log });
@@ -91,7 +92,9 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
     log,
     agora,
   });
-  hub.aoEvento(criarTradutorAlertas({ central: alertas, consultas: banco.sistema, log }));
+  hub.aoEvento(
+    criarTradutorAlertas({ central: alertas, consultas: banco.sistema, log, fuso: config.ZENTRADE_FUSO }),
+  );
   await assinarEventos(assinante, hub);
   const saude = verificadorSaude({
     redis,

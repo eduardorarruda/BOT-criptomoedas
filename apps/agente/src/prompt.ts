@@ -1,6 +1,7 @@
 import type { PedidoAnalise } from "@zentrade/contratos";
+import { FUSO_PADRAO } from "@zentrade/dominio";
 import { custoIdaEVolta } from "./pedido/custos.js";
-import { agoraComFuso, FUSO_PADRAO } from "./pedido/hora.js";
+import { linhaDoAgora } from "./agora.js";
 import { leituraDoMercado } from "./pedido/mercado.js";
 import { linhasDoPrevio, type ContextoPrevio } from "./pedido/previo.js";
 import { leituraDasSaidas } from "./pedido/saidas.js";
@@ -60,7 +61,7 @@ const MERCADOS = {
 
 export interface OpcoesMensagem {
   /** Fuso da instância (ZENTRADE_FUSO); padrão America/Sao_Paulo. */
-  readonly fuso?: string;
+  readonly fuso?: string | undefined;
   /** Histórico do robô e frescor da base, buscados antes de chamar o modelo. */
   readonly previo?: ContextoPrevio;
 }
@@ -94,7 +95,7 @@ export function mensagemDoPedido(pedido: PedidoAnalise, agora: Date, opcoes: Opc
   const { robo, sinal } = pedido;
   return [
     "Analise este sinal e devolva a proposta.",
-    `Agora: ${agoraComFuso(agora, fuso)}`,
+    linhaDoAgora(agora, fuso),
     ...secao("Sinal", [
       `${robo.simbolo}, velas de ${robo.intervalo}. Regra: ${sinal.acao}${sinal.acao === "VENDER" ? ` (${sinal.motivo})` : ""} — ${sinal.explicacao}`,
       ...(op ? [`Mercado: ${MERCADOS[op.custos.mercado]}. Operação ${op.sentido}.`] : []),

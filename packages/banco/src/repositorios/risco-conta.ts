@@ -15,7 +15,7 @@ export interface DadosSituacaoConta extends LimitesGravados {
 
 const ORDEM_REDES: readonly Rede[] = ["real", "testnet", "papel"];
 
-export function repositorioRiscoConta(db: Db) {
+export function repositorioRiscoConta(db: Db, fuso: string) {
   return {
     situacao: (usuarioId: string, agora: number): Promise<DadosSituacaoConta> =>
       comoUsuario(db, usuarioId, async (tx) => {
@@ -25,13 +25,13 @@ export function repositorioRiscoConta(db: Db) {
         const redes = new Set((await tx.selectDistinct({ rede: robos.rede }).from(robos)).map((r) => r.rede));
         const retratos: RetratoConta[] = [];
         for (const rede of ORDEM_REDES.filter((r) => redes.has(r)))
-          retratos.push(await retratoDaConta(tx, rede, agora, desde));
-        return { ...gravados, retratos, orcamento: await lerUsoOrcamento(tx, usuarioId, agora) };
+          retratos.push(await retratoDaConta(tx, rede, agora, desde, fuso));
+        return { ...gravados, retratos, orcamento: await lerUsoOrcamento(tx, usuarioId, agora, fuso) };
       }),
 
     /** Os robôs da pessoa na rede, com a posição de cada um (para a reconciliação). */
     posicoes: (usuarioId: string, rede: Rede, agora: number): Promise<readonly RoboDoRetrato[]> =>
-      comoUsuario(db, usuarioId, async (tx) => (await retratoDaConta(tx, rede, agora, agora)).robos),
+      comoUsuario(db, usuarioId, async (tx) => (await retratoDaConta(tx, rede, agora, agora, fuso)).robos),
 
     /** Robôs da pessoa (id e nome) de uma rede: para dizer quem uma divergência afeta. */
     robosDaRede: (usuarioId: string, rede: Rede) =>

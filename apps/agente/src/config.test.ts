@@ -17,6 +17,14 @@ describe("configDoAgente", () => {
     });
   });
 
+  it("fuso da instância: Brasília por padrão; inválido derruba a partida explicando", () => {
+    expect(configDoAgente(valido).fuso).toBe("America/Sao_Paulo");
+    expect(configDoAgente({ ...valido, ZENTRADE_FUSO: "America/New_York" }).fuso).toBe("America/New_York");
+    expect(() => configDoAgente({ ...valido, ZENTRADE_FUSO: "Sao_Paulo" })).toThrow(
+      /ZENTRADE_FUSO: fuso desconhecido: "Sao_Paulo"/,
+    );
+  });
+
   it("lista tudo o que falta, sem ecoar valores secretos", () => {
     const erro = (() => {
       try {
@@ -108,13 +116,11 @@ describe("chave mestra no agente (token do Claude Code de cada pessoa)", () => {
     }
   });
 
-  it("prévias de futuro: limiar do cenário favorável (padrão 0,6, de 0,5 a 0,95) e fuso do pedido", () => {
-    expect(configDoAgente(valido)).toMatchObject({ limiarCenarios: 0.6, fuso: "America/Sao_Paulo" });
+  it("prévias de futuro: limiar do cenário favorável (padrão 0,6, de 0,5 a 0,95)", () => {
+    expect(configDoAgente(valido).limiarCenarios).toBe(0.6);
     expect(configDoAgente({ ...valido, AGENTE_CENARIO_LIMIAR: "0.7" }).limiarCenarios).toBe(0.7);
     expect(() => configDoAgente({ ...valido, AGENTE_CENARIO_LIMIAR: "0.3" })).toThrow(
       /AGENTE_CENARIO_LIMIAR/,
     );
-    expect(configDoAgente({ ...valido, ZENTRADE_FUSO: "Europe/Lisbon" }).fuso).toBe("Europe/Lisbon");
-    expect(() => configDoAgente({ ...valido, ZENTRADE_FUSO: "Marte/Olimpo" })).toThrow(/ZENTRADE_FUSO.*IANA/);
   });
 });

@@ -14,7 +14,7 @@ import { formatarDolar, formatarNumero } from "./formatar.js";
 export type EscopoSequencia = "robo" | "conta" | "ambos";
 
 export interface LimitesConta {
-  /** Perda máxima do dia (00:00 a 23:59 UTC), em US$, somando os robôs. */
+  /** Perda máxima do dia (00:00 a 23:59 no fuso da instância), em US$, somando os robôs. */
   readonly perdaDiariaMaxima: Valor | null;
   /** Soma o resultado não realizado das posições abertas à perda do dia. */
   readonly incluirNaoRealizado: boolean;
@@ -62,7 +62,7 @@ export interface DivergenciaAberta {
 export interface EstadoConta {
   readonly limites: LimitesConta;
   readonly agora: number;
-  /** Resultado realizado desde 00:00 UTC, somando os robôs da conta. */
+  /** Resultado realizado desde a meia-noite (fuso da instância), somando os robôs da conta. */
   readonly realizadoDoDia: Valor;
   /** Resultado não realizado agora das posições abertas (preço atual − preço médio). */
   readonly naoRealizado: Valor;
@@ -240,7 +240,7 @@ function barreirasDeLimites(p: CompraConta, e: EstadoConta): BarreiraConta[] {
   if (l.perdaDiariaMaxima && doDia.lte(l.perdaDiariaMaxima.neg()))
     b.push({
       codigo: "conta_perda_diaria",
-      mensagem: `A perda do dia na conta (${formatarDolar(doDia.neg())}, somando os robôs${l.incluirNaoRealizado ? " e o não realizado" : ""}) chegou ao limite de ${formatarDolar(l.perdaDiariaMaxima)}. Compras voltam às 00:00 UTC (21h de Brasília).`,
+      mensagem: `A perda do dia na conta (${formatarDolar(doDia.neg())}, somando os robôs${l.incluirNaoRealizado ? " e o não realizado" : ""}) chegou ao limite de ${formatarDolar(l.perdaDiariaMaxima)}. Compras voltam quando o dia virar, à meia-noite.`,
     });
   const exposicao = e.exposicao.plus(p.quantidade.times(p.precoReferencia));
   if (l.exposicaoMaxima && exposicao.gt(l.exposicaoMaxima))

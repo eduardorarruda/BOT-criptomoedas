@@ -152,7 +152,7 @@ export class Analista {
     const previo = await buscarContextoPrevio(pedido, opcoes.usuarioId, this.#o.dependencias, agora);
     const pergunta: BetaMessageParam = {
       role: "user",
-      content: mensagemDoPedido(pedido, agora, { previo, ...(this.#o.fuso ? { fuso: this.#o.fuso } : {}) }),
+      content: mensagemDoPedido(pedido, agora, { previo, fuso: this.#o.fuso ?? this.#o.dependencias.fuso }),
     };
     const primeira = await this.#rodar(pedido, opcoes, registro, [pergunta]);
     const final = primeira.at(-1);

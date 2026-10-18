@@ -1,5 +1,6 @@
 import { ConfigBancoEsquema } from "@zentrade/banco";
 import { PROVEDORES_EMBEDDINGS } from "@zentrade/conhecimento";
+import { FusoInstanciaEsquema } from "@zentrade/contratos";
 import { z } from "zod";
 
 const booleano = z
@@ -69,6 +70,9 @@ const EsquemaApi = z.object({
   // De quantos em quantos minutos a API confere a posição dos robôs com o saldo da Binance (0 = só pelo botão).
   RECONCILIACAO_MIN: z.coerce.number().int().min(0).max(1440).default(10),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  // O fuso da instância (nome IANA): onde começa o "hoje" do resumo, da conta e do
+  // orçamento de IA. A tela recebe o mesmo fuso em GET /api/v1/publico/config.
+  ZENTRADE_FUSO: FusoInstanciaEsquema,
   // LGPD: quem opera a instância (controlador) e o encarregado. Aparecem na política de
   // privacidade, sem login (GET /api/v1/publico/config). Veja docs/privacidade.md.
   ZENTRADE_CONTROLADOR_NOME: nomeContato("ZENTRADE_CONTROLADOR_NOME"),

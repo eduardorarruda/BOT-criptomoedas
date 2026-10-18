@@ -29,6 +29,16 @@ describe("configuração da API", () => {
     expect(() => lerConfig({ ...valido, LOG_LEVEL: "verboso" })).toThrow(/LOG_LEVEL/);
   });
 
+  it("fuso da instância: Brasília por padrão; fuso inválido derruba a partida explicando", () => {
+    expect(lerConfig(valido).ZENTRADE_FUSO).toBe("America/Sao_Paulo");
+    expect(lerConfig({ ...valido, ZENTRADE_FUSO: "America/New_York" }).ZENTRADE_FUSO).toBe(
+      "America/New_York",
+    );
+    expect(() => lerConfig({ ...valido, ZENTRADE_FUSO: "GMT-3" })).toThrow(
+      /ZENTRADE_FUSO: fuso desconhecido: "GMT-3"/,
+    );
+  });
+
   it("recusa segredo de webhook curto e diz como resolver", () => {
     expect(() => lerConfig({ ...valido, N8N_WEBHOOK_SEGREDO: "curto" })).toThrow(/32 caracteres/);
   });

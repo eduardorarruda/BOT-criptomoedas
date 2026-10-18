@@ -1,11 +1,20 @@
 import type { AlertaEmitido, PedidoAnalise, RespostaAnalise } from "@zentrade/contratos";
-import { dec, formatarDolar, type Valor } from "@zentrade/dominio";
+import {
+  dec,
+  diaNoFuso,
+  formatarDolar,
+  FUSO_PADRAO,
+  mesNoFuso,
+  nomeDoFuso,
+  type Valor,
+} from "@zentrade/dominio";
 import { aguardar, type OpcoesAnalise } from "./analista.js";
 
 /**
  * Orçamento de IA por pessoa: teto mensal (e, se quiser, diário) em US$ para o que o
  * agente gasta com o modelo — análises e assistente. Conferido ANTES de chamar o
- * modelo; o gasto é gravado depois de cada chamada (tabela gastos_ia). Mês e dia em UTC.
+ * modelo; o gasto é gravado depois de cada chamada (tabela gastos_ia). Mês e dia no fuso
+ * da instância (ZENTRADE_FUSO), não em UTC: o dia não vira às 21h de Brasília.
  */
 export const MOTIVO_ORCAMENTO_MES = "orçamento de IA do mês atingido";
 export const MOTIVO_ORCAMENTO_DIA = "orçamento de IA do dia atingido";
@@ -52,22 +61,24 @@ const MARCOS = [
   { fracao: dec(1), tipo: "orcamento_ia_100", gravidade: "critico", rotulo: "100%" },
 ] as const;
 
-const mesUtc = (agora: number): string => new Date(agora).toISOString().slice(0, 7);
-const diaUtc = (agora: number): string => new Date(agora).toISOString().slice(0, 10);
+/** Quando o orçamento volta, para gente: "à meia-noite (horário de Brasília)". */
+const quandoVolta = (fuso: string): string =>
+  `quando o dia (ou o mês) virar, à meia-noite (${nomeDoFuso(fuso)})`;
 
 /**
  * Alertas dos marcos (80% e 100%) que este gasto atravessou, no mês e no dia. A chave
- * leva o mês (ou o dia): cada marco avisa uma vez por período.
+ * leva o mês (ou o dia) local: cada marco avisa uma vez por período.
  */
 export function marcosAtravessados(
   usuarioId: string,
   u: UsoOrcamento,
   custo: Valor,
   agora: number,
+  fuso: string,
 ): AlertaEmitido[] {
   const periodos = [
-    { nome: "do mês", gasto: u.gastoMes, limite: u.limiteMensal, sufixo: mesUtc(agora) },
-    { nome: "do dia", gasto: u.gastoDia, limite: u.limiteDiario, sufixo: diaUtc(agora) },
+    { nome: "do mês", gasto: u.gastoMes, limite: u.limiteMensal, sufixo: mesNoFuso(agora, fuso) },
+    { nome: "do dia", gasto: u.gastoDia, limite: u.limiteDiario, sufixo: diaNoFuso(agora, fuso) },
   ];
   return periodos.flatMap((p) => {
     const limite = p.limite;
@@ -80,7 +91,7 @@ export function marcosAtravessados(
       titulo: `Orçamento de IA ${p.nome}: ${m.rotulo}`,
       mensagem:
         m.tipo === "orcamento_ia_100"
-          ? `O gasto com IA ${p.nome} chegou a ${formatarDolar(p.gasto)} (limite ${formatarDolar(limite)}). Análises voltam como "aguardar" e o assistente para até o período virar (UTC) ou você subir o limite em Risco. Com o agente obrigatório, os robôs não compram; stops seguem.`
+          ? `O gasto com IA ${p.nome} chegou a ${formatarDolar(p.gasto)} (limite ${formatarDolar(limite)}). Análises voltam como "aguardar" e o assistente para até o dia (ou o mês) virar, à meia-noite (${nomeDoFuso(fuso)}), ou até você subir o limite em Risco. Com o agente obrigatório, os robôs não compram; stops seguem.`
           : `O gasto com IA ${p.nome} já é ${formatarDolar(p.gasto)}, ${m.rotulo} do limite de ${formatarDolar(limite)}.`,
       chave: `${m.tipo}:${usuarioId}:${p.sufixo}`,
       usuarioId,
@@ -100,11 +111,17 @@ export class PortaoOrcamento {
       readonly log: LogOrcamento;
       readonly alertar?: (a: AlertaEmitido) => Promise<void>;
       readonly agora?: () => number;
+      /** O fuso da instância (ZENTRADE_FUSO): onde viram o dia e o mês. Padrão: Brasília. */
+      readonly fuso?: string;
     },
   ) {}
 
   private agora(): number {
     return (this.o.agora ?? Date.now)();
+  }
+
+  get fuso(): string {
+    return this.o.fuso ?? FUSO_PADRAO;
   }
 
   async conferir(usuarioId: string): Promise<Liberacao> {
@@ -125,7 +142,8 @@ export class PortaoOrcamento {
     try {
       await this.o.fonte.registrar(usuarioId, origem, custo, agora);
       const uso = await this.o.fonte.uso(usuarioId, agora);
-      for (const alerta of marcosAtravessados(usuarioId, uso, custo, agora)) await this.o.alertar?.(alerta);
+      for (const alerta of marcosAtravessados(usuarioId, uso, custo, agora, this.fuso))
+        await this.o.alertar?.(alerta);
     } catch (erro) {
       this.o.log.error({ err: erro, usuarioId, origem }, "não deu para gravar o gasto de IA");
     }
@@ -152,7 +170,7 @@ export class AnalistaComOrcamento implements AnalistaServicoOrcado {
     if (!liberacao.liberado)
       return {
         proposta: aguardar(
-          `${liberacao.motivo}. Sem análise, a proposta é aguardar até o período virar (UTC) ou o limite subir em Risco.`,
+          `${liberacao.motivo}. Sem análise, a proposta é aguardar ${quandoVolta(this.portao.fuso)} ou até o limite subir em Risco.`,
         ),
         custoUsd: dec(0),
         semOrcamento: true,

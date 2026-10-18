@@ -1,5 +1,7 @@
+import { deslocamentoNoFuso, exigirFuso, FUSO_B3 } from "@zentrade/dominio";
+
 /** O relógio da B3: horário de Brasília (sem horário de verão desde 2019; com ele antes). */
-export const FUSO_B3 = "America/Sao_Paulo";
+export { FUSO_B3 };
 
 /**
  * Um fuso para ler horários: um nome IANA (`America/Sao_Paulo`, `Europe/Athens`), que
@@ -7,8 +9,7 @@ export const FUSO_B3 = "America/Sao_Paulo";
  * `UTC`), útil para servidores de MetaTrader que não seguem fuso nenhum.
  */
 export type Fuso =
-  | { readonly tipo: "iana"; readonly nome: string; readonly formato: Intl.DateTimeFormat }
-  | { readonly tipo: "fixo"; readonly minutos: number };
+  { readonly tipo: "iana"; readonly nome: string } | { readonly tipo: "fixo"; readonly minutos: number };
 
 export interface HoraLocal {
   readonly ano: number;
@@ -40,17 +41,7 @@ export function lerFuso(texto: string): Fuso {
   }
   if (!t.includes("/")) throw erroFuso(texto);
   try {
-    const formato = new Intl.DateTimeFormat("en-US", {
-      timeZone: t,
-      hourCycle: "h23",
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
-    });
-    return { tipo: "iana", nome: t, formato };
+    return { tipo: "iana", nome: exigirFuso(t) };
   } catch {
     throw erroFuso(texto);
   }
@@ -59,19 +50,7 @@ export function lerFuso(texto: string): Fuso {
 /** Hora local − UTC, em minutos, no instante dado. */
 function deslocamentoMin(instante: number, fuso: Fuso): number {
   if (fuso.tipo === "fixo") return fuso.minutos;
-  const partes = Object.fromEntries(
-    fuso.formato.formatToParts(new Date(instante)).map((p) => [p.type, Number(p.value)]),
-  ) as Record<string, number>;
-  const comoUtc = Date.UTC(
-    partes["year"] ?? 0,
-    (partes["month"] ?? 1) - 1,
-    partes["day"] ?? 1,
-    partes["hour"] ?? 0,
-    partes["minute"] ?? 0,
-    partes["second"] ?? 0,
-  );
-  const semMs = instante - (((instante % 1000) + 1000) % 1000);
-  return Math.round((comoUtc - semMs) / MINUTO);
+  return Math.round(deslocamentoNoFuso(instante, fuso.nome) / MINUTO);
 }
 
 /** Data e hora de parede no fuso, com o dia da semana (0 = domingo). */

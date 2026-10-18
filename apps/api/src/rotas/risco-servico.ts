@@ -20,6 +20,8 @@ import {
   fimDaSequencia,
   formatarDolar,
   formatarNumero,
+  inicioDoProximoDiaNoFuso,
+  inicioDoProximoMesNoFuso,
   paraTexto,
   perdaDoDiaConta,
   quedaDoPico,
@@ -28,15 +30,8 @@ import {
   type Valor,
 } from "@zentrade/dominio";
 
-const DIA_MS = 86_400_000;
 /** A compra "vazia": as barreiras da conta que não dependem do tamanho da ordem. */
 const SEM_COMPRA = { quantidade: dec(0), precoReferencia: dec(0) };
-
-const proximoDiaUtc = (agora: number): number => agora - (agora % DIA_MS) + DIA_MS;
-const proximoMesUtc = (agora: number): number => {
-  const d = new Date(agora);
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
-};
 
 function estadoDoRetrato(
   r: RetratoConta,
@@ -71,12 +66,16 @@ function quedaDaRede(r: RetratoConta, l: LimitesConta, liberadaEm: number | null
   return { ...q, libera: (q.picoEm ?? primeiro) + l.quedaJanelaMs };
 }
 
-/** As pausas de compra em vigor numa rede, com o motivo (a mensagem da barreira) e quando acabam. */
+/**
+ * As pausas de compra em vigor numa rede, com o motivo (a mensagem da barreira) e quando
+ * acabam. A perda do dia acaba na meia-noite do `fuso` da instância.
+ */
 function pausasDaRede(
   r: RetratoConta,
   l: LimitesConta,
   liberadaEm: number | null,
   agora: number,
+  fuso: string,
 ): PausaConta[] {
   const conta = estadoDoRetrato(r, l, liberadaEm, agora, null);
   const pausas: PausaConta[] = [];
@@ -87,7 +86,7 @@ function pausasDaRede(
         ...base,
         codigo: b.codigo,
         motivo: b.mensagem,
-        ate: proximoDiaUtc(agora),
+        ate: inicioDoProximoDiaNoFuso(agora, fuso),
         liberavel: false,
       });
     if (b.codigo === "conta_queda")
@@ -177,7 +176,7 @@ export function orcamentoIaDTO(u: UsoOrcamentoIa): OrcamentoIa {
   };
 }
 
-function pausaDoOrcamento(u: UsoOrcamentoIa, agora: number): PausaConta | null {
+function pausaDoOrcamento(u: UsoOrcamentoIa, agora: number, fuso: string): PausaConta | null {
   const doMes = u.limiteMensal && u.gastoMes.gte(u.limiteMensal);
   const doDia = u.limiteDiario && u.gastoDia.gte(u.limiteDiario);
   if (!doMes && !doDia) return null;
@@ -187,7 +186,7 @@ function pausaDoOrcamento(u: UsoOrcamentoIa, agora: number): PausaConta | null {
     rede: null,
     roboId: null,
     motivo: `Orçamento de IA ${doMes ? "do mês" : "do dia"} atingido (${formatarDolar(gasto)} de ${formatarDolar(limite ?? dec(0))}): as análises voltam como "aguardar" e o assistente para. Com o agente obrigatório, os robôs não compram; stops seguem.`,
-    ate: doMes ? proximoMesUtc(agora) : proximoDiaUtc(agora),
+    ate: doMes ? inicioDoProximoMesNoFuso(agora, fuso) : inicioDoProximoDiaNoFuso(agora, fuso),
     liberavel: false,
   };
 }
@@ -203,20 +202,24 @@ function pausaDaDivergencia(d: DivergenciaGravada): PausaConta {
   };
 }
 
-/** `GET /risco/conta`: aplica as regras do domínio sobre a fotografia do banco. */
+/**
+ * `GET /risco/conta`: aplica as regras do domínio sobre a fotografia do banco. `fuso`: o
+ * da instância (ZENTRADE_FUSO), que diz quando o dia e o mês viram.
+ */
 export function situacaoDaConta(
   dados: DadosSituacaoConta,
   divergencias: readonly DivergenciaGravada[],
   agora: number,
+  fuso: string,
 ): SituacaoConta {
   const l = limitesDominio(dados.limites);
-  const orcamento = pausaDoOrcamento(dados.orcamento, agora);
+  const orcamento = pausaDoOrcamento(dados.orcamento, agora, fuso);
   return {
     limites: dados.limites,
     liberadaEm: dados.liberadaEm,
     redes: dados.retratos.map((r) => situacaoDaRede(r, l, dados.liberadaEm, agora)),
     pausas: [
-      ...dados.retratos.flatMap((r) => pausasDaRede(r, l, dados.liberadaEm, agora)),
+      ...dados.retratos.flatMap((r) => pausasDaRede(r, l, dados.liberadaEm, agora, fuso)),
       ...divergencias.filter((d) => d.estado === "aberta").map(pausaDaDivergencia),
       ...(orcamento ? [orcamento] : []),
     ],

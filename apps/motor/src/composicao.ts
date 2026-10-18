@@ -232,6 +232,7 @@ export function montarMotor(config: Config, f: FontesMotor, registro: Registro) 
       tamanhoHistorico: config.MOTOR_HISTORICO,
       expiracaoAprovacaoMs: config.APROVACAO_VALIDADE_MIN * 60_000,
       stopLimiteBps: config.MOTOR_STOP_LIMITE_BPS,
+      fuso: config.ZENTRADE_FUSO,
     },
   };
   return { deps, opcoesMotor: opcoesDoMotor(config, f, corretora, portas.ordens, registro) };

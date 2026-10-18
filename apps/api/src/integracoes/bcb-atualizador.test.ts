@@ -39,6 +39,15 @@ describe("atualizador dos índices do Banco Central", () => {
     expect(verificacoes).toHaveLength(6);
   });
 
+  it("pede até o dia de Brasília (o BCB publica por ele), não o dia UTC", async () => {
+    const pedidos: string[] = [];
+    const cliente: ClienteBcb = { serie: async (_c, _de, ate) => (pedidos.push(ate), []) };
+    const { armazem } = armazemMemoria();
+    const noite = Date.parse("2026-10-18T01:52:00Z"); // 17/10 22:52 em Brasília
+    await criarAtualizadorIndicadores({ cliente, armazem, agora: () => noite, log }).atualizar();
+    expect(new Set(pedidos)).toEqual(new Set(["2026-10-17"]));
+  });
+
   it("depois, só a cauda, com 10 dias de folga", async () => {
     const pedidos: string[] = [];
     const cliente: ClienteBcb = { serie: async (_c, de) => (pedidos.push(de), []) };

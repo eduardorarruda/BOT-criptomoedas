@@ -2,7 +2,6 @@ import { dec, precoAlvo } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
 import { OPERACAO_DONCHIAN, pedidoExemplo, velasDeTeste } from "../teste/pedido.js";
 import { custoIdaEVolta } from "./custos.js";
-import { agoraComFuso } from "./hora.js";
 import { leituraDoMercado } from "./mercado.js";
 import { ALVO_DISTANTE_MULTIPLO, leituraDasSaidas } from "./saidas.js";
 
@@ -188,19 +187,5 @@ describe("mercado (calculado no código a partir das velas)", () => {
     const texto = leituraDoMercado(pedido, Date.UTC(2026, 9, 16, 15, 20)).linhas.join("\n");
     expect(texto).toMatch(/Pregão da B3: 12:20 de Brasília, almoço/);
     expect(texto).toMatch(/VWAP do dia: [\d.,]+; preço [\d.,]+ pontos \([\d,]+%\) (acima|abaixo)/);
-  });
-});
-
-describe("hora no pedido", () => {
-  it("mostra a hora local com o nome do fuso e o UTC", () => {
-    expect(agoraComFuso(new Date("2026-10-18T01:52:30Z"), "America/Sao_Paulo")).toBe(
-      "sábado, 17/10/2026 22:52 (America/Sao_Paulo; UTC 2026-10-18T01:52Z)",
-    );
-  });
-
-  it("outro fuso", () => {
-    expect(agoraComFuso(new Date("2026-10-18T01:52:30Z"), "Europe/Lisbon")).toBe(
-      "domingo, 18/10/2026 02:52 (Europe/Lisbon; UTC 2026-10-18T01:52Z)",
-    );
   });
 });

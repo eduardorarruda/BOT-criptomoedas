@@ -1,6 +1,6 @@
 import type { LinhaTitulo } from "@zentrade/banco";
 import type { ResumoRendaFixa, TituloDetalhe, TituloRendaFixa } from "@zentrade/contratos";
-import { dec, paraTexto, type Valor } from "@zentrade/dominio";
+import { dec, diaNoFuso, FUSO_B3, paraTexto, type Valor } from "@zentrade/dominio";
 import {
   comPremissasInformadas,
   consolidar,
@@ -26,15 +26,12 @@ export interface ServicosRendaFixa {
   readonly pluggy: SincronizadorPluggy;
 }
 
-const diaSaoPaulo = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "America/Sao_Paulo",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-/** "Hoje" da renda fixa é o dia no Brasil, não em UTC. */
-export const hojeEm = (ms: number): string => diaSaoPaulo.format(new Date(ms));
+/**
+ * "Hoje" da renda fixa é o dia no Brasil, não em UTC: o calendário dos títulos, do
+ * Tesouro e dos índices do Banco Central é o de Brasília, qualquer que seja o fuso da
+ * instância.
+ */
+export const hojeEm = (ms: number): string => diaNoFuso(ms, FUSO_B3);
 
 interface Carteira {
   readonly hoje: string;

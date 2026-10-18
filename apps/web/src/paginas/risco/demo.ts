@@ -8,7 +8,7 @@ import type {
   SituacaoRede,
 } from "@zentrade/contratos/esquemas";
 import { LIMITES_CONTA_PADRAO } from "@zentrade/contratos/esquemas";
-import { dec } from "@zentrade/dominio";
+import { dec, FUSO_PADRAO, inicioDoProximoDiaNoFuso, inicioDoProximoMesNoFuso } from "@zentrade/dominio";
 
 /**
  * A conta de demonstração: dois robôs na testnet (BTC e SOL) e dois em papel. O SOL
@@ -175,11 +175,9 @@ function avisosIniciais(agora: number): AvisoDTO[] {
   ];
 }
 
-const proximoDiaUtc = (agora: number): number => agora - (agora % DIA) + DIA;
-const proximoMesUtc = (agora: number): number => {
-  const d = new Date(agora);
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
-};
+/** O exemplo roda no navegador, sem instância: o dia é o de Brasília (o padrão do ZENTRADE_FUSO). */
+const proximoDia = (agora: number): number => inicioDoProximoDiaNoFuso(agora, FUSO_PADRAO);
+const proximoMes = (agora: number): number => inicioDoProximoMesNoFuso(agora, FUSO_PADRAO);
 
 const atingido = (valor: string, limite: string | null): boolean => limite !== null && dec(valor).gte(limite);
 
@@ -217,8 +215,8 @@ export function demoRisco(inicio: number, { vazio = false }: { readonly vazio?: 
         codigo: "conta_perda_diaria",
         rede: "testnet",
         roboId: null,
-        motivo: `A perda do dia na conta (US$ 50,50, somando os robôs) chegou ao limite. Compras voltam às 00:00 UTC (21h de Brasília).`,
-        ate: proximoDiaUtc(agora),
+        motivo: `A perda do dia na conta (US$ 50,50, somando os robôs) chegou ao limite. Compras voltam quando o dia virar, à meia-noite.`,
+        ate: proximoDia(agora),
         liberavel: false,
       });
     if (liberadaEm === null && atingido(TESTNET.queda, limites.quedaMaxima))
@@ -266,7 +264,7 @@ export function demoRisco(inicio: number, { vazio = false }: { readonly vazio?: 
         rede: null,
         roboId: null,
         motivo: 'Orçamento de IA atingido: as análises voltam como "aguardar" e o assistente para.',
-        ate: proximoMesUtc(agora),
+        ate: proximoMes(agora),
         liberavel: false,
       });
     return lista;

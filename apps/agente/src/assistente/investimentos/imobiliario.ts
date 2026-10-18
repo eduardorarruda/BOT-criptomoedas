@@ -40,14 +40,14 @@ function calcular(r: RegistroImobiliario, dataBase: string): Item {
   }
 }
 
-function linha({ registro: { investimento: i }, metricas: m, erro }: Item) {
+function linha({ registro: { investimento: i }, metricas: m, erro }: Item, fuso: string) {
   const base = {
     id: i.id,
     nome: i.nome,
     tipo: i.tipo,
     moedaOriginal: i.moeda,
     ...(i.ticker ? { ticker: i.ticker } : {}),
-    atualizadoEm: quando(i.atualizadoEm),
+    atualizadoEm: quando(i.atualizadoEm, fuso),
   };
   if (!m) return { ...base, erro };
   return {
@@ -104,7 +104,7 @@ async function lerImobiliario(ctx: ContextoInvestimentos, dados: LeituraInvestim
       rendaMensal: visao.rendaMensal,
       resultadoLiquido: visao.resultadoLiquido,
     },
-    investimentos: primeiros.map(linha),
+    investimentos: primeiros.map((item) => linha(item, ctx.fuso)),
     omitidos,
     avisos: comCotas ? [SEM_COTACAO] : [],
   };

@@ -44,7 +44,6 @@ export type {
   ResultadoRegistro,
 } from "./repositorios/divergencias.js";
 export {
-  inicioDoMesUtc,
   type OrigemGastoIa,
   type RepositorioGastosIa,
   type UsoOrcamentoIa,
@@ -72,6 +71,7 @@ export type {
   CandleDTO,
   CoberturaCandles,
   ConsultaCandles,
+  LoteCandles,
   UltimoFechamento,
 } from "./repositorios/mercado.js";
 export type {

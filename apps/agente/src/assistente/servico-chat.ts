@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ConfigAssistente, EventoRespostaAgente, PedidoRespostaAgente } from "@zentrade/contratos";
+import { FUSO_PADRAO, nomeDoFuso } from "@zentrade/dominio";
 import { ErroClaudeCli } from "../claude-cli/analista-cli.js";
 import { ErroContas } from "../claude-cli/contas.js";
 import { descreverEtapa } from "../eventos/descrever.js";
@@ -17,6 +18,8 @@ export interface OpcoesServicoChat extends DependenciasChat {
   readonly api: ChatApi | null;
   readonly cli: ChatCli | null;
   readonly agora?: () => number;
+  /** O fuso da instância (ZENTRADE_FUSO): o "hoje" das ferramentas. Padrão: Brasília. */
+  readonly fuso?: string;
   /** Para o log: falha da resposta inteira ou, com `ferramenta`, de uma ferramenta (provedor "api"). */
   readonly aoFalhar?: (erro: unknown, ferramenta?: string) => void;
   /** Orçamento de IA da pessoa: conferido antes de chamar o modelo, gasto gravado depois. */
@@ -75,14 +78,19 @@ export class ServicoChat {
       emitir({
         tipo: "erro",
         codigo: "orcamento_ia",
-        mensagem: `O assistente está parado: ${liberacao.motivo}. Ele volta quando o período virar (UTC) ou quando você subir o limite em Risco → Orçamento de IA.`,
+        mensagem: `O assistente está parado: ${liberacao.motivo}. Ele volta quando o dia (ou o mês) virar, à meia-noite (${nomeDoFuso(this.#o.fuso ?? FUSO_PADRAO)}), ou quando você subir o limite em Risco → Orçamento de IA.`,
       });
       return;
     }
     try {
       const config = await this.#o.config(pedido.usuarioId);
       const citacoes = new RegistroCitacoes();
-      const ctx = { usuarioId: pedido.usuarioId, citacoes, agora: this.#o.agora ?? Date.now };
+      const ctx = {
+        usuarioId: pedido.usuarioId,
+        citacoes,
+        agora: this.#o.agora ?? Date.now,
+        fuso: this.#o.fuso ?? FUSO_PADRAO,
+      };
       const ferramentas = observar(ferramentasDoChat(ctx, this.#o), (nome, entrada) =>
         emitir({ tipo: "ferramenta", nome, descricao: descreverEtapa(nome, entrada) }),
       );

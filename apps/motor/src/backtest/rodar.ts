@@ -58,6 +58,8 @@ export interface EntradaBacktest {
   readonly fim?: number;
   /** Candles antes do início usados só para os indicadores. Padrão 200. */
   readonly aquecimento?: number;
+  /** Onde começa o dia da perda diária (padrão: America/Sao_Paulo, como OPCOES_PADRAO). */
+  readonly fuso?: string;
 }
 
 export interface SaidasIntrabar {
@@ -134,6 +136,7 @@ function montar(e: EntradaBacktest, aquecimento: number) {
       ...OPCOES_PADRAO,
       agenteObrigatorio: true,
       tamanhoHistorico: Math.max(aquecimento, OPCOES_PADRAO.tamanhoHistorico),
+      fuso: e.fuso ?? OPCOES_PADRAO.fuso,
     },
   };
   return { relogio, corretora, ordens, decisoes, erros, robo, deps, nucleo: new NucleoRobo(robo, deps) };

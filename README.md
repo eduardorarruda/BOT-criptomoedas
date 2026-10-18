@@ -154,7 +154,7 @@ O que **falta**:
 - [Estratégias](docs/estrategias.md) — como montar e ler um backtest.
 - [Fundamentação](docs/fundamentacao.md) — o que reguladores, estudos e plataformas dizem sobre robôs de investimento, com 48 fontes, e onde o ZenTrade se encaixa.
 - [Mini índice e Jev](docs/mini-indice-e-jev.md) — estudo sobre operar WIN na B3 com um modelo de IA rápido: contrato, custos, impostos, plataformas no Linux, regulação, o que o Jev faz e não faz, e as fases com critérios de avanço. As notas para a base de conhecimento estão em [`conhecimento/semente`](conhecimento/semente/).
-- [Dados da B3](docs/dados-b3.md) — candles do mini índice para o backtest: Ibovespa intradiário pela brapi (`WIN-IBOV`), WIN pelo CSV do MetaTrader 5, fontes avaliadas e o que a aproximação não é.
+- [Dados da B3](docs/dados-b3.md) — candles do mini índice para o backtest: WIN pelos arquivos de negócios da B3 (BDI) e pelo CSV do MetaTrader 5, Ibovespa intradiário pela brapi (`WIN-IBOV`), fontes avaliadas e o que a aproximação não é.
 - [Privacidade e LGPD](docs/privacidade.md) — o que a política de privacidade promete, como configurar o controlador e o que ainda falta.
 - [Segurança](docs/seguranca.md) e [ADRs](docs/adr/) — as decisões de fundo.
 

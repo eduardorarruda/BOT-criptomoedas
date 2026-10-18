@@ -2,6 +2,7 @@ import { ShieldCheck } from "lucide-react";
 import { Painel } from "../../componentes/Cabecalho";
 import type { Medidor } from "../../lib/aovivo/risco";
 import { formatarDinheiro, formatarPercentual } from "../../lib/formatar";
+import { nomeDoFusoDaInstancia } from "../../lib/fuso";
 
 const NIVEL = { ok: "dentro do limite", atencao: "perto do limite", limite: "no limite" } as const;
 
@@ -59,7 +60,7 @@ export function MedidoresRisco({ medidores }: { readonly medidores: readonly Med
           <Barra key={m.id} m={m} />
         ))}
       </ul>
-      <p className="medidores__nota">O dia começa às 21:00 de Brasília (00:00 UTC), como no motor.</p>
+      <p className="medidores__nota">O dia começa à meia-noite ({nomeDoFusoDaInstancia()}), como no motor.</p>
     </Painel>
   );
 }

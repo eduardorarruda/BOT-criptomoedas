@@ -1,10 +1,10 @@
 import { lerChaveMestra } from "@zentrade/banco";
 import { PROVEDORES_EMBEDDINGS, type ProvedorEmbeddings } from "@zentrade/conhecimento";
+import { FusoInstanciaEsquema } from "@zentrade/contratos";
 import { z } from "zod";
 import { MODELO_PADRAO } from "./analista.js";
 import { LIMIAR_PADRAO } from "./cenarios.js";
 import { lerContas, type ContaClaude } from "./claude-cli/contas.js";
-import { FUSO_PADRAO, fusoValido } from "./pedido/hora.js";
 
 const inteiro = (min: number, max: number, padrao: number) =>
   z.coerce.number().int().min(min).max(max).default(padrao);
@@ -37,11 +37,6 @@ const Ambiente = z.object({
   AGENTE_CLI_TETO_USD: z.coerce.number().min(0.01).max(50).default(1),
   // Prévias de futuro: probabilidade mínima do cenário favorável para abrir posição.
   AGENTE_CENARIO_LIMIAR: z.coerce.number().min(0.5).max(0.95).default(LIMIAR_PADRAO),
-  // Fuso da hora que vai no pedido ao modelo (a hora de quem opera, além do UTC).
-  ZENTRADE_FUSO: z
-    .string()
-    .refine(fusoValido, "fuso desconhecido; use um nome da IANA, ex.: America/Sao_Paulo")
-    .default(FUSO_PADRAO),
   // Assistente (chat): prazo de uma resposta e teto de respostas.
   AGENTE_CHAT_TIMEOUT_MS: inteiro(10_000, 1_800_000, 300_000),
   AGENTE_CHAT_MAX_SIMULTANEAS: inteiro(1, 64, 4),
@@ -55,6 +50,8 @@ const Ambiente = z.object({
   // A mesma chave mestra da API: decifra (e cifra) o token do Claude Code de cada pessoa.
   // Opcional: sem ela, o provedor "cli" usa só as contas de AGENTE_CLAUDE_CONTAS.
   ZENTRADE_CHAVE_MESTRA: z.string().optional(),
+  // O fuso da instância (nome IANA): o "hoje" do orçamento de IA e do assistente.
+  ZENTRADE_FUSO: FusoInstanciaEsquema,
 });
 
 export interface ConfigCliDoAgente {
@@ -79,8 +76,6 @@ export interface ConfigAgente {
   readonly cli: ConfigCliDoAgente;
   /** Probabilidade mínima do cenário favorável para a proposta abrir posição. */
   readonly limiarCenarios: number;
-  /** Fuso da hora no pedido ao modelo (IANA). */
-  readonly fuso: string;
   readonly provedorEmbeddings: ProvedorEmbeddings;
   readonly chat: {
     readonly timeoutMs: number;
@@ -90,6 +85,8 @@ export interface ConfigAgente {
   readonly nivelLog: z.infer<typeof Ambiente>["LOG_LEVEL"];
   /** 32 bytes; ausente = sem o token do Claude Code de cada pessoa. */
   readonly chaveMestra?: Buffer;
+  /** O fuso da instância (ZENTRADE_FUSO, nome IANA canônico). */
+  readonly fuso: string;
 }
 
 export class ErroConfiguracao extends Error {
