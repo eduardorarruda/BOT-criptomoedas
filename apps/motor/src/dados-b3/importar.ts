@@ -1,4 +1,5 @@
 import { MS_POR_INTERVALO } from "@zentrade/contratos";
+import type { LoteCandles } from "@zentrade/banco";
 import type { Candle } from "@zentrade/dominio";
 import { candlesDoBanco, type CandlesDoBanco } from "../backtest/candles-historicos.js";
 import { agregar } from "./agregar.js";
@@ -67,6 +68,19 @@ async function gravarAgregados(
   return gravados;
 }
 
+/** Só o pregão regular e o que já fechou em `agora`, em ordem e sem aberturas repetidas. */
+function filtrarParaGravar(lista: readonly Candle[], intervalo: IntervaloB3, agora: number) {
+  const ms = MS_POR_INTERVALO[intervalo];
+  const todos = normalizar(lista, ms);
+  const noPregao = todos.filter((k) => noPregaoB3(k.abertura));
+  const fechados = noPregao.filter((k) => k.abertura + ms <= agora);
+  return {
+    fechados,
+    foraDoPregao: todos.length - noPregao.length,
+    emFormacao: noPregao.length - fechados.length,
+  };
+}
+
 /**
  * Grava (upsert, idempotente) candles da B3 já lidos de uma fonte: só os do pregão
  * regular e já fechados; depois monta e grava 15m e 1h. Nunca inventa candle para
@@ -79,18 +93,70 @@ export async function gravarCandlesB3(
   lista: readonly Candle[],
   o: OpcoesGravacao,
 ): Promise<ResumoGravacao> {
-  const ms = MS_POR_INTERVALO[intervalo];
-  const todos = normalizar(lista, ms);
-  const noPregao = todos.filter((k) => noPregaoB3(k.abertura));
-  const fechados = noPregao.filter((k) => k.abertura + ms <= o.agora);
-  const contagem = {
-    foraDoPregao: todos.length - noPregao.length,
-    emFormacao: noPregao.length - fechados.length,
-  };
+  const { fechados, ...contagem } = filtrarParaGravar(lista, intervalo, o.agora);
   const primeiro = fechados[0]?.abertura;
   const ultimo = fechados.at(-1)?.abertura;
   if (primeiro === undefined || ultimo === undefined) return { gravados: { [intervalo]: 0 }, ...contagem };
   await emLotes(banco, simbolo, intervalo, fechados);
   const agregados = await gravarAgregados(banco, simbolo, intervalo, { primeiro, ultimo }, o.agora);
   return { gravados: { [intervalo]: fechados.length, ...agregados }, ...contagem, primeiro, ultimo };
+}
+
+export interface Trecho {
+  readonly inicio: number;
+  readonly fim: number;
+}
+
+/** O banco de candles que também troca um trecho inteiro (o repositório de mercado de packages/banco). */
+export interface CandlesSubstituiveis extends CandlesDoBanco {
+  /**
+   * Numa transação só: apaga o que há em [inicio, fim) nos intervalos dos lotes e grava
+   * os lotes. Devolve quantos candles antigos foram apagados.
+   */
+  substituir(simbolo: string, trecho: Trecho, lotes: readonly LoteCandles[]): Promise<number>;
+}
+
+/**
+ * Troca tudo o que há no trecho [inicio, fim) pelo lote, no intervalo importado e nos
+ * maiores (15m e 1h, montados aqui a partir do lote), numa transação só: se algo falhar
+ * no meio, o banco fica como estava. Para a fonte que manda o pregão inteiro de uma vez
+ * (o arquivo de negócios da B3): reimportar o dia fica igual, e candle que não existe
+ * mais na fonte some. Mesmos filtros de `gravarCandlesB3` (pregão regular, já fechado).
+ * O trecho precisa estar na grade do maior intervalo (meia-noite de Brasília está) e
+ * conter todo o lote.
+ */
+export async function substituirCandlesB3(
+  banco: CandlesSubstituiveis,
+  simbolo: SimboloB3,
+  intervalo: IntervaloB3,
+  trecho: Trecho,
+  lista: readonly Candle[],
+  o: OpcoesGravacao,
+): Promise<ResumoGravacao & { readonly apagados: number }> {
+  const acima = intervalosAcima(intervalo);
+  const maior = acima.at(-1) ?? intervalo;
+  const msMaior = MS_POR_INTERVALO[maior];
+  if (piso(trecho.inicio, msMaior) !== trecho.inicio || piso(trecho.fim, msMaior) !== trecho.fim)
+    throw new RangeError(`o trecho a substituir precisa estar na grade de ${maior}`);
+  if (lista.some((k) => k.abertura < trecho.inicio || k.abertura >= trecho.fim))
+    throw new RangeError("há candle fora do trecho a substituir");
+  const { fechados, ...contagem } = filtrarParaGravar(lista, intervalo, o.agora);
+  const lotes: LoteCandles[] = [
+    { intervalo, lista: fechados },
+    ...acima.map((i) => ({
+      intervalo: i,
+      lista: agregar(fechados, intervalo, i).filter((k) => k.fechamento < o.agora),
+    })),
+  ];
+  const apagados = await banco.substituir(simbolo, trecho, lotes);
+  const gravados = Object.fromEntries(lotes.map((l) => [l.intervalo, l.lista.length]));
+  const primeiro = fechados[0]?.abertura;
+  const ultimo = fechados.at(-1)?.abertura;
+  return {
+    gravados,
+    ...contagem,
+    ...(primeiro === undefined ? {} : { primeiro }),
+    ...(ultimo === undefined ? {} : { ultimo }),
+    apagados,
+  };
 }
