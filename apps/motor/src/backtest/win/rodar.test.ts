@@ -129,6 +129,22 @@ describe("backtest do mini índice: contas de uma operação (feitas à mão)", 
     expect(op.resultado.gt(0)).toBe(true);
   });
 
+  it("a taxa percentual da estratégia (modelo do cripto) não mexe no alvo nem no empate do WIN", () => {
+    const candles = pregao(DIA, "10:00", [
+      parada(130_000),
+      { o: 130_000, h: 130_010, l: 129_870, c: 129_880 },
+      { o: 129_800, h: 129_850, l: 128_500, c: 128_700 },
+      parada(128_700),
+    ]);
+    const comTaxa: Estrategia = { ...venda, taxa: 0.001, empate: { gatilho: 0.003 } };
+    const semTaxa: Estrategia = { ...venda, empate: { gatilho: 0.003 } };
+    const a = rodar(candles, { estrategia: comTaxa });
+    const b = rodar(candles, { estrategia: semTaxa });
+    // os custos do WIN vêm do modelo do contrato (tarifa por contrato e ticks), não da taxa
+    expect(a.operacoes).toEqual(b.operacoes);
+    expect(a.operacoes[0]!.motivo).toBe("alvo");
+  });
+
   it("nem 1 contrato cabe no risco: não opera e conta o sinal", () => {
     const candles = pregao(DIA, "10:00", [
       parada(130_000),

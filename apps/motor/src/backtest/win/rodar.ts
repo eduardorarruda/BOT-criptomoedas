@@ -77,6 +77,16 @@ function momentoDo(candles: readonly Candle[], i: number, ultimoDaJanela: boolea
   };
 }
 
+/**
+ * A `taxa` da estratégia é a taxa percentual da corretora de cripto. No WIN o custo é
+ * outro (tarifa e corretagem por contrato, ticks de deslizamento) e entra pelo modelo
+ * do contrato; deixar a taxa no alvo líquido e no empate empurraria os dois centenas de
+ * pontos para longe por um custo que não existe.
+ */
+function semTaxaPercentual(e: EntradaBacktestWin): EntradaBacktestWin {
+  return e.estrategia.taxa === 0 ? e : { ...e, estrategia: { ...e.estrategia, taxa: 0 } };
+}
+
 function validar(e: EntradaBacktestWin): void {
   const problemas = [...validarEstrategia(e.estrategia), ...problemasNoMercado(e.estrategia, "win")];
   if (problemas.length > 0)
@@ -112,7 +122,8 @@ function estadoInicial(saldo: Valor): EstadoWin {
  *      com contratos pelo risco em reais, pelo máximo e pela margem.
  * Determinístico e sem rede. Custos: tarifa da B3 e corretagem por contrato e por lado.
  */
-export function rodarBacktestWin(e: EntradaBacktestWin): ResultadoBacktestWin {
+export function rodarBacktestWin(entrada: EntradaBacktestWin): ResultadoBacktestWin {
+  const e = semTaxaPercentual(entrada);
   validar(e);
   const inicio = e.inicio ?? Number.NEGATIVE_INFINITY;
   const janela = recorte(e.candles, inicio, e.fim ?? Number.POSITIVE_INFINITY, (c) => c.abertura);

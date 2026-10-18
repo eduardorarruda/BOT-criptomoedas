@@ -345,7 +345,7 @@ Exemplo da nota 04: risco de R$ 50 e stop de 150 pontos: 150 × 0,20 + 2,50 = R$
 
 ### Modelos do mini índice
 
-Quatro modelos em 5 minutos, nos dois sentidos e com taxa zero (os custos vêm do modelo do contrato): **rompimento da faixa de abertura** (30 min), **tendência EMA 9/21 com ADX**, **volta à média com Bollinger no pregão** e **Donchian 20/10 com stop por ATR**. Para eles, a árvore de regras ganhou dois indicadores do pregão, que recomeçam a cada dia de Brasília e não olham candle de depois: o **VWAP do dia** (sem volume, como no índice à vista, não tem valor) e a **faixa de abertura** (máxima e mínima dos primeiros N minutos; só existe depois que eles passam). São exemplos para estudar, não recomendação.
+Quatro modelos em 5 minutos, nos dois sentidos e com taxa zero (os custos vêm do modelo do contrato): **rompimento da faixa de abertura** (30 min), **tendência EMA 9/21 com ADX**, **volta à média com Bollinger no pregão** e **Donchian 20/10 com stop por ATR**. Para eles, a árvore de regras ganhou dois indicadores do pregão, que recomeçam a cada dia de Brasília e não olham candle de depois: o **VWAP do dia** (sem volume, como no índice à vista, não tem valor) e a **faixa de abertura** (máxima e mínima dos primeiros N minutos; só existe depois que eles passam). São exemplos para estudar, não recomendação. Qualquer estratégia pode rodar no WIN: a `taxa` percentual dela (a da corretora de cripto) é ignorada ali, porque o custo do mini índice é por contrato e já entra pelo modelo do contrato; o alvo líquido e o empate ficam em percentual do preço, sem taxa.
 
 ### O que este backtest ainda não mostra
 
