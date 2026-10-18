@@ -26,3 +26,6 @@ export function problemasNoMercado(e: Estrategia, m: Mercado): string[] {
     `o mercado à vista de cripto só opera comprado (não há venda a descoberto); esta estratégia opera ${direcao === "vendido" ? "vendida" : "nos dois sentidos"} e roda no backtest do mini índice`,
   ];
 }
+
+/** O mercado de um símbolo: os do mini índice começam com WIN (WIN, WIN-IBOV, WINZ26); o resto é cripto. */
+export const mercadoDoSimbolo = (simbolo: string): Mercado => (/^WIN/.test(simbolo) ? "win" : "cripto");

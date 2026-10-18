@@ -99,6 +99,13 @@
       "when": 1792265754062,
       "tag": "0013_credenciais_claude",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792288947290,
+      "tag": "0014_placar_claude",
+      "breakpoints": true
     }
   ]
 }

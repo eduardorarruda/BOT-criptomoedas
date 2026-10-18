@@ -1,5 +1,6 @@
 import {
   estrategiaDoDTO,
+  type AvaliacaoDecisao,
   type CamposEstrategia,
   type DecisaoDTO,
   type EstadoDecisao,
@@ -10,8 +11,9 @@ import {
   type RoboConfig,
   type RoboDTO,
 } from "@zentrade/contratos";
-import { dec, paraTexto, type Estrategia, type Execucao } from "@zentrade/dominio";
+import { acertou, dec, paraTexto, type Estrategia, type Execucao } from "@zentrade/dominio";
 import type {
+  avaliacoesDecisao,
   decisoes,
   estrategiaVersoes,
   execucoes,
@@ -36,6 +38,7 @@ type LinhaRobo = typeof robos.$inferSelect;
 type LinhaDecisao = typeof decisoes.$inferSelect;
 type LinhaOrdem = typeof ordens.$inferSelect;
 type LinhaExecucao = typeof execucoes.$inferSelect;
+type LinhaAvaliacao = typeof avaliacoesDecisao.$inferSelect;
 
 /**
  * O JSONB `regra` da versão: as árvores e, desde as saídas novas, a configuração
@@ -117,7 +120,29 @@ interface RiscoGravado {
   readonly barreiras: { codigo: string; mensagem: string }[];
 }
 
-export function decisaoDeLinha(d: LinhaDecisao, ordemId?: string): DecisaoDTO {
+/** A avaliação do placar do Claude → contrato (vai em cada item de GET /decisoes). */
+export function avaliacaoDeLinha(a: LinhaAvaliacao): AvaliacaoDecisao {
+  const concluida = a.situacao === "concluida" && a.resultado !== null;
+  return {
+    claude: a.claude,
+    confianca: fracao(a.confianca),
+    fonte: a.fonte,
+    situacao: a.situacao,
+    ...(a.motivo ? { motivo: a.motivo } : {}),
+    ...(a.resultado !== null ? { resultado: decimalTexto(a.resultado) } : {}),
+    ...(a.retorno !== null ? { retorno: Number(a.retorno) } : {}),
+    barras: a.barras,
+    ...(concluida ? { acertou: acertou(a.claude, dec(a.resultado as string)) } : {}),
+    moeda: a.moeda,
+    avaliadaEm: ms(a.avaliadaEm),
+  };
+}
+
+export function decisaoDeLinha(
+  d: LinhaDecisao,
+  ordemId?: string,
+  avaliacao?: LinhaAvaliacao | null,
+): DecisaoDTO {
   const sinal = d.sinal as SinalGravado;
   const risco = d.risco as RiscoGravado;
   const quantidade = decimalOpcional(d.quantidade);
@@ -137,6 +162,7 @@ export function decisaoDeLinha(d: LinhaDecisao, ordemId?: string): DecisaoDTO {
     ...(d.resultado !== null && d.avaliadaEm !== null
       ? { desfecho: { resultado: decimalTexto(d.resultado), avaliadoEm: ms(d.avaliadaEm) } }
       : {}),
+    ...(avaliacao ? { avaliacao: avaliacaoDeLinha(avaliacao) } : {}),
   };
 }
 

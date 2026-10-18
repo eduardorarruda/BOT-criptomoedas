@@ -14,6 +14,7 @@ import { retratoMercado } from "./retrato-mercado.js";
 
 export type {
   ContextoAnalise,
+  AvaliacaoPassada,
   DecisaoPassada,
   DependenciasFerramentas,
   PortaHistoricoDecisoes,

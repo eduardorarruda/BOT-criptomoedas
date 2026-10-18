@@ -1,4 +1,5 @@
-import { EstadoDecisao } from "@zentrade/contratos";
+import { EstadoDecisao, FiltroPlacarEsquema, placarParaDTO } from "@zentrade/contratos";
+import { calcularPlacar } from "@zentrade/dominio";
 import { LIMITE_MAXIMO_LISTA } from "@zentrade/banco";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -19,7 +20,7 @@ const FiltroOrdens = z.object({
 });
 
 export const rotasDecisoes: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (app, { deps }) => {
-  const { decisoes, ordens } = deps.banco;
+  const { decisoes, ordens, placar } = deps.banco;
 
   app.get(
     "/decisoes",
@@ -32,6 +33,24 @@ export const rotasDecisoes: FastifyPluginAsyncZod<{ deps: Dependencias }> = asyn
         ...(antes !== undefined ? { antes } : {}),
         ...(limite !== undefined ? { limite } : {}),
       });
+    },
+  );
+
+  /**
+   * O placar do Claude: precisão das aprovações (com intervalo de Wilson), vetos certos,
+   * dinheiro contra aprovar tudo, payoff, calibração e o limite de confiança sugerido —
+   * no total, por robô, por estratégia e por mercado. Só as decisões da pessoa (RLS).
+   */
+  app.get(
+    "/decisoes/placar",
+    { config: { acesso: "leitura" }, schema: { querystring: FiltroPlacarEsquema } },
+    async (req) => {
+      const { roboId, desde } = req.query;
+      const lista = await placar.decisoes(usuarioIdDe(req), {
+        ...(roboId ? { roboId } : {}),
+        ...(desde !== undefined ? { desde } : {}),
+      });
+      return placarParaDTO(calcularPlacar(lista), deps.agora());
     },
   );
 
