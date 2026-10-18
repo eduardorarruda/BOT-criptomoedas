@@ -6,6 +6,7 @@ import { useAvisos } from "../../componentes/Avisos";
 import { Botao } from "../../componentes/Botao";
 import { Painel } from "../../componentes/Cabecalho";
 import { CampoTexto } from "../../componentes/Campo";
+import { nomeDoFusoDaInstancia } from "../../lib/fuso";
 import { lerFormulario, paraFormulario } from "./formulario";
 import { useSalvarLimites } from "./ganchos";
 import { Medidores } from "./Medidores";
@@ -57,7 +58,7 @@ export function PainelOrcamentoIa({
       id="titulo-orcamento-ia"
       icone={BrainCircuit}
       variante={orcamento.esgotado ? "perigo" : "padrao"}
-      descricao="Análises dos robôs e respostas do assistente, nos dois provedores (API e Claude Code). Mês e dia em UTC."
+      descricao={`Análises dos robôs e respostas do assistente, nos dois provedores (API e Claude Code). Mês e dia no ${nomeDoFusoDaInstancia()}.`}
     >
       <Medidores medidores={medidoresDoOrcamento(orcamento)} />
       {orcamento.esgotado ? (

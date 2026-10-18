@@ -4,6 +4,7 @@ import { Painel } from "../../componentes/Cabecalho";
 import { EstadoVazio } from "../../componentes/Estados";
 import { Selo } from "../../componentes/Selo";
 import { formatarDinheiro } from "../../lib/formatar";
+import { nomeDoFusoDaInstancia } from "../../lib/fuso";
 import { REDE } from "../../lib/rotulos";
 import { Medidores } from "./Medidores";
 import { medidoresDaRede } from "./medidores";
@@ -18,7 +19,7 @@ export function PainelConta({ situacao }: { readonly situacao: SituacaoConta }) 
       titulo="Limites da conta agora"
       id="titulo-conta"
       icone={Gauge}
-      descricao="Somando os robôs de cada rede. O dia começa às 00:00 UTC (21h de Brasília), como no motor."
+      descricao={`Somando os robôs de cada rede. O dia começa à meia-noite (${nomeDoFusoDaInstancia()}), como no motor.`}
     >
       {situacao.redes.length === 0 ? (
         <EstadoVazio compacto icone={Gauge} titulo="Nenhum robô ainda">

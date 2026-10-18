@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { definirFusoDaInstancia } from "./fuso";
 import { formatarDataHora, formatarHora, formatarRelativo, formatarDuracao } from "./tempo";
+
+afterEach(() => definirFusoDaInstancia("America/Sao_Paulo"));
 
 // 10/10/2026 14:32:05 em São Paulo (UTC−3)
 const EM = Date.UTC(2026, 9, 10, 17, 32, 5);
@@ -8,6 +11,12 @@ describe("tempo", () => {
   it("formata data e hora no fuso de São Paulo", () => {
     expect(formatarDataHora(EM)).toBe("10/10 14:32");
     expect(formatarHora(EM)).toBe("14:32:05");
+  });
+
+  it("segue o fuso da instância informado pela API", () => {
+    definirFusoDaInstancia("America/New_York");
+    expect(formatarDataHora(EM)).toBe("10/10 13:32");
+    expect(formatarHora(EM)).toBe("13:32:05");
   });
 
   it("descreve há quanto tempo, como uma pessoa diria", () => {

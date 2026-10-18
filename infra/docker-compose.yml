@@ -15,6 +15,9 @@ x-ambiente-comum: &ambiente-comum
   REDIS_URL: redis://:${REDIS_SENHA:-}@redis:6379
   LOG_LEVEL: ${LOG_LEVEL:-info}
   TZ: UTC
+  # O "hoje" da instância (perda do dia, resultado do dia, orçamento de IA): nome IANA.
+  # Os dados continuam em UTC; só os limites de dia e de mês seguem este fuso.
+  ZENTRADE_FUSO: ${ZENTRADE_FUSO:-America/Sao_Paulo}
 
 services:
   banco:
@@ -211,6 +214,8 @@ services:
       # Para os passos ao vivo das análises (eventos "analise" em zentrade:eventos).
       REDIS_URL: redis://:${REDIS_SENHA:-}@redis:6379
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      # O mesmo fuso da API e do motor: o "hoje" do orçamento de IA e do assistente.
+      ZENTRADE_FUSO: ${ZENTRADE_FUSO:-America/Sao_Paulo}
       # Opcional: sem a chave, só o Claude Code (provedor "cli") atende.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # A mesma chave mestra da API: cifra e decifra o token do Claude que cada pessoa conecta

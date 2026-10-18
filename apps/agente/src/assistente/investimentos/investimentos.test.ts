@@ -103,7 +103,10 @@ const lancamento = (data: string, tipo: "aporte" | "receita" | "resgate", valor:
 
 function montar(dados: Partial<LeituraInvestimentos> = {}) {
   const d = investimentosFalsos(dados);
-  const lista = ferramentasDeInvestimentos({ usuarioId: USUARIO_TESTE, agora: () => AGORA }, d);
+  const lista = ferramentasDeInvestimentos(
+    { usuarioId: USUARIO_TESTE, agora: () => AGORA, fuso: "America/Sao_Paulo" },
+    d,
+  );
   const ferramenta = (nome: string) => lista.find((f) => f.nome === nome)!;
   const rodar = async (nome: string, entrada: unknown = {}) => {
     const r = await executarFerramenta(ferramenta(nome), entrada);
@@ -161,8 +164,11 @@ describe("carteira_cripto", () => {
       conectada: true,
       rede: "real",
       redes: ["real", "testnet"],
-      sincronizacao: { em: "2026-10-11 11:55 UTC", ok: true, erro: null },
-      precos: { maisAntigoEm: "2026-10-11 11:58 UTC", fonte: expect.stringMatching(/candle de 1 minuto/) },
+      sincronizacao: { em: "11/10/2026 08:55 (horário de Brasília)", ok: true, erro: null },
+      precos: {
+        maisAntigoEm: "11/10/2026 08:58 (horário de Brasília)",
+        fonte: expect.stringMatching(/candle de 1 minuto/),
+      },
       resumo: { caixa: "1000", valorConta: "1390" },
       omitidas: 0,
     });
@@ -299,7 +305,7 @@ describe("renda_fixa", () => {
       aplicado: "10000",
       vencimento: "2028-01-15",
       fonte: "calculado pelo ZenTrade",
-      atualizadoEm: "2026-01-15 13:00 UTC",
+      atualizadoEm: "15/01/2026 10:00 (horário de Brasília)",
     });
     expect(Number(titulos[0]!["bruto"])).toBeGreaterThan(10000);
     expect(titulos[1]).toMatchObject({
@@ -382,7 +388,7 @@ describe("investimentos_imobiliarios", () => {
       fonteValorAtual: "manual",
       valorAtualEm: "2026-09-01",
       rendaAcumulada: "3000",
-      atualizadoEm: "2026-09-01 15:30 UTC",
+      atualizadoEm: "01/09/2026 12:30 (horário de Brasília)",
     });
     expect(typeof apto!["tirAnualPct"]).toBe("string");
     expect(JSON.stringify(r.dados)).not.toMatch(/anotação longa/);

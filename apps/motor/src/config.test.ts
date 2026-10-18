@@ -20,6 +20,12 @@ describe("configuração do motor (variáveis de ambiente)", () => {
     expect(c.AGENTE_URL).toBeUndefined();
   });
 
+  it("fuso da instância: Brasília por padrão; nome IANA aceito; inválido derruba a partida explicando", () => {
+    expect(lerConfig({}).ZENTRADE_FUSO).toBe("America/Sao_Paulo");
+    expect(lerConfig({ ZENTRADE_FUSO: "America/New_York" }).ZENTRADE_FUSO).toBe("America/New_York");
+    expect(() => lerConfig({ ZENTRADE_FUSO: "Brasilia" })).toThrow(/ZENTRADE_FUSO: fuso desconhecido/);
+  });
+
   it("stop na corretora ligado por padrão, com o limite 1% abaixo do gatilho; dá para desligar e ajustar", () => {
     const padrao = lerConfig({});
     expect(padrao.MOTOR_STOP_NA_CORRETORA).toBe(true);

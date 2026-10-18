@@ -1,9 +1,8 @@
 import type { Fonte } from "@zentrade/contratos";
-import { metricasDoPlacar, paraTexto, resumoDoPlacar } from "@zentrade/dominio";
+import { diaNoFuso, FUSO_PADRAO, metricasDoPlacar, paraTexto, resumoDoPlacar } from "@zentrade/dominio";
 import { z } from "zod";
 import { definirFerramenta } from "./definicao.js";
 import {
-  dataCurta,
   json,
   type AvaliacaoPassada,
   type ContextoAnalise,
@@ -45,7 +44,8 @@ export function historicoDecisoes(ctx: ContextoAnalise, deps: DependenciasFerram
       return json({
         placar: await placarDoRobo(ctx, deps),
         decisoes: decisoes.map((d) => {
-          const fonte: Fonte = { tipo: "diario", id: d.id, titulo: `Decisão ${d.id}`, data: dataCurta(d.em) };
+          const data = diaNoFuso(d.em, deps.fuso ?? FUSO_PADRAO);
+          const fonte: Fonte = { tipo: "diario", id: d.id, titulo: `Decisão ${d.id}`, data };
           ctx.registro.registrar(fonte);
           return {
             fonte,

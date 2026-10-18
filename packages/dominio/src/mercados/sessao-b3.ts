@@ -1,3 +1,5 @@
+import { chaveDiaNoFuso, diaNoFuso, horaNoFuso } from "../fuso.js";
+
 /**
  * O pregão do mini índice em America/Sao_Paulo (veja a nota 02 da base de
  * conhecimento). Desde 9/3/2026 o WIN negocia das 9h00 às 18h25, com call de
@@ -37,54 +39,16 @@ export interface HoraB3 {
   readonly minutos: number;
 }
 
-const HORA_MS = 3_600_000;
-const formato = new Intl.DateTimeFormat("en-CA", {
-  timeZone: FUSO_B3,
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-});
-
-/** Diferença local − UTC em ms, por hora UTC (o Brasil só muda de fuso em hora cheia). */
-const deslocamentos = new Map<number, number>();
-const LIMITE_CACHE = 200_000;
-
-function deslocamento(ms: number): number {
-  const hora = Math.floor(ms / HORA_MS);
-  const salvo = deslocamentos.get(hora);
-  if (salvo !== undefined) return salvo;
-  const inicio = hora * HORA_MS;
-  const partes = Object.fromEntries(formato.formatToParts(inicio).map((p) => [p.type, p.value]));
-  const local = Date.UTC(
-    Number(partes.year),
-    Number(partes.month) - 1,
-    Number(partes.day),
-    Number(partes.hour),
-    Number(partes.minute),
-  );
-  if (deslocamentos.size >= LIMITE_CACHE) deslocamentos.clear();
-  deslocamentos.set(hora, local - inicio);
-  return local - inicio;
-}
-
 /** O dia e a hora de Brasília de um instante UTC (ms). */
 export function horaB3(ms: number): HoraB3 {
-  const local = new Date(ms + deslocamento(ms));
-  return {
-    dia: local.toISOString().slice(0, 10),
-    minutos: local.getUTCHours() * 60 + local.getUTCMinutes(),
-  };
+  const h = horaNoFuso(ms, FUSO_B3);
+  return { dia: h.dia, minutos: h.minutos };
 }
 
-export const diaB3 = (ms: number): string => horaB3(ms).dia;
-
-const DIA_MS = 86_400_000;
+export const diaB3 = (ms: number): string => diaNoFuso(ms, FUSO_B3);
 
 /** O dia de Brasília como número (dias desde 1970): para comparar dias sem montar texto. */
-export const chaveDiaB3 = (ms: number): number => Math.floor((ms + deslocamento(ms)) / DIA_MS);
+export const chaveDiaB3 = (ms: number): number => chaveDiaNoFuso(ms, FUSO_B3);
 
 const HORARIO = /^([01]\d|2[0-3]):([0-5]\d)$/;
 

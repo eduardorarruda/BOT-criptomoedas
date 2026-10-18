@@ -137,9 +137,12 @@ async function lerCarteira(
     rede,
     redes,
     sincronizacao: sincronizacao
-      ? { em: quando(sincronizacao.em), ok: sincronizacao.ok, erro: sincronizacao.erro }
+      ? { em: quando(sincronizacao.em, ctx.fuso), ok: sincronizacao.ok, erro: sincronizacao.erro }
       : null,
-    precos: { fonte: FONTE_PRECOS, maisAntigoEm: p.maisAntigo === null ? null : quando(p.maisAntigo) },
+    precos: {
+      fonte: FONTE_PRECOS,
+      maisAntigoEm: p.maisAntigo === null ? null : quando(p.maisAntigo, ctx.fuso),
+    },
     resumo: resumo(r.resumo),
     moedas: itens.map(moeda),
     omitidas: omitidos,

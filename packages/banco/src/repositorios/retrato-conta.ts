@@ -1,7 +1,14 @@
 import type { Rede } from "@zentrade/contratos";
-import { dec, posicaoDe, type Execucao, type ResultadoRealizado, type Valor } from "@zentrade/dominio";
+import {
+  dec,
+  inicioDoDiaNoFuso,
+  posicaoDe,
+  type Execucao,
+  type ResultadoRealizado,
+  type Valor,
+} from "@zentrade/dominio";
 import { and, desc, eq, gte, inArray } from "drizzle-orm";
-import { deltasRealizados, inicioDoDiaUtc } from "../calculos.js";
+import { deltasRealizados } from "../calculos.js";
 import type { Executor } from "../cliente.js";
 import { candles, robos } from "../esquema/index.js";
 import { execucoesPorRobo } from "./execucoes.js";
@@ -68,7 +75,7 @@ function realizados(execs: ReadonlyMap<string, readonly Execucao[]>, ids: readon
 
 /**
  * Lê os robôs da rede, as execuções deles e os preços recentes, e soma: resultado do
- * dia (desde 00:00 UTC), não realizado, exposição (a preço atual, ou ao preço médio sem
+ * dia (desde a meia-noite no `fuso` da instância), não realizado, exposição (a preço atual, ou ao preço médio sem
  * preço recente) e posições abertas. `desde` corta os resultados e as perdas devolvidos.
  */
 export async function retratoDaConta(
@@ -76,6 +83,7 @@ export async function retratoDaConta(
   rede: Rede,
   agora: number,
   desde: number,
+  fuso: string,
 ): Promise<RetratoConta> {
   const daRede = await tx
     .select({ id: robos.id, nome: robos.nome, simbolo: robos.simbolo })
@@ -91,7 +99,7 @@ export async function retratoDaConta(
   const abertas = comPosicao.filter((r) => r.quantidade.gt(0));
   const precos = await precosRecentes(tx, [...new Set(abertas.map((r) => r.simbolo))], agora);
   const deltas = realizados(execs, ids);
-  const inicioDia = inicioDoDiaUtc(agora);
+  const inicioDia = inicioDoDiaNoFuso(agora, fuso);
   return {
     rede,
     robos: comPosicao,

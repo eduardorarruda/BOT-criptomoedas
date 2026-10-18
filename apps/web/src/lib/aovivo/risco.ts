@@ -1,17 +1,24 @@
 import type { LimitesRiscoDTO, OrdemDTO } from "@zentrade/contratos/esquemas";
-import { aplicarExecucao, dec, POSICAO_ZERADA, type Execucao, type Valor } from "@zentrade/dominio";
+import {
+  aplicarExecucao,
+  dec,
+  inicioDoDiaNoFuso,
+  POSICAO_ZERADA,
+  type Execucao,
+  type Valor,
+} from "@zentrade/dominio";
+import { fusoDaInstancia } from "../fuso";
 
 /**
  * Os três limites que o motor de risco confere a cada decisão, vistos de fora: perda
  * do dia, exposição e ordens por hora. Contas em Decimal; número só para a largura
- * da barra. O dia é o mesmo do motor: a partir de 00:00 UTC.
+ * da barra. O dia é o mesmo do motor: a partir da meia-noite no fuso da instância.
  */
-const DIA_MS = 86_400_000;
 const HORA_MS = 3_600_000;
 /** A partir daqui a barra fica em atenção (âmbar); em 100%, no limite (coral). */
 export const LIMIAR_ATENCAO = 0.7;
 
-export const inicioDoDiaUtc = (agora: number): number => agora - (agora % DIA_MS);
+export const inicioDoDia = (agora: number, fuso: string): number => inicioDoDiaNoFuso(agora, fuso);
 
 /** As execuções confirmadas das ordens, na ordem em que aconteceram. */
 function execucoesDe(ordens: readonly OrdemDTO[]): Execucao[] {
@@ -78,10 +85,12 @@ export interface EntradaMedidores {
   readonly quantidade: string;
   readonly preco: string | null;
   readonly agora: number;
+  /** Padrão: o fuso da instância (o do motor). */
+  readonly fuso?: string;
 }
 
 export function medidores(e: EntradaMedidores): Medidor[] {
-  const resultado = resultadoDesde(e.ordens, inicioDoDiaUtc(e.agora));
+  const resultado = resultadoDesde(e.ordens, inicioDoDia(e.agora, e.fuso ?? fusoDaInstancia()));
   const perda = resultado?.isNegative() ? resultado.neg() : dec(0);
   const exposicao = e.preco ? dec(e.quantidade).times(e.preco) : dec(0);
   const ordens = ordensDesde(e.ordens, e.agora - HORA_MS);

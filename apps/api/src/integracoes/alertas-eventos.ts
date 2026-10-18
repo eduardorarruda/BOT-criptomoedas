@@ -1,4 +1,5 @@
 import type { AlertaEmitido, Evento, GravidadeAlerta, OrdemDTO, TipoAlerta } from "@zentrade/contratos";
+import { diaNoFuso } from "@zentrade/dominio";
 import type { CentralAlertas } from "./alertas.js";
 import type { Log } from "./tipos.js";
 
@@ -50,7 +51,6 @@ const BARREIRAS: Readonly<Record<string, Regra>> = {
   },
 };
 
-const diaUtc = (em: number): string => new Date(em).toISOString().slice(0, 10);
 const INCERTA = /estado incerto/i;
 
 function alertaDaOrdem(
@@ -86,6 +86,8 @@ export function criarTradutorAlertas(o: {
   readonly central: CentralAlertas;
   readonly consultas: ConsultasAlertas;
   readonly log: Log;
+  /** O fuso da instância: "um aviso por dia" é por dia local, não por dia UTC. */
+  readonly fuso: string;
 }): (evento: Evento) => Promise<void> {
   const { central, consultas } = o;
 
@@ -99,7 +101,7 @@ export function criarTradutorAlertas(o: {
       gravidade: regra.gravidade,
       titulo: regra.titulo(robo.nome),
       mensagem: e.barreira.mensagem,
-      chave: regra.chave(e.roboId, diaUtc(e.em)),
+      chave: regra.chave(e.roboId, diaNoFuso(e.em, o.fuso)),
       usuarioId: robo.usuarioId,
       roboId: e.roboId,
       em: e.em,

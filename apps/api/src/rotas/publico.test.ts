@@ -54,6 +54,13 @@ describe("GET /api/v1/publico/config", () => {
     expect(corpo.controlador).toEqual({ nome: "Ana Exemplo", email: "privacidade@exemplo.com" });
     expect(corpo.encarregado).toBeNull();
     expect(corpo.versao).toMatch(/^\d+\.\d+\.\d+/);
+    expect(corpo.fuso).toBe("America/Sao_Paulo");
+  });
+
+  it('diz o fuso da instância (ZENTRADE_FUSO): a tela usa o mesmo "hoje"', async () => {
+    aberto = await montar({ ...base, ZENTRADE_FUSO: "America/New_York" });
+    const r = await aberto.inject({ method: "GET", url: "/api/v1/publico/config" });
+    expect(r.json()).toMatchObject({ fuso: "America/New_York" });
   });
 
   it("sem configuração, controlador e encarregado vêm nulos (a tela mostra o aviso ao operador)", async () => {
@@ -62,10 +69,10 @@ describe("GET /api/v1/publico/config", () => {
     expect(r.json()).toMatchObject({ controlador: null, encarregado: null });
   });
 
-  it("não expõe nada além dos três campos", async () => {
+  it("não expõe nada além dos quatro campos", async () => {
     aberto = await montar({ ...comControlador, BRAPI_TOKEN: "segredo-que-nao-sai" });
     const r = await aberto.inject({ method: "GET", url: "/api/v1/publico/config" });
-    expect(Object.keys(r.json() as object).sort()).toEqual(["controlador", "encarregado", "versao"]);
+    expect(Object.keys(r.json() as object).sort()).toEqual(["controlador", "encarregado", "fuso", "versao"]);
     expect(r.body).not.toContain("segredo-que-nao-sai");
     expect(r.body).not.toContain("postgres://");
   });
@@ -91,6 +98,7 @@ describe("config pública (função)", () => {
       controlador: { nome: "Ana Exemplo", email: "privacidade@exemplo.com" },
       encarregado: { nome: "Bruno DPO", email: "dpo@exemplo.com" },
       versao: "1.2.3",
+      fuso: "America/Sao_Paulo",
     });
   });
 

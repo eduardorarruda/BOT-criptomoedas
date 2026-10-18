@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { agruparConversas, filtrarConversas, tituloDaPergunta } from "./conversas";
 
 const DIA = 86_400_000;
-// 11/10/2026 15:00 no horário local de quem roda o teste.
-const AGORA = new Date(2026, 9, 11, 15, 0).getTime();
+// 11/10/2026 15:00 em Brasília (o fuso da instância, não o do navegador).
+const AGORA = Date.parse("2026-10-11T15:00:00-03:00");
 
 const conversa = (id: string, atualizadaEm: number, titulo = id, previa = ""): ConversaResumo => ({
   id,
@@ -16,7 +16,7 @@ const conversa = (id: string, atualizadaEm: number, titulo = id, previa = ""): C
 
 describe("agruparConversas", () => {
   it("separa em Hoje, Últimos 7 dias e Mais antigas, a mais recente primeiro", () => {
-    const meiaNoite = new Date(2026, 9, 11, 0, 0).getTime();
+    const meiaNoite = Date.parse("2026-10-11T00:00:00-03:00");
     const grupos = agruparConversas(
       [
         conversa("antiga", AGORA - 30 * DIA),

@@ -43,7 +43,7 @@ export const ResumoEsquema = z.object({
   maiorQueda30d: TextoDecimal,
   robosAtivos: z.number().int().nonnegative(),
   custoIaHoje: TextoDecimal,
-  /** Taxas pagas hoje (dia UTC), na moeda de cotação, somadas das execuções. */
+  /** Taxas pagas hoje (dia no fuso da instância), na moeda de cotação, somadas das execuções. */
   taxasHoje: TextoDecimal,
   paradaTotal: z.boolean(),
 });

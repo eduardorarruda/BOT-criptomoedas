@@ -1,5 +1,5 @@
 import type { PortaRiscoConta } from "@zentrade/contratos";
-import { dec, type EstadoConta } from "@zentrade/dominio";
+import { dec, FUSO_PADRAO, type EstadoConta } from "@zentrade/dominio";
 import { and, eq } from "drizzle-orm";
 import { comoUsuario, type Db } from "../cliente.js";
 import { ms } from "../conversao.js";
@@ -15,8 +15,13 @@ export type AtivoDoSimbolo = (simbolo: string) => string;
  * Estado da conta para as barreiras da conta (motor). Acha a dona do robô (acesso de
  * sistema, só o id) e lê o resto como ela, sob RLS: um bug aqui não soma robôs de outra
  * pessoa. A conta é a pessoa NA REDE do robô: papel, testnet e real não se misturam.
+ * O "dia" da perda diária é o do `fuso` da instância (ZENTRADE_FUSO).
  */
-export function portaRiscoConta(db: Db, ativoDe: AtivoDoSimbolo): PortaRiscoConta {
+export function portaRiscoConta(
+  db: Db,
+  ativoDe: AtivoDoSimbolo,
+  fuso: string = FUSO_PADRAO,
+): PortaRiscoConta {
   return {
     async estado(roboId: string, agora: number): Promise<EstadoConta> {
       const [robo] = await db
@@ -28,7 +33,7 @@ export function portaRiscoConta(db: Db, ativoDe: AtivoDoSimbolo): PortaRiscoCont
         const { limites, liberadaEm } = await lerLimites(tx, robo.usuarioId);
         const l = limitesDominio(limites);
         const desde = agora - Math.max(l.quedaJanelaMs, l.sequenciaStopsJanelaMs);
-        const retrato = await retratoDaConta(tx, robo.rede, agora, desde);
+        const retrato = await retratoDaConta(tx, robo.rede, agora, desde, fuso);
         const divergencias =
           robo.rede === "papel"
             ? []

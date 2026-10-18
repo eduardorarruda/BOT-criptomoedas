@@ -18,7 +18,7 @@ export type EscopoSequencia = z.infer<typeof EscopoSequencia>;
  * rede, e o orçamento de IA. `null` = sem limite.
  */
 export const LimitesContaEsquema = z.object({
-  /** Perda máxima do dia (00:00 a 23:59 UTC, 21h às 20h59 de Brasília), em US$. */
+  /** Perda máxima do dia (00:00 a 23:59 no fuso da instância, ZENTRADE_FUSO), em US$. */
   perdaDiariaMaxima: ValorPositivo.nullable(),
   incluirNaoRealizado: z.boolean(),
   exposicaoMaxima: ValorPositivo.nullable(),
@@ -30,9 +30,9 @@ export const LimitesContaEsquema = z.object({
   sequenciaStopsMax: z.number().int().min(1).max(50).nullable(),
   sequenciaStopsJanelaHoras: z.number().int().min(1).max(168),
   sequenciaStopsEscopo: EscopoSequencia,
-  /** Teto de gasto com IA (análises + assistente) no mês UTC, em US$. */
+  /** Teto de gasto com IA (análises + assistente) no mês (fuso da instância), em US$. */
   orcamentoIaMensalUsd: ValorPositivo.nullable(),
-  /** Teto opcional por dia UTC, em US$. */
+  /** Teto opcional por dia (fuso da instância), em US$. */
   orcamentoIaDiarioUsd: ValorPositivo.nullable(),
 });
 export type LimitesContaDTO = z.infer<typeof LimitesContaEsquema>;

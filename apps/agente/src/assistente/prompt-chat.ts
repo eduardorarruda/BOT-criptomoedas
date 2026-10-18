@@ -1,4 +1,5 @@
 import type { PedidoRespostaAgente } from "@zentrade/contratos";
+import { linhaDoAgora } from "../agora.js";
 
 /**
  * Instruções do assistente (chat). Estáveis — sem data nem nada da pessoa — para o cache
@@ -27,8 +28,9 @@ const ROTULO = { usuario: "Pessoa", assistente: "Assistente" } as const;
 export function promptComHistorico(
   p: Pick<PedidoRespostaAgente, "historico" | "pergunta">,
   agora: Date,
+  fuso: string,
 ): string {
-  const partes = [`Agora (UTC): ${agora.toISOString()}`];
+  const partes = [linhaDoAgora(agora, fuso)];
   if (p.historico.length > 0) {
     partes.push(
       "Conversa até aqui (para contexto):",
@@ -48,11 +50,12 @@ export type Turno = { readonly role: "user" | "assistant"; readonly content: str
 export function turnosAlternados(
   p: Pick<PedidoRespostaAgente, "historico" | "pergunta">,
   agora: Date,
+  fuso: string,
 ): Turno[] {
   const turnos: Turno[] = [];
   const todos = [
     ...p.historico,
-    { papel: "usuario" as const, texto: `Agora (UTC): ${agora.toISOString()}\n\n${p.pergunta}` },
+    { papel: "usuario" as const, texto: `${linhaDoAgora(agora, fuso)}\n\n${p.pergunta}` },
   ];
   for (const t of todos) {
     const role = t.papel === "usuario" ? "user" : "assistant";

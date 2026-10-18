@@ -1,8 +1,9 @@
 import type { LimitesRiscoDTO, OrdemDTO } from "@zentrade/contratos/esquemas";
 import { describe, expect, it } from "vitest";
-import { inicioDoDiaUtc, medidores, ordensDesde, resultadoDesde } from "./risco";
+import { inicioDoDia, medidores, ordensDesde, resultadoDesde } from "./risco";
 
-const DIA = Date.UTC(2026, 9, 11);
+/** 11/10/2026 00:00 em Brasília (03:00 UTC): o começo do dia do motor. */
+const DIA = Date.parse("2026-10-11T03:00:00Z");
 const HORA = 3_600_000;
 const ordem = (
   lado: OrdemDTO["lado"],
@@ -31,8 +32,22 @@ const LIMITES: LimitesRiscoDTO = {
 };
 
 describe("medidores de risco", () => {
-  it("o dia começa às 00:00 UTC, como no motor", () => {
-    expect(inicioDoDiaUtc(DIA + 5 * HORA)).toBe(DIA);
+  it("o dia começa à meia-noite do fuso da instância, como no motor (não às 21h de Brasília)", () => {
+    expect(inicioDoDia(DIA + 5 * HORA, "America/Sao_Paulo")).toBe(DIA);
+    // 22:52 de 17/10 em Brasília já é 18/10 em UTC, mas o dia ainda é 17/10
+    expect(inicioDoDia(Date.parse("2026-10-18T01:52:00Z"), "America/Sao_Paulo")).toBe(
+      Date.parse("2026-10-17T03:00:00Z"),
+    );
+  });
+
+  it("a perda das 20h ainda pesa às 22:52 de Brasília", () => {
+    const noite = Date.parse("2026-10-18T01:52:00Z");
+    const ordens = [
+      ordem("COMPRA", "100", Date.parse("2026-10-17T13:00:00Z"), "1", "0"),
+      ordem("VENDA", "95", Date.parse("2026-10-17T23:00:00Z"), "1", "0"),
+    ];
+    const [perda] = medidores({ limites: LIMITES, ordens, quantidade: "0", preco: null, agora: noite });
+    expect(perda?.valor).toBe("5.00");
   });
 
   it("resultado realizado conta só o que aconteceu desde o início do dia, com as taxas", () => {

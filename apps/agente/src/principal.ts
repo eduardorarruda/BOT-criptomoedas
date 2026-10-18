@@ -105,6 +105,7 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
   const banco = criarBancoDoAgente({
     url: config.urlBanco,
     maximoConexoes: 5,
+    fuso: config.fuso,
     ...(config.chaveMestra ? { chaveMestra: config.chaveMestra } : {}),
   });
   const busca = criarBuscaHibrida({
@@ -114,12 +115,13 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
   if (busca.modo === "palavras") {
     logger.info("EMBEDDINGS_PROVEDOR=nenhum: o conhecimento é buscado só por palavras");
   }
-  const dependencias = { busca, historico: criarHistoricoPostgres(sql) };
+  const dependencias = { busca, historico: criarHistoricoPostgres(sql), fuso: config.fuso };
   const { redis, publicador, alertar } = prepararRedis(config, logger);
   // Orçamento de IA da pessoa: vale para as análises e o assistente, nos dois provedores.
   const orcamento = new PortaoOrcamento({
     fonte: { uso: banco.usoOrcamentoIa, registrar: banco.registrarGastoIa },
     log: logger,
+    fuso: config.fuso,
     ...(alertar ? { alertar } : {}),
   });
   const sessoes = new SessoesPonte();
@@ -146,8 +148,9 @@ function montarServicos(config: ConfigAgente, logger: Logger) {
     dados: banco,
     busca,
     config: configDaPessoa,
-    api: cliente ? new ChatApi({ cliente, modeloPadrao: config.modelo }) : null,
-    cli: executor ? new ChatCli({ executor, tempoMs: config.chat.timeoutMs }) : null,
+    fuso: config.fuso,
+    api: cliente ? new ChatApi({ cliente, modeloPadrao: config.modelo, fuso: config.fuso }) : null,
+    cli: executor ? new ChatCli({ executor, tempoMs: config.chat.timeoutMs, fuso: config.fuso }) : null,
     orcamento,
     aoFalhar: (erro, ferramenta) =>
       ferramenta

@@ -7,6 +7,7 @@ describe("config pública", () => {
       controlador: { nome: "Ana Exemplo", email: "privacidade@exemplo.com" },
       encarregado: null,
       versao: "0.1.0",
+      fuso: "America/Sao_Paulo",
     };
     expect(ConfigPublicaEsquema.parse(config)).toEqual(config);
   });

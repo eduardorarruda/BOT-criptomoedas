@@ -1,5 +1,6 @@
 import { lerChaveMestra } from "@zentrade/banco";
 import { PROVEDORES_EMBEDDINGS, type ProvedorEmbeddings } from "@zentrade/conhecimento";
+import { FusoInstanciaEsquema } from "@zentrade/contratos";
 import { z } from "zod";
 import { MODELO_PADRAO } from "./analista.js";
 import { lerContas, type ContaClaude } from "./claude-cli/contas.js";
@@ -46,6 +47,8 @@ const Ambiente = z.object({
   // A mesma chave mestra da API: decifra (e cifra) o token do Claude Code de cada pessoa.
   // Opcional: sem ela, o provedor "cli" usa só as contas de AGENTE_CLAUDE_CONTAS.
   ZENTRADE_CHAVE_MESTRA: z.string().optional(),
+  // O fuso da instância (nome IANA): o "hoje" do orçamento de IA e do assistente.
+  ZENTRADE_FUSO: FusoInstanciaEsquema,
 });
 
 export interface ConfigCliDoAgente {
@@ -77,6 +80,8 @@ export interface ConfigAgente {
   readonly nivelLog: z.infer<typeof Ambiente>["LOG_LEVEL"];
   /** 32 bytes; ausente = sem o token do Claude Code de cada pessoa. */
   readonly chaveMestra?: Buffer;
+  /** O fuso da instância (ZENTRADE_FUSO, nome IANA canônico). */
+  readonly fuso: string;
 }
 
 export class ErroConfiguracao extends Error {
@@ -126,6 +131,7 @@ export function configDoAgente(env: Readonly<Record<string, string | undefined>>
     maxSimultaneas: a.AGENTE_MAX_SIMULTANEAS,
     maxPorMinuto: a.AGENTE_MAX_POR_MINUTO,
     nivelLog: a.LOG_LEVEL,
+    fuso: a.ZENTRADE_FUSO,
     provedorEmbeddings: a.EMBEDDINGS_PROVEDOR,
     cli: {
       caminho: a.AGENTE_CLAUDE_CAMINHO,

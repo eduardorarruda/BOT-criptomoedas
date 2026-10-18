@@ -1,4 +1,5 @@
 import type { PortaDecisoes, PortaOrdens, PortaProtecoes, PortaRobos } from "@zentrade/contratos";
+import { exigirFuso, FUSO_PADRAO } from "@zentrade/dominio";
 import { conectar, type Conexao } from "./cliente.js";
 import { portaCredenciais } from "./portas/credenciais.js";
 import { portaDecisoes } from "./portas/decisoes.js";
@@ -41,7 +42,15 @@ export interface OpcoesConexaoBanco {
   readonly maximoConexoes?: number;
   readonly validadeAprovacaoMs?: number;
   readonly aoAviso?: (mensagem: string) => void;
+  /**
+   * O fuso da instância (ZENTRADE_FUSO, já validado): onde começa o "hoje" do resumo,
+   * da perda do dia da conta e do orçamento de IA. Padrão: America/Sao_Paulo.
+   */
+  readonly fuso?: string;
 }
+
+/** O fuso das opções, conferido: um nome errado derruba cedo, na montagem do banco. */
+const fusoDe = (opcoes: OpcoesConexaoBanco): string => exigirFuso(opcoes.fuso ?? FUSO_PADRAO);
 
 export interface OpcoesBanco extends OpcoesConexaoBanco {
   /** 32 bytes (leia com lerChaveMestra de ZENTRADE_CHAVE_MESTRA). */
@@ -92,7 +101,9 @@ export function criarBancoDoMotor(opcoes: OpcoesBancoDoMotor) {
     conexao,
     portas,
     credenciais: opcoes.chaveMestra ? portaCredenciais(conexao.db, opcoes.chaveMestra) : null,
-    riscoConta: opcoes.ativoDoSimbolo ? portaRiscoConta(conexao.db, opcoes.ativoDoSimbolo) : null,
+    riscoConta: opcoes.ativoDoSimbolo
+      ? portaRiscoConta(conexao.db, opcoes.ativoDoSimbolo, fusoDe(opcoes))
+      : null,
     mercado: repositorioMercado(conexao.db),
     backtests: repositorioBacktests(conexao.db),
     placar: portaPlacar(conexao.db),
@@ -109,6 +120,7 @@ export type BancoDoMotor = ReturnType<typeof criarBancoDoMotor>;
 export function criarBanco(opcoes: OpcoesBanco) {
   const { conexao, portas } = abrir(opcoes);
   const { db } = conexao;
+  const fuso = fusoDe(opcoes);
   return {
     conexao,
     portas,
@@ -131,17 +143,17 @@ export function criarBanco(opcoes: OpcoesBanco) {
     conhecimento: repositorioConhecimento(db),
     conhecimentoDetalhe: repositorioConhecimentoDetalhe(db),
     assistente: repositorioAssistente(db),
-    resumo: repositorioResumo(db),
+    resumo: repositorioResumo(db, fuso),
     imobiliario: repositorioImobiliario(db),
     sistema: repositorioSistema(db),
     rendaFixa: repositorioRendaFixa(db),
     indicadores: repositorioIndicadores(db),
     pluggy: repositorioPluggy(db),
     limitesConta: repositorioLimitesConta(db),
-    riscoConta: repositorioRiscoConta(db),
+    riscoConta: repositorioRiscoConta(db, fuso),
     divergencias: repositorioDivergencias(db),
     avisos: repositorioAvisos(db),
-    gastosIa: repositorioGastosIa(db),
+    gastosIa: repositorioGastosIa(db, fuso),
     fechar: () => conexao.fechar(),
   };
 }

@@ -225,7 +225,8 @@ describe("ferramentas do analista", () => {
       );
       expect(recentes).toHaveBeenCalledWith("robo-1", 5);
       expect(dados.decisoes[0]).toMatchObject({
-        fonte: { tipo: "diario", id: "dec-9", data: "2026-09-30" },
+        // 30/09 00:00 UTC é 29/09 21:00 em Brasília: a decisão é do dia 29 (fuso da instância)
+        fonte: { tipo: "diario", id: "dec-9", data: "2026-09-29" },
         preco: "59000",
         resultado: "3.21",
         estado: "executada",

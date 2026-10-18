@@ -1,4 +1,6 @@
 import type { ConversaResumo } from "@zentrade/contratos/esquemas";
+import { inicioDoDiaNoFuso } from "@zentrade/dominio";
+import { fusoDaInstancia } from "../../lib/fuso";
 
 /** Como a barra lateral organiza as conversas: por quando foram usadas pela última vez. */
 export interface GrupoConversas {
@@ -10,16 +12,12 @@ const DIA_MS = 86_400_000;
 const DIAS_RECENTES = 7;
 const TAMANHO_TITULO = 60;
 
-function inicioDoDia(ms: number): number {
-  const d = new Date(ms);
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-}
-
 export function agruparConversas(
   lista: readonly ConversaResumo[],
   agora: number = Date.now(),
 ): GrupoConversas[] {
-  const hoje = inicioDoDia(agora);
+  // "Hoje" é o dia no fuso da instância, como no motor e na API (não o do navegador).
+  const hoje = inicioDoDiaNoFuso(agora, fusoDaInstancia());
   const semana = agora - DIAS_RECENTES * DIA_MS;
   const ordenadas = [...lista].sort((a, b) => b.atualizadaEm - a.atualizadaEm);
   const grupos: GrupoConversas[] = [

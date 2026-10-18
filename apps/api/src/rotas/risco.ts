@@ -96,7 +96,7 @@ export const rotasRisco: FastifyPluginAsyncZod<{ deps: Dependencias }> = async (
         banco.riscoConta.situacao(usuarioId, agora),
         banco.divergencias.listar(usuarioId, agora),
       ]);
-      return situacaoDaConta(dados, divergencias, agora);
+      return situacaoDaConta(dados, divergencias, agora, deps.config.ZENTRADE_FUSO);
     },
   );
 

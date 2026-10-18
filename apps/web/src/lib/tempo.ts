@@ -1,29 +1,46 @@
-/** Datas sempre no fuso de São Paulo e em pt-BR; horários chegam em ms UTC. */
-const FUSO = "America/Sao_Paulo";
+import { fusoDaInstancia } from "./fuso";
 
-const dataHora = new Intl.DateTimeFormat("pt-BR", {
-  timeZone: FUSO,
-  day: "2-digit",
-  month: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-const hora = new Intl.DateTimeFormat("pt-BR", {
-  timeZone: FUSO,
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-});
-const dataLonga = new Intl.DateTimeFormat("pt-BR", {
-  timeZone: FUSO,
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
+/** Datas sempre no fuso da instância (padrão: São Paulo) e em pt-BR; horários chegam em ms UTC. */
+interface Formatos {
+  readonly dataHora: Intl.DateTimeFormat;
+  readonly hora: Intl.DateTimeFormat;
+  readonly dataLonga: Intl.DateTimeFormat;
+}
 
-export const formatarDataHora = (ms: number): string => dataHora.format(ms).replace(", ", " ");
-export const formatarHora = (ms: number): string => hora.format(ms);
-export const formatarData = (ms: number): string => dataLonga.format(ms);
+const porFuso = new Map<string, Formatos>();
+
+function formatos(): Formatos {
+  const timeZone = fusoDaInstancia();
+  const salvo = porFuso.get(timeZone);
+  if (salvo) return salvo;
+  const novos: Formatos = {
+    dataHora: new Intl.DateTimeFormat("pt-BR", {
+      timeZone,
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    hora: new Intl.DateTimeFormat("pt-BR", {
+      timeZone,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }),
+    dataLonga: new Intl.DateTimeFormat("pt-BR", {
+      timeZone,
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+  };
+  porFuso.set(timeZone, novos);
+  return novos;
+}
+
+export const formatarDataHora = (ms: number): string => formatos().dataHora.format(ms).replace(", ", " ");
+export const formatarHora = (ms: number): string => formatos().hora.format(ms);
+export const formatarData = (ms: number): string => formatos().dataLonga.format(ms);
 
 const MINUTO = 60_000;
 const HORA = 60 * MINUTO;

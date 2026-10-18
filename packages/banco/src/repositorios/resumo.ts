@@ -1,6 +1,6 @@
-import { paraTexto } from "@zentrade/dominio";
+import { inicioDoDiaNoFuso, paraTexto } from "@zentrade/dominio";
 import { count, eq, sql } from "drizzle-orm";
-import { inicioDoDiaUtc, resumirCarteira } from "../calculos.js";
+import { resumirCarteira } from "../calculos.js";
 import { comoUsuario, type Db } from "../cliente.js";
 import { curvaDiaria, DIA_MS, taxasDesde } from "../curva-diaria.js";
 import { decimalTexto, iso } from "../conversao.js";
@@ -24,12 +24,12 @@ export interface PontoPatrimonio {
 
 const TRINTA_DIAS_MS = 30 * 86_400_000;
 
-/** O painel inicial. "Hoje" é o dia UTC, como os instantes do contrato. */
-export function repositorioResumo(db: Db) {
+/** O painel inicial. "Hoje" é o dia no fuso da instância (ZENTRADE_FUSO), não o dia UTC. */
+export function repositorioResumo(db: Db, fuso: string) {
   return {
     resumo: (usuarioId: string, agora: number): Promise<Resumo> =>
       comoUsuario(db, usuarioId, async (tx) => {
-        const inicioDia = inicioDoDiaUtc(agora);
+        const inicioDia = inicioDoDiaNoFuso(agora, fuso);
         const porRobo = await execucoesPorRobo(tx);
         const carteira = resumirCarteira(porRobo, {
           inicioDia,
@@ -55,9 +55,11 @@ export function repositorioResumo(db: Db) {
     /** Resultado realizado acumulado por dia, nos últimos `dias` (das execuções confirmadas). */
     patrimonio: (usuarioId: string, agora: number, dias: number): Promise<PontoPatrimonio[]> =>
       comoUsuario(db, usuarioId, async (tx) =>
-        curvaDiaria(await execucoesPorRobo(tx), { inicio: agora - (dias - 1) * DIA_MS, fim: agora }).map(
-          (p) => ({ em: p.em, valor: paraTexto(p.valor) }),
-        ),
+        curvaDiaria(
+          await execucoesPorRobo(tx),
+          { inicio: agora - (dias - 1) * DIA_MS, fim: agora },
+          fuso,
+        ).map((p) => ({ em: p.em, valor: paraTexto(p.valor) })),
       ),
   };
 }

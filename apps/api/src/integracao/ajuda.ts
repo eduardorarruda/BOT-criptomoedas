@@ -94,6 +94,7 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     url: config.DATABASE_URL,
     chaveMestra: config.ZENTRADE_CHAVE_MESTRA,
     maximoConexoes: 5,
+    fuso: config.ZENTRADE_FUSO,
   });
   const redis = conectarRedis(redisUrl, "teste-api");
   const assinante = conectarRedis(redisUrl, "teste-api-eventos");
@@ -119,7 +120,14 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     log: silencioso,
     agora,
   });
-  hub.aoEvento(criarTradutorAlertas({ central: alertas, consultas: banco.sistema, log: silencioso }));
+  hub.aoEvento(
+    criarTradutorAlertas({
+      central: alertas,
+      consultas: banco.sistema,
+      log: silencioso,
+      fuso: config.ZENTRADE_FUSO,
+    }),
+  );
   await assinarEventos(assinante, hub);
   const conhecimento = criarServicoConhecimento({
     repositorio: repositorioRag(banco),

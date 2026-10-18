@@ -1,5 +1,6 @@
 import type { EstadoIndicador, PontoIndicador } from "@zentrade/banco";
 import { SERIES_INDICADOR, type SerieIndicador } from "@zentrade/contratos";
+import { diaNoFuso, FUSO_B3 } from "@zentrade/dominio";
 import { FONTES_INDICES, somarDias } from "@zentrade/financas";
 import type { ClienteBcb } from "./bcb.js";
 
@@ -41,14 +42,14 @@ export interface OpcoesAtualizador {
   readonly log: LogAtualizador;
 }
 
-/** Dia de hoje em UTC: o SGS aceita pedir um dia à frente; o que não existe não vem. */
-const hojeUtc = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
+/** Hoje em Brasília: o Banco Central publica as séries por dia de Brasília, não por dia UTC. */
+const hojeEmBrasilia = (ms: number): string => diaNoFuso(ms, FUSO_B3);
 
 export function criarAtualizadorIndicadores(o: OpcoesAtualizador): AtualizadorIndicadores {
   let emAndamento: Promise<ResultadoAtualizacao[]> | null = null;
 
   async function atualizarSerie(serie: SerieIndicador, ultimo: string | null): Promise<ResultadoAtualizacao> {
-    const ate = hojeUtc(o.agora());
+    const ate = hojeEmBrasilia(o.agora());
     const de = ultimo ? somarDias(ultimo, -FOLGA_DIAS) : DESDE_PADRAO;
     try {
       const pontos = await o.cliente.serie(FONTES_INDICES[serie].serie, de, ate);

@@ -90,7 +90,7 @@ function rendimento(l: LinhaTitulo): string {
   }
 }
 
-function linhaDoTitulo(l: LinhaTitulo, p: Posicao) {
+function linhaDoTitulo(l: LinhaTitulo, p: Posicao, fuso: string) {
   const base = {
     id: l.id,
     nome: l.nome,
@@ -103,7 +103,7 @@ function linhaDoTitulo(l: LinhaTitulo, p: Posicao) {
     liquidez: l.liquidez,
     ...(l.carenciaAte ? { carenciaAte: l.carenciaAte } : {}),
     aplicado: dinheiro(p.aplicado),
-    atualizadoEm: quando(l.atualizadoEm),
+    atualizadoEm: quando(l.atualizadoEm, fuso),
   };
   if (!p.disponivel) return { ...base, indisponivel: p.motivo };
   return {
@@ -157,7 +157,7 @@ async function lerRendaFixa(ctx: ContextoInvestimentos, dados: LeituraInvestimen
       rentabilidadeLiquidaPct: pct(s.rentabilidadeLiquidaPct),
     },
     proximoVencimento: s.proximoVencimento,
-    titulos: itens.map(({ l, p }) => linhaDoTitulo(l, p)),
+    titulos: itens.map(({ l, p }) => linhaDoTitulo(l, p, ctx.fuso)),
     omitidos,
   };
 }
