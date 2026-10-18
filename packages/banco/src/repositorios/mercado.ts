@@ -1,7 +1,7 @@
 import type { Intervalo } from "@zentrade/contratos";
 import { paraTexto, type Candle } from "@zentrade/dominio";
 import { and, asc, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
-import type { Db } from "../cliente.js";
+import type { Db, Executor } from "../cliente.js";
 import { decimalTexto, iso, ms } from "../conversao.js";
 import { candles } from "../esquema/index.js";
 
@@ -67,6 +67,47 @@ export interface ConsultaCandles {
   readonly intervalo: Intervalo;
   readonly inicio: number;
   readonly fim: number;
+}
+
+/** Os candles de um intervalo, para `substituir`. */
+export interface LoteCandles {
+  readonly intervalo: Intervalo;
+  readonly lista: readonly Candle[];
+}
+
+/** Upsert pela chave (símbolo, intervalo, abertura): corrige o candle que já existe. */
+async function gravarCandles(
+  db: Executor,
+  simbolo: string,
+  intervalo: Intervalo,
+  lista: readonly Candle[],
+): Promise<void> {
+  if (lista.length === 0) return;
+  const valores = lista.map((k) => ({
+    simbolo,
+    intervalo,
+    abertura: new Date(k.abertura),
+    fechamento: new Date(k.fechamento),
+    abre: paraTexto(k.abre),
+    maxima: paraTexto(k.maxima),
+    minima: paraTexto(k.minima),
+    fecha: paraTexto(k.fecha),
+    volume: paraTexto(k.volume),
+  }));
+  await db
+    .insert(candles)
+    .values(valores)
+    .onConflictDoUpdate({
+      target: [candles.simbolo, candles.intervalo, candles.abertura],
+      set: {
+        fechamento: sql`excluded.fechamento`,
+        abre: sql`excluded.abre`,
+        maxima: sql`excluded.maxima`,
+        minima: sql`excluded.minima`,
+        fecha: sql`excluded.fecha`,
+        volume: sql`excluded.volume`,
+      },
+    });
 }
 
 /** Dados de mercado: iguais para todos, sem RLS. */
@@ -177,35 +218,42 @@ export function repositorioMercado(db: Db) {
       }));
     },
 
-    /** Para o motor: grava (ou corrige) candles fechados. */
-    async gravar(simbolo: string, intervalo: Intervalo, lista: readonly Candle[]): Promise<void> {
-      if (lista.length === 0) return;
-      const valores = lista.map((k) => ({
-        simbolo,
-        intervalo,
-        abertura: new Date(k.abertura),
-        fechamento: new Date(k.fechamento),
-        abre: paraTexto(k.abre),
-        maxima: paraTexto(k.maxima),
-        minima: paraTexto(k.minima),
-        fecha: paraTexto(k.fecha),
-        volume: paraTexto(k.volume),
-      }));
-      await db
-        .insert(candles)
-        .values(valores)
-        .onConflictDoUpdate({
-          target: [candles.simbolo, candles.intervalo, candles.abertura],
-          set: {
-            fechamento: sql`excluded.fechamento`,
-            abre: sql`excluded.abre`,
-            maxima: sql`excluded.maxima`,
-            minima: sql`excluded.minima`,
-            fecha: sql`excluded.fecha`,
-            volume: sql`excluded.volume`,
-          },
-        });
+    /**
+     * Para os importadores da B3: troca, numa transação só, tudo o que há em
+     * [inicio, fim) do símbolo nos intervalos dos lotes pelos candles dos lotes (o
+     * pregão inteiro de uma vez). Se algo falhar no meio, nada muda. Devolve quantos
+     * candles antigos foram apagados.
+     */
+    async substituir(
+      simbolo: string,
+      trecho: { readonly inicio: number; readonly fim: number },
+      lotes: readonly LoteCandles[],
+    ): Promise<number> {
+      return db.transaction(async (tx) => {
+        let apagados = 0;
+        for (const { intervalo, lista } of lotes) {
+          const linhas = await tx
+            .delete(candles)
+            .where(
+              and(
+                eq(candles.simbolo, simbolo),
+                eq(candles.intervalo, intervalo),
+                gte(candles.abertura, new Date(trecho.inicio)),
+                lt(candles.abertura, new Date(trecho.fim)),
+              ),
+            )
+            .returning({ abertura: candles.abertura });
+          apagados += linhas.length;
+          for (let i = 0; i < lista.length; i += LIMITE_CANDLES)
+            await gravarCandles(tx, simbolo, intervalo, lista.slice(i, i + LIMITE_CANDLES));
+        }
+        return apagados;
+      });
     },
+
+    /** Para o motor: grava (ou corrige) candles fechados. */
+    gravar: (simbolo: string, intervalo: Intervalo, lista: readonly Candle[]): Promise<void> =>
+      gravarCandles(db, simbolo, intervalo, lista),
   };
 }
 

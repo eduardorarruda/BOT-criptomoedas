@@ -2,7 +2,7 @@ import { dec } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
 import { bancoDeCandlesFalso } from "../teste/banco-candles.js";
 import { aberturaSemente, sementeWinIbov5m } from "../teste/win-ibov.js";
-import { gravarCandlesB3 } from "./importar.js";
+import { gravarCandlesB3, substituirCandlesB3 } from "./importar.js";
 
 const M5 = 300_000;
 const DEPOIS = Date.UTC(2026, 7, 1);
@@ -108,5 +108,69 @@ describe("gravação de candles da B3", () => {
     const r = await gravarCandlesB3(b.banco, "WIN-IBOV", "5m", muitos, { agora: Date.UTC(2026, 8, 1) });
     expect(r.gravados["5m"]).toBe(22 * 84);
     expect(b.gravacoes.filter((g) => g.intervalo === "5m").map((g) => g.quantos)).toEqual([1000, 848]);
+  });
+});
+
+describe("substituição de um trecho (um pregão inteiro)", () => {
+  const dia = (d: number) => ({ inicio: Date.UTC(2026, 6, d, 3), fim: Date.UTC(2026, 6, d + 1, 3) });
+
+  it("apaga 5m, 15m e 1h do trecho antes de gravar: candle que sumiu da fonte não fica", async () => {
+    const b = bancoDeCandlesFalso();
+    await gravarCandlesB3(b.banco, "WIN", "5m", sementeWinIbov5m(), { agora: DEPOIS });
+    const primeiroDia = sementeWinIbov5m().slice(0, 84);
+    const r = await substituirCandlesB3(b.banco, "WIN", "5m", dia(1), primeiroDia.slice(12), {
+      agora: DEPOIS,
+    });
+    expect(r.apagados).toBe(84 + 28 + 7);
+    expect(r.gravados).toEqual({ "5m": 72, "15m": 24, "1h": 6 });
+    // O dia 1 perdeu a primeira hora; os dias 2 e 3 ficaram como estavam.
+    expect(b.de("WIN", "5m")).toHaveLength(72 + 168);
+    expect(b.de("WIN", "1h")).toHaveLength(6 + 14);
+    expect(b.de("WIN", "5m")[0]?.abertura).toBe(aberturaSemente(0, 12));
+  });
+
+  it("tudo vai numa chamada só ao banco (uma transação): nada de apagar e gravar em separado", async () => {
+    const b = bancoDeCandlesFalso();
+    await substituirCandlesB3(b.banco, "WIN", "5m", dia(1), sementeWinIbov5m().slice(0, 84), {
+      agora: DEPOIS,
+    });
+    expect(b.substituicoes).toEqual([{ simbolo: "WIN", ...dia(1) }]);
+    expect(b.gravacoes).toEqual([]);
+  });
+
+  it("deixa de fora o que está fora do pregão ou ainda em formação, como a gravação comum", async () => {
+    const b = bancoDeCandlesFalso();
+    const s = sementeWinIbov5m().slice(0, 12);
+    const noturno = { ...s[0]!, abertura: Date.UTC(2026, 6, 1, 21, 30) };
+    const r = await substituirCandlesB3(b.banco, "WIN", "5m", dia(1), [...s, noturno], {
+      agora: s[10]!.abertura + 60_000,
+    });
+    expect(r).toMatchObject({ foraDoPregao: 1, emFormacao: 2, gravados: { "5m": 10, "15m": 3, "1h": 0 } });
+    expect(r.primeiro).toBe(s[0]!.abertura);
+    expect(r.ultimo).toBe(s[9]!.abertura);
+  });
+
+  it("rodar duas vezes deixa o mesmo banco", async () => {
+    const b = bancoDeCandlesFalso();
+    const primeiroDia = sementeWinIbov5m().slice(0, 84);
+    await substituirCandlesB3(b.banco, "WIN", "5m", dia(1), primeiroDia, { agora: DEPOIS });
+    const antes = [b.de("WIN", "5m"), b.de("WIN", "15m"), b.de("WIN", "1h")];
+    const r = await substituirCandlesB3(b.banco, "WIN", "5m", dia(1), primeiroDia, { agora: DEPOIS });
+    expect(r.apagados).toBe(84 + 28 + 7);
+    expect([b.de("WIN", "5m"), b.de("WIN", "15m"), b.de("WIN", "1h")]).toEqual(antes);
+  });
+
+  it("recusa trecho fora da grade do maior intervalo ou candle fora do trecho", async () => {
+    const b = bancoDeCandlesFalso();
+    const s = sementeWinIbov5m().slice(0, 84);
+    await expect(
+      substituirCandlesB3(b.banco, "WIN", "5m", { inicio: dia(1).inicio + M5, fim: dia(1).fim }, s, {
+        agora: DEPOIS,
+      }),
+    ).rejects.toThrow(/grade de 1h/);
+    await expect(substituirCandlesB3(b.banco, "WIN", "5m", dia(2), s, { agora: DEPOIS })).rejects.toThrow(
+      /fora do trecho/,
+    );
+    expect(b.total()).toBe(0);
   });
 });

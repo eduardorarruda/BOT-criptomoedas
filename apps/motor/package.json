@@ -21,7 +21,8 @@
     "start": "node --env-file-if-exists=../../.env dist/main.js",
     "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts",
     "importar-candles-b3": "node --env-file-if-exists=../../.env dist/comandos/importar-candles-b3.js",
-    "importar-candles-csv": "node --env-file-if-exists=../../.env dist/comandos/importar-candles-csv.js"
+    "importar-candles-csv": "node --env-file-if-exists=../../.env dist/comandos/importar-candles-csv.js",
+    "importar-negocios-b3": "node --env-file-if-exists=../../.env dist/comandos/importar-negocios-b3.js"
   },
   "dependencies": {
     "@zentrade/banco": "workspace:*",
@@ -32,6 +33,10 @@
     "bullmq": "^6.3.12",
     "ioredis": "^6.0.0",
     "pino": "^10.4.0",
+    "yauzl": "^3.4.0",
     "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/yauzl": "^3.4.0"
   }
 }
