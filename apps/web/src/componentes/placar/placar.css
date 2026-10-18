@@ -1,0 +1,158 @@
+/* Placar do Claude (Decisões e Visão geral). Só tokens do tema: claro e escuro saem de graça. */
+.placar-claude {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--espaco-5);
+  min-width: 0;
+}
+.placar-claude > * {
+  min-width: 0;
+}
+
+.placar-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-2);
+  margin: 0;
+  padding: var(--espaco-3) var(--espaco-4);
+  border: 1px solid color-mix(in oklab, var(--atencao) 35%, transparent);
+  border-radius: var(--raio);
+  background: var(--atencao-tenue);
+  color: var(--texto);
+  font-size: var(--t-pequeno);
+}
+.placar-aviso > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--atencao);
+}
+
+.placar-resumo,
+.placar-nota {
+  margin: 0;
+  color: var(--texto-2);
+  font-size: var(--t-pequeno);
+  line-height: 1.55;
+}
+.placar-resumo > svg {
+  display: inline-block;
+  vertical-align: -2px;
+  color: var(--marca);
+}
+.placar-nota {
+  color: var(--apagado);
+  font-size: var(--t-legenda);
+}
+
+.placar-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--espaco-5);
+}
+
+.placar-bloco {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--espaco-2);
+  min-width: 0;
+}
+.placar-bloco__titulo {
+  margin: 0;
+  color: var(--texto);
+  font-size: var(--t-pequeno);
+  font-weight: 600;
+}
+.placar-bloco__texto {
+  margin: 0;
+  color: var(--texto-2);
+  font-size: var(--t-pequeno);
+  line-height: 1.6;
+  max-width: 70ch;
+}
+.placar-bloco__texto strong {
+  color: var(--texto);
+}
+
+.placar-detalhes > summary {
+  width: fit-content;
+  padding: 2px 0;
+  color: var(--texto-2);
+  font-size: var(--t-pequeno);
+  cursor: pointer;
+}
+.placar-detalhes > summary:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+  border-radius: var(--raio-p);
+}
+.placar-detalhes[open] > summary {
+  margin-bottom: var(--espaco-2);
+}
+
+.placar-tabela th[scope="row"] {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.placar-tabela tr[aria-current="true"] > * {
+  background: var(--marca-tenue);
+}
+
+/* Legenda das barras de calibração: a cor nunca é a única pista (a tabela tem os números). */
+.placar-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-4);
+  margin: 0;
+  color: var(--texto-2);
+  font-size: var(--t-legenda);
+}
+.placar-legenda__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.placar-legenda__cor {
+  width: 14px;
+  height: 6px;
+  border-radius: 3px;
+}
+.placar-legenda__cor--disse,
+.placar-barras__disse {
+  background: var(--cat-2);
+}
+.placar-legenda__cor--acertou,
+.placar-barras__acertou {
+  background: var(--cat-1);
+}
+
+.placar-barras {
+  display: grid;
+  gap: 3px;
+  min-width: 120px;
+}
+.placar-barras__trilho {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--superficie-3);
+  overflow: hidden;
+}
+.placar-barras__disse,
+.placar-barras__acertou {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+@media (forced-colors: active) {
+  .placar-barras__disse,
+  .placar-barras__acertou,
+  .placar-legenda__cor {
+    background: CanvasText;
+  }
+  .placar-barras__acertou,
+  .placar-legenda__cor--acertou {
+    background: Highlight;
+  }
+}

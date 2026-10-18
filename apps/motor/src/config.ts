@@ -56,6 +56,18 @@ export const EsquemaConfig = z
      * padrão o backtest usa os limites de um robô novo (ou os do robô escolhido).
      */
     MOTOR_BACKTEST_RISCO: z.coerce.number().gt(0).max(0.1).default(0.01),
+    /** Placar do Claude: avalia as decisões que passaram pelo agente (só com banco, no processo dos robôs). */
+    MOTOR_PLACAR: Booleano.default(true),
+    /** De quantos em quantos minutos o avaliador roda. */
+    MOTOR_PLACAR_MINUTOS: z.coerce.number().int().min(1).max(1440).default(5),
+    /** Candles esperados por stop, alvo, regra ou tempo antes de fechar a conta no horizonte. */
+    MOTOR_PLACAR_HORIZONTE: z.coerce.number().int().min(1).max(1000).default(500),
+    /** Deslizamento mais meio spread do contrafactual no cripto (pontos-base; 7 = o padrão do backtest). */
+    MOTOR_PLACAR_BPS: z.coerce.number().min(0).max(100).default(7),
+    /** Só decisões dos últimos N dias. */
+    MOTOR_PLACAR_DIAS: z.coerce.number().int().min(1).max(365).default(30),
+    /** Decisões por rodada. */
+    MOTOR_PLACAR_LOTE: z.coerce.number().int().min(1).max(500).default(50),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   })
   .superRefine((c, ctx) => {

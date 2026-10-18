@@ -30,7 +30,10 @@ const doDTO = (k: CandleDTO, ms: number): Candle => ({
 });
 
 /** Todos os candles gravados de [inicio, fim), em ordem, paginando de 1000 em 1000. */
-export async function candlesDoBanco(banco: CandlesDoBanco, c: ConsultaCandles): Promise<Candle[]> {
+export async function candlesDoBanco(
+  banco: Pick<CandlesDoBanco, "candles">,
+  c: ConsultaCandles,
+): Promise<Candle[]> {
   const ms = MS_POR_INTERVALO[c.intervalo];
   let lista: Candle[] = [];
   for (let cursor = c.inicio; cursor < c.fim;) {

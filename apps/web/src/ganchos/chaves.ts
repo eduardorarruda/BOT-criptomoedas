@@ -1,5 +1,5 @@
 import type { Intervalo } from "@zentrade/contratos/esquemas";
-import type { FiltroDecisoes } from "../api/fonte";
+import type { FiltroDecisoes, FiltroPlacar } from "../api/fonte";
 
 /** Chaves do TanStack Query, num lugar só para os eventos ao vivo acharem os dados. */
 export const chaves = {
@@ -15,6 +15,8 @@ export const chaves = {
   posicao: (roboId: string) => ["posicao", roboId] as const,
   decisoesTodas: ["decisoes"] as const,
   decisoes: (f: FiltroDecisoes = {}) => ["decisoes", f] as const,
+  /** Fora de "decisoes": o placar não é lista de decisões (os eventos ao vivo mexem nelas). */
+  placar: (f: FiltroPlacar = {}) => ["placar", f] as const,
   ordensTodas: ["ordens"] as const,
   ordens: (roboId?: string) => ["ordens", roboId ?? "todas"] as const,
   candles: (simbolo: string, intervalo: Intervalo) => ["candles", simbolo, intervalo] as const,

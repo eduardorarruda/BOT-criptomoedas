@@ -10,6 +10,7 @@ import type {
   LimitesRiscoDTO,
   ModoRobo,
   OrdemDTO,
+  PlacarDTO,
   PosicaoDTO,
   Rede,
   RoboDTO,
@@ -58,6 +59,12 @@ export interface FiltroDecisoes {
   readonly estado?: EstadoDecisao;
   readonly antes?: number;
   readonly limite?: number;
+}
+
+export interface FiltroPlacar {
+  readonly roboId?: string;
+  /** Só decisões a partir deste instante (ms). */
+  readonly desde?: number;
 }
 
 export type NovaEstrategia = Omit<EstrategiaDTO, "id" | "versao">;
@@ -127,6 +134,8 @@ export interface Fonte {
   decisoes(f?: FiltroDecisoes): Promise<DecisaoDTO[]>;
   aprovarDecisao(id: string): Promise<DecisaoDTO>;
   recusarDecisao(id: string): Promise<DecisaoDTO>;
+  /** O placar do Claude: precisão das aprovações, vetos certos, dinheiro, calibração e limite sugerido. */
+  placar(f?: FiltroPlacar): Promise<PlacarDTO>;
 
   ordens(roboId?: string): Promise<OrdemDTO[]>;
   candles(simbolo: string, intervalo: Intervalo): Promise<CandleApi[]>;

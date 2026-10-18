@@ -5,9 +5,11 @@ import type {
   Execucao,
   Lado,
   LimitesRisco,
+  MotivoDesfecho,
   Posicao,
   Sinal,
   Valor,
+  VeredictoClaude,
 } from "@zentrade/dominio";
 import type { Intervalo, ModoRobo, Rede } from "./comum.js";
 import type { EstadoDecisao } from "./dados.js";
@@ -238,4 +240,62 @@ export interface PortaAprovacao {
  */
 export interface PortaRiscoConta {
   estado(roboId: string, agora: number): Promise<EstadoConta>;
+}
+
+/**
+ * Uma decisão de entrada que passou pelo Claude e ainda não tem desfecho final, com o
+ * que o avaliador do placar precisa: o robô (símbolo, intervalo, estratégia, risco), a
+ * proposta e, se a compra executou e a posição já fechou, o resultado real.
+ */
+export interface CandidataAvaliacao {
+  readonly decisaoId: string;
+  readonly usuarioId: string;
+  readonly roboId: string;
+  readonly simbolo: string;
+  readonly intervalo: Intervalo;
+  /** Fechamento do candle do sinal (ms). */
+  readonly em: number;
+  readonly preco: Valor;
+  readonly quantidade: Valor | null;
+  readonly estado: EstadoDecisao;
+  readonly proposta: PropostaAgente;
+  readonly protecao: Protecao | null;
+  /** O resultado líquido da posição executada, quando ela já fechou. */
+  readonly resultadoReal: Valor | null;
+  readonly estrategia: Estrategia;
+  readonly riscoPorOperacao: Valor;
+  readonly exposicaoMaxima: Valor;
+}
+
+export interface NovaAvaliacao {
+  readonly decisaoId: string;
+  readonly usuarioId: string;
+  readonly claude: VeredictoClaude;
+  readonly confianca: number;
+  readonly fonte: "real" | "contrafactual";
+  readonly situacao: "concluida" | "pendente";
+  readonly motivo?: MotivoDesfecho;
+  readonly quantidade?: Valor;
+  readonly precoEntrada?: Valor;
+  readonly precoSaida?: Valor;
+  readonly resultado?: Valor;
+  readonly retorno?: number;
+  readonly barras: number;
+  readonly moeda: string;
+  readonly em: number;
+}
+
+/** O placar do Claude, visto pelo avaliador do motor (acesso de sistema). */
+export interface PortaPlacar {
+  /**
+   * Entradas com proposta do agente desde `desde`, sem avaliação concluída: primeiro as
+   * nunca avaliadas, depois as pendentes avaliadas antes de `revisarAntesDe`.
+   */
+  candidatas(f: {
+    readonly desde: number;
+    readonly revisarAntesDe: number;
+    readonly limite: number;
+  }): Promise<CandidataAvaliacao[]>;
+  /** Grava ou regrava a avaliação; uma concluída nunca é sobrescrita (idempotente). */
+  gravar(a: NovaAvaliacao): Promise<void>;
 }
