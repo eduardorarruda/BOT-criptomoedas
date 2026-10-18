@@ -208,3 +208,21 @@ export function validarRegra(regra: Regra): string[] {
   if (nos > NOS_MAXIMOS) problemas.add(`a regra tem ${nos} partes; o máximo é ${NOS_MAXIMOS}`);
   return [...problemas];
 }
+
+/**
+ * A regra em texto, sem os valores do momento ("preço < fundo de Donchian(10)"): o
+ * que o agente lê para saber como a posição vai sair. Mesmos rótulos da explicação.
+ */
+export function descreverRegra(regra: Regra): string {
+  switch (regra.tipo) {
+    case "comparar":
+      return `${rotulo(regra.esquerda)} ${SIMBOLO[regra.comparador]} ${rotulo(regra.direita)}`;
+    case "nao":
+      return `não (${descreverRegra(regra.regra)})`;
+    case "e":
+    case "ou":
+      return regra.regras.length === 1
+        ? descreverRegra(regra.regras[0] as Regra)
+        : regra.regras.map((r) => `(${descreverRegra(r)})`).join(regra.tipo === "e" ? " e " : " ou ");
+  }
+}
