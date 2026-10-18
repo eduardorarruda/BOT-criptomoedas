@@ -34,4 +34,5 @@ export function sentidosDa(d: Direcao): readonly Sentido[] {
 }
 
 /** A direção de uma estratégia: sem o campo, é "comprado" (todas as estratégias antigas). */
-export const direcaoDe = (e: { readonly direcao?: Direcao }): Direcao => e.direcao ?? "comprado";
+export const direcaoDe = (e: { readonly direcao?: Direcao | undefined }): Direcao =>
+  e.direcao ?? "comprado";
