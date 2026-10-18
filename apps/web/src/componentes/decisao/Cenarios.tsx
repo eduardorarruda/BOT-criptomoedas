@@ -5,8 +5,10 @@ import {
   type NomeCenario,
   type PropostaAgente,
 } from "@zentrade/contratos/esquemas";
+import { useId, useState } from "react";
 import {
   ArrowDownRight,
+  ChevronDown,
   ArrowRight,
   ArrowUpRight,
   Info,
@@ -152,32 +154,55 @@ function Avaliacao({ avaliacao: a }: { readonly avaliacao: AvaliacaoCenarios }) 
   );
 }
 
+/**
+ * O resumo (valor esperado e veredito da regra) fica sempre à vista; os três cenários e o
+ * argumento contra abrem num botão. Uma lista de decisões tem dezenas de cartões: abrir
+ * tudo de uma vez deixaria a tela longa e pesada.
+ */
 export function Cenarios({ proposta: p }: { readonly proposta: PropostaAgente }) {
+  const [aberto, setAberto] = useState(false);
+  const idDetalhes = useId();
   const cenarios = p.cenarios ? ordenar(p.cenarios) : [];
   if (cenarios.length === 0 && !p.contraArgumento) return null;
   const favoravel = p.avaliacao?.favoravel;
+  const oQue = [
+    ...(cenarios.length ? [`os ${cenarios.length} cenários`] : []),
+    ...(p.contraArgumento ? ["o argumento contra"] : []),
+  ].join(" e ");
   return (
     // Sem nome acessível de propósito: com vários cartões, uma "region" nomeada se repetiria
     // (landmark-unique). O h3 já marca o bloco, como nos outros blocos do cartão.
     <section className="decisao__bloco cenarios">
       <h3 className="decisao__subtitulo">Prévias de futuro (cenários)</h3>
-      {cenarios.length ? (
-        <ul role="list" className="cenarios__lista">
-          {cenarios.map((c) => (
-            <ItemCenario key={c.nome} cenario={c} favoravel={c.nome === favoravel} />
-          ))}
-        </ul>
-      ) : null}
       {p.avaliacao ? <Avaliacao avaliacao={p.avaliacao} /> : null}
-      {p.contraArgumento ? (
-        <div className="cenarios__contra">
-          <h4 className="cenarios__contra-titulo">
-            <MessageSquareWarning size={16} aria-hidden="true" />
-            Principal argumento contra
-          </h4>
-          <p>{p.contraArgumento}</p>
-        </div>
-      ) : null}
+      <button
+        type="button"
+        className="cenarios__alternar"
+        aria-expanded={aberto}
+        aria-controls={idDetalhes}
+        onClick={() => setAberto((a) => !a)}
+      >
+        <ChevronDown size={14} aria-hidden="true" />
+        {aberto ? `Esconder ${oQue}` : `Ver ${oQue}`}
+      </button>
+      <div id={idDetalhes} hidden={!aberto}>
+        {aberto && cenarios.length ? (
+          <ul role="list" className="cenarios__lista">
+            {cenarios.map((c) => (
+              <ItemCenario key={c.nome} cenario={c} favoravel={c.nome === favoravel} />
+            ))}
+          </ul>
+        ) : null}
+        {aberto && p.contraArgumento ? (
+          <div className="cenarios__contra">
+            <h4 className="cenarios__contra-titulo">
+              <MessageSquareWarning size={16} aria-hidden="true" />
+              Principal argumento contra
+            </h4>
+            <p>{p.contraArgumento}</p>
+          </div>
+        ) : null}
+      </div>
     </section>
   );
 }

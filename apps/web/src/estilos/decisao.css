@@ -375,3 +375,29 @@
 .cenarios__contra p {
   max-width: 78ch;
 }
+
+/* Botão que abre os cenários e o argumento contra (aparência de link, alvo de 30 px). */
+.cenarios__alternar {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  min-height: 30px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: none;
+  color: var(--apagado);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--linha-forte);
+  text-underline-offset: 3px;
+}
+.cenarios__alternar:hover {
+  color: var(--texto);
+  text-decoration-color: var(--marca);
+}
+.cenarios__alternar[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}

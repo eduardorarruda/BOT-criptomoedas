@@ -1,5 +1,5 @@
 import type { PropostaAgente } from "@zentrade/contratos/esquemas";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import axe from "axe-core";
 import { describe, expect, it } from "vitest";
 import { Cenarios } from "./Cenarios";
@@ -59,9 +59,29 @@ const OPCOES_AXE: axe.RunOptions = {
   resultTypes: ["violations"],
 };
 
+/** Abre os cenários e o argumento contra (começam recolhidos). */
+function renderAberto(proposta: PropostaAgente) {
+  const r = render(<Cenarios proposta={proposta} />);
+  fireEvent.click(screen.getByRole("button", { name: /^Ver / }));
+  return r;
+}
+
 describe("Cenarios (prévias de futuro)", () => {
-  it("mostra os três cenários em ordem, com probabilidade, horizonte, gatilho, invalidação e resultado", () => {
+  it("começa recolhido: resumo à vista, cenários e argumento contra num botão acessível", () => {
     render(<Cenarios proposta={COM_CENARIOS} />);
+    expect(screen.getByText("Valor esperado líquido")).toBeInTheDocument();
+    const botao = screen.getByRole("button", { name: "Ver os 3 cenários e o argumento contra" });
+    expect(botao).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+    fireEvent.click(botao);
+    expect(botao).toHaveAttribute("aria-expanded", "true");
+    expect(botao).toHaveTextContent("Esconder os 3 cenários e o argumento contra");
+    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(document.getElementById(botao.getAttribute("aria-controls")!)).not.toHaveAttribute("hidden");
+  });
+
+  it("mostra os três cenários em ordem, com probabilidade, horizonte, gatilho, invalidação e resultado", () => {
+    renderAberto(COM_CENARIOS);
     const secao = screen.getByRole("heading", {
       level: 3,
       name: "Prévias de futuro (cenários)",
@@ -89,7 +109,7 @@ describe("Cenarios (prévias de futuro)", () => {
   });
 
   it("destaca o cenário favorável à operação com texto, não só com cor", () => {
-    render(<Cenarios proposta={COM_CENARIOS} />);
+    renderAberto(COM_CENARIOS);
     const [alta, lateral] = screen.getAllByRole("listitem");
     expect(alta).toHaveTextContent("Favorável à operação");
     expect(lateral).not.toHaveTextContent("Favorável à operação");
@@ -107,7 +127,7 @@ describe("Cenarios (prévias de futuro)", () => {
   });
 
   it("mostra o principal argumento contra a proposta", () => {
-    render(<Cenarios proposta={COM_CENARIOS} />);
+    renderAberto(COM_CENARIOS);
     expect(screen.getByText("Principal argumento contra")).toBeInTheDocument();
     expect(screen.getByText(/pode faltar comprador/)).toBeInTheDocument();
   });
@@ -145,7 +165,7 @@ describe("Cenarios (prévias de futuro)", () => {
 
   it("sem avaliação do código, mostra os cenários sem valor esperado nem destaque", () => {
     const { avaliacao: _, ...semAvaliacao } = COM_CENARIOS;
-    render(<Cenarios proposta={semAvaliacao} />);
+    renderAberto(semAvaliacao);
     expect(screen.getAllByRole("listitem")).toHaveLength(3);
     expect(screen.queryByText("Valor esperado líquido")).toBeNull();
     expect(screen.queryByText("Favorável à operação")).toBeNull();
@@ -165,6 +185,7 @@ describe("Cenarios (prévias de futuro)", () => {
         <Cenarios proposta={COM_CENARIOS} />
       </main>,
     );
+    screen.getAllByRole("button", { name: /^Ver / }).forEach((b) => fireEvent.click(b));
     const r = await axe.run(container, OPCOES_AXE);
     expect(r.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
   });

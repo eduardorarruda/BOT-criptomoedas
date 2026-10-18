@@ -1,5 +1,5 @@
 import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ErroApi } from "../../api/erros";
@@ -34,6 +34,7 @@ describe("CartaoDecisao", () => {
       screen.getByRole("heading", { level: 3, name: "Prévias de futuro (cenários)" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Valor esperado líquido")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^Ver os 3 cenários/ }));
     expect(screen.getByText("Principal argumento contra")).toBeInTheDocument();
   });
 
