@@ -2,7 +2,7 @@ import { dec, POSICAO_ZERADA } from "@zentrade/dominio";
 import type { PedidoAnalise } from "@zentrade/contratos";
 import { describe, expect, it } from "vitest";
 import { lerCorpoAnalise, pedidoDeJson, pedidoParaJson } from "./serializacao.js";
-import { pedidoExemplo } from "./teste/pedido.js";
+import { OPERACAO_DONCHIAN, pedidoExemplo } from "./teste/pedido.js";
 
 const pedido: PedidoAnalise = {
   robo: { id: "r1", simbolo: "BTCUSDT", intervalo: "1h" },
@@ -83,5 +83,36 @@ describe("serialização do PedidoAnalise", () => {
     const lido = lerCorpoAnalise(json);
     expect(lido.ok && lido.valor.pedido.analiseId).toBe("analise-1");
     expect(pedidoParaJson(pedidoExemplo()).analiseId).toBeUndefined();
+  });
+
+  it("leva e traz a operação (como sai e quanto custa) e as velas do motor", () => {
+    const velas = {
+      instantes: [1, 2, 3],
+      maximas: [59100, 59600, 60100],
+      minimas: [58900, 59400, 59900],
+      volumes: [5, 6, 7],
+    };
+    const json = pedidoParaJson({ ...pedido, operacao: OPERACAO_DONCHIAN, velas });
+    const lido = lerCorpoAnalise(JSON.parse(JSON.stringify(json)));
+    expect(lido.ok).toBe(true);
+    if (!lido.ok) return;
+    expect(lido.valor.pedido.operacao).toEqual(OPERACAO_DONCHIAN);
+    expect(lido.valor.pedido.velas).toEqual(velas);
+  });
+
+  it("recusa velas desalinhadas dos fechamentos e operação torta, dizendo onde", () => {
+    const base = pedidoParaJson(pedido);
+    const velas = { instantes: [1, 2], maximas: [1, 2], minimas: [1, 2], volumes: [1, 2] };
+    const r1 = lerCorpoAnalise({ ...base, velas });
+    expect(r1.ok).toBe(false);
+    if (!r1.ok) expect(r1.erro).toMatch(/velas/);
+    const r2 = lerCorpoAnalise({ ...base, operacao: { ...OPERACAO_DONCHIAN, custos: { mercado: "lua" } } });
+    expect(r2.ok).toBe(false);
+    if (!r2.ok) expect(r2.erro).toMatch(/operacao/);
+  });
+
+  it("pedido sem operação nem velas (motor antigo) continua valendo", () => {
+    const lido = lerCorpoAnalise(pedidoParaJson(pedido));
+    expect(lido.ok && lido.valor.pedido.operacao).toBeUndefined();
   });
 });

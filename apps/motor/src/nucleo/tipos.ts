@@ -12,6 +12,7 @@ import type {
   PortaRobos,
   Relogio,
   ResultadoOrdem,
+  VelasPedido,
 } from "@zentrade/contratos";
 import { FUSO_PADRAO, type Posicao, type Sinal, type Valor } from "@zentrade/dominio";
 import type { DecisaoRegistrada } from "./diario.js";
@@ -56,6 +57,8 @@ export interface EntradaCiclo {
   readonly sinal: Sinal;
   readonly preco: Valor;
   readonly fechamentos: readonly number[];
+  /** As outras séries das velas (máximas, mínimas, volumes, instantes), para o agente. */
+  readonly velas?: VelasPedido;
   readonly posicao: Posicao;
   readonly em: number;
 }

@@ -13,6 +13,7 @@ import type {
 } from "@zentrade/dominio";
 import type { Intervalo, ModoRobo, Rede } from "./comum.js";
 import type { EstadoDecisao } from "./dados.js";
+import type { OperacaoPedido, VelasPedido } from "./pedido-analise.js";
 import type { Evento } from "./eventos.js";
 import type { PropostaAgente } from "./proposta.js";
 import type { EstadoProtecao, IdsProtecao, ResultadoOrdem } from "./corretora.js";
@@ -198,6 +199,10 @@ export interface PedidoAnalise {
   /** Liga os eventos "analise" do agente (passo a passo ao vivo) a esta decisão. */
   readonly analiseId?: string;
   readonly orcamento?: OrcamentoAnalise;
+  /** Como a operação termina (stop, regra de saída, tempo) e quanto custa (taxas, deslizamento). */
+  readonly operacao?: OperacaoPedido;
+  /** Máximas, mínimas, volumes e instantes das velas, alinhados com `fechamentos`. */
+  readonly velas?: VelasPedido;
 }
 
 export interface RespostaAnalise {

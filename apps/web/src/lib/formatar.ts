@@ -97,6 +97,12 @@ export function formatarPercentual(fracao: number | string, opcoes: OpcoesDinhei
   return `${prefixoSinal(arredondado, opcoes.sinal ?? false)}${absolutoPtBr(arredondado, casas)}%`;
 }
 
+/** Valor que já está em % (0,31 → "0,31%"), como os resultados e o valor esperado dos cenários. */
+export function formatarPorcento(valor: number, opcoes: OpcoesDinheiro = {}): string {
+  if (!Number.isFinite(valor)) return TRACO;
+  return formatarPercentual(dec(valor).div(100).toString(), opcoes);
+}
+
 export function sinalDe(texto: string): Sinal {
   const v = lerDecimal(texto);
   if (!v || v.isZero()) return "neutro";

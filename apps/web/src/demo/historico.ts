@@ -216,8 +216,14 @@ const MODELOS: readonly Modelo[] = [
     estado: "registrada",
     preco: "2440.10",
     quantidade: "0.080",
-    proposta: "ethObservar",
+    proposta: "ethAguardar",
     explicacao: "(EMA(9) cruzou acima de EMA(21): sim) e não (RSI(14) (49,3) > 70: não)",
+    barreiras: [
+      {
+        codigo: "agente_aguardar",
+        mensagem: `O agente propôs "aguardar": ${PROPOSTAS.ethAguardar.avaliacao.motivo}`,
+      },
+    ],
     custoIa: "0.0122",
   },
 ];
@@ -327,7 +333,8 @@ function proposta(m: Modelo): PropostaAgente | undefined {
   if (!m.proposta) return undefined;
   const base = PROPOSTAS[m.proposta];
   if (!base) return undefined;
-  if (m.acao !== "COMPRAR") return base;
+  // Só a compra que a IA endossou ganha stop e alvo; o "aguardar" não abre posição.
+  if (m.acao !== "COMPRAR" || base.acao !== "comprar") return base;
   const entrada = dec(m.preco);
   return {
     ...base,

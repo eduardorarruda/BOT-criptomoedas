@@ -37,6 +37,30 @@ function decisoesBrutas(lista: readonly DecisaoDTO[]): string {
   return ["quando  id  robô  sinal  proposta  estado  preço", ...linhas].join("\n");
 }
 
+const pctSinal = (v: number): string => `${v > 0 ? "+" : v < 0 ? "−" : ""}${formatarNumero(Math.abs(v))}%`;
+
+/** As três prévias de futuro, a conta do código e o argumento contra (propostas novas). */
+function explicarCenarios(p: NonNullable<DecisaoDTO["proposta"]>): string[] {
+  const a = p.avaliacao;
+  return [
+    ...(p.cenarios
+      ? [
+          "Cenários:",
+          ...p.cenarios.map(
+            (c) =>
+              `  - ${c.nome} ${porcento(c.probabilidade)}, em até ${c.horizonte} velas: ${pctSinal(c.resultadoEstimado)} — confirma: ${c.gatilho}; invalida: ${c.invalidacao}`,
+          ),
+        ]
+      : []),
+    ...(a
+      ? [
+          `Valor esperado (código): ${pctSinal(a.valorEsperado)} — ${a.aplicada ? (a.aprovada ? "aprovada" : "barrada") : "só informa"}: ${a.motivo}`,
+        ]
+      : []),
+    ...(p.contraArgumento ? [`Contra-argumento: ${p.contraArgumento}`] : []),
+  ];
+}
+
 function explicarProposta(d: DecisaoDTO): string[] {
   const p = d.proposta;
   if (!p) return ["Proposta da IA: nenhuma (decisão só por regras)."];
@@ -45,6 +69,7 @@ function explicarProposta(d: DecisaoDTO): string[] {
       (p.stop ? `, stop ${formatarNumero(dec(p.stop))}` : "") +
       (p.alvo ? `, alvo ${formatarNumero(dec(p.alvo))}` : ""),
     `Justificativa: ${p.justificativa}`,
+    ...explicarCenarios(p),
     ...(p.riscos.length > 0 ? ["Riscos:", ...p.riscos.map((r) => `  - ${r}`)] : []),
     ...(p.fontes.length > 0
       ? [

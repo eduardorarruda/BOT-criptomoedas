@@ -2,7 +2,7 @@ import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { dec, precoAlvo, precoStop } from "@zentrade/dominio";
 import type { EventoAnalise } from "@zentrade/contratos/esquemas";
 import { formatarDinheiro, formatarPreco } from "../lib/formatar";
-import { PROPOSTAS } from "./propostas";
+import { PROPOSTAS, semCenarios } from "./propostas";
 
 /**
  * Roteiro de uma análise do agente no exemplo. Cada etapa é uma ferramenta que o
@@ -117,7 +117,8 @@ export function decisaoDeVenda(
     em,
     sinal: { acao: "VENDER", explicacao: `preço ${formatarPreco(preco)} chegou ao alvo líquido` },
     proposta: {
-      ...base,
+      // Os cenários da compra não descrevem a saída: a venda vai sem eles.
+      ...semCenarios(base),
       acao: "vender",
       justificativa: "O alvo líquido foi atingido e nada no diário nem nas notícias pede para segurar.",
     },

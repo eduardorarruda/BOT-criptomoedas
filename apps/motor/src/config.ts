@@ -17,7 +17,8 @@ export const EsquemaConfig = z
     MOTOR_ROBOS_ARQUIVO: z.string().min(1).default("robos.exemplo.json"),
     MOTOR_AGENTE_OBRIGATORIO: Booleano.default(true),
     MOTOR_AGENTE_FIXO: z.enum(["sempre_concorda", "nunca_concorda"]).default("nunca_concorda"),
-    MOTOR_HISTORICO: z.coerce.number().int().min(50).max(1000).default(500),
+    // 1000 = uma página da Binance; em velas de 5 min, ~83 h: o agente lê o tempo gráfico de 4 h.
+    MOTOR_HISTORICO: z.coerce.number().int().min(50).max(1000).default(1000),
     MOTOR_PAPEL_SALDO: TextoDecimal.default("1000"),
     MOTOR_PAPEL_TAXA: z.coerce.number().min(0).lt(0.01).default(0.001),
     MOTOR_PAPEL_DESLIZAMENTO_BPS: z.coerce.number().min(0).max(1000).default(5),
