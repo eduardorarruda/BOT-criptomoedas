@@ -81,8 +81,3 @@ export function resumirCarteira(
     maiorQueda: maiorQueda(todos.filter((d) => d.em >= janela.inicioJanela)),
   };
 }
-
-export const inicioDoDiaUtc = (agoraMs: number): number => {
-  const d = new Date(agoraMs);
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-};

@@ -1,17 +1,10 @@
-import { dec, paraTexto, type Valor } from "@zentrade/dominio";
+import { dec, inicioDoDiaNoFuso, inicioDoMesNoFuso, paraTexto, type Valor } from "@zentrade/dominio";
 import { gte, sum } from "drizzle-orm";
 import { comoUsuario, type Db, type Executor } from "../cliente.js";
-import { inicioDoDiaUtc } from "../calculos.js";
 import { gastosIa } from "../esquema/index.js";
 import { lerLimites } from "./limites-conta.js";
 
 export type OrigemGastoIa = "analise" | "assistente";
-
-/** 00:00 UTC do dia 1 do mês de `agora`: o orçamento mensal conta daqui. */
-export const inicioDoMesUtc = (agora: number): number => {
-  const d = new Date(agora);
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
-};
 
 /** Gasto e tetos de IA da pessoa agora (US$). Teto `null` = sem limite. */
 export interface UsoOrcamentoIa {
@@ -29,16 +22,20 @@ async function somaDesde(tx: Executor, desde: number): Promise<Valor> {
   return dec(r?.total ?? 0);
 }
 
-/** Lê o uso na transação de quem chama (já sob RLS). */
+/**
+ * Lê o uso na transação de quem chama (já sob RLS). O mês e o dia são os do fuso da
+ * instância: o orçamento diário não vira às 21h de Brasília.
+ */
 export async function lerUsoOrcamento(
   tx: Executor,
   usuarioId: string,
   agora: number,
+  fuso: string,
 ): Promise<UsoOrcamentoIa> {
   const [{ limites }, gastoMes, gastoDia] = await Promise.all([
     lerLimites(tx, usuarioId),
-    somaDesde(tx, inicioDoMesUtc(agora)),
-    somaDesde(tx, inicioDoDiaUtc(agora)),
+    somaDesde(tx, inicioDoMesNoFuso(agora, fuso)),
+    somaDesde(tx, inicioDoDiaNoFuso(agora, fuso)),
   ]);
   return {
     gastoMes,
@@ -49,7 +46,7 @@ export async function lerUsoOrcamento(
 }
 
 /** O livro do gasto com IA: o agente grava cada chamada; o orçamento soma daqui. */
-export function repositorioGastosIa(db: Db) {
+export function repositorioGastosIa(db: Db, fuso: string) {
   return {
     registrar: (usuarioId: string, origem: OrigemGastoIa, custo: Valor, em: number): Promise<void> =>
       comoUsuario(db, usuarioId, async (tx) => {
@@ -57,7 +54,7 @@ export function repositorioGastosIa(db: Db) {
       }),
 
     uso: (usuarioId: string, agora: number): Promise<UsoOrcamentoIa> =>
-      comoUsuario(db, usuarioId, (tx) => lerUsoOrcamento(tx, usuarioId, agora)),
+      comoUsuario(db, usuarioId, (tx) => lerUsoOrcamento(tx, usuarioId, agora, fuso)),
   };
 }
 

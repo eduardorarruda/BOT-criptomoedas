@@ -44,7 +44,6 @@ export type {
   ResultadoRegistro,
 } from "./repositorios/divergencias.js";
 export {
-  inicioDoMesUtc,
   type OrigemGastoIa,
   type RepositorioGastosIa,
   type UsoOrcamentoIa,

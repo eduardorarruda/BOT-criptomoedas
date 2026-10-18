@@ -267,13 +267,14 @@ describe("limites da conta, divergências, avisos e gasto de IA", () => {
       expect(await c.banco.avisos.marcarLidos(c.ana.id, agora)).toBe(0);
     });
 
-    it("gasto de IA: soma o mês e o dia UTC", async () => {
-      const agora = Date.UTC(2026, 9, 12, 15);
-      await c.banco.gastosIa.registrar(c.ana.id, "analise", dec("1.5"), Date.UTC(2026, 9, 12, 1));
+    it("gasto de IA: soma o mês e o dia no fuso da instância (Brasília), não em UTC", async () => {
+      const agora = Date.UTC(2026, 9, 12, 15); // 12/10 12:00 em Brasília
+      await c.banco.gastosIa.registrar(c.ana.id, "analise", dec("1.5"), Date.UTC(2026, 9, 12, 4)); // 01:00 de 12/10
+      await c.banco.gastosIa.registrar(c.ana.id, "analise", dec("0.5"), Date.UTC(2026, 9, 12, 1)); // 22:00 de 11/10
       await c.banco.gastosIa.registrar(c.ana.id, "assistente", dec("0.25"), Date.UTC(2026, 9, 2));
-      await c.banco.gastosIa.registrar(c.ana.id, "analise", dec("9"), Date.UTC(2026, 8, 30)); // mês passado
+      await c.banco.gastosIa.registrar(c.ana.id, "analise", dec("9"), Date.UTC(2026, 9, 1, 1)); // 30/09 22:00: mês passado
       const uso = await c.banco.gastosIa.uso(c.ana.id, agora);
-      expect(uso.gastoMes.toFixed()).toBe("1.75");
+      expect(uso.gastoMes.toFixed()).toBe("2.25");
       expect(uso.gastoDia.toFixed()).toBe("1.5");
       expect(uso.limiteMensal?.toFixed()).toBe("10");
       expect(uso.limiteDiario).toBeNull();
@@ -324,6 +325,26 @@ describe("limites da conta, divergências, avisos e gasto de IA", () => {
       await expect(
         comoUsuario(db, c.ana.id, (tx) => tx.execute(sql`update gastos_ia set custo_usd = 0`)),
       ).rejects.toThrow();
+    });
+  });
+
+  describe("o dia da conta é o dia no fuso da instância", () => {
+    it("às 22:52 de Brasília (já amanhã em UTC), a venda das 20h ainda é perda de hoje", async () => {
+      const agora = Date.parse("2027-01-18T01:52:00Z"); // 17/01 22:52 em Brasília
+      await executar(c.beto.robo.id, "BTCUSDT", "COMPRA", "0.01", "100", Date.parse("2027-01-17T13:00:00Z"));
+      await executar(c.beto.robo.id, "BTCUSDT", "VENDA", "0.01", "90", Date.parse("2027-01-17T23:00:00Z"));
+      const brasilia = await portaRiscoConta(c.banco.conexao.db, ativoDe, "America/Sao_Paulo").estado(
+        c.beto.robo.id,
+        agora,
+      );
+      expect(brasilia.realizadoDoDia.toFixed()).toBe("-0.1");
+      // O comportamento antigo (dia UTC) zerava a perda às 21h de Brasília.
+      const utc = await portaRiscoConta(c.banco.conexao.db, ativoDe, "UTC").estado(c.beto.robo.id, agora);
+      expect(utc.realizadoDoDia.toFixed()).toBe("0");
+      // O resumo (barra do topo) e a situação da conta (tela de Risco) contam o mesmo dia.
+      expect((await c.banco.resumo.resumo(c.beto.id, agora)).resultadoHoje).toBe("-0.1");
+      const situacao = await c.banco.riscoConta.situacao(c.beto.id, agora);
+      expect(situacao.retratos.find((r) => r.rede === "testnet")?.realizadoDoDia.toFixed()).toBe("-0.1");
     });
   });
 });

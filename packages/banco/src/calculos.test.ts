@@ -1,13 +1,6 @@
 import { dec, type Execucao } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
-import {
-  deltasRealizados,
-  inicioDoDiaUtc,
-  maiorQueda,
-  resultadoDesde,
-  resumirCarteira,
-  ultimaPerdaEm,
-} from "./calculos.js";
+import { deltasRealizados, maiorQueda, resultadoDesde, resumirCarteira, ultimaPerdaEm } from "./calculos.js";
 
 const ex = (lado: "COMPRA" | "VENDA", preco: string, q: string, taxa: string, em: number): Execucao => ({
   lado,
@@ -66,9 +59,5 @@ describe("resumo da carteira", () => {
     expect(r.exposicao.toFixed()).toBe("20");
     // acumulado: -0,1; 9,84; 4,795 → pico 9,84
     expect(r.maiorQueda.toFixed()).toBe("5.045");
-  });
-
-  it("início do dia em UTC", () => {
-    expect(inicioDoDiaUtc(Date.UTC(2026, 9, 10, 23, 59))).toBe(Date.UTC(2026, 9, 10));
   });
 });
