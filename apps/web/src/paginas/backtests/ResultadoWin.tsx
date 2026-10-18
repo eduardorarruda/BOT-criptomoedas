@@ -15,8 +15,8 @@ import { pct, pctSinal, razao } from "./formato";
 type Metricas = NonNullable<Backtest["metricas"]>;
 
 export const reais = (v: string, sinal = false) => formatarDinheiro(v, { moeda: "R$", sinal });
-const pontos = (v: string) =>
-  `${Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1, signDisplay: "exceptZero" })} pontos`;
+const pontos = (v: string, sinal = true) =>
+  `${Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1, signDisplay: sinal ? "exceptZero" : "auto" })} pontos`;
 const tom = (v: number | null | undefined): TomKpi =>
   v === null || v === undefined || v === 0 ? "neutro" : v > 0 ? "ganho" : "perda";
 
@@ -44,7 +44,7 @@ function Resultado({ m, w }: { readonly m: Metricas; readonly w: MetricasWin }) 
       <CartaoKpi
         rotulo="Custos do mini índice"
         valor={<span className="num perda">{reais(String(Number(w.custosB3) + Number(w.corretagem)))}</span>}
-        nota={`Tarifas da B3 ${reais(w.custosB3)} e corretagem ${reais(w.corretagem)}, mais ${reais(w.deslizamentoPago)} de deslizamento (${pontos(w.deslizamentoPontos)}).`}
+        nota={`Tarifas da B3 ${reais(w.custosB3)} e corretagem ${reais(w.corretagem)}, mais ${reais(w.deslizamentoPago)} de deslizamento (${pontos(w.deslizamentoPontos, false)}).`}
       />
     </>
   );

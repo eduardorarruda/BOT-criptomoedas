@@ -140,7 +140,8 @@ function simular(p: Pedido, perfil: PerfilWin, c: ConfiguracaoBacktest) {
     s.buyHold.push(sessao);
   });
   const anos = (p.fim - p.inicio) / ANO;
-  return { s, operacoes, capital, porAno: (dias.length * CANDLES_POR_DIA) / Math.max(anos, 1 / 365), dias };
+  // A curva do exemplo tem um ponto por operação e um por pregão: anualiza por eles.
+  return { s, operacoes, capital, porAno: s.em.length / Math.max(anos, 1 / 365), dias };
 }
 
 const texto = (v: number) => v.toFixed(2);
