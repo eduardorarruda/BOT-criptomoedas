@@ -29,6 +29,7 @@ import { variacao } from "../lib/metricas";
 import { MODO_ROBO, REDE } from "../lib/rotulos";
 import { ComeceAqui } from "./visao/ComeceAqui";
 import { ProximoPasso } from "../componentes/ProximoPasso";
+import { ResumoPlacar } from "../componentes/placar/ResumoPlacar";
 
 /** O lightweight-charts (~57 kB) chega depois dos números: a curva não segura a primeira tela. */
 const GraficoLinha = lazy(() =>
@@ -303,6 +304,7 @@ export function VisaoGeral() {
             >
               <Robos />
             </Painel>
+            <ResumoPlacar />
           </div>
           <Decisoes />
         </div>

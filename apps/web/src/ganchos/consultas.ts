@@ -1,7 +1,7 @@
 import type { Intervalo } from "@zentrade/contratos/esquemas";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useFonte } from "../api/contexto";
-import type { FiltroDecisoes } from "../api/fonte";
+import type { FiltroDecisoes, FiltroPlacar } from "../api/fonte";
 import { chaves } from "./chaves";
 
 /** Leituras. As escritas ficam em mutacoes.ts. */
@@ -59,6 +59,18 @@ export function usePosicoes(roboIds: readonly string[]) {
 export function useDecisoes(filtro: FiltroDecisoes = {}) {
   const fonte = useFonte();
   return useQuery({ queryKey: chaves.decisoes(filtro), queryFn: () => fonte.decisoes(filtro) });
+}
+
+/** O avaliador do motor grava de 5 em 5 minutos: a tela relê no mesmo ritmo. */
+const PLACAR_RELER_MS = 5 * 60_000;
+
+export function usePlacar(filtro: FiltroPlacar = {}) {
+  const fonte = useFonte();
+  return useQuery({
+    queryKey: chaves.placar(filtro),
+    queryFn: () => fonte.placar(filtro),
+    refetchInterval: PLACAR_RELER_MS,
+  });
 }
 
 export function useOrdens(roboId?: string) {

@@ -28,6 +28,7 @@ import {
   tokensIniciais,
 } from "./dados";
 import { backtestsIniciais, decisoesIniciais, ordensIniciais, patrimonioInicial } from "./historico";
+import { comPlacarDemo } from "./placar";
 
 /** Estado do exemplo, sempre substituído por cópias (nunca alterado no lugar). */
 export interface EstadoDemo {
@@ -59,7 +60,7 @@ export function estadoInicialDemo(agora: number): EstadoDemo {
     paradaTotal: false,
     estrategias: ESTRATEGIAS,
     robos: robosIniciais(agora),
-    decisoes: decisoesIniciais(agora),
+    decisoes: comPlacarDemo(decisoesIniciais(agora), agora),
     ordens: ordensIniciais(agora),
     patrimonio: patrimonioInicial(agora),
     backtests: backtestsIniciais(agora),
