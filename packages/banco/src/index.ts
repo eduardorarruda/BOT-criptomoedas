@@ -72,6 +72,7 @@ export type {
   CandleDTO,
   CoberturaCandles,
   ConsultaCandles,
+  LoteCandles,
   UltimoFechamento,
 } from "./repositorios/mercado.js";
 export type {
