@@ -32,3 +32,36 @@ export function detectarFusoServidorMt5(primeiraVelaNaiveMs: number, diaBrasilia
   const minutos = Math.round((primeiraVelaNaiveMs - aberturaBrasiliaUtc) / 60_000);
   return { tipo: "fixo", minutos };
 }
+
+const MEIA_HORA = 30 * 60_000;
+const diaNaive = (naiveMs: number): number => Math.floor(naiveMs / 86_400_000);
+
+/**
+ * Converte as barras para UTC. Com `fuso` configurado, usa-o (um nome IANA acompanha o
+ * horário de verão do servidor — o caminho mais seguro). Sem ele, detecta o deslocamento
+ * **dia a dia**: a primeira barra de cada dia do servidor é a abertura de 09:00 de
+ * Brasília, arredondada para meia hora (a abertura do WIN às vezes só pega negócio às
+ * 09:05); assim, a mudança de horário de verão do servidor no meio do período não
+ * estraga o resto. Premissa: cada dia chega **inteiro** (quem pede as barras alinha o
+ * pedido a dias completos); um dia que começa no meio seria lido como se abrisse às 09:00.
+ */
+export function converterBarrasMt5(naives: readonly number[], fuso: Fuso | null): number[] {
+  if (fuso) return naives.map((n) => paraUtcMt5(n, fuso));
+  const primeiraDoDia = new Map<number, number>();
+  for (const n of naives) {
+    const dia = diaNaive(n);
+    const atual = primeiraDoDia.get(dia);
+    if (atual === undefined || n < atual) primeiraDoDia.set(dia, n);
+  }
+  const deslocamentoDoDia = new Map<number, number>();
+  for (const [dia, primeira] of primeiraDoDia) {
+    const aberturaUtc = meiaNoiteB3(diaTexto(primeira)) + ABERTURA_BRASILIA_MIN * 60_000;
+    deslocamentoDoDia.set(dia, Math.round((primeira - aberturaUtc) / MEIA_HORA) * MEIA_HORA);
+  }
+  return naives.map((n) => n - (deslocamentoDoDia.get(diaNaive(n)) ?? 0));
+}
+
+const diaTexto = (naiveMs: number): string => {
+  const h = horaDoServidor(naiveMs);
+  return `${h.ano}-${String(h.mes).padStart(2, "0")}-${String(h.dia).padStart(2, "0")}`;
+};

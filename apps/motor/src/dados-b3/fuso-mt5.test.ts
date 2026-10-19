@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { meiaNoiteB3 } from "./comandos.js";
-import { detectarFusoServidorMt5, horaDoServidor, paraUtcMt5 } from "./fuso-mt5.js";
+import { lerFuso } from "./fuso.js";
+import { converterBarrasMt5, detectarFusoServidorMt5, horaDoServidor, paraUtcMt5 } from "./fuso-mt5.js";
 
 const DIA = "2026-10-14";
 // 09:00 de Brasília (UTC-3, sem horário de verão desde 2019) = 12:00 UTC no mesmo dia.
@@ -51,5 +52,40 @@ describe("paraUtcMt5 (ida e volta com o fuso detectado)", () => {
     const velasNaive = [0, 5, 10, 15].map((min) => ABERTURA_UTC + 3 * HORA + min * 60_000);
     const velasUtc = velasNaive.map((n) => paraUtcMt5(n, fuso));
     expect(velasUtc).toEqual([0, 5, 10, 15].map((min) => ABERTURA_UTC + min * 60_000));
+  });
+});
+
+describe("converterBarrasMt5", () => {
+  const abre = (dia: string, deslocamentoMin: number, minutos = 0) =>
+    meiaNoiteB3(dia) + 9 * HORA + deslocamentoMin * 60_000 + minutos * 60_000;
+
+  it("com fuso configurado, usa-o (IANA acompanha o horário de verão do servidor)", () => {
+    const fuso = lerFuso("Europe/Athens");
+    const verao = Date.UTC(2026, 6, 1, 15, 0); // 15:00 do servidor em julho = 12:00 UTC (UTC+3)
+    const inverno = Date.UTC(2026, 0, 14, 14, 0); // 14:00 em janeiro = 12:00 UTC (UTC+2)
+    expect(converterBarrasMt5([verao, inverno], fuso)).toEqual([
+      Date.UTC(2026, 6, 1, 12, 0),
+      Date.UTC(2026, 0, 14, 12, 0),
+    ]);
+  });
+
+  it("sem fuso, detecta dia a dia: a troca de horário de verão do servidor no meio não estraga", () => {
+    const naives = [
+      abre("2026-03-20", 120), // servidor em UTC+2 (inverno)
+      abre("2026-03-20", 120, 5),
+      abre("2026-03-31", 180), // depois da troca, UTC+3
+      abre("2026-03-31", 180, 5),
+    ];
+    expect(converterBarrasMt5(naives, null)).toEqual([
+      abre("2026-03-20", 0),
+      abre("2026-03-20", 0, 5),
+      abre("2026-03-31", 0),
+      abre("2026-03-31", 0, 5),
+    ]);
+  });
+
+  it("abertura que só pega negócio às 09:05 não desloca o dia (arredonda para meia hora)", () => {
+    const naives = [abre("2026-10-15", 180, 5), abre("2026-10-15", 180, 10)];
+    expect(converterBarrasMt5(naives, null)).toEqual([abre("2026-10-15", 0, 5), abre("2026-10-15", 0, 10)]);
   });
 });
