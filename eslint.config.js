@@ -5,7 +5,16 @@ import reactHooks from "eslint-plugin-react-hooks";
 import jsxA11y from "eslint-plugin-jsx-a11y-x";
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/coverage/**", "**/node_modules/**", "infra/n8n/**", "index.js"] },
+  {
+    ignores: [
+      "**/dist/**",
+      "**/coverage/**",
+      "**/node_modules/**",
+      "infra/n8n/**",
+      "index.js",
+      "docs/pesquisa/**/scripts/**",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strict,
   {
