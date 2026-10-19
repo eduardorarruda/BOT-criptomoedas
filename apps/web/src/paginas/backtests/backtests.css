@@ -234,3 +234,16 @@
 .upb3__barra::-moz-progress-bar {
   background: var(--marca);
 }
+
+/* ---------- atualizar o WIN pelo MetaTrader 5 ---------- */
+.atualizar-win {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-3);
+  margin: var(--espaco-2) 0;
+}
+.atualizar-win__status {
+  margin: 0;
+  font-size: 13px;
+}

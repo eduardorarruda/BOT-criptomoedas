@@ -4,7 +4,7 @@ import { CircleAlert, CircleCheck, FileUp, LoaderCircle } from "lucide-react";
 import { useId, useRef, useState, type DragEvent } from "react";
 import { mensagemDe } from "../../api/erros";
 import { chaves } from "../../ganchos/chaves";
-import { conferirZipB3, type ApiImportacaoB3 } from "./apiB3";
+import { acompanharImportacao, conferirZipB3, type ApiImportacaoB3 } from "./apiB3";
 
 type Situacao = "enviando" | "na_fila" | "lendo" | "concluida" | "falhou" | "erro";
 
@@ -24,10 +24,6 @@ const TEXTO: Record<Situacao, string> = {
   falhou: "Não entrou",
   erro: "Não entrou",
 };
-
-/** De quanto em quanto tempo a tela confere se o motor já terminou de processar o .zip. */
-const INTERVALO_CONSULTA_MS = 2000;
-const TENTATIVAS_MAXIMAS = 150; // 5 minutos
 
 function Item({ item }: { readonly item: ItemEnvio }) {
   const comErro = item.situacao === "erro" || item.situacao === "falhou";
@@ -78,23 +74,14 @@ export function EnvioB3({
     setItens((l) => l.map((i) => (i.id === id ? { ...i, ...m } : i)));
 
   const acompanhar = async (id: number, importacaoId: string) => {
-    for (let tentativa = 0; tentativa < TENTATIVAS_MAXIMAS; tentativa++) {
-      await new Promise((r) => setTimeout(r, INTERVALO_CONSULTA_MS));
-      const atual = await api.obter(importacaoId).catch(() => null);
-      if (!atual) continue;
-      if (atual.estado === "concluida") {
-        mudar(id, { situacao: "concluida", mensagem: resumoDeDias(atual.resumo) });
-        void qc.invalidateQueries({ queryKey: chaves.dadosWin });
-        aoConcluir?.();
-        return;
-      }
-      if (atual.estado === "falhou") {
-        mudar(id, { situacao: "falhou", mensagem: atual.erro });
-        return;
-      }
-      mudar(id, { situacao: atual.estado });
-    }
-    mudar(id, { situacao: "falhou", mensagem: "demorou demais para o motor responder; confira depois" });
+    const fim = await acompanharImportacao(api, importacaoId, (atual) =>
+      mudar(id, { situacao: atual.estado }),
+    );
+    if (fim.estado === "concluida") {
+      mudar(id, { situacao: "concluida", mensagem: resumoDeDias(fim.resumo) });
+      void qc.invalidateQueries({ queryKey: chaves.dadosWin });
+      aoConcluir?.();
+    } else mudar(id, { situacao: "falhou", mensagem: fim.erro });
   };
 
   const enviarUm = async (arquivo: File) => {

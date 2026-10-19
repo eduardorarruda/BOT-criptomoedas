@@ -43,7 +43,9 @@ export function SemDadosWin({
           pnpm --filter @zentrade/motor importar-candles-csv -- --simbolo WIN --intervalo 5m --arquivo
           WIN_M5.csv
         </code>
-        . Detalhes (fuso do servidor, rolagem) em <code>docs/dados-b3.md</code>.
+        . Ou, com a conta demo do MetaTrader 5 cadastrada em Contas e chaves e o perfil <code>mt5</code>{" "}
+        ligado, use o botão "Atualizar dados do WIN". Detalhes (fuso do servidor, rolagem) em{" "}
+        <code>docs/dados-b3.md</code>.
       </p>
     </EstadoVazio>
   );

@@ -8,7 +8,7 @@ import {
 } from "@zentrade/contratos/esquemas";
 import { direcaoDe } from "@zentrade/dominio";
 import { Play, SlidersHorizontal } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useFonte } from "../../api/contexto";
 import { mensagemDe } from "../../api/erros";
 import type { PedidoBacktest } from "../../api/fonte";
@@ -27,6 +27,8 @@ import {
   validacaoDoFormulario,
   type Avancado,
 } from "./CamposCripto";
+import { AtualizarWin } from "./AtualizarWin";
+import { criarApiImportacaoB3 } from "./apiB3";
 import { CamposDoWin, SemDadosWin, TEXTO_APROXIMACAO } from "./CamposWin";
 import { CAMPOS_WIN_INICIAIS, configuracaoWinDoFormulario, errosWin, janelaWin } from "./formularioWin";
 
@@ -72,6 +74,7 @@ function JanelaDoWin({ janela }: { readonly janela: NonNullable<ReturnType<typeo
 
 export function FormBacktest() {
   const fonte = useFonte();
+  const apiImportacao = useMemo(() => criarApiImportacaoB3(), []);
   const estrategias = useEstrategias().data ?? [];
   const robos = useRobos().data ?? [];
   const dadosWin = useDadosWin();
@@ -203,6 +206,9 @@ export function FormBacktest() {
         )
       ) : null}
       {janela ? <JanelaDoWin janela={janela} /> : null}
+      {ehWin && !fonte.demo ? (
+        <AtualizarWin api={apiImportacao} aoConcluir={() => void dadosWin.refetch()} />
+      ) : null}
       <details className="bt-avancado">
         <summary>
           <SlidersHorizontal size={14} aria-hidden="true" />{" "}

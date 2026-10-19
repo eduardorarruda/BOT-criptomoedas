@@ -24,6 +24,7 @@ function apiFalsa(sequencia: readonly ImportacaoB3DTO[]): ApiImportacaoB3 {
   let i = -1;
   return {
     listar: vi.fn(async () => [naFila]),
+    atualizarMt5: vi.fn(async () => naFila),
     obter: vi.fn(async () => {
       i = Math.min(i + 1, sequencia.length - 1);
       return sequencia[i]!;
@@ -41,7 +42,11 @@ describe("EnvioB3", () => {
     const concluida: ImportacaoB3DTO = {
       ...naFila,
       estado: "concluida",
-      resumo: { dias: [{ data: "2026-10-14", contrato: "WINZ26", negocios: 10, negociosUsados: 9, gravados: { "5m": 4 } }] },
+      resumo: {
+        dias: [
+          { data: "2026-10-14", contrato: "WINZ26", negocios: 10, negociosUsados: 9, gravados: { "5m": 4 } },
+        ],
+      },
       concluidoEm: Date.UTC(2026, 9, 14, 1),
     };
     const api = apiFalsa([naFila, concluida]);
@@ -79,6 +84,8 @@ describe("EnvioB3", () => {
     renderizar(<EnvioB3 api={api} />, fonte);
     const zona = (await screen.findByText(/Arraste os \.zip da B3/)).closest(".upb3__zona")!;
     fireEvent.drop(zona, { dataTransfer: { files: [new File(["PK\x03\x04"], "d.zip")] } });
-    expect(await screen.findByText("o .zip não tem um .txt dentro", {}, { timeout: 15_000 })).toBeInTheDocument();
+    expect(
+      await screen.findByText("o .zip não tem um .txt dentro", {}, { timeout: 15_000 }),
+    ).toBeInTheDocument();
   });
 });

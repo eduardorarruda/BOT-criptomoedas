@@ -12,6 +12,8 @@ export interface ApiImportacaoB3 {
   listar(): Promise<ImportacaoB3DTO[]>;
   /** Para acompanhar depois do envio: o motor processa em segundo plano (fila). */
   obter(id: string): Promise<ImportacaoB3DTO>;
+  /** Pede ao motor para buscar o que falta do WIN no MetaTrader 5 (acompanhe com `obter`). */
+  atualizarMt5(): Promise<ImportacaoB3DTO>;
   /** Envia o .zip cru; `aoProgresso` recebe de 0 a 1 enquanto os bytes sobem. */
   enviar(arquivo: File, aoProgresso: (fracao: number) => void): Promise<ImportacaoB3DTO>;
 }
@@ -73,6 +75,7 @@ export function criarApiImportacaoB3(
   const { pedir } = cliente;
   return {
     listar: () => pedir("GET", "/dados-b3/importacoes", z.array(ImportacaoB3Esquema)),
+    atualizarMt5: () => pedir("POST", "/dados-mt5/atualizar", ImportacaoB3Esquema),
     obter: (id) => pedir("GET", `/dados-b3/importacoes/${encodeURIComponent(id)}`, ImportacaoB3Esquema),
     enviar: (arquivo, aoProgresso) => {
       const consulta = new URLSearchParams({ nome: arquivo.name });
@@ -85,4 +88,28 @@ export function criarApiImportacaoB3(
       );
     },
   };
+}
+
+const INTERVALO_CONSULTA_MS = 2000;
+const TENTATIVAS_MAXIMAS = 150; // 5 minutos
+
+/**
+ * Acompanha uma importação (upload da B3 ou atualização pelo MT5) até o motor terminar:
+ * `aoMudar` recebe cada estado intermediário; devolve o estado final (concluída ou falhou),
+ * ou uma falha sintética se o motor não responder em 5 minutos.
+ */
+export async function acompanharImportacao(
+  api: Pick<ApiImportacaoB3, "obter">,
+  id: string,
+  aoMudar: (atual: ImportacaoB3DTO) => void,
+  intervaloMs = INTERVALO_CONSULTA_MS,
+): Promise<Pick<ImportacaoB3DTO, "estado" | "resumo" | "erro">> {
+  for (let tentativa = 0; tentativa < TENTATIVAS_MAXIMAS; tentativa++) {
+    await new Promise((r) => setTimeout(r, intervaloMs));
+    const atual = await api.obter(id).catch(() => null);
+    if (!atual) continue;
+    if (atual.estado === "concluida" || atual.estado === "falhou") return atual;
+    aoMudar(atual);
+  }
+  return { estado: "falhou", resumo: null, erro: "demorou demais para o motor responder; confira depois" };
 }
