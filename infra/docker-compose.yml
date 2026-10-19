@@ -148,6 +148,8 @@ services:
       # Pasta do volume "importacoes-b3" (abaixo): a API só grava o .zip aqui; quem lê e
       # descompacta (até 560 MB) é o motor-backtests, pelo mesmo volume.
       ZENTRADE_IMPORTACOES_B3_DIR: /dados/importacoes-b3
+      # Com o perfil mt5 (abaixo), use http://coletor-mt5:8090; vazio = botão explica o que falta.
+      COLETOR_MT5_URL: ${COLETOR_MT5_URL:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -191,6 +193,11 @@ services:
       ZENTRADE_AMBIENTE: ${ZENTRADE_AMBIENTE:-producao}
       # Só o comando importar-candles-b3 usa (Ibovespa intradiário; veja docs/dados-b3.md).
       BRAPI_TOKEN: ${BRAPI_TOKEN:-}
+      # Coletor do MetaTrader 5 (perfil mt5) e a atualização diária do WIN depois do fechamento.
+      COLETOR_MT5_URL: ${COLETOR_MT5_URL:-}
+      MOTOR_MT5_AUTO: ${MOTOR_MT5_AUTO:-true}
+      MOTOR_MT5_HORA: ${MOTOR_MT5_HORA:-19}
+      MOTOR_MT5_HISTORICO_DIAS: ${MOTOR_MT5_HISTORICO_DIAS:-730}
     depends_on:
       migrar: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
@@ -272,6 +279,39 @@ services:
     depends_on:
       api: { condition: service_healthy }
 
+  # --- Perfil "mt5": dados do mini índice pelo MetaTrader 5 (opcional e pesado) ---
+  # Sem este perfil nada disto é baixado nem construído. Nenhum dos dois publica porta no
+  # host: só a rede do compose alcança o coletor (e o RPyC do terminal, que executa código,
+  # nunca sai dele). Só leitura de dados; veja docs/adr/009-mt5-wine-docker.md.
+
+  # Terminal MT5 sob Wine, com servidor RPyC na 8001 (projeto gmag11/MetaTrader5-Docker-Image,
+  # MIT). Sem login aqui: quem abre a sessão é o coletor, com a conta cadastrada na tela.
+  mt5-terminal:
+    profiles: ["mt5"]
+    image: ${MT5_TERMINAL_IMAGEM:-gmag11/metatrader5_vnc:latest}
+    restart: unless-stopped
+    environment:
+      # Só para depuração visual (VNC web); a porta NÃO é publicada.
+      CUSTOM_USER: ${MT5_VNC_USUARIO:-zentrade}
+      PASSWORD: ${MT5_VNC_SENHA:-}
+    volumes:
+      - mt5-terminal:/config
+    shm_size: "1gb"
+
+  coletor-mt5:
+    profiles: ["mt5"]
+    build: { context: ../infra/coletor-mt5 }
+    image: ${ZENTRADE_IMAGEM:-zentrade}-coletor-mt5:local
+    restart: unless-stopped
+    environment:
+      MT5_RPYC_HOST: mt5-terminal
+      MT5_RPYC_PORTA: "8001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      - mt5-terminal
+
 volumes:
   banco:
   redis:
@@ -280,3 +320,4 @@ volumes:
   # .zip da B3 entre o upload (API) e o processamento (motor-backtests); a API apaga o
   # arquivo ao terminar, então o volume não cresce sem limite.
   importacoes-b3:
+  mt5-terminal:
