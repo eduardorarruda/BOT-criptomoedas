@@ -64,6 +64,8 @@ const EsquemaApi = z.object({
     .string()
     .min(8, "BRAPI_TOKEN parece curto demais; copie o token do painel da brapi.dev")
     .optional(),
+  // Coletor do MetaTrader 5 (perfil mt5 do compose): só a rede interna alcança. Sem ele, testar e atualizar explicam o que falta.
+  COLETOR_MT5_URL: url("COLETOR_MT5_URL", "http://coletor-mt5:8090").optional(),
   APROVACAO_VALIDADE_MIN: z.coerce.number().int().min(1).max(1440).default(15),
   // Pasta compartilhada com o motor (motor-backtests): a API só grava o .zip aqui e
   // enfileira; quem processa (CPU e memória do arquivo de 560 MB descompactado) é o

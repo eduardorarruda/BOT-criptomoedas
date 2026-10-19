@@ -74,7 +74,11 @@ describe("upload dos .zip da B3 (a API só grava e enfileira; quem processa é o
       payload: { nome: "x" },
     });
     expect(json.statusCode).toBe(415);
-    const grande = await enviar(ana, "a.zip", Buffer.concat([ASSINATURA_ZIP, Buffer.alloc(LIMITE_ZIP_B3_BYTES, 1)]));
+    const grande = await enviar(
+      ana,
+      "a.zip",
+      Buffer.concat([ASSINATURA_ZIP, Buffer.alloc(LIMITE_ZIP_B3_BYTES, 1)]),
+    );
     expect(grande.statusCode).toBe(413);
   });
 
