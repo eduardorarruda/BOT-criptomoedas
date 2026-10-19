@@ -24,10 +24,7 @@ export type {
   TentativaBacktest,
 } from "./repositorios/backtests.js";
 export type { Documento, DocumentoParaGravar, Fonte, TrechoParaGravar } from "./repositorios/conhecimento.js";
-export type {
-  CredenciaisMt5Abertas,
-  RepositorioCredenciaisMt5,
-} from "./repositorios/credenciais-mt5.js";
+export type { CredenciaisMt5Abertas, RepositorioCredenciaisMt5 } from "./repositorios/credenciais-mt5.js";
 export type {
   ImportacaoB3,
   ImportacaoB3ParaProcessar,

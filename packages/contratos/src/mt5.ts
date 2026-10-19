@@ -10,7 +10,10 @@ const NOME_SIMBOLO = /^[A-Za-z0-9$@._-]{1,20}$/;
 
 export const NovasCredenciaisMt5Esquema = z.object({
   servidor: z.string().trim().min(3, "informe o servidor da corretora").max(200),
-  login: z.string().trim().regex(/^\d{3,20}$/, "o login do MT5 é um número"),
+  login: z
+    .string()
+    .trim()
+    .regex(/^\d{3,20}$/, "o login do MT5 é um número"),
   senha: z.string().min(1, "informe a senha da conta demo").max(200),
   /** Nome do contínuo nesta corretora (WIN$N, WIN$, WIN@…); vazio = detectar. */
   simboloContinuo: z.string().trim().regex(NOME_SIMBOLO, "nome de símbolo inválido").optional(),

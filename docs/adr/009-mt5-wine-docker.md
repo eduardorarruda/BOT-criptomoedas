@@ -10,11 +10,11 @@ A B3 proíbe coleta automatizada das próprias páginas (ver aviso no topo de `d
 
 ## Alternativas avaliadas
 
-| Opção | Como funciona | Problema |
-| --- | --- | --- |
-| VM Windows dedicada | MT5 nativo + script Python local | Pesada, fora do `docker compose`, mais uma coisa para o usuário manter rodando |
-| Wine + MT5 + API Python, do zero | Construir a imagem na mão | Reinventa um problema já resolvido; frágil (o setup do Wine para o MT5 tem detalhes finos: fontes, `.NET`, DPI) |
-| **Wine + MT5 + `mt5linux`/RPyC, projeto existente** | Container com Wine roda o terminal MT5 (headless, por VNC se precisar depurar) e expõe a API Python por RPyC (porta interna 8001); o `mt5linux` do lado "Linux" chama essa API como se fosse o pacote oficial | É o caminho adotado |
+| Opção                                               | Como funciona                                                                                                                                                                                                 | Problema                                                                                                        |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| VM Windows dedicada                                 | MT5 nativo + script Python local                                                                                                                                                                              | Pesada, fora do `docker compose`, mais uma coisa para o usuário manter rodando                                  |
+| Wine + MT5 + API Python, do zero                    | Construir a imagem na mão                                                                                                                                                                                     | Reinventa um problema já resolvido; frágil (o setup do Wine para o MT5 tem detalhes finos: fontes, `.NET`, DPI) |
+| **Wine + MT5 + `mt5linux`/RPyC, projeto existente** | Container com Wine roda o terminal MT5 (headless, por VNC se precisar depurar) e expõe a API Python por RPyC (porta interna 8001); o `mt5linux` do lado "Linux" chama essa API como se fosse o pacote oficial | É o caminho adotado                                                                                             |
 
 Pesquisa (outubro de 2026): o projeto [`gmag11/MetaTrader5-Docker-Image`](https://github.com/gmag11/MetaTrader5-Docker-Image) (também publicado como `gmag11/MetaTrader5-Docker`) empacota Wine + MT5 + um servidor RPyC na porta 8001, com VNC web para depuração visual quando necessário; licença **MIT**. O pacote [`mt5linux`](https://github.com/lucas-campagna/mt5linux) do lado de quem chama (aqui, dentro do próprio container, por um pequeno serviço Python) fala com esse RPyC e replica a assinatura de `MetaTrader5` (`initialize`, `login`, `symbol_select`, `copy_rates_range`, `symbols_get`…), então o código de coleta é o mesmo da documentação oficial do PyPI.
 

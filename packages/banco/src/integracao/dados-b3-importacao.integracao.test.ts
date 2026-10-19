@@ -25,7 +25,11 @@ describe("repositório de importações da B3 (upload de .zip)", () => {
     await c.banco.importacoesB3.marcarLendo(criada.id);
     expect((await c.banco.importacoesB3.obter(c.ana.id, criada.id))!.estado).toBe("lendo");
 
-    const resumo = { dias: [{ data: "2026-10-01", contrato: "WINZ26", negocios: 100, negociosUsados: 90, gravados: { "5m": 10 } }] };
+    const resumo = {
+      dias: [
+        { data: "2026-10-01", contrato: "WINZ26", negocios: 100, negociosUsados: 90, gravados: { "5m": 10 } },
+      ],
+    };
     await c.banco.importacoesB3.concluir(criada.id, resumo);
     const concluida = await c.banco.importacoesB3.obter(c.ana.id, criada.id);
     expect(concluida).toMatchObject({ estado: "concluida", erro: null, resumo });
@@ -43,8 +47,6 @@ describe("repositório de importações da B3 (upload de .zip)", () => {
   });
 
   it("sem a importação, obterParaProcessar devolve null", async () => {
-    expect(
-      await c.banco.importacoesB3.obterParaProcessar("00000000-0000-0000-0000-000000000000"),
-    ).toBeNull();
+    expect(await c.banco.importacoesB3.obterParaProcessar("00000000-0000-0000-0000-000000000000")).toBeNull();
   });
 });

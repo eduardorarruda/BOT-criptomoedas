@@ -1,8 +1,4 @@
-import {
-  ESTADO_MT5_VAZIO,
-  type EstadoMt5,
-  type NovasCredenciaisMt5,
-} from "@zentrade/contratos";
+import { ESTADO_MT5_VAZIO, type EstadoMt5, type NovasCredenciaisMt5 } from "@zentrade/contratos";
 import { eq, sql } from "drizzle-orm";
 import { cifrar, decifrar } from "../cifra.js";
 import { comoUsuario, type Db, type Tx } from "../cliente.js";
