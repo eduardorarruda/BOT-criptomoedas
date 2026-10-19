@@ -6,6 +6,19 @@ import { resolve } from "node:path";
 import type { Logger } from "pino";
 import { consumirBacktests, type ConsumidorBacktests } from "./backtest/fila.js";
 import { cacheDeCandlesDoBacktest, criarDadosHistoricos, redeDosDadosAoVivo } from "./dados-backtest.js";
+import {
+  criarAgendadorMt5,
+  NOME_ATUALIZACAO_MT5,
+  processarAtualizacaoMt5,
+  type DependenciasAtualizacaoDiaria,
+} from "./dados-b3/atualizacao-mt5.js";
+import {
+  consumirAtualizacoesMt5,
+  consumirImportacoesB3,
+  type ConsumidorImportacoesB3,
+} from "./dados-b3/fila.js";
+import { criarFonteBarrasMt5Http } from "./dados-b3/fonte-mt5.js";
+import { processarImportacaoB3 } from "./dados-b3/processar-importacao.js";
 import { papeisDoMotor } from "./funcao.js";
 import { processarBacktest } from "./backtest/servico.js";
 import { montarMotor } from "./composicao.js";
@@ -62,6 +75,77 @@ function ligarBacktests(config: Config, infra: Infra, registro: Logger): Consumi
   return consumirBacktests(redis, (id) => processarBacktest(deps, opcoes, id), registro);
 }
 
+/** A mesma fila BullMQ e processo dos backtests: upload da B3 também é CPU por minutos. */
+function ligarImportacoesB3(infra: Infra, registro: Logger): ConsumidorImportacoesB3 | undefined {
+  const { banco, redis } = infra;
+  if (!banco || !redis) {
+    registro.warn({}, "sem DATABASE_URL e REDIS_URL, a fila de importações da B3 não é consumida");
+    return undefined;
+  }
+  return consumirImportacoesB3(
+    redis,
+    (id) =>
+      processarImportacaoB3({ banco: banco.mercado, repositorio: banco.importacoesB3, agora: Date.now }, id),
+    registro,
+  );
+}
+
+/**
+ * "Atualizar dados do WIN" pelo MetaTrader 5: a fila do botão e, depois do fechamento, a
+ * atualização diária (desligável). Só no processo motor-backtests, e só com a chave mestra
+ * (sem ela não há como decifrar a conta).
+ */
+function ligarAtualizacaoMt5(
+  config: Config,
+  infra: Infra,
+  registro: Logger,
+): { fechar(): Promise<void> } | undefined {
+  const { banco, redis } = infra;
+  const contas = banco?.credenciaisMt5;
+  if (!banco || !redis || !contas) {
+    registro.warn(
+      {},
+      "sem banco, Redis ou ZENTRADE_CHAVE_MESTRA, a atualização do WIN pelo MT5 fica desligada",
+    );
+    return undefined;
+  }
+  const deps: DependenciasAtualizacaoDiaria = {
+    banco: banco.mercado,
+    repositorio: banco.importacoesB3,
+    credenciais: (usuarioId) => contas.credenciais(usuarioId),
+    ultimaVela: async () =>
+      (await banco.mercado.cobertura(["WIN"])).find((c) => c.intervalo === "5m")?.ultimo ?? null,
+    criarFonte: (conta) => criarFonteBarrasMt5Http({ url: config.COLETOR_MT5_URL ?? "", conta }),
+    agora: Date.now,
+    historicoDias: config.MOTOR_MT5_HISTORICO_DIAS,
+    coletorConfigurado: Boolean(config.COLETOR_MT5_URL),
+  };
+  const consumidor = consumirAtualizacoesMt5(redis, (id) => processarAtualizacaoMt5(deps, id), registro);
+  const agendador = criarAgendadorMt5({
+    agora: Date.now,
+    hora: config.MOTOR_MT5_HORA,
+    executar: async () => {
+      const [dono] = await contas.donos();
+      if (!dono) return;
+      const linha = await banco.importacoesB3.criar(dono, `${NOME_ATUALIZACAO_MT5} · automático`, "");
+      await processarAtualizacaoMt5(deps, linha.id);
+    },
+  });
+  const relogio = config.MOTOR_MT5_AUTO
+    ? setInterval(() => {
+        agendador
+          .tick()
+          .catch((erro: unknown) => registro.error({ erro }, "atualização diária do WIN pelo MT5 falhou"));
+      }, 60_000)
+    : undefined;
+  return {
+    fechar: async () => {
+      if (relogio) clearInterval(relogio);
+      await consumidor.fechar();
+    },
+  };
+}
+
 /** O avaliador do placar do Claude: só no processo dos robôs, com banco (lê candles e decisões dele). */
 function ligarPlacar(config: Config, infra: Infra, registro: Logger): AvaliadorLigado | undefined {
   if (!config.MOTOR_PLACAR || !infra.banco) return undefined;
@@ -109,6 +193,8 @@ async function principal(): Promise<void> {
   const motor = papeis.robos ? new Motor(...motorDe(montarMotor(config, fontes, registro))) : undefined;
   const { ligados, falharam } = motor ? await motor.iniciar() : { ligados: 0, falharam: 0 };
   const backtests = papeis.backtests ? ligarBacktests(config, infra, registro) : undefined;
+  const importacoesB3 = papeis.backtests ? ligarImportacoesB3(infra, registro) : undefined;
+  const atualizacaoMt5 = papeis.backtests ? ligarAtualizacaoMt5(config, infra, registro) : undefined;
   const placar = papeis.robos ? ligarPlacar(config, infra, registro) : undefined;
   registro.info(
     {
@@ -124,6 +210,8 @@ async function principal(): Promise<void> {
   );
   aoDesligar(registro, async () => {
     await backtests?.fechar();
+    await importacoesB3?.fechar();
+    await atualizacaoMt5?.fechar();
     await placar?.parar();
     await motor?.parar();
     await infra.redis?.quit();

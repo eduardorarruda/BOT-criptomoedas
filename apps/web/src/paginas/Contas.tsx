@@ -16,6 +16,7 @@ import { REDE } from "../lib/rotulos";
 import { useStatusBinance } from "./carteira/ganchos";
 import { formatarData } from "../lib/tempo";
 import { SeuClaude } from "./assistente/SeuClaude";
+import { ContaMt5 } from "./contas/ContaMt5";
 import { DoisFatores } from "./contas/DoisFatores";
 
 function FormConta() {
@@ -165,6 +166,7 @@ export function Contas() {
       </Cabecalho>
       <DoisFatores />
       <SeuClaude />
+      <ContaMt5 />
       <div className="grade-dupla">
         <Painel titulo="Chaves cadastradas" id="titulo-chaves" icone={KeyRound}>
           {contas.isPending ? <Esqueleto forma="lista" linhas={2} rotulo="Carregando chaves" /> : null}

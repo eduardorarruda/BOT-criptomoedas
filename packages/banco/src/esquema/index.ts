@@ -3,6 +3,7 @@ export * from "./carteira.js";
 export * from "./assistente.js";
 export * from "./conhecimento.js";
 export * from "./mercado.js";
+export * from "./mt5.js";
 export * from "./operacao.js";
 export * from "./renda-fixa.js";
 export * from "./imobiliario.js";

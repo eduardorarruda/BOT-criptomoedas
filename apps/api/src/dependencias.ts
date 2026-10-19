@@ -10,12 +10,17 @@ import type { FabricaConta } from "./integracoes/binance-conta.js";
 import type { HubEventos } from "./integracoes/eventos.js";
 import type { ClienteCotacoesB3 } from "./integracoes/cotacoes-b3.js";
 import type { CentralAlertas } from "./integracoes/alertas.js";
+import type { TestarMt5 } from "./integracoes/coletor-mt5.js";
 import type { ClienteN8n } from "./integracoes/n8n.js";
 import type { Reconciliador } from "./integracoes/reconciliacao.js";
 import type { ServicosRendaFixa } from "./rotas/renda-fixa-servico.js";
 
 export interface FilaBacktests {
   adicionar(backtestId: string): Promise<void>;
+}
+
+export interface FilaImportacoesB3 {
+  adicionar(importacaoId: string): Promise<void>;
 }
 
 /** Checagens de saúde que dependem de Redis e de outros serviços. */
@@ -32,6 +37,13 @@ export interface Dependencias {
   readonly config: Config;
   readonly banco: Banco;
   readonly fila: FilaBacktests;
+  readonly filaImportacoesB3: FilaImportacoesB3;
+  /** Pasta compartilhada com o motor onde o .zip da B3 fica até ser processado. */
+  readonly diretorioImportacoesB3: string;
+  /** Fila do botão "Atualizar dados do WIN" (MetaTrader 5). Ausente = a rota responde 503. */
+  readonly filaAtualizacoesMt5?: FilaImportacoesB3;
+  /** Testa a conta no coletor do MT5 (perfil mt5). Ausente = sem coletor configurado. */
+  readonly testarMt5?: TestarMt5;
   readonly n8n: ClienteN8n;
   readonly conhecimento: ServicoConhecimento;
   readonly automacoes: RegistroAutomacoes;

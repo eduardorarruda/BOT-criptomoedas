@@ -11,6 +11,8 @@ export * from "./carteira.js";
 export * from "./claude-token.js";
 export * from "./comum.js";
 export * from "./dados.js";
+export * from "./dados-b3-importacao.js";
+export * from "./mt5.js";
 export * from "./eventos.js";
 export * from "./pedido-analise.js";
 export * from "./fuso.js";

@@ -68,6 +68,14 @@ export const EsquemaConfig = z
     MOTOR_PLACAR_DIAS: z.coerce.number().int().min(1).max(365).default(30),
     /** Decisões por rodada. */
     MOTOR_PLACAR_LOTE: z.coerce.number().int().min(1).max(500).default(50),
+    /** Coletor do MetaTrader 5 (perfil mt5 do compose); sem ele, o botão explica o que falta. */
+    COLETOR_MT5_URL: z.url().optional(),
+    /** Atualização diária do WIN pelo MT5, depois do fechamento (desligue com false). */
+    MOTOR_MT5_AUTO: Booleano.default(true),
+    /** Hora de Brasília a partir da qual roda (o pregão fecha às 18:25). */
+    MOTOR_MT5_HORA: z.coerce.number().int().min(18).max(23).default(19),
+    /** Quanto histórico pedir na primeira vez (a corretora entrega o que tiver). */
+    MOTOR_MT5_HISTORICO_DIAS: z.coerce.number().int().min(1).max(1095).default(730),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
     /** O fuso da instância: onde começa o dia da perda diária (padrão: America/Sao_Paulo). */
     ZENTRADE_FUSO: FusoInstanciaEsquema,

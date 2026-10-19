@@ -1,4 +1,7 @@
 import { randomBytes } from "node:crypto";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { criarBanco, type Banco } from "@zentrade/banco";
 import { criarBancoDescartavel } from "@zentrade/banco/teste";
 import type { Alerta } from "../integracoes/n8n.js";
@@ -8,7 +11,7 @@ import { generate } from "otplib";
 import { construirApp } from "../app.js";
 import { criarUsuario } from "../comandos/usuario.js";
 import { lerConfig } from "../config.js";
-import type { Dependencias, FilaBacktests } from "../dependencias.js";
+import type { Dependencias, FilaBacktests, FilaImportacoesB3 } from "../dependencias.js";
 import type { ServicoCarteira } from "../integracoes/binance-carteira.js";
 import type { Embeddings } from "@zentrade/conhecimento";
 import { criarCentralAlertas } from "../integracoes/alertas.js";
@@ -19,6 +22,7 @@ import { armazemMemoria, criarRegistroAutomacoes } from "../integracoes/automaco
 import { criarServicoConhecimento, repositorioRag } from "../integracoes/conhecimento.js";
 import { criarHubEventos } from "../integracoes/eventos.js";
 import { criarFilaBacktests } from "../integracoes/fila.js";
+import { criarFilaImportacoesB3 } from "../integracoes/fila-importacoes-b3.js";
 import { assinarEventos, conectarRedis, verificadorSaude } from "../integracoes/redis.js";
 import { n8nComRegistro } from "../integracoes/n8n.js";
 import type { ServicosRendaFixa } from "../rotas/renda-fixa-servico.js";
@@ -65,6 +69,8 @@ export interface OpcoesApi {
   /** Ausente: RAG desligado (sem chave). `null`: EMBEDDINGS_PROVEDOR=nenhum (só palavras). */
   readonly embeddings?: Embeddings | null;
   readonly fila?: FilaBacktests;
+  readonly filaImportacoesB3?: FilaImportacoesB3;
+  readonly diretorioImportacoesB3?: string;
   /** Variáveis de ambiente a mais (ex.: N8N_USUARIO_ID). */
   readonly ambiente?: Readonly<Record<string, string>>;
   /** Carteira com uma Binance simulada (o banco é o do teste). */
@@ -99,6 +105,8 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
   const redis = conectarRedis(redisUrl, "teste-api");
   const assinante = conectarRedis(redisUrl, "teste-api-eventos");
   const filaReal = criarFilaBacktests(redis);
+  const filaImportacoesB3Real = criarFilaImportacoesB3(redis);
+  const diretorioImportacoesB3 = o.diretorioImportacoesB3 ?? (await mkdtemp(join(tmpdir(), "zt-teste-b3-")));
   const n8n = { propostas: [] as PropostaCriada[], alertas: [] as Alerta[] };
   const relogio = { t: Date.now() };
   const agora = () => relogio.t;
@@ -144,6 +152,8 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     config,
     banco,
     fila: o.fila ?? filaReal,
+    filaImportacoesB3: o.filaImportacoesB3 ?? filaImportacoesB3Real,
+    diretorioImportacoesB3,
     n8n: clienteN8n,
     conhecimento,
     automacoes,
@@ -194,6 +204,8 @@ export async function montarApi(o: OpcoesApi = {}): Promise<Api> {
     async encerrar() {
       await app.close();
       await filaReal.fechar();
+      await filaImportacoesB3Real.fechar();
+      await rm(diretorioImportacoesB3, { recursive: true, force: true });
       await Promise.all([redis.quit(), assinante.quit()]);
       await banco.fechar();
       await descartavel.descartar();

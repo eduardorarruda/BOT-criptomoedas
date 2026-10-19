@@ -14,6 +14,8 @@ import { criarServicoArquivos } from "./integracoes/conhecimento-arquivos.js";
 import { criarHubEventos } from "./integracoes/eventos.js";
 import { criarClienteCotacoesB3 } from "./integracoes/cotacoes-b3.js";
 import { criarFilaBacktests } from "./integracoes/fila.js";
+import { criarTestadorMt5 } from "./integracoes/coletor-mt5.js";
+import { criarFilaAtualizacoesMt5, criarFilaImportacoesB3 } from "./integracoes/fila-importacoes-b3.js";
 import { criarClienteN8n, n8nComRegistro } from "./integracoes/n8n.js";
 import { criarAtualizadorIndicadores } from "./integracoes/bcb-atualizador.js";
 import { criarClienteBcb } from "./integracoes/bcb.js";
@@ -76,6 +78,8 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
     fuso: config.ZENTRADE_FUSO,
   });
   const fila = criarFilaBacktests(redis);
+  const filaImportacoesB3 = criarFilaImportacoesB3(redis);
+  const filaAtualizacoesMt5 = criarFilaAtualizacoesMt5(redis);
   const automacoes = criarRegistroAutomacoes({ armazem: armazemRedis(redis), agora, log });
   const n8n = n8nComRegistro(
     criarClienteN8n({ url: config.N8N_URL, segredo: config.N8N_WEBHOOK_SEGREDO }),
@@ -106,6 +110,10 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
     config,
     banco,
     fila,
+    filaImportacoesB3,
+    diretorioImportacoesB3: config.ZENTRADE_IMPORTACOES_B3_DIR,
+    filaAtualizacoesMt5,
+    ...(config.COLETOR_MT5_URL ? { testarMt5: criarTestadorMt5(config.COLETOR_MT5_URL) } : {}),
     n8n,
     ...conhecimentoDe(banco, log, agora),
     assistente: assistenteDe(log),
@@ -118,7 +126,7 @@ async function montarDependencias(config: Config, log: FastifyBaseLogger, redis:
     cotacoesB3: criarClienteCotacoesB3({ token: config.BRAPI_TOKEN }),
     alertas,
   };
-  return { deps, fila };
+  return { deps, fila, filaImportacoesB3, filaAtualizacoesMt5 };
 }
 
 async function iniciar(config: Config): Promise<void> {
@@ -127,7 +135,12 @@ async function iniciar(config: Config): Promise<void> {
   const assinante = conectarRedis(config.REDIS_URL, "zentrade-api-eventos");
   for (const r of [redis, assinante])
     r.on("error", (erro: Error) => log.error({ err: erro }, "erro na conexão com o Redis"));
-  const { deps, fila } = await montarDependencias(config, log, redis, assinante);
+  const { deps, fila, filaImportacoesB3, filaAtualizacoesMt5 } = await montarDependencias(
+    config,
+    log,
+    redis,
+    assinante,
+  );
   const app = await construirApp(deps, log);
   if (!config.COOKIE_SEGURO)
     log.warn("COOKIE_SEGURO=false: cookies sem Secure. Use só em desenvolvimento local.");
@@ -148,6 +161,8 @@ async function iniciar(config: Config): Promise<void> {
     pararPluggy?.();
     await app.close();
     await fila.fechar();
+    await filaImportacoesB3.fechar();
+    await filaAtualizacoesMt5.fechar();
     await Promise.allSettled([assinante.quit(), redis.quit(), deps.banco.fechar()]);
   };
   process.once("SIGTERM", (s) => void encerrar(s));

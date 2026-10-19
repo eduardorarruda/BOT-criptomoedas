@@ -1,29 +1,50 @@
 import { FileUp } from "lucide-react";
 import { CampoSelecao, CampoTexto } from "../../componentes/Campo";
 import { EstadoVazio } from "../../componentes/Estados";
+import { criarApiImportacaoB3 } from "./apiB3";
 import { GrupoValidacao, type Avancado } from "./CamposCripto";
+import { EnvioB3 } from "./EnvioB3";
 import type { CamposWin, ErrosWin } from "./formularioWin";
 
 /** O texto da aproximação pelo Ibovespa: no formulário e no resultado, igual. */
 export const TEXTO_APROXIMACAO =
   "Aproximação: o índice à vista não tem a base do futuro nem o horário completo do WIN; valide com dados reais do WIN antes de operar.";
 
-/** Sem candles do WIN de verdade: como exportar do MetaTrader 5 e importar. */
-export function SemDadosWin() {
+/**
+ * Sem candles do WIN de verdade: suba o .zip "Negócio a negócio" baixado à mão no BDI
+ * (o sistema nunca baixa nada da B3: ela proíbe coleta automatizada das próprias
+ * páginas). O motor lê, monta as velas de 5m, 15m e 1h e grava — só falta soltar o
+ * arquivo aqui. Em modo de demonstração, o envio precisa da API de verdade.
+ */
+export function SemDadosWin({
+  demo = false,
+  aoImportar,
+}: {
+  readonly demo?: boolean;
+  readonly aoImportar?: () => void;
+}) {
   return (
     <EstadoVazio compacto icone={FileUp} titulo="Ainda não há candles do WIN importados">
       <p>
-        O backtest do mini índice lê os candles do banco; nenhum dado da B3 é baixado sozinho. O caminho mais
-        fiel é o histórico do próprio WIN exportado do MetaTrader 5 da sua corretora: Exibir → Símbolos → aba
-        Barras → escolha o WIN (o contínuo, como <code>WIN$</code>) e o período M5 → Pedir → Exportar barras.
+        O backtest do mini índice lê os candles do banco; nenhum dado da B3 é baixado sozinho (a B3 proíbe
+        coleta automatizada das próprias páginas). Baixe o arquivo "Negócio a negócio" no BDI da B3
+        (Derivativos → Derivativos de bolsa → tabela "Negócio a negócio" → "Histórico dos últimos 20 dias
+        úteis") e solte o .zip abaixo: o motor lê, monta as velas e grava.
       </p>
+      {demo ? (
+        <p className="apagado">O envio do .zip funciona com a API rodando (fora do modo de demonstração).</p>
+      ) : (
+        <EnvioB3 api={criarApiImportacaoB3()} {...(aoImportar ? { aoConcluir: aoImportar } : {})} />
+      )}
       <p>
-        Depois, importe o arquivo com{" "}
+        Alternativa: o histórico exportado do MetaTrader 5 da corretora (Exibir → Símbolos → aba Barras → WIN
+        contínuo, como <code>WIN$</code> → M5 → Pedir → Exportar barras), importado com{" "}
         <code>
           pnpm --filter @zentrade/motor importar-candles-csv -- --simbolo WIN --intervalo 5m --arquivo
           WIN_M5.csv
         </code>
-        . O 15m e o 1h são montados a partir dele. O passo a passo, com o fuso do servidor, está em{" "}
+        . Ou, com a conta demo do MetaTrader 5 cadastrada em Contas e chaves e o perfil <code>mt5</code>{" "}
+        ligado, use o botão "Atualizar dados do WIN". Detalhes (fuso do servidor, rolagem) em{" "}
         <code>docs/dados-b3.md</code>.
       </p>
     </EstadoVazio>

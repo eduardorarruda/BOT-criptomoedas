@@ -141,3 +141,109 @@
   margin-top: 2px;
   color: var(--atencao);
 }
+
+/* ---------- upload dos .zip da B3 (dentro de "ainda não há candles do WIN") ---------- */
+.upb3 {
+  display: grid;
+  gap: var(--espaco-4);
+  margin: var(--espaco-3) 0;
+}
+.upb3__zona {
+  display: grid;
+  justify-items: center;
+  gap: var(--espaco-2);
+  text-align: center;
+  padding: var(--espaco-6) var(--espaco-4);
+  border: 1.5px dashed var(--linha-forte);
+  border-radius: var(--raio-g);
+  background: var(--superficie-2);
+  color: var(--apagado);
+  transition:
+    border-color var(--dur-curta) var(--curva),
+    background var(--dur-curta) var(--curva);
+}
+.upb3__zona p {
+  margin: 0;
+}
+.upb3__zona--sobre {
+  border-color: var(--marca);
+  background: var(--marca-tenue);
+  color: var(--texto);
+}
+.upb3__escolher {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--marca);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.upb3__dica {
+  font-size: 12.5px;
+}
+.upb3__lista {
+  display: grid;
+  gap: var(--espaco-2);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.upb3__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px var(--espaco-2);
+  font-size: 13px;
+}
+.upb3__nome {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.upb3__situacao {
+  color: var(--apagado);
+}
+.upb3__item--concluida svg {
+  color: var(--ganho);
+}
+.upb3__item--erro {
+  color: var(--perda);
+}
+.upb3__item--erro .upb3__situacao {
+  grid-column: 2 / -1;
+  color: var(--perda);
+}
+.upb3__barra {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 4px;
+  appearance: none;
+  border: 0;
+  border-radius: 2px;
+  background: var(--linha);
+  overflow: hidden;
+}
+.upb3__barra::-webkit-progress-bar {
+  background: var(--linha);
+}
+.upb3__barra::-webkit-progress-value {
+  background: var(--marca);
+  transition: width var(--dur-curta) linear;
+}
+.upb3__barra::-moz-progress-bar {
+  background: var(--marca);
+}
+
+/* ---------- atualizar o WIN pelo MetaTrader 5 ---------- */
+.atualizar-win {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-3);
+  margin: var(--espaco-2) 0;
+}
+.atualizar-win__status {
+  margin: 0;
+  font-size: 13px;
+}
