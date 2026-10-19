@@ -105,6 +105,30 @@ docker compose --env-file .env -f infra/docker-compose.yml --profile app run --r
 
 **Linhas estranhas não param a importação.** Linha vazia e cabeçalho repetido são pulados; linha com colunas a menos, data ou hora que não existe, número inválido, máxima abaixo da mínima (ou da abertura, ou do fechamento), preço zero ou negativo e horário fora da grade do intervalo (por exemplo, 09:03 num arquivo de 5m) são ignoradas, e a saída mostra as 20 primeiras com o número da linha e o motivo. Duas linhas com o mesmo horário: vale a última. O que fica fora do pregão (antes das 09:00, depois das 18:25, fim de semana) não é gravado e aparece na contagem.
 
+## Atualizar o WIN automaticamente pelo MetaTrader 5 (botão)
+
+Em vez de exportar o CSV à mão, o ZenTrade pode ler o histórico do WIN direto do **MetaTrader 5 de uma conta demo** de corretora brasileira (XP, Clear, Genial, Rico…), pela API oficial em Python. O MT5 só existe para Windows, então ele roda num container com Wine (perfil **opcional** `mt5` do compose, que não é construído nem baixado se você não usar). Escolha da imagem e riscos: [ADR 009](adr/009-mt5-wine-docker.md). **Só leitura de dados:** nada envia ordem (um teste automatizado barra qualquer função de ordem no coletor). Não depende da B3: os dados vêm da corretora.
+
+**Passo a passo**
+
+1. Abra uma conta **demo** na corretora (no site dela ou no próprio MT5: Arquivo → Abrir uma conta) e anote **servidor**, **login** e **senha**.
+2. Suba o perfil `mt5` (pesado: Wine + MT5, mais de 1 GB) e diga à API e ao motor onde o coletor está. No `.env`: `COLETOR_MT5_URL=http://coletor-mt5:8090`. Depois:
+   ```bash
+   docker compose --env-file .env -f infra/docker-compose.yml --profile app --profile mt5 up -d --build
+   ```
+   Nenhum desses containers publica porta no host. Confira na primeira subida o nome/tag da imagem do terminal (`MT5_TERMINAL_IMAGEM`, padrão `gmag11/metatrader5_vnc:latest`): ela é de terceiros e não foi testada contra uma conta real nesta entrega.
+3. Em **Contas e chaves → MetaTrader 5 (dados do mini índice)**, cole servidor, login e senha da conta demo (pede confirmação da identidade). Eles ficam **cifrados** com a mesma chave mestra das chaves da Binance e **nunca voltam** pela API nem entram em log; a tela mostra só o final do login. Opcionais: o nome do símbolo contínuo e o fuso do servidor.
+4. Clique em **Testar conexão**: abre uma sessão no coletor e lista os símbolos `WIN*` que a corretora tem.
+5. Em **Backtests**, escolha "Mini índice — WIN" e clique em **Atualizar dados do WIN**. A primeira vez busca o máximo de histórico que a corretora entregar (até `MOTOR_MT5_HISTORICO_DIAS`, padrão 730 dias, em janelas de 30 dias); as seguintes, só o que falta desde a última vela (reprocessando o dia dela). O andamento aparece na tela (fila → lendo → resumo por pregão).
+6. **Automático:** depois do fechamento (a partir de `MOTOR_MT5_HORA`, padrão 19h de Brasília, segunda a sexta), o motor atualiza sozinho uma vez por dia, enquanto houver conta cadastrada. Desligue com `MOTOR_MT5_AUTO=false`.
+
+**Como os dados são tratados**
+
+- **Símbolo contínuo:** nas corretoras brasileiras costuma ser `WIN$N`, `WIN$` ou `WIN@`. Sem configuração, o motor consulta `symbols_get("WIN*")` e usa o primeiro que existir, nessa ordem; se nenhum existir, a atualização falha listando os `WIN*` disponíveis, e você configura o nome certo na tela. Tudo é gravado como `WIN` em 5m (15m e 1h montados), pela mesma gravação idempotente dos outros importadores: rodar de novo não duplica.
+- **Fuso do servidor:** o MT5 devolve o horário do **relógio do servidor da corretora**. Com o fuso configurado (nome IANA, como `Europe/Athens`, acompanha o horário de verão do servidor; ou `+03:00`), ele é usado. Sem configuração, o motor descobre **dia a dia** comparando a primeira barra do dia com a abertura de 09:00 de Brasília (arredondando para meia hora, porque a abertura às vezes só pega negócio às 09:05), então a troca de horário de verão do servidor no meio do período não estraga o resto. Se a corretora tiver feriados ou dias com abertura atípica, configure o fuso.
+- **Limites honestos:** o MT5 entrega o histórico que o servidor da corretora guarda (varia; peça "barras ilimitadas" nas opções do terminal se faltar). Candle em formação e fora do pregão (09:00–18:25) não entram, como nos outros importadores.
+- **Segurança:** a conta trafega só na rede interna do compose (API/motor → coletor → terminal), cifrada em repouso no banco; o RPyC do terminal executa código e por isso nunca é exposto. Use sempre conta **demo**.
+
 ## Importar o WIN dos arquivos de negócios da B3
 
 A B3 publica no BDI, de graça, o arquivo com **todos os negócios do dia** de cada derivativo, inclusive o WIN, para os **últimos 20 dias úteis**. O ZenTrade monta as velas a partir dele.
@@ -240,7 +264,8 @@ Uma fonte implementa a porta `FonteCandlesB3` (`apps/motor/src/dados-b3/fonte.ts
 ## Pendências
 
 - **1 minuto:** o contrato com o backtest tem 5m, 15m e 1h. A fase 1 pede série de 1 minuto; o MT5 exporta M1, mas importar `1m` é uma extensão a combinar com o backtest.
-- **Histórico além de 20 pregões pelos arquivos da B3:** só juntando com o tempo; o BDI não guarda mais que isso.
+- **Histórico além de 20 pregões pelos arquivos da B3:** só juntando com o tempo; o BDI não guarda mais que isso. O MetaTrader 5 (seção acima) entrega mais, conforme a corretora.
+- **Conector MT5 sem conta real:** a imagem do terminal, o coletor e a conta não foram exercitados contra uma corretora de verdade nesta entrega (os testes usam um coletor falso); a primeira subida real pode pedir ajustes de tag da imagem, versão do `mt5linux` ou fuso.
 - **Leilão de fechamento:** fica fora da janela de 09:00 a 18:25 do contrato com o backtest; se a estratégia precisar do preço de ajuste do dia, isso é uma extensão a combinar.
 - **Criar backtest pela API:** a validação atual do símbolo (`/^[A-Z0-9]{5,20}$/`, em `packages/contratos/src/backtest.ts` e `dados.ts`) recusa `WIN` e `WIN-IBOV`; isso fica com a parte do backtest do WIN.
 - **Profundidade do `^BVSP` no plano Pro:** não conferida (exige token).
