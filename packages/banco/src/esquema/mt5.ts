@@ -20,6 +20,8 @@ export const credenciaisMt5 = pgTable("credenciais_mt5", {
   loginFinal: text("login_final").notNull(),
   /** Nome do contínuo nesta corretora (ex.: "WIN$N"); vazio = detectar automaticamente. */
   simboloContinuo: text("simbolo_continuo"),
+  /** Fuso do relógio do servidor (IANA ou +03:00); vazio = detectar pelas barras. */
+  fusoServidor: text("fuso_servidor"),
   criadaEm: instante("criada_em").notNull().defaultNow(),
   validadaEm: instante("validada_em"),
   ultimoErro: text("ultimo_erro"),

@@ -17,6 +17,7 @@ import { repositorioCarteira } from "./repositorios/carteira.js";
 import { repositorioConfiguracao } from "./repositorios/configuracao.js";
 import { repositorioConhecimento } from "./repositorios/conhecimento.js";
 import { repositorioContas } from "./repositorios/contas.js";
+import { repositorioCredenciaisMt5 } from "./repositorios/credenciais-mt5.js";
 import { repositorioCredenciaisClaude } from "./repositorios/credenciais-claude.js";
 import { repositorioDecisoes } from "./repositorios/decisoes.js";
 import { repositorioDivergencias } from "./repositorios/divergencias.js";
@@ -108,6 +109,7 @@ export function criarBancoDoMotor(opcoes: OpcoesBancoDoMotor) {
     mercado: repositorioMercado(conexao.db),
     backtests: repositorioBacktests(conexao.db),
     importacoesB3: repositorioImportacoesB3(conexao.db),
+    credenciaisMt5: opcoes.chaveMestra ? repositorioCredenciaisMt5(conexao.db, opcoes.chaveMestra) : null,
     placar: portaPlacar(conexao.db),
     fechar: () => conexao.fechar(),
   };
@@ -143,6 +145,7 @@ export function criarBanco(opcoes: OpcoesBanco) {
     mercado: repositorioMercado(db),
     backtests: repositorioBacktests(db),
     importacoesB3: repositorioImportacoesB3(db),
+    credenciaisMt5: repositorioCredenciaisMt5(db, opcoes.chaveMestra),
     conhecimento: repositorioConhecimento(db),
     conhecimentoDetalhe: repositorioConhecimentoDetalhe(db),
     assistente: repositorioAssistente(db),

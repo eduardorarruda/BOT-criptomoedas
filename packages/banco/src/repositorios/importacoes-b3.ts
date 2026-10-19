@@ -23,6 +23,7 @@ export interface ImportacaoB3 {
 /** Só para o motor (acesso de sistema): de onde ler o arquivo temporário. */
 export interface ImportacaoB3ParaProcessar extends ImportacaoB3 {
   readonly caminho: string;
+  readonly usuarioId: string;
 }
 
 const RESUMO_FORA_DO_CONTRATO =
@@ -52,6 +53,7 @@ const paraDTO = (b: typeof importacoesB3.$inferSelect): ImportacaoB3 => ({
 const paraProcessar = (b: typeof importacoesB3.$inferSelect): ImportacaoB3ParaProcessar => ({
   ...paraDTO(b),
   caminho: b.caminho,
+  usuarioId: b.usuarioId,
 });
 
 /**

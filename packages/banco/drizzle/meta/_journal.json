@@ -113,6 +113,13 @@
       "when": 1792321588856,
       "tag": "0015_importacoes_b3",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792438813671,
+      "tag": "0016_credenciais_mt5",
+      "breakpoints": true
     }
   ]
 }
