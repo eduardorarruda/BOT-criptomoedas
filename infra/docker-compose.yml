@@ -297,6 +297,9 @@ services:
     volumes:
       - mt5-terminal:/config
     shm_size: "1gb"
+    # Rede própria: só o coletor alcança o RPyC (que executa código). A rede padrão, onde
+    # estão a API, o n8n e o banco, não o enxerga. Precisa de saída para a internet (corretora).
+    networks: [mt5]
 
   coletor-mt5:
     profiles: ["mt5"]
@@ -306,11 +309,15 @@ services:
     environment:
       MT5_RPYC_HOST: mt5-terminal
       MT5_RPYC_PORTA: "8001"
+    networks: [default, mt5]
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     depends_on:
       - mt5-terminal
+
+networks:
+  mt5:
 
 volumes:
   banco:
