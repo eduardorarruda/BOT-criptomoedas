@@ -75,10 +75,28 @@ async function lerCandles(par: string, intervalo: string): Promise<Candle[]> {
 }
 
 const FEATURES = [
-  "ret_1", "ret_3", "ret_6", "ret_12", "ret_24", "ret_48",
-  "atr_pct", "atr_percentil_100", "dist_sma200_atr", "dist_ema50_atr", "inclinacao_sma200",
-  "adx_14", "rsi_14", "bb_largura", "volume_rel_20", "dist_donchian_atr",
-  "btc_ret_6", "btc_ret_24", "hora_sin", "hora_cos", "dia_sin", "dia_cos",
+  "ret_1",
+  "ret_3",
+  "ret_6",
+  "ret_12",
+  "ret_24",
+  "ret_48",
+  "atr_pct",
+  "atr_percentil_100",
+  "dist_sma200_atr",
+  "dist_ema50_atr",
+  "inclinacao_sma200",
+  "adx_14",
+  "rsi_14",
+  "bb_largura",
+  "volume_rel_20",
+  "dist_donchian_atr",
+  "btc_ret_6",
+  "btc_ret_24",
+  "hora_sin",
+  "hora_cos",
+  "dia_sin",
+  "dia_cos",
 ] as const;
 
 const RETORNOS_LOG = [1, 3, 6, 12, 24, 48] as const;
@@ -103,8 +121,9 @@ function features(s: Serie, abertura: number, btcRet: { r6: number; r24: number 
   const v = { maximas: s.maximas, minimas: s.minimas, fechamentos: f };
   const a = nulo(atr(v, 14), "atr");
   const percentil =
-    Array.from({ length: 100 }, (_, d) => atr(v, 14, d)).filter((x): x is number => x !== null).filter((x) => x <= a)
-      .length / 100;
+    Array.from({ length: 100 }, (_, d) => atr(v, 14, d))
+      .filter((x): x is number => x !== null)
+      .filter((x) => x <= a).length / 100;
   const sma200 = nulo(sma(f, 200), "sma200");
   const sma200Antes = nulo(sma(f, 200, 10), "sma200-10");
   const canal = nulo(donchian(v, 20), "donchian");
@@ -152,11 +171,17 @@ async function main() {
     return i === undefined || i < k ? null : Math.log((btcFecha[i] as number) / (btcFecha[i - k] as number));
   };
 
-  const linhas: string[] = [["par", "sinal_em", "entrada_em", "fim_em", "retorno", "rotulo", "barras", "motivo", ...FEATURES].join(",")];
+  const linhas: string[] = [
+    ["par", "sinal_em", "entrada_em", "fim_em", "retorno", "rotulo", "barras", "motivo", ...FEATURES].join(
+      ",",
+    ),
+  ];
   const resumo: string[] = [];
   for (const par of so ? so.split(",") : PARES) {
     const candles = await lerCandles(par, intervalo);
-    const lacunas = candles.filter((c, i) => i > 0 && c.abertura - (candles[i - 1] as Candle).abertura !== intervaloMs).length;
+    const lacunas = candles.filter(
+      (c, i) => i > 0 && c.abertura - (candles[i - 1] as Candle).abertura !== intervaloMs,
+    ).length;
     const ctx = contextoDeCandles(candles);
     let contados = 0;
     let pendentes = 0;
@@ -206,12 +231,24 @@ async function main() {
       const x = features(janela, vela.abertura, { r6, r24 });
       const retorno = d.retorno;
       linhas.push(
-        [par, vela.fechamento, seguinte.abertura, d.em, retorno, retorno > 0 ? 1 : 0, d.barras, d.motivo, ...x].join(","),
+        [
+          par,
+          vela.fechamento,
+          seguinte.abertura,
+          d.em,
+          retorno,
+          retorno > 0 ? 1 : 0,
+          d.barras,
+          d.motivo,
+          ...x,
+        ].join(","),
       );
       contados++;
       ultimaSaida = i + d.barras;
     }
-    resumo.push(`${par}: ${candles.length} velas, ${lacunas} lacunas, ${contados} sinais, ${pendentes} pendentes, ${semDados} sem BTC`);
+    resumo.push(
+      `${par}: ${candles.length} velas, ${lacunas} lacunas, ${contados} sinais, ${pendentes} pendentes, ${semDados} sem BTC`,
+    );
   }
   await writeFile(saida, linhas.join("\n") + "\n");
   console.warn(resumo.join("\n"));

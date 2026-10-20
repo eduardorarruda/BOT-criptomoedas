@@ -8,18 +8,18 @@ Protocolo e parâmetros: [`PRE-REGISTRO.md`](PRE-REGISTRO.md), commitado antes d
 
 ## Fora da amostra (6 dobras, 2021 a 2026-09)
 
-| Candidato | Operações | Acerto | Retorno médio/op. | Retorno somado (% do capital, 1/15 por op.) | Sharpe anual | Sharpe deflacionado | AUC |
-|---|---|---|---|---|---|---|---|
-| Regra pura (todos os sinais) | 2.161 | 29,7% | 0,99% | 142,2 | 1,235 | 0,99955 | n/a |
-| Logística L2 (C=0,1) | 1.964 (91%) | 30,1% | 1,05% | 137,9 | 1,297 | 0,99981 | 0,523 |
-| LightGBM raso + Platt | 2.161 (100%) | 29,7% | 0,99% | 142,2 | 1,235 | 0,99955 | 0,500 |
+| Candidato                    | Operações    | Acerto | Retorno médio/op. | Retorno somado (% do capital, 1/15 por op.) | Sharpe anual | Sharpe deflacionado | AUC   |
+| ---------------------------- | ------------ | ------ | ----------------- | ------------------------------------------- | ------------ | ------------------- | ----- |
+| Regra pura (todos os sinais) | 2.161        | 29,7%  | 0,99%             | 142,2                                       | 1,235        | 0,99955             | n/a   |
+| Logística L2 (C=0,1)         | 1.964 (91%)  | 30,1%  | 1,05%             | 137,9                                       | 1,297        | 0,99981             | 0,523 |
+| LightGBM raso + Platt        | 2.161 (100%) | 29,7%  | 0,99%             | 142,2                                       | 1,235        | 0,99955             | 0,500 |
 
 Filtro aleatório (1.000 rodadas, mesma taxa de aprovação por dobra), Sharpe anual:
 
-| Modelo | p50 | p95 | Sharpe do modelo | Percentil do modelo |
-|---|---|---|---|---|
-| Logística | 1,102 | 1,264 | 1,297 | 96,8 |
-| LightGBM | 1,235 | 1,235 | 1,235 | n/a (não vetou nada) |
+| Modelo    | p50   | p95   | Sharpe do modelo | Percentil do modelo  |
+| --------- | ----- | ----- | ---------------- | -------------------- |
+| Logística | 1,102 | 1,264 | 1,297            | 96,8                 |
+| LightGBM  | 1,235 | 1,235 | 1,235            | n/a (não vetou nada) |
 
 ## Veredito pelo critério do protocolo
 
