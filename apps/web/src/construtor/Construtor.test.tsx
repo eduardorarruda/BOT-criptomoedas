@@ -1,6 +1,7 @@
 import { MODELOS, MODELOS_WIN, TODOS_OS_MODELOS, validarEstrategia, validarRegra } from "@zentrade/dominio";
 import { createEvent, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import axe from "axe-core";
 import { describe, expect, it, vi } from "vitest";
 import type { NovaEstrategia } from "../api/fonte";
 import { criarFonteDemo } from "../demo/fonteDemo";
@@ -292,5 +293,58 @@ describe("Construtor de estratégias", () => {
     expect(separadores.map((x) => x.textContent?.trim())).toEqual([]);
     await usuario.selectOptions(tipo, "faixaAbertura");
     expect(screen.getByLabelText("Lado esquerdo: minutos de faixa de abertura")).toHaveValue("30");
+  });
+
+  it("bloco Horário: dois campos, janela que passa da meia-noite explicada, estratégia salva com a regra", async () => {
+    const { aoSalvar } = montar();
+    const usuario = userEvent.setup();
+    await usuario.type(screen.getByLabelText("Nome da estratégia"), "Só de madrugada");
+    const raiz = screen.getByRole("group", { name: "Adicionar ao grupo E" });
+    await usuario.click(within(raiz).getByRole("button", { name: /Horário/ }));
+    const de = screen.getByLabelText("Horário: de");
+    const ate = screen.getByLabelText("até");
+    expect(de).toHaveValue("12:00");
+    expect(ate).toHaveValue("15:00");
+    expect(
+      screen.getAllByText(/o candle abrir entre 12:00 e 15:00 \(horário de Brasília\)/).length,
+    ).toBeGreaterThan(0);
+    fireEvent.change(de, { target: { value: "22:00" } });
+    fireEvent.change(ate, { target: { value: "02:00" } });
+    expect(screen.getByText(/a janela passa da meia-noite/)).toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "Criar estratégia" }));
+    const estrategia = aoSalvar.mock.calls[0]![1];
+    expect(estrategia.entrada).toMatchObject({
+      tipo: "e",
+      regras: [{ tipo: "comparar" }, { tipo: "horario", de: "22:00", ate: "02:00" }],
+    });
+    expect(validarRegra(estrategia.entrada)).toEqual([]);
+  });
+
+  it("janela com os dois horários iguais: explica e não deixa salvar", async () => {
+    montar();
+    const usuario = userEvent.setup();
+    await usuario.type(screen.getByLabelText("Nome da estratégia"), "Janela vazia");
+    const raiz = screen.getByRole("group", { name: "Adicionar ao grupo E" });
+    await usuario.click(within(raiz).getByRole("button", { name: /Horário/ }));
+    fireEvent.change(screen.getByLabelText("até"), { target: { value: "12:00" } });
+    expect(screen.getByText(/precisam ser diferentes/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Criar estratégia" })).toBeDisabled();
+  });
+
+  it("acessível (axe) com o bloco de horário na árvore", async () => {
+    const { container } = renderizar(
+      <Construtor inicial={estadoVazio()} salvando={false} aoSalvar={vi.fn()} />,
+      criarFonteDemo({ latenciaMs: [0, 0] }),
+    );
+    await userEvent.click(
+      within(screen.getByRole("group", { name: "Adicionar ao grupo E" })).getByRole("button", {
+        name: /Horário/,
+      }),
+    );
+    const r = await axe.run(container, {
+      rules: { "color-contrast": { enabled: false } },
+      resultTypes: ["violations"],
+    });
+    expect(r.violations).toEqual([]);
   });
 });

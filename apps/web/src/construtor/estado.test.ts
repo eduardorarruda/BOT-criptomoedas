@@ -350,3 +350,34 @@ describe("construtor: direção e lado vendido", () => {
     expect(deNovo.editando).toBe("entrada");
   });
 });
+
+describe("construtor: bloco de horário", () => {
+  it("adiciona o bloco, edita a janela e monta uma estratégia válida", () => {
+    let e = aplicar(estadoVazio(), { tipo: "nome", nome: "Só à tarde" });
+    e = aplicar(e, { tipo: "adicionar", destinoId: e.entrada.id, indice: 1, bloco: "horario" });
+    const horario = raiz(e).filhos[1]!;
+    expect(horario).toMatchObject({ tipo: "horario", de: "12:00", ate: "15:00" });
+    e = aplicar(e, { tipo: "trocarNo", no: { ...horario, de: "13:30", ate: "17:00" } as typeof horario });
+    const { estrategia, problemas } = montar(e);
+    expect(problemas).toEqual([]);
+    expect(estrategia?.entrada).toMatchObject({
+      tipo: "e",
+      regras: [{ tipo: "comparar" }, { tipo: "horario", de: "13:30", ate: "17:00" }],
+    });
+    expect(validarRegra(estrategia!.entrada)).toEqual([]);
+  });
+
+  it("janela vazia ou horário incompleto impede de salvar e explica", () => {
+    let e = aplicar(estadoVazio(), { tipo: "nome", nome: "x" });
+    e = aplicar(e, { tipo: "adicionar", destinoId: e.entrada.id, indice: 1, bloco: "horario" });
+    const horario = raiz(e).filhos[1]!;
+    const igual = montar(
+      aplicar(e, { tipo: "trocarNo", no: { ...horario, de: "12:00", ate: "12:00" } as typeof horario }),
+    );
+    expect(igual.estrategia).toBeNull();
+    expect(igual.problemas.join(" ")).toMatch(/diferentes/);
+    const vazio = montar(aplicar(e, { tipo: "trocarNo", no: { ...horario, de: "" } as typeof horario }));
+    expect(vazio.estrategia).toBeNull();
+    expect(vazio.problemas.join(" ")).toMatch(/HH:MM/);
+  });
+});

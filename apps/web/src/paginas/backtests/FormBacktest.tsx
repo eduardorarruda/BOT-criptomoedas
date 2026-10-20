@@ -104,7 +104,11 @@ export function FormBacktest() {
   const pedido = (e: EstrategiaDTO): PedidoBacktest | null => {
     if (ehWin) {
       if (!janela) return null;
-      const configuracao = configuracaoWinDoFormulario(camposWin, validacaoDoFormulario(avancado));
+      const configuracao = configuracaoWinDoFormulario(
+        camposWin,
+        validacaoDoFormulario(avancado),
+        avancado.execucao,
+      );
       const { inicio, fim } = janela;
       return {
         estrategiaId: e.id,

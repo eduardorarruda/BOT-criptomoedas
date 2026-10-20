@@ -24,6 +24,11 @@ export interface ContextoMercado {
   readonly instantes?: readonly number[];
   /** Duração de um candle em ms (sem ela, sai da menor distância entre instantes). */
   readonly intervaloMs?: number;
+  /**
+   * Fuso do mercado (nome IANA) em que a regra de horário lê a hora do candle. Sem ele,
+   * vale America/Sao_Paulo: o fuso do pregão da B3 e o padrão da instância (ZENTRADE_FUSO).
+   */
+  readonly fuso?: string;
 }
 
 export type SerieCandle = "aberturas" | "maximas" | "minimas" | "volumes" | "instantes";
@@ -46,7 +51,7 @@ export const duracaoDoCandle = (c: Pick<Candle, "abertura" | "fechamento">): num
   c.fechamento - c.abertura + 1;
 
 /** Contexto completo (OHLCV e instantes) a partir de candles fechados. Decimal vira número: é análise. */
-export function contextoDeCandles(candles: readonly Candle[]): ContextoMercado {
+export function contextoDeCandles(candles: readonly Candle[], fuso?: string): ContextoMercado {
   const primeiro = candles[0];
   return {
     fechamentos: candles.map((c) => c.fecha.toNumber()),
@@ -56,6 +61,7 @@ export function contextoDeCandles(candles: readonly Candle[]): ContextoMercado {
     volumes: candles.map((c) => c.volume.toNumber()),
     instantes: candles.map((c) => c.abertura),
     ...(primeiro ? { intervaloMs: duracaoDoCandle(primeiro) } : {}),
+    ...(fuso ? { fuso } : {}),
   };
 }
 
@@ -70,5 +76,6 @@ export function contextoAte(ctx: ContextoMercado, fim: number): ContextoMercado 
     ...(ctx.volumes ? { volumes: ctx.volumes.slice(0, n) } : {}),
     ...(ctx.instantes ? { instantes: ctx.instantes.slice(0, n) } : {}),
     ...(ctx.intervaloMs !== undefined ? { intervaloMs: ctx.intervaloMs } : {}),
+    ...(ctx.fuso ? { fuso: ctx.fuso } : {}),
   };
 }

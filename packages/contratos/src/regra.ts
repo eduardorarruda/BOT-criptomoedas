@@ -57,6 +57,9 @@ const IndicadorEsquema = z.union([
   }),
 ]);
 
+/** "HH:MM" de 00:00 a 23:59 (o mesmo padrão do horário do backtest de WIN). */
+export const HorarioEsquema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "horário como 09:15");
+
 export const OperandoEsquema: z.ZodType<Operando> = z.lazy(() =>
   z.union([
     z.object({ tipo: z.enum(["preco", "abertura", "maxima", "minima", "volume"]) }),
@@ -71,6 +74,7 @@ export const RegraEsquema: z.ZodType<Regra> = z.lazy(() =>
     z.object({ tipo: z.literal("e"), regras: z.array(RegraEsquema) }),
     z.object({ tipo: z.literal("ou"), regras: z.array(RegraEsquema) }),
     z.object({ tipo: z.literal("nao"), regra: RegraEsquema }),
+    z.object({ tipo: z.literal("horario"), de: HorarioEsquema, ate: HorarioEsquema }),
     z.object({
       tipo: z.literal("comparar"),
       esquerda: OperandoEsquema,

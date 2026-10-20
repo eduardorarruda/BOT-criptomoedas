@@ -23,6 +23,8 @@ export function frase(no: NoEditor | null, aninhado = false): string {
   switch (no.tipo) {
     case "comparar":
       return `${rotulo(no.esquerda)} ${VERBO[no.comparador]} ${rotulo(no.direita)}`;
+    case "horario":
+      return `o candle abrir entre ${no.de} e ${no.ate} (horário de Brasília)`;
     case "nao":
       return `não (${frase(no.filho)})`;
     case "e":
@@ -43,6 +45,7 @@ export function linhas(no: NoEditor | null, nivel = 0): Linha[] {
   if (!no) return [{ nivel, texto: "falta uma condição aqui" }];
   switch (no.tipo) {
     case "comparar":
+    case "horario":
       return [{ nivel, texto: frase(no) }];
     case "nao":
       return [{ nivel, texto: "esta NÃO pode valer:" }, ...linhas(no.filho, nivel + 1)];

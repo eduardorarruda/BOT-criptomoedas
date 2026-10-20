@@ -1,3 +1,4 @@
+import type { ModoExecucaoBacktest } from "@zentrade/contratos";
 import {
   contextoDeCandles,
   dec,
@@ -19,6 +20,7 @@ import { valorAberto, type OperacaoWin } from "./execucao.js";
 import type { ModeloWin } from "./modelo.js";
 import {
   aoFecharComPosicao,
+  executarPendente,
   tentarAbrir,
   vigiarDentroDoCandle,
   type EstadoWin,
@@ -38,6 +40,13 @@ export interface EntradaBacktestWin {
   /** Janela operada: abertura em [inicio, fim). */
   readonly inicio?: number;
   readonly fim?: number;
+  /**
+   * Onde executa a ordem decidida no fechamento do candle. Sem ele (ou `fechamento`): no
+   * fechamento, com tick e deslizamento. `proximaAbertura`: na abertura do candle seguinte
+   * do mesmo pregão; a zeragem do fim do pregão e da janela continua no fechamento do
+   * último candle, e uma entrada sinalizada no último candle não abre.
+   */
+  readonly execucao?: ModoExecucaoBacktest;
 }
 
 export interface ResultadoBacktestWin {
@@ -106,6 +115,7 @@ function estadoInicial(saldo: Valor): EstadoWin {
     zeragens: 0,
     semEspaco: 0,
     barradas: 0,
+    pendente: null,
     intrabar: { stop: 0, alvo: 0, ambiguos: 0 },
   };
 }
@@ -120,6 +130,10 @@ function estadoInicial(saldo: Valor): EstadoWin {
  *   3. sem posição, se a sessão deixa (início, corte, leilão de abertura) e os limites
  *      deixam: abre no sentido que a regra pediu, no fechamento com tick e deslizamento,
  *      com contratos pelo risco em reais, pelo máximo e pela margem.
+ * Com `execucao: "proximaAbertura"`, a entrada e a saída por regra decididas no
+ * fechamento do candle i são executadas na ABERTURA do candle i+1, antes de tudo o mais
+ * nele (com o mesmo tick e deslizamento); stop e alvo seguem dentro do candle, e a
+ * zeragem do fim do pregão continua no fechamento do último candle.
  * Determinístico e sem rede. Custos: tarifa da B3 e corretagem por contrato e por lado.
  */
 export function rodarBacktestWin(entrada: EntradaBacktestWin): ResultadoBacktestWin {
@@ -143,6 +157,7 @@ export function rodarBacktestWin(entrada: EntradaBacktestWin): ResultadoBacktest
       st.dia = t.dia;
       st.resultadoDoDia = dec(0);
     }
+    if (st.pendente) executarPendente(st, e, c, ate(i - 1), t);
     vigiarDentroDoCandle(st, e.modelo, c, t);
     const ctx = ate(i);
     if (!aoFecharComPosicao(st, e, c, ctx, t)) tentarAbrir(st, e, c, ctx, t);

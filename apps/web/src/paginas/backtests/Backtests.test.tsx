@@ -94,7 +94,35 @@ describe("tela Backtests", () => {
       custos: { taxaPorLado: 0.00075, deslizamentoBps: 8, meioSpreadBps: 2 },
       risco: { modo: "sem_limites" },
       precisaoMinuto: false,
+      execucao: "fechamento",
       validacao: { fracaoDentroDaAmostra: 0.8, janelas: 5, modoJanelas: "ancorada", limiteRuina: 0.3 },
+    });
+  });
+
+  it("escolhe executar na abertura do candle seguinte e pede isso, no cripto e no WIN", async () => {
+    const fonte = criarFonteDemo({ latenciaMs: [0, 0] });
+    const criar = vi.spyOn(fonte, "criarBacktest");
+    montar(fonte);
+    await resultado();
+    await userEvent.click(screen.getByText(/Custos, limites e validação/));
+    const seletor = screen.getByLabelText("Executar ordens");
+    expect(seletor).toHaveValue("fechamento");
+    expect(screen.getByText(/É a forma mais simples, mas otimista/)).toBeInTheDocument();
+    await userEvent.selectOptions(seletor, "proximaAbertura");
+    expect(screen.getByText(/só chega ao mercado no candle seguinte/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Rodar backtest" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    expect(criar.mock.calls[0]![0].configuracao).toMatchObject({ execucao: "proximaAbertura" });
+
+    await userEvent.selectOptions(screen.getByLabelText("Mercado"), "WIN-IBOV");
+    await userEvent.selectOptions(screen.getByLabelText("Estratégia"), "e-win-faixa");
+    await userEvent.click(screen.getByText(/Custos, sessão, tamanho e validação/));
+    await userEvent.selectOptions(screen.getByLabelText("Executar ordens"), "proximaAbertura");
+    await userEvent.click(screen.getByRole("button", { name: "Rodar backtest" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(2));
+    expect(criar.mock.calls[1]![0].configuracao).toMatchObject({
+      mercado: "win",
+      execucao: "proximaAbertura",
     });
   });
 
@@ -181,6 +209,7 @@ describe("mini índice (WIN)", () => {
       mercado: "win",
       saldoInicial: "5000",
       risco: { modo: "sem_limites" },
+      execucao: "fechamento",
       validacao: { fracaoDentroDaAmostra: 0.7, janelas: 5, modoJanelas: "rolante", limiteRuina: 0.3 },
       win: {
         tarifaB3PorContrato: "0.25",
@@ -266,6 +295,7 @@ describe("configuração do formulário", () => {
       meioSpread: "2",
       limites: "r1",
       precisaoMinuto: true,
+      execucao: "fechamento" as const,
       fracaoDentro: "0.7",
       janelas: "5",
       modoJanelas: "rolante" as const,

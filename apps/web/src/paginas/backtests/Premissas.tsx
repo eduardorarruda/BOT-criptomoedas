@@ -28,6 +28,18 @@ const bps = (v: number) => `${v.toLocaleString("pt-BR")} ponto${v === 1 ? "" : "
 
 const reais = (v: string) => formatarDinheiro(v, { moeda: "R$" });
 
+/** Onde as ordens do sinal foram executadas (nos dois mercados). */
+function PremissaExecucao({ c }: { readonly c: NonNullable<Backtest["configuracao"]> }) {
+  return (
+    <li>
+      <strong>Execução das ordens:</strong>{" "}
+      {c.execucao === "proximaAbertura"
+        ? "na abertura do candle seguinte ao sinal (mais conservador). Stop e alvo valem dentro do candle; no último candle não há seguinte: a entrada não abre e a saída sai no fechamento."
+        : "no fechamento do candle do sinal (mais otimista: o preço já pode ter mudado quando a ordem chega)."}
+    </li>
+  );
+}
+
 /** O modelo do mini índice com que o backtest rodou. */
 function PremissasWin({ b, c }: { readonly b: Backtest; readonly c: NonNullable<Backtest["configuracao"]> }) {
   const w = configuracaoWin(c);
@@ -65,6 +77,7 @@ function PremissasWin({ b, c }: { readonly b: Backtest; readonly c: NonNullable<
           ? "nenhum (menos realista: o robô de verdade operaria menos)."
           : "perda diária de 2% do capital, 4 ordens por hora e pausa de 60 min depois de uma perda."}
       </li>
+      <PremissaExecucao c={c} />
       <li>
         <strong>Referências:</strong> ficar de fora (zero) e sempre comprado na sessão (1 contrato da abertura
         à zeragem, todo pregão, com os mesmos custos). Comprar e segurar não faz sentido num futuro de day
@@ -108,6 +121,7 @@ export function Premissas({ b }: { readonly b: Backtest }) {
                 ? `os de um robô seu: perda diária ${formatarDinheiro(c.risco.limites.perdaDiariaMaxima)}, exposição ${formatarDinheiro(c.risco.limites.exposicaoMaxima)}, ${c.risco.limites.ordensPorHoraMax} ordens por hora, pausa de ${c.risco.limites.pausaAposPerdaMin} min após perda.`
                 : "os de um robô novo (perda diária 2%, exposição 30%, risco 0,5% do saldo por operação, 4 ordens por hora, pausa de 60 min após perda)."}
           </li>
+          <PremissaExecucao c={c} />
           <li>
             <strong>Stop e alvo:</strong> vigiados dentro do candle pela mínima e pela máxima
             {m?.precisaoMinuto ? ", no caminho dos candles de 1 minuto" : ""}. Se os dois cabem no mesmo

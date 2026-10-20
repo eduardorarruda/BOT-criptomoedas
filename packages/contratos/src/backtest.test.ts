@@ -38,6 +38,7 @@ describe("configuração do backtest", () => {
       custos: { taxaPorLado: TAXA_BINANCE_VIP0, deslizamentoBps: 5, meioSpreadBps: 2 },
       risco: { modo: "robo" },
       precisaoMinuto: false,
+      execucao: "fechamento",
       validacao: {
         fracaoDentroDaAmostra: 0.7,
         janelas: 5,
@@ -47,6 +48,14 @@ describe("configuração do backtest", () => {
         limiteRuina: 0.3,
       },
     });
+  });
+
+  it("a execução padrão é no fechamento (backtests antigos); aceita a abertura seguinte e recusa o resto", () => {
+    expect(ConfiguracaoBacktestEsquema.parse({}).execucao).toBe("fechamento");
+    expect(ConfiguracaoBacktestEsquema.parse({ execucao: "proximaAbertura" }).execucao).toBe(
+      "proximaAbertura",
+    );
+    expect(ConfiguracaoBacktestEsquema.safeParse({ execucao: "meio-do-candle" }).success).toBe(false);
   });
 
   it("aceita taxa com BNB, sem limites e limites copiados de um robô", () => {

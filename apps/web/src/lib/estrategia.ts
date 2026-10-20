@@ -13,5 +13,7 @@ export function contextoDeVelas(velas: readonly CandleApi[]): ContextoMercado {
     maximas: velas.map((v) => Number(v.maxima)),
     minimas: velas.map((v) => Number(v.minima)),
     volumes: velas.map((v) => Number(v.volume)),
+    // A regra de horário (e o VWAP do dia) leem a abertura de cada vela.
+    instantes: velas.map((v) => v.abertura),
   };
 }

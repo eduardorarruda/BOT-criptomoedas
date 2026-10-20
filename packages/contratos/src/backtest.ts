@@ -2,6 +2,7 @@ import { dec, problemasSessao } from "@zentrade/dominio";
 import { z } from "zod";
 import { Fracao, Id, Instante, Intervalo, TextoDecimal } from "./comum.js";
 import { LimitesRiscoEsquema, type LimitesRiscoDTO } from "./dados.js";
+import { HorarioEsquema } from "./regra.js";
 
 /**
  * Backtest: a API grava o pedido e enfileira; o motor roda e grava métricas e curva.
@@ -110,7 +111,7 @@ const ReaisPositivos = (maximo: number) =>
     (v) => Number(v) > 0 && Number(v) <= maximo,
     `valor em reais maior que 0 e até ${maximo}`,
   );
-const Horario = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "horário como 09:15");
+const Horario = HorarioEsquema;
 
 /**
  * O modelo do mini índice. Custos por contrato e por lado (entrada e saída), em
@@ -144,6 +145,15 @@ const SaldoPositivo = TextoDecimal.refine(
   "o saldo inicial precisa ser maior que zero",
 );
 
+/**
+ * Onde a ordem decidida no fechamento de um candle é executada: no próprio fechamento
+ * (padrão, o de todos os backtests de antes) ou na ABERTURA do candle seguinte, que é
+ * quando a ordem de fato chegaria ao mercado (mais conservador). Stop e alvo, que são
+ * vigiados dentro do candle, não mudam.
+ */
+export const ModoExecucaoBacktest = z.enum(["fechamento", "proximaAbertura"]);
+export type ModoExecucaoBacktest = z.infer<typeof ModoExecucaoBacktest>;
+
 export const ConfiguracaoBacktestEsquema = z.object({
   /** Sem ele, vale o saldo do motor (MOTOR_BACKTEST_SALDO). */
   saldoInicial: SaldoPositivo.optional(),
@@ -156,6 +166,8 @@ export const ConfiguracaoBacktestEsquema = z.object({
   mercado: MercadoBacktest.optional(),
   /** Só no mercado `win`. Quem grava preenche os padrões (`comPadroesDoMercado`). */
   win: ConfiguracaoWinEsquema.optional(),
+  /** Onde executa a ordem decidida no fechamento do candle. Backtests antigos: no fechamento. */
+  execucao: ModoExecucaoBacktest.default("fechamento"),
 });
 export type ConfiguracaoBacktest = z.infer<typeof ConfiguracaoBacktestEsquema>;
 export type ConfiguracaoBacktestEntrada = z.input<typeof ConfiguracaoBacktestEsquema>;

@@ -81,6 +81,7 @@ async function rodar(d: DependenciasBacktest, o: OpcoesBacktest, p: BacktestPara
     agente: "sempre_concorda",
     aquecimento: AQUECIMENTO,
     custos: config.custos,
+    execucao: config.execucao,
     ...(minutos ? { minutos } : {}),
     ...(o.fuso ? { fuso: o.fuso } : {}),
   });

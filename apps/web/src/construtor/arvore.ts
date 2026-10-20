@@ -18,7 +18,14 @@ export type NoComparar = {
   readonly comparador: Comparador;
   readonly direita: Operando;
 };
-export type NoEditor = NoGrupo | NoNao | NoComparar;
+/** Janela de horário "HH:MM" [de, ate), no fuso do mercado; se `de` > `ate`, cruza a meia-noite. */
+export type NoHorario = {
+  readonly id: string;
+  readonly tipo: "horario";
+  readonly de: string;
+  readonly ate: string;
+};
+export type NoEditor = NoGrupo | NoNao | NoComparar | NoHorario;
 type NoContainer = NoGrupo | NoNao;
 
 let sequencia = 0;
@@ -31,6 +38,12 @@ export const novoComparar = (): NoComparar => ({
   comparador: "<",
   direita: { tipo: "numero", valor: 30 },
 });
+export const novoHorario = (de = "12:00", ate = "15:00"): NoHorario => ({
+  id: novoId(),
+  tipo: "horario",
+  de,
+  ate,
+});
 export const novoGrupo = (tipo: "e" | "ou", filhos: readonly NoEditor[] = []): NoGrupo => ({
   id: novoId(),
   tipo,
@@ -38,7 +51,8 @@ export const novoGrupo = (tipo: "e" | "ou", filhos: readonly NoEditor[] = []): N
 });
 export const novoNao = (filho: NoEditor | null = null): NoNao => ({ id: novoId(), tipo: "nao", filho });
 
-const ehContainer = (no: NoEditor): no is NoContainer => no.tipo !== "comparar";
+const ehContainer = (no: NoEditor): no is NoContainer =>
+  no.tipo === "e" || no.tipo === "ou" || no.tipo === "nao";
 
 export function deRegra(r: Regra): NoEditor {
   switch (r.tipo) {
@@ -47,6 +61,8 @@ export function deRegra(r: Regra): NoEditor {
       return novoGrupo(r.tipo, r.regras.map(deRegra));
     case "nao":
       return novoNao(deRegra(r.regra));
+    case "horario":
+      return novoHorario(r.de, r.ate);
     case "comparar":
       return {
         id: novoId(),
@@ -68,6 +84,8 @@ export function paraRegra(no: NoEditor): Conversao {
     switch (n.tipo) {
       case "comparar":
         return { tipo: "comparar", esquerda: n.esquerda, comparador: n.comparador, direita: n.direita };
+      case "horario":
+        return { tipo: "horario", de: n.de, ate: n.ate };
       case "nao": {
         if (!n.filho) {
           problemas.push('um "NÃO" está vazio: arraste uma condição para dentro dele');
@@ -119,7 +137,7 @@ function contem(no: NoEditor, id: string): boolean {
 }
 
 export function contarNos(no: NoEditor): number {
-  if (no.tipo === "comparar") return 1;
+  if (no.tipo === "comparar" || no.tipo === "horario") return 1;
   if (no.tipo === "nao") return 1 + (no.filho ? contarNos(no.filho) : 0);
   return 1 + no.filhos.reduce((t, f) => t + contarNos(f), 0);
 }

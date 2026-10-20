@@ -28,7 +28,11 @@ export class BufferCandles {
   private inicio = 0;
   private quantidade = 0;
 
-  constructor(readonly capacidade: number) {
+  constructor(
+    readonly capacidade: number,
+    /** O fuso da instância: onde as regras de horário leem a hora do candle (padrão: Brasília). */
+    private readonly fuso?: string,
+  ) {
     if (!Number.isInteger(capacidade) || capacidade < 1)
       throw new RangeError("A capacidade do buffer de candles precisa ser um inteiro positivo.");
     this.itens = new Array<Candle | undefined>(capacidade);
@@ -90,6 +94,7 @@ export class BufferCandles {
       volumes: v.map((x) => x.volume),
       instantes: velas.map((c) => c.abertura),
       ...(primeiro ? { intervaloMs: duracaoDoCandle(primeiro) } : {}),
+      ...(this.fuso ? { fuso: this.fuso } : {}),
     };
   }
 }

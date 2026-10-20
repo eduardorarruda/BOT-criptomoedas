@@ -3,6 +3,7 @@ import {
   TAXA_BINANCE_BNB,
   TAXA_BINANCE_VIP0,
   type ConfiguracaoBacktestEntrada,
+  type ModoExecucaoBacktest,
   type RoboDTO,
 } from "@zentrade/contratos/esquemas";
 import { CampoSelecao, CampoTexto } from "../../componentes/Campo";
@@ -25,6 +26,8 @@ export interface Avancado {
   /** "padrao", "sem" ou o id de um robô cujos limites valem. */
   limites: string;
   precisaoMinuto: boolean;
+  /** Onde executa a ordem decidida no fechamento do candle. */
+  execucao: ModoExecucaoBacktest;
   fracaoDentro: string;
   janelas: string;
   modoJanelas: "rolante" | "ancorada";
@@ -37,6 +40,7 @@ export const AVANCADO_INICIAL: Avancado = {
   meioSpread: "2",
   limites: "padrao",
   precisaoMinuto: false,
+  execucao: "fechamento",
   fracaoDentro: "0.7",
   janelas: "5",
   modoJanelas: "rolante",
@@ -68,6 +72,7 @@ export function configuracaoDoFormulario(
           ? { modo: "robo", limites: robo.limites }
           : { modo: "robo" },
     precisaoMinuto: a.precisaoMinuto && dias <= DIAS_MAXIMOS_PRECISAO_MINUTO,
+    execucao: a.execucao,
     validacao: validacaoDoFormulario(a),
   };
 }
@@ -146,8 +151,37 @@ export function CamposAvancados({
           </span>
         </label>
       </fieldset>
+      <GrupoExecucao a={a} mudar={mudar} />
       <GrupoValidacao a={a} mudar={mudar} />
     </div>
+  );
+}
+
+/** Onde a ordem decidida no fechamento do candle é executada (cripto e mini índice). */
+export function GrupoExecucao({
+  a,
+  mudar,
+}: {
+  readonly a: Avancado;
+  readonly mudar: (parcial: Partial<Avancado>) => void;
+}) {
+  return (
+    <fieldset className="bt-avancado__grupo">
+      <legend>Execução das ordens</legend>
+      <CampoSelecao
+        rotulo="Executar ordens"
+        dica={
+          a.execucao === "proximaAbertura"
+            ? "O robô decide quando o candle fecha, mas a ordem só chega ao mercado no candle seguinte: o preço é o de abertura dele. Stop e alvo continuam valendo dentro do candle. No último candle da janela não há candle seguinte: a entrada não abre e a saída sai no fechamento."
+            : "A ordem é executada pelo preço de fechamento do candle em que a regra deu o sinal, mais o deslizamento. É a forma mais simples, mas otimista: na prática o preço já mudou quando a ordem chega."
+        }
+        value={a.execucao}
+        onChange={(e) => mudar({ execucao: e.target.value as ModoExecucaoBacktest })}
+      >
+        <option value="fechamento">No fechamento do candle do sinal</option>
+        <option value="proximaAbertura">Na abertura do candle seguinte (mais conservador)</option>
+      </CampoSelecao>
+    </fieldset>
   );
 }
 

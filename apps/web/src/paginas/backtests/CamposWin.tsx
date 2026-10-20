@@ -2,7 +2,7 @@ import { FileUp } from "lucide-react";
 import { CampoSelecao, CampoTexto } from "../../componentes/Campo";
 import { EstadoVazio } from "../../componentes/Estados";
 import { criarApiImportacaoB3 } from "./apiB3";
-import { GrupoValidacao, type Avancado } from "./CamposCripto";
+import { GrupoExecucao, GrupoValidacao, type Avancado } from "./CamposCripto";
 import { EnvioB3 } from "./EnvioB3";
 import type { CamposWin, ErrosWin } from "./formularioWin";
 
@@ -172,6 +172,7 @@ export function CamposDoWin({
           <option value="sem">Sem limites — menos realista</option>
         </CampoSelecao>
       </fieldset>
+      <GrupoExecucao a={a} mudar={mudarAvancado} />
       <GrupoValidacao a={a} mudar={mudarAvancado} />
     </div>
   );

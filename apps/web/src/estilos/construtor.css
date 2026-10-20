@@ -265,6 +265,27 @@
   align-items: center;
   gap: 6px;
 }
+.no__horario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.no__horario-campo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-pequeno);
+}
+.no__horario-campo input {
+  height: 30px;
+  padding: 0 6px;
+  border-radius: var(--raio-p);
+  border: 1px solid var(--linha-forte);
+  background: var(--superficie);
+  font-size: var(--t-pequeno);
+  color: inherit;
+}
 .no__acoes {
   display: inline-flex;
   align-items: center;
