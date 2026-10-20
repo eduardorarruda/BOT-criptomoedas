@@ -115,18 +115,45 @@ Os itens abaixo aparecem de forma consistente em B3 [1], Nelogica [4], CM Capita
   - Para estratégias automatizadas, a APIMEC recomenda uma lâmina com metodologia e riscos [48].
 - **Nunca prometer rentabilidade.** No caso do "robô" Atlas Quantum, a CVM aplicou mais de R$ 55,8 milhões em multas [47]. Consulte um advogado antes de oferecer o ZenTrade a terceiros.
 
+## Literatura revisada em 20/10/2026
+
+Só entram fontes que foram verificadas. Elas mudaram duas decisões do projeto: executar a ordem na abertura do candle seguinte (opção de backtest) e exigir que um filtro de aprendizado de máquina cubra os custos antes de ser aceito.
+
+- Islas Anguiano e García-Medina [56] comparam LightGBM e LSTM com médias móveis (EMA), MACD+ADX e buy and hold em bitcoin. O LSTM rendeu cerca de 65% em menos de um ano, mas é um período só: evidência fraca de robustez, não de lucro futuro.
+- Bysik e Ślepaczuk [57] testam bitcoin por hora (2018 a 2026) com 27 dobras de walk-forward e custo de 10 pontos-base por operação. As estratégias que operam pelo sinal da previsão perdem a vantagem depois do custo. Um filtro que só opera quando a magnitude prevista cobre o custo recupera lucro em algumas configurações, e nenhum modelo foi estatisticamente superior aos demais. É a base do corte de aprovação do protocolo abaixo.
+- Rosa [58] testa day trade técnico no WINFUT contra buy and hold: há períodos de lucro bruto, mas os custos e a volatilidade dominam o resultado.
+- Os métodos vêm de López de Prado [54] (barreira tripla e meta-rotulagem no cap. 3, unicidade de amostras no cap. 4, validação cruzada com purge e embargo no cap. 7), de Chan [59] (regime: reversão à média contra momento, com testes ADF e expoente de Hurst) e de Pardo [17] (análise walk-forward). O estudo da FGV [11] segue como a principal evidência sobre o mini-índice.
+
+Outras referências do material revisado foram descartadas: uma não foi encontrada (Souza, 2020, FATEC), uma é descritiva e não testa resultado (Rodrigues, 2021, UFPA) e uma tem evidência fraca (Rahaman et al., 2023, BEEI: sentimento do Twitter e Prophet em período curto).
+
+## Protocolo para o filtro de aprendizado de máquina (Etapa 2, pesquisa em Python fora do sistema)
+
+Este é o contrato da próxima etapa. O filtro de aprendizado de máquina só é pesquisado fora do ZenTrade e só entra no motor se passar por todas as regras abaixo.
+
+1. **Só features estacionárias ou normalizadas.** Variações percentuais ou múltiplos de ATR; nunca preço nominal.
+2. **Walk-forward com purge e embargo.** O embargo é, no mínimo, a duração máxima de uma operação (o tempo máximo da estratégia ou o horizonte da barreira tripla).
+3. **Várias moedas no mesmo conjunto de dados.** A divisão treino/teste e o embargo seguem o timestamp GLOBAL: nunca uma moeda no treino e outra no teste na mesma data. Cada amostra pesa o inverso do número de sinais simultâneos (unicidade de amostras, López de Prado, cap. 4).
+4. **Rótulos pela barreira tripla com as MESMAS saídas da estratégia.** Reaproveitar o desfecho contrafactual do placar (`packages/dominio/src/placar/`), com a execução escolhida na estratégia (abertura do candle seguinte).
+5. **Poucos eventos: mais histórico e mais moedas.** Ampliar o histórico (Binance desde 2017 a 2019) e usar de 10 a 20 moedas líquidas. Com menos de cerca de 1.000 sinais, a favorita é a regressão logística com regularização L2: a probabilidade sai bem calibrada pela log-loss e leva-se ao TypeScript com um produto escalar e uma sigmoide. O LightGBM entra só como comparação, com árvores rasas (`max_depth` ≤ 3 a 4, `num_leaves` ≤ 15, `min_child_samples` alto) e calibração sigmoide (Platt) feita dentro do treino. Nunca isotônica.
+6. **Hiperparâmetros fixados antes.** Toda configuração testada entra no número de tentativas do Sharpe deflacionado.
+7. **Corte de aprovação pelo valor esperado líquido.** O filtro só aprova o sinal se p × ganho médio − (1 − p) × perda média − custos > 0, depois de taxas e deslizamento. Ganho e perda médios são estimados só no treino. É a linha de Bysik e Ślepaczuk [57].
+8. **Comparações obrigatórias.** (a) A regra pura, sem filtro. (b) Um filtro aleatório com a mesma taxa de aprovação, rodado cerca de 1.000 vezes: é a distribuição nula, e o modelo precisa passar do percentil 95. (c) Regressão logística contra LightGBM.
+9. **Critério de sucesso.** Bater a regra pura no Sharpe deflacionado fora da amostra e passar do percentil 95 do filtro aleatório. Só então o filtro é integrado ao motor.
+
 ## O que o ZenTrade faz em relação a cada prática
 
 O estado de cada item está em [`README.md`](../README.md) e nos documentos [`estrategias.md`](estrategias.md), [`operacao.md`](operacao.md) e [`seguranca.md`](seguranca.md). Em linhas gerais:
 
-| Prática                                                         | Onde está                                                         |
-| --------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Regras determinísticas e explicáveis                            | `packages/dominio/src/regras.ts`                                  |
-| Motor de risco com a palavra final; a IA não afrouxa limite     | `packages/dominio/src/risco.ts`, `apps/motor/src/nucleo/plano.ts` |
-| Papel, testnet e portão de dinheiro real (2FA + reautenticação) | `apps/motor`, `apps/api/src/rotas/robos.ts`                       |
-| Parada geral, vigia de saúde e auditoria encadeada              | `apps/api/src/rotas/parada.ts`, `infra/n8n`, `packages/banco`     |
-| Limites da API da Binance (429/418, disjuntor)                  | `packages/corretora/src/cliente.ts`, `disjuntor.ts`               |
-| Backtest, métricas e validação fora da amostra                  | `apps/motor/src/backtest`                                         |
+| Prática                                                         | Onde está                                                             |
+| --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Regras determinísticas e explicáveis                            | `packages/dominio/src/regras.ts`                                      |
+| Motor de risco com a palavra final; a IA não afrouxa limite     | `packages/dominio/src/risco.ts`, `apps/motor/src/nucleo/plano.ts`     |
+| Papel, testnet e portão de dinheiro real (2FA + reautenticação) | `apps/motor`, `apps/api/src/rotas/robos.ts`                           |
+| Parada geral, vigia de saúde e auditoria encadeada              | `apps/api/src/rotas/parada.ts`, `infra/n8n`, `packages/banco`         |
+| Limites da API da Binance (429/418, disjuntor)                  | `packages/corretora/src/cliente.ts`, `disjuntor.ts`                   |
+| Backtest, métricas e validação fora da amostra                  | `apps/motor/src/backtest`                                             |
+| Execução na abertura do candle seguinte (opção, mais cautelosa) | `execucao: "proximaAbertura"` em `packages/contratos/src/backtest.ts` |
+| Filtro de horário (janela em que a regra vale)                  | regra `horario` em `packages/dominio/src/regras.ts`                   |
 
 ## Fontes
 
@@ -185,3 +212,7 @@ O estado de cada item está em [`README.md`](../README.md) e nos documentos [`es
 53. Yao et al. — [Tree of Thoughts: Deliberate Problem Solving with Large Language Models (NeurIPS 2023)](https://arxiv.org/abs/2305.10601)
 54. López de Prado — [Advances in Financial Machine Learning (Wiley, 2018), cap. 3: tripla barreira e meta-rotulagem](https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086)
 55. Greshake et al. — [Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection (2023)](https://arxiv.org/abs/2302.12173)
+56. Islas Anguiano & García-Medina — [Technical Analysis Meets Machine Learning: Bitcoin Evidence (2025)](https://arxiv.org/abs/2511.00665)
+57. Bysik & Ślepaczuk — [Machine Learning-Based Bitcoin Trading Under Transaction Costs: Evidence From Walk-Forward Forecasting (2026)](https://arxiv.org/abs/2606.00060)
+58. Rosa — trabalho de conclusão de curso (UNIPAMPA, 2025): backtest de day trade técnico no WINFUT contra buy and hold
+59. Chan — Algorithmic Trading: Winning Strategies and Their Rationale (Wiley, 2013)
