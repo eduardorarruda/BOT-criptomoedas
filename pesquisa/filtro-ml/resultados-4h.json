@@ -1,0 +1,99 @@
+{
+  "intervalo": "4h",
+  "sinais_total": 2665,
+  "sinais_teste": 2161,
+  "n_tentativas": 3,
+  "dobras": [
+    {
+      "dobra": "2021",
+      "n_treino": 479,
+      "n_teste": 449,
+      "filtro_aplicado": true,
+      "ganho_medio": 0.14746780270486537,
+      "perda_media": 0.04377491516033509
+    },
+    {
+      "dobra": "2022",
+      "n_treino": 941,
+      "n_teste": 265,
+      "filtro_aplicado": true,
+      "ganho_medio": 0.19754225835306144,
+      "perda_media": 0.055155516720195086
+    },
+    {
+      "dobra": "2023",
+      "n_treino": 1210,
+      "n_teste": 397,
+      "filtro_aplicado": true,
+      "ganho_medio": 0.173627310857159,
+      "perda_media": 0.053398836727116684
+    },
+    {
+      "dobra": "2024",
+      "n_treino": 1581,
+      "n_teste": 409,
+      "filtro_aplicado": true,
+      "ganho_medio": 0.16145296315794644,
+      "perda_media": 0.049072267421815384
+    },
+    {
+      "dobra": "2025",
+      "n_treino": 2012,
+      "n_teste": 338,
+      "filtro_aplicado": true,
+      "ganho_medio": 0.15461032961477914,
+      "perda_media": 0.04665844199159209
+    },
+    {
+      "dobra": "2026",
+      "n_treino": 2352,
+      "n_teste": 303,
+      "filtro_aplicado": true,
+      "ganho_medio": 0.143119177876869,
+      "perda_media": 0.04555671327940168
+    }
+  ],
+  "candidatos": {
+    "regra_pura": {
+      "operacoes": 2161,
+      "taxa_aprovacao": 0.8108818011257035,
+      "acerto": 0.2966219342896807,
+      "retorno_medio_pct": 0.9868990030888666,
+      "retorno_somado_pct_capital": 142.17924971166934,
+      "sharpe_anual": 1.2349028213561213,
+      "sharpe_deflacionado": 0.9995496769077401
+    },
+    "logistica": {
+      "operacoes": 1964,
+      "taxa_aprovacao": 0.7369606003752345,
+      "acerto": 0.30091649694501016,
+      "retorno_medio_pct": 1.0534696487077404,
+      "retorno_somado_pct_capital": 137.93429267080018,
+      "sharpe_anual": 1.2972122676542728,
+      "sharpe_deflacionado": 0.9998100349467378,
+      "auc_fora_da_amostra": 0.5226301420477871,
+      "nulo_sharpe_anual_p50": 1.101986159925695,
+      "nulo_sharpe_anual_p95": 1.2642766731864161,
+      "percentil_no_nulo": 96.8,
+      "bate_regra_no_dsr": true,
+      "passa_p95_nulo": true,
+      "passa_criterio": true
+    },
+    "lightgbm": {
+      "operacoes": 2161,
+      "taxa_aprovacao": 0.8108818011257035,
+      "acerto": 0.2966219342896807,
+      "retorno_medio_pct": 0.9868990030888666,
+      "retorno_somado_pct_capital": 142.17924971166934,
+      "sharpe_anual": 1.2349028213561213,
+      "sharpe_deflacionado": 0.9995496769077401,
+      "auc_fora_da_amostra": 0.5001549798834058,
+      "nulo_sharpe_anual_p50": 1.2349028213561213,
+      "nulo_sharpe_anual_p95": 1.2349028213561213,
+      "percentil_no_nulo": 0.0,
+      "bate_regra_no_dsr": false,
+      "passa_p95_nulo": false,
+      "passa_criterio": false
+    }
+  }
+}
