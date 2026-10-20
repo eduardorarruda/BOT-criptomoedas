@@ -7,7 +7,7 @@ import {
   type Intervalo,
 } from "@zentrade/contratos/esquemas";
 import { direcaoDe } from "@zentrade/dominio";
-import { Play, SlidersHorizontal } from "lucide-react";
+import { FileUp, Play, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { useFonte } from "../../api/contexto";
 import { mensagemDe } from "../../api/erros";
@@ -28,6 +28,7 @@ import {
   type Avancado,
 } from "./CamposCripto";
 import { AtualizarWin } from "./AtualizarWin";
+import { EnvioB3 } from "./EnvioB3";
 import { criarApiImportacaoB3 } from "./apiB3";
 import { CamposDoWin, SemDadosWin, TEXTO_APROXIMACAO } from "./CamposWin";
 import { CAMPOS_WIN_INICIAIS, configuracaoWinDoFormulario, errosWin, janelaWin } from "./formularioWin";
@@ -212,6 +213,14 @@ export function FormBacktest() {
       {janela ? <JanelaDoWin janela={janela} /> : null}
       {ehWin && !fonte.demo ? (
         <AtualizarWin api={apiImportacao} aoConcluir={() => void dadosWin.refetch()} />
+      ) : null}
+      {ehWin && !fonte.demo && cobertura.some((c) => c.simbolo === SIMBOLO_WIN) ? (
+        <details className="bt-avancado">
+          <summary>
+            <FileUp size={14} aria-hidden="true" /> Importar mais dias da B3 (.zip "Negócio a negócio")
+          </summary>
+          <EnvioB3 api={apiImportacao} aoConcluir={() => void dadosWin.refetch()} />
+        </details>
       ) : null}
       <details className="bt-avancado">
         <summary>
