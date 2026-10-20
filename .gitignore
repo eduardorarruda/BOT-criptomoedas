@@ -7,3 +7,8 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
+
+# Pesquisa do filtro de aprendizado de máquina (Etapa 2)
+pesquisa/filtro-ml/dados/
+pesquisa/filtro-ml/.venv/
+pesquisa/filtro-ml/__pycache__/

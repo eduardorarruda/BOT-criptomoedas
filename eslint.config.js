@@ -13,6 +13,7 @@ export default tseslint.config(
       "infra/n8n/**",
       "index.js",
       "docs/pesquisa/**/scripts/**",
+      "pesquisa/**",
     ],
   },
   js.configs.recommended,
