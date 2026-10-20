@@ -132,6 +132,7 @@ function recorte(ctx: ContextoMercado, de: number, ate: number): ContextoMercado
     fechamentos: ctx.fechamentos.slice(de, ate),
     ...Object.fromEntries(series),
     ...(ctx.intervaloMs !== undefined ? { intervaloMs: ctx.intervaloMs } : {}),
+    ...(ctx.fuso ? { fuso: ctx.fuso } : {}),
   };
 }
 

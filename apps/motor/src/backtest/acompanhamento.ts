@@ -88,5 +88,6 @@ export function contextoEntre(ctx: ContextoMercado, de: number, ate: number): Co
     ...(volumes ? { volumes } : {}),
     ...(instantes ? { instantes } : {}),
     ...(ctx.intervaloMs !== undefined ? { intervaloMs: ctx.intervaloMs } : {}),
+    ...(ctx.fuso ? { fuso: ctx.fuso } : {}),
   };
 }

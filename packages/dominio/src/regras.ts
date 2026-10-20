@@ -1,6 +1,7 @@
 import { problemasIndicador, rotuloIndicador, valorIndicador, type OperandoIndicador } from "./catalogo.js";
 import { serieDe, type ContextoMercado, type SerieCandle } from "./contexto.js";
 import { formatarNumero } from "./formatar.js";
+import { FUSO_PADRAO, horaNoFuso, nomeDoFuso } from "./fuso.js";
 
 /**
  * A estratégia é uma árvore: grupos E / OU / NÃO com comparações nas folhas. O
@@ -30,7 +31,12 @@ export type Regra =
       readonly esquerda: Operando;
       readonly comparador: Comparador;
       readonly direita: Operando;
-    };
+    }
+  /**
+   * Janela de horário "HH:MM", [de, ate), no fuso do mercado: vale quando a ABERTURA do
+   * último candle fechado cai dentro dela. Se `de` > `ate`, a janela cruza a meia-noite.
+   */
+  | { readonly tipo: "horario"; readonly de: string; readonly ate: string };
 
 export interface Resultado {
   readonly valor: boolean;
@@ -122,11 +128,48 @@ function comparar(regra: Extract<Regra, { tipo: "comparar" }>, ctx: ContextoMerc
   };
 }
 
+const FORMATO_HORARIO = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** "HH:MM" em minutos desde a meia-noite, ou `null` se o texto não é um horário. */
+function minutosDe(texto: string): number | null {
+  const m = FORMATO_HORARIO.exec(texto);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+
+const doisDigitos = (n: number): string => String(n).padStart(2, "0");
+
+/**
+ * A regra de horário. Lê a hora de ABERTURA do último candle fechado (já conhecida no
+ * momento da decisão: nada do futuro) no fuso do contexto. Janela com `de` = `ate` é
+ * recusada por `validarRegra`; se chegar aqui, não vale em horário nenhum.
+ */
+function horario(regra: Extract<Regra, { tipo: "horario" }>, ctx: ContextoMercado): Resultado {
+  const instantes = serieDe(ctx, "instantes");
+  const abertura = instantes?.[instantes.length - 1];
+  if (abertura === undefined)
+    return { valor: false, explicacao: "dados insuficientes para o horário do candle" };
+  const de = minutosDe(regra.de);
+  const ate = minutosDe(regra.ate);
+  const h = horaNoFuso(abertura, ctx.fuso ?? FUSO_PADRAO);
+  const dentro =
+    de === null || ate === null || de === ate
+      ? false
+      : de < ate
+        ? h.minutos >= de && h.minutos < ate
+        : h.minutos >= de || h.minutos < ate;
+  return {
+    valor: dentro,
+    explicacao: `horário do candle ${doisDigitos(h.hora)}:${doisDigitos(h.minuto)} entre ${regra.de} e ${regra.ate}: ${dentro ? "sim" : "não"}`,
+  };
+}
+
 /** Avalia a árvore inteira (sem atalho: a explicação mostra todas as condições). */
 export function avaliar(regra: Regra, ctx: ContextoMercado): Resultado {
   switch (regra.tipo) {
     case "comparar":
       return comparar(regra, ctx);
+    case "horario":
+      return horario(regra, ctx);
     case "nao": {
       const r = avaliar(regra.regra, ctx);
       return { valor: !r.valor, explicacao: `não (${r.explicacao})` };
@@ -188,6 +231,11 @@ export function validarRegra(regra: Regra): string[] {
       return;
     }
     switch (r.tipo) {
+      case "horario":
+        if (minutosDe(r.de) === null || minutosDe(r.ate) === null)
+          problemas.add("o horário precisa estar no formato HH:MM, de 00:00 a 23:59");
+        else if (r.de === r.ate) problemas.add('os horários "de" e "até" precisam ser diferentes');
+        return;
       case "comparar":
         operando(r.esquerda, prof + 1);
         operando(r.direita, prof + 1);
@@ -213,16 +261,18 @@ export function validarRegra(regra: Regra): string[] {
  * A regra em texto, sem os valores do momento ("preço < fundo de Donchian(10)"): o
  * que o agente lê para saber como a posição vai sair. Mesmos rótulos da explicação.
  */
-export function descreverRegra(regra: Regra): string {
+export function descreverRegra(regra: Regra, fuso: string = FUSO_PADRAO): string {
   switch (regra.tipo) {
+    case "horario":
+      return `horário entre ${regra.de} e ${regra.ate} (${nomeDoFuso(fuso)})`;
     case "comparar":
       return `${rotulo(regra.esquerda)} ${SIMBOLO[regra.comparador]} ${rotulo(regra.direita)}`;
     case "nao":
-      return `não (${descreverRegra(regra.regra)})`;
+      return `não (${descreverRegra(regra.regra, fuso)})`;
     case "e":
     case "ou":
       return regra.regras.length === 1
-        ? descreverRegra(regra.regras[0] as Regra)
-        : regra.regras.map((r) => `(${descreverRegra(r)})`).join(regra.tipo === "e" ? " e " : " ou ");
+        ? descreverRegra(regra.regras[0] as Regra, fuso)
+        : regra.regras.map((r) => `(${descreverRegra(r, fuso)})`).join(regra.tipo === "e" ? " e " : " ou ");
   }
 }

@@ -71,6 +71,17 @@ describe("esquemas", () => {
     expect(RegraEsquema.safeParse({ tipo: "talvez" }).success).toBe(false);
   });
 
+  it("regra de horário: HH:MM de 00:00 a 23:59, combinável com as outras", () => {
+    const ok = (de: string, ate: string) =>
+      RegraEsquema.safeParse({ tipo: "nao", regra: { tipo: "horario", de, ate } }).success;
+    expect(ok("12:00", "15:00")).toBe(true);
+    expect(ok("22:00", "02:00")).toBe(true);
+    expect(ok("9:00", "15:00")).toBe(false);
+    expect(ok("12:00", "24:00")).toBe(false);
+    expect(ok("12:60", "15:00")).toBe(false);
+    expect(RegraEsquema.safeParse({ tipo: "horario", de: "12:00" }).success).toBe(false);
+  });
+
   it("proposta do agente: confiança entre 0 e 1 e justificativa obrigatória", () => {
     const ok = {
       acao: "comprar",

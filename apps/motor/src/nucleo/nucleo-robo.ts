@@ -55,7 +55,7 @@ export class NucleoRobo {
     readonly robo: RoboConfig,
     private readonly deps: Dependencias,
   ) {
-    this.buffer = new BufferCandles(deps.opcoes.tamanhoHistorico);
+    this.buffer = new BufferCandles(deps.opcoes.tamanhoHistorico, deps.opcoes.fuso);
     this.aberta = new PosicaoAberta(robo, deps);
     this.bloqueio = new MemoriaBloqueio(() => deps.robos.pausado(robo.id));
     this.acompanhamento = new AcompanhamentoPosicao(

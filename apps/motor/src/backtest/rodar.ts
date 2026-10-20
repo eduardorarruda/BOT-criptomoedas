@@ -1,4 +1,4 @@
-import type { CustosBacktest, Intervalo, RoboConfig } from "@zentrade/contratos";
+import type { CustosBacktest, Intervalo, ModoExecucaoBacktest, RoboConfig } from "@zentrade/contratos";
 import { ativosDoSimbolo, PapelCorretora } from "@zentrade/corretora";
 import {
   contextoDeCandles,
@@ -60,6 +60,14 @@ export interface EntradaBacktest {
   readonly aquecimento?: number;
   /** Onde começa o dia da perda diária (padrão: America/Sao_Paulo, como OPCOES_PADRAO). */
   readonly fuso?: string;
+  /**
+   * Onde executa a ordem decidida no fechamento do candle. Sem ele (ou `fechamento`): no
+   * fechamento. `proximaAbertura`: no preço de abertura do candle seguinte da janela (mais
+   * deslizamento e taxa, como sempre). Stop e alvo seguem vigiados dentro do candle. No
+   * último candle da janela não há candle seguinte: a entrada não abre e a saída por regra
+   * ou por tempo executa no fechamento dele.
+   */
+  readonly execucao?: ModoExecucaoBacktest;
 }
 
 export interface SaidasIntrabar {
@@ -214,8 +222,21 @@ async function vigiarDentroDoCandle(
   if (saida.ambiguo) st.intrabar.ambiguos++;
 }
 
+/** Onde e quando a ordem decidida no fechamento de um candle é executada. */
+interface PontoDeExecucao {
+  readonly preco: Valor;
+  readonly em: number;
+}
+
 /** Depois do fechamento: começa a acompanhar uma compra nova ou atualiza a que segue aberta. */
-async function aposFechamento(m: Montagem, e: EntradaBacktest, c: Candle, st: Estado, ctx: ContextoMercado) {
+async function aposFechamento(
+  m: Montagem,
+  e: EntradaBacktest,
+  c: Candle,
+  st: Estado,
+  ctx: ContextoMercado,
+  onde: PontoDeExecucao = { preco: c.fecha, em: c.fechamento },
+) {
   const posicao = await posicaoAtual(m);
   if (posicao.quantidade.isZero()) {
     st.aberta = null;
@@ -228,11 +249,27 @@ async function aposFechamento(m: Montagem, e: EntradaBacktest, c: Candle, st: Es
   if (!precisaAcompanhar(e.estrategia)) return;
   const r = aoFecharComPosicao(st.aberta, ctx, c.fecha, posicao);
   st.aberta = r.posicao;
-  if (
-    r.saida &&
-    (await vender(m, e, { preco: c.fecha, em: c.fechamento, sinal: r.saida }, posicao, ctx.fechamentos))
-  )
+  if (r.saida && (await vender(m, e, { ...onde, sinal: r.saida }, posicao, ctx.fechamentos)))
     st.aberta = null;
+}
+
+/**
+ * `proximaAbertura`: a decisão do candle `anterior` (já fechado) é tomada com o mercado
+ * daquele fechamento, mas a ordem chega ao mercado na ABERTURA do candle seguinte: a
+ * corretora de papel executa nesse preço (mais deslizamento e taxa), no instante da abertura.
+ */
+async function decidirNaAbertura(
+  m: Montagem,
+  e: EntradaBacktest,
+  st: Estado,
+  anterior: Candle,
+  proximo: Candle,
+  ctx: ContextoMercado,
+) {
+  m.relogio.definir(proximo.abertura);
+  m.corretora.definirPreco(e.simbolo, proximo.abre);
+  await m.nucleo.aoFecharIntervalo(anterior);
+  await aposFechamento(m, e, anterior, st, ctx, { preco: proximo.abre, em: proximo.abertura });
 }
 
 /**
@@ -260,18 +297,33 @@ export async function rodarBacktest(e: EntradaBacktest): Promise<ResultadoBackte
   anteriores.forEach((c) => m.corretora.alimentar(e.simbolo, e.intervalo, c));
   await m.nucleo.completarHistorico(anteriores);
   // O mesmo tamanho de histórico que o robô guarda: indicadores e ATR veem o que ele veria.
-  const todos = contextoDeCandles(e.candles);
+  const todos = contextoDeCandles(e.candles, m.deps.opcoes.fuso);
   const historico = m.deps.opcoes.tamanhoHistorico;
   const ate = (i: number) => contextoEntre(todos, Math.max(0, i + 1 - historico), i + 1);
   const curva: PontoCurva[] = [];
   const st: Estado = { aberta: null, expostas: 0, intrabar: { stop: 0, alvo: 0, ambiguos: 0 } };
+  const naAbertura = e.execucao === "proximaAbertura";
   for (const [k, c] of janela.entries()) {
+    const anterior = janela[k - 1];
+    if (naAbertura && anterior) await decidirNaAbertura(m, e, st, anterior, c, ate(corte + k - 1));
     await vigiarDentroDoCandle(m, e, c, st, ate(corte + k - 1));
     m.relogio.definir(c.fechamento);
     m.corretora.alimentar(e.simbolo, e.intervalo, c);
-    await m.nucleo.aoFecharIntervalo(c);
-    await aposFechamento(m, e, c, st, ate(corte + k));
+    if (!naAbertura) {
+      await m.nucleo.aoFecharIntervalo(c);
+      await aposFechamento(m, e, c, st, ate(corte + k));
+    }
     curva.push({ em: c.fechamento, patrimonio: await patrimonio(m.corretora, e.simbolo, c.fecha) });
+  }
+  const ultimo = janela.at(-1);
+  if (naAbertura && ultimo && !(await posicaoAtual(m)).quantidade.isZero()) {
+    // Sem candle seguinte: a saída decidida no último fechamento executa nele mesmo.
+    await m.nucleo.aoFecharIntervalo(ultimo);
+    await aposFechamento(m, e, ultimo, st, ate(corte + janela.length - 1));
+    curva[curva.length - 1] = {
+      em: ultimo.fechamento,
+      patrimonio: await patrimonio(m.corretora, e.simbolo, ultimo.fecha),
+    };
   }
   if (m.erros.length > 0) throw new Error(`O backtest falhou: ${m.erros[0]}`);
   const execucoes = await m.ordens.execucoes(ID);

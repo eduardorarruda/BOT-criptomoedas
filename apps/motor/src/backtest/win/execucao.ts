@@ -20,7 +20,7 @@ export type MotivoSaidaWin = MotivoVenda | "zeragem";
 export interface PosicaoWin {
   readonly sentido: Sentido;
   readonly contratos: number;
-  /** O preço que a estratégia viu (o fechamento do candle da decisão). */
+  /** O preço de referência da ordem (o fechamento do candle da decisão ou, na `proximaAbertura`, a abertura do seguinte). */
   readonly referencia: Valor;
   /** O preço executado, com tick e deslizamento. */
   readonly entrada: Valor;

@@ -1,3 +1,4 @@
+import type { ModoExecucaoBacktest } from "@zentrade/contratos";
 import {
   atualizarStop,
   contratosPeloRisco,
@@ -22,6 +23,7 @@ import {
   precoDeEntrada,
   type OperacaoWin,
   type PosicaoWin,
+  type MotivoSaidaWin,
   type Saida,
 } from "./execucao.js";
 import type { ModeloWin } from "./modelo.js";
@@ -43,13 +45,26 @@ export interface EstadoWin {
   zeragens: number;
   semEspaco: number;
   barradas: number;
+  /** Ordem decidida no fechamento do candle anterior, à espera da abertura deste (`proximaAbertura`). */
+  pendente: OrdemPendente | null;
   readonly intrabar: { -readonly [K in keyof SaidasIntrabar]: number };
 }
+
+/**
+ * O que a regra decidiu no fechamento e só executa na abertura do candle seguinte. A
+ * entrada guarda o que a estratégia viu (sentido e distância de risco); o preço, o stop
+ * e o tamanho saem do preço de abertura, que é o executado.
+ */
+export type OrdemPendente =
+  | { readonly tipo: "entrar"; readonly sentido: Sentido; readonly distanciaRisco: Valor | undefined }
+  | { readonly tipo: "sair"; readonly motivo: MotivoSaidaWin };
 
 export interface Simulacao {
   readonly estrategia: Estrategia;
   readonly modelo: ModeloWin;
   readonly limites: LimitesRisco | null;
+  /** Onde executa a ordem decidida no fechamento. Sem ele: no fechamento. */
+  readonly execucao?: ModoExecucaoBacktest;
 }
 
 export interface MomentoCandle {
@@ -59,6 +74,8 @@ export interface MomentoCandle {
   /** Fim do candle: o instante da decisão. */
   readonly decisao: number;
 }
+
+const naAbertura = (s: Simulacao): boolean => s.execucao === "proximaAbertura";
 
 const HORA_MS = 3_600_000;
 
@@ -106,13 +123,47 @@ export function aoFecharComPosicao(
     { ...ctx, preco: c.fecha, acompanhamento },
     { sentido: p.sentido, precoMedio: p.entrada },
   );
-  if (sinal.acao === "ZERAR" || t.ultimoDoDia || deveZerar(t.decisao, s.modelo.sessao)) {
+  const zeragem = t.ultimoDoDia || deveZerar(t.decisao, s.modelo.sessao);
+  if (sinal.acao === "ZERAR" || zeragem) {
     const motivo = sinal.acao === "ZERAR" ? sinal.motivo : "zeragem";
-    registrarSaida(st, s.modelo, { referencia: c.fecha, motivo, em: c.fechamento, dia: t.dia });
+    // A zeragem do fim do pregão (ou da janela) não espera: nada dorme posicionado.
+    if (naAbertura(s) && !zeragem) {
+      st.aberta = { ...p, acompanhamento };
+      st.pendente = { tipo: "sair", motivo };
+    } else registrarSaida(st, s.modelo, { referencia: c.fecha, motivo, em: c.fechamento, dia: t.dia });
     return true;
   }
   st.aberta = { ...p, acompanhamento };
   return false;
+}
+
+/**
+ * Executa, na ABERTURA do candle `c`, a ordem que a regra decidiu no fechamento do
+ * anterior (`ctx` é o mercado daquele fechamento). Roda antes de qualquer outra coisa do
+ * candle: a ordem chega primeiro, e o stop e o alvo do candle já valem para a posição nova.
+ */
+export function executarPendente(
+  st: EstadoWin,
+  s: Simulacao,
+  c: Candle,
+  ctx: ContextoMercado,
+  t: MomentoCandle,
+): void {
+  const ordem = st.pendente;
+  st.pendente = null;
+  if (!ordem) return;
+  if (ordem.tipo === "sair") {
+    registrarSaida(st, s.modelo, { referencia: c.abre, motivo: ordem.motivo, em: c.abertura, dia: t.dia });
+    return;
+  }
+  const posicao = montarPosicao(s, ordem.sentido, c.abre, c.abertura, ctx, ordem.distanciaRisco, st.caixa);
+  if (!posicao) {
+    st.semEspaco++;
+    return;
+  }
+  st.caixa = st.caixa.minus(custoDeUmLado(s.modelo, posicao.contratos));
+  st.aberta = posicao;
+  st.ordens.push(c.abertura);
 }
 
 /** O que barra uma entrada, como no motor de risco do robô: perda do dia, frequência e pausa. */
@@ -126,20 +177,22 @@ export function barreira(st: EstadoWin, l: LimitesRisco | null, agora: number): 
 }
 
 /**
- * A posição que a entrada abriria: preço executado (tick + deslizamento), stop da
+ * A posição que a entrada abriria a partir do preço de `referencia` (o fechamento do
+ * candle da decisão ou a abertura do seguinte): preço executado (tick + deslizamento), stop da
  * estratégia a partir dele (percentual ou por ATR), contratos pelo risco em reais, pelo
  * máximo e pela margem. `null` quando nem 1 contrato cabe.
  */
 export function montarPosicao(
   s: Simulacao,
   sentido: Sentido,
-  c: Candle,
+  referencia: Valor,
+  em: number,
   ctx: ContextoMercado,
   distanciaRisco: Valor | undefined,
   capital: Valor,
 ): PosicaoWin | null {
   const m = s.modelo;
-  const entrada = precoDeEntrada(m, sentido, c.fecha);
+  const entrada = precoDeEntrada(m, sentido, referencia);
   const { stop } = stopDeEntrada(s.estrategia, entrada, ctx, sentido);
   const distancia = entrada.minus(stop).abs();
   const risco = distanciaRisco?.gt(distancia) ? distanciaRisco : distancia;
@@ -156,11 +209,11 @@ export function montarPosicao(
   return {
     sentido,
     contratos,
-    referencia: c.fecha,
+    referencia,
     entrada,
     alvo: precoAlvo(entrada, s.estrategia.alvoLiquido, s.estrategia.taxa, sentido),
     acompanhamento: { ...iniciarAcompanhamento(s.estrategia, { precoMedio: entrada }, sentido), stop },
-    em: c.fechamento,
+    em,
   };
 }
 
@@ -174,7 +227,11 @@ export function tentarAbrir(st: EstadoWin, s: Simulacao, c: Candle, ctx: Context
     st.barradas++;
     return;
   }
-  const posicao = montarPosicao(s, sinal.sentido, c, ctx, sinal.distanciaRisco, st.caixa);
+  if (naAbertura(s)) {
+    st.pendente = { tipo: "entrar", sentido: sinal.sentido, distanciaRisco: sinal.distanciaRisco };
+    return;
+  }
+  const posicao = montarPosicao(s, sinal.sentido, c.fecha, c.fechamento, ctx, sinal.distanciaRisco, st.caixa);
   if (!posicao) {
     st.semEspaco++;
     return;

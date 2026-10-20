@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contextoDeCandles } from "@zentrade/dominio";
+import { avaliar, contextoDeCandles, type Regra } from "@zentrade/dominio";
 import { BufferCandles } from "./buffer.js";
 import { candle } from "./teste/candles.js";
 
@@ -34,5 +34,23 @@ describe("buffer circular de candles", () => {
     expect(new BufferCandles(2).ultimo()).toBeUndefined();
     expect(new BufferCandles(2).lista()).toEqual([]);
     expect(() => new BufferCandles(0)).toThrow(/capacidade/);
+  });
+
+  it("o robô ao vivo e o backtest avaliam a regra de horário igual: o contexto leva o fuso da instância", () => {
+    // 15:00 UTC = 12:00 em Brasília = 11:00 em Nova York (UTC−4 em outubro)
+    const abertura = Date.UTC(2026, 9, 20, 15, 0);
+    const janela: Regra = { tipo: "horario", de: "12:00", ate: "13:00" };
+    const doRobo = (fuso?: string) => {
+      const b = new BufferCandles(3, fuso);
+      b.adicionar(candle(abertura, 100, 300_000));
+      return b.contexto();
+    };
+    const doBacktest = (fuso?: string) => contextoDeCandles([candle(abertura, 100, 300_000)], fuso);
+    for (const fuso of [undefined, "America/Sao_Paulo", "America/New_York"]) {
+      expect(doRobo(fuso)).toEqual(doBacktest(fuso));
+      expect(avaliar(janela, doRobo(fuso)).valor).toBe(avaliar(janela, doBacktest(fuso)).valor);
+    }
+    expect(avaliar(janela, doRobo()).valor).toBe(true);
+    expect(avaliar(janela, doRobo("America/New_York")).valor).toBe(false);
   });
 });

@@ -75,6 +75,7 @@ export async function rodarWin(
     saldoInicial: saldo,
     inicio: p.inicio,
     fim: p.fim,
+    execucao: config.execucao,
   });
   const contexto = {
     simbolo: p.simbolo,
