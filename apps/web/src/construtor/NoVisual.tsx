@@ -2,7 +2,15 @@ import type { Comparador } from "@zentrade/dominio";
 import { ArrowDown, ArrowUp, Ban, GripVertical, Plus, Trash2 } from "lucide-react";
 import { m } from "motion/react";
 import type { DragEvent } from "react";
-import { destinosPara, localizar, type NoComparar, type NoEditor, type NoGrupo, type NoNao } from "./arvore";
+import {
+  destinosPara,
+  localizar,
+  type NoComparar,
+  type NoEditor,
+  type NoGrupo,
+  type NoHorario,
+  type NoNao,
+} from "./arvore";
 import { TIPO_ARRASTE, useConstrutor } from "./contexto";
 import { frase } from "./descrever";
 import { EditorOperando } from "./EditorOperando";
@@ -21,7 +29,7 @@ const COMPARADORES: readonly { valor: Comparador; rotulo: string }[] = [
 ];
 
 const nomeDo = (no: NoEditor): string =>
-  no.tipo === "comparar"
+  no.tipo === "comparar" || no.tipo === "horario"
     ? `condição ${frase(no)}`
     : no.tipo === "nao"
       ? "NÃO"
@@ -139,11 +147,13 @@ function Adicionar({ destino }: { readonly destino: NoGrupo | NoNao }) {
     destino.tipo === "nao"
       ? [
           ["comparar", "Condição"],
+          ["horario", "Horário"],
           ["e", "Grupo E"],
           ["ou", "Grupo OU"],
         ]
       : [
           ["comparar", "Condição"],
+          ["horario", "Horário"],
           ["e", "Grupo E"],
           ["ou", "Grupo OU"],
           ["nao", "NÃO"],
@@ -218,6 +228,30 @@ function Comparacao({ no }: { readonly no: NoComparar }) {
   );
 }
 
+/** A janela de horário: dois campos "HH:MM" e uma frase que diz o que ela faz. */
+function JanelaDeHorario({ no }: { readonly no: NoHorario }) {
+  const { despachar } = useConstrutor();
+  const trocar = (parcial: Partial<NoHorario>): void =>
+    despachar({ tipo: "trocarNo", no: { ...no, ...parcial } });
+  const cruza = no.de > no.ate;
+  return (
+    <div className="no__horario">
+      <label className="no__horario-campo">
+        <span>Horário: de</span>
+        <input type="time" value={no.de} onChange={(e) => trocar({ de: e.target.value })} />
+      </label>
+      <label className="no__horario-campo">
+        <span>até</span>
+        <input type="time" value={no.ate} onChange={(e) => trocar({ ate: e.target.value })} />
+      </label>
+      <span className="no__explica">
+        vale quando o candle abre nesta janela, em horário de Brasília (a hora final não entra)
+        {cruza ? "; a janela passa da meia-noite" : ""}
+      </span>
+    </div>
+  );
+}
+
 export function NoVisual({ no, ehRaiz = false }: { readonly no: NoEditor; readonly ehRaiz?: boolean }) {
   const { despachar, anunciar } = useConstrutor();
   const comum = {
@@ -232,6 +266,16 @@ export function NoVisual({ no, ehRaiz = false }: { readonly no: NoEditor; readon
       <m.div className="no no--comparar" {...comum}>
         {ehRaiz ? null : <Alca no={no} />}
         <Comparacao no={no} />
+        <Acoes no={no} />
+      </m.div>
+    );
+  }
+
+  if (no.tipo === "horario") {
+    return (
+      <m.div className="no no--comparar no--horario" {...comum}>
+        {ehRaiz ? null : <Alca no={no} />}
+        <JanelaDeHorario no={no} />
         <Acoes no={no} />
       </m.div>
     );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { novoComparar, novoGrupo, novoNao, type NoComparar } from "./arvore";
+import { novoComparar, novoGrupo, novoHorario, novoNao, type NoComparar } from "./arvore";
 import { frase, fraseComparador, fraseDirecao, frasesLados, frasesSaidas, linhas } from "./descrever";
 
 const preco = (comparador: NoComparar["comparador"]): NoComparar => ({
@@ -169,6 +169,22 @@ describe("prévia em linguagem natural", () => {
       "stop 1% abaixo da entrada",
       "stop móvel a 3 × ATR(14) da maior máxima desde a entrada (só sobe)",
       "na venda, o espelho: stop acima da entrada e stop móvel pela menor mínima (só desce)",
+    ]);
+  });
+});
+
+describe("prévia do bloco de horário", () => {
+  it("diz a janela e o fuso, e combina com as outras condições", () => {
+    expect(frase(novoHorario("12:00", "15:00"))).toBe(
+      "o candle abrir entre 12:00 e 15:00 (horário de Brasília)",
+    );
+    const raiz = novoGrupo("e", [novoComparar(), novoNao(novoHorario("22:00", "02:00"))]);
+    expect(frase(raiz)).toBe(
+      "RSI(14) abaixo de 30 e não (o candle abrir entre 22:00 e 02:00 (horário de Brasília))",
+    );
+    expect(linhas(novoGrupo("e", [novoHorario()])).map((l) => l.texto)).toEqual([
+      "todas estas precisam valer:",
+      "o candle abrir entre 12:00 e 15:00 (horário de Brasília)",
     ]);
   });
 });

@@ -13,6 +13,7 @@ import {
   moverEntreIrmaos,
   novoComparar,
   novoGrupo,
+  novoHorario,
   novoNao,
   paraRegra,
   podeReceber,
@@ -189,5 +190,34 @@ describe("NÃO e troca de grupo", () => {
     const raiz = novoGrupo("e", [novoComparar(), nao]);
     expect(localizar(raiz, c.id)).toMatchObject({ pai: nao, indice: 0, profundidade: 2 });
     expect(localizar(raiz, "x")).toBeNull();
+  });
+});
+
+describe("bloco de horário", () => {
+  const janela: Regra = { tipo: "horario", de: "12:00", ate: "15:00" };
+
+  it("vai e volta entre a regra do domínio e a árvore do editor", () => {
+    const no = deRegra({ tipo: "e", regras: [REGRA, { tipo: "nao", regra: janela }] });
+    expect(paraRegra(no).regra).toEqual({ tipo: "e", regras: [REGRA, { tipo: "nao", regra: janela }] });
+    expect(paraRegra(novoHorario("22:00", "02:00")).regra).toEqual({
+      tipo: "horario",
+      de: "22:00",
+      ate: "02:00",
+    });
+  });
+
+  it("é folha: conta como um nó, não recebe filhos e entra em grupos e no NÃO", () => {
+    const grupo = novoGrupo("e", [novoComparar(), novoHorario()]);
+    expect(contarNos(grupo)).toBe(3);
+    const horario = grupo.filhos[1]!;
+    expect(podeReceber(grupo, horario.id)).toBe(false);
+    const nao = novoNao();
+    expect(inserir(nao, nao.id, 0, horario)).toMatchObject({ filho: { tipo: "horario" } });
+    expect(destinosPara(grupo, horario.id).map((d) => d.id)).toEqual([]);
+  });
+
+  it("horário mal formado converte, mas o validarRegra do domínio recusa", () => {
+    const { regra } = paraRegra(novoHorario("9:00", "15:00"));
+    expect(validarRegra(regra!)[0]).toMatch(/HH:MM/);
   });
 });

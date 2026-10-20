@@ -28,6 +28,7 @@ export const TIPO_ARRASTE = "application/x-zentrade-bloco";
 
 const NOME_BASICO: Readonly<Record<string, string>> = {
   comparar: "Condição",
+  horario: "Horário",
   e: "Grupo E",
   ou: "Grupo OU",
   nao: "NÃO",

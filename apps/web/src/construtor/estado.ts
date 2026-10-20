@@ -18,6 +18,7 @@ import {
   mover,
   moverEntreIrmaos,
   novoComparar,
+  novoHorario,
   novoGrupo,
   novoId,
   novoNao,
@@ -41,7 +42,7 @@ export { fracaoDe } from "./saidas";
  * (para não perder o que foi montado), mas só vão para a estratégia quando a
  * direção usa o lado vendido.
  */
-export type Bloco = "comparar" | "e" | "ou" | "nao" | CondicaoPronta["id"];
+export type Bloco = "comparar" | "horario" | "e" | "ou" | "nao" | CondicaoPronta["id"];
 export type Arvore = "entrada" | "saida" | "entradaVendida" | "saidaVendida";
 
 export interface EstadoConstrutor {
@@ -137,6 +138,7 @@ function deCondicaoPronta(id: string): NoComparar | null {
 
 export function criarBloco(b: Bloco): NoEditor {
   if (b === "comparar") return novoComparar();
+  if (b === "horario") return novoHorario();
   if (b === "nao") return novoNao();
   if (b === "e" || b === "ou") return novoGrupo(b);
   return deCondicaoPronta(b) ?? novoComparar();

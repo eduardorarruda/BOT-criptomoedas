@@ -51,6 +51,8 @@ Indicadores trabalham em `number` (são análise e rodam a cada candle de cada r
 
 Comparadores: `<`, `<=`, `>`, `>=`, `cruzouAcima` e `cruzouAbaixo`. Os de cruzamento olham dois candles: `A cruzouAcima B` é verdade quando no candle anterior `A ≤ B` e no atual `A > B`.
 
+Além das comparações, a árvore tem a regra de **horário**, `{ "tipo": "horario", "de": "12:00", "ate": "15:00" }`, que vale quando o candle **abre** em `[de, ate)`: o início conta e o fim não. Lê a hora de abertura do último candle fechado (nada do futuro), no fuso do mercado: Brasília no mini índice e o fuso da instância (`ZENTRADE_FUSO`, padrão `America/Sao_Paulo`) no cripto. Se `de` for maior que `ate`, a janela passa da meia-noite (`22:00` a `02:00`); `de` igual a `ate` é recusado. Combina com E, OU e NÃO, vale no backtest e no robô ao vivo, e no Construtor é o bloco "Horário".
+
 Regras de avaliação:
 
 - Só candles **fechados** entram na conta. Nada de decidir com candle pela metade.
@@ -239,6 +241,8 @@ Compra quando o RSI de apenas 2 candles cai abaixo de 10 com o preço acima da m
 O backtest roda a estratégia sobre candles históricos com as **mesmas funções do robô** (decisão, agente fixo que concorda, motor de risco, ordem idempotente) numa corretora de papel, e devolve métricas, a curva do patrimônio contra o buy and hold e uma validação (`POST /api/v1/backtests` e `GET /api/v1/backtests/:id`). Ele quer ser **honesto**, não bonito: na dúvida, assume o pior.
 
 ### Premissas (o que é simulado e como)
+
+Por padrão a ordem decidida no fechamento de um candle é executada **no fechamento dele**, mais deslizamento. A opção `execucao: "proximaAbertura"` (na tela: "Executar ordens: na abertura do candle seguinte") executa no preço de **abertura do candle seguinte**, que é quando a ordem de fato chegaria; é mais conservador. Vale para a entrada e para a saída por regra, por tempo e por stop móvel decididas no fechamento (stop e alvo seguem valendo dentro do candle). Sem candle seguinte, no último candle da janela, a entrada não abre e a saída sai no fechamento dele; no WIN, a zeragem do fim do pregão continua no fechamento do último candle do dia. O stop e o alvo do cripto são calculados sobre o preço de decisão (o fechamento); no WIN, sobre o preço executado.
 
 | Item             | Padrão                                                                                                                              | Como entra                                                                     |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |

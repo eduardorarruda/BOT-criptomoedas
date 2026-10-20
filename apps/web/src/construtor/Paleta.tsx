@@ -1,4 +1,4 @@
-import { Activity, Ban, Brackets, GitMerge, SquareEqual } from "lucide-react";
+import { Activity, Ban, Brackets, Clock, GitMerge, SquareEqual } from "lucide-react";
 import { nomeDoBloco, TIPO_ARRASTE, useConstrutor } from "./contexto";
 import type { Bloco } from "./estado";
 import { CONDICOES_PRONTAS } from "./prontas";
@@ -6,6 +6,7 @@ import { CONDICOES_PRONTAS } from "./prontas";
 /** Blocos para arrastar até a árvore. Pelo teclado, use os botões "+" de cada grupo. */
 const BLOCOS: readonly { bloco: Bloco; icone: typeof Ban; dica: string }[] = [
   { bloco: "comparar", icone: SquareEqual, dica: "compara dois valores" },
+  { bloco: "horario", icone: Clock, dica: "vale só numa janela do dia (ex.: 12:00 às 15:00)" },
   { bloco: "e", icone: Brackets, dica: "todas precisam valer" },
   { bloco: "ou", icone: GitMerge, dica: "basta uma valer" },
   { bloco: "nao", icone: Ban, dica: "inverte a condição" },

@@ -3,6 +3,7 @@ import {
   SALDO_PADRAO_WIN,
   type CoberturaWin,
   type ConfiguracaoBacktestEntrada,
+  type ModoExecucaoBacktest,
   type ConfiguracaoWinEntrada,
 } from "@zentrade/contratos/esquemas";
 import { problemasSessao } from "@zentrade/dominio";
@@ -82,6 +83,7 @@ export function errosWin(c: CamposWin): ErrosWin {
 export function configuracaoWinDoFormulario(
   c: CamposWin,
   validacao: NonNullable<ConfiguracaoBacktestEntrada["validacao"]>,
+  execucao: ModoExecucaoBacktest = "fechamento",
 ): ConfiguracaoBacktestEntrada {
   const win: ConfiguracaoWinEntrada = {
     tarifaB3PorContrato: lerReais(c.tarifa) ?? "0.25",
@@ -99,6 +101,7 @@ export function configuracaoWinDoFormulario(
     mercado: "win",
     saldoInicial: lerReais(c.capital, { positivo: true }) ?? SALDO_PADRAO_WIN,
     risco: c.limites === "sem" ? { modo: "sem_limites" } : { modo: "robo" },
+    execucao,
     validacao,
     win,
   };
