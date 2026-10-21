@@ -11,7 +11,7 @@ import type { Operando, Regra } from "./regras.js";
  * Os modelos do mini índice (WIN) são adaptações para day trade em candles de 5
  * minutos, nos dois sentidos. A taxa deles é zero porque, no WIN, os custos (tarifa
  * da B3, corretagem e deslizamento em ticks) vêm do modelo do mercado no backtest;
- * os percentuais de stop e alvo são sobre o índice (0,3% de 130.000 = 390 pontos).
+ * os percentuais de stop e alvo são sobre o índice (1% de 200.000 = 2.000 pontos).
  */
 export interface ModeloEstrategia {
   readonly id: string;
@@ -203,15 +203,15 @@ export const MODELOS_WIN: readonly ModeloEstrategia[] = [
     mercado: "win",
     intervalo: "5m",
     descricao:
-      "Marca a maior máxima e a menor mínima dos primeiros 30 minutos do pregão e opera o rompimento: compra quando o preço fecha acima do topo da faixa e vende quando fecha abaixo do fundo. Sai se o preço voltar ao meio da faixa, no stop (2 ATR, no máximo 0,3% do índice) ou na zeragem do fim do dia. A ideia, estudada desde os anos 1990 em futuros de índice, é que o começo do pregão concentra a informação da noite e o rompimento da faixa pode marcar a direção do dia. Tende a funcionar em dias de tendência; sofre em dias laterais, com rompimentos falsos para os dois lados, e é sensível ao deslizamento logo depois da abertura.",
+      "Marca a maior máxima e a menor mínima dos primeiros 30 minutos do pregão e opera o rompimento: compra quando o preço fecha acima do topo da faixa e vende quando fecha abaixo do fundo. Sai se o preço voltar ao meio da faixa, no stop (4 ATR, no máximo 1% do índice, para ficar além do meio da faixa — se o stop ficasse antes do meio, a saída pelo meio nunca agiria) ou na zeragem do fim do dia. A ideia, estudada desde os anos 1990 em futuros de índice, é que o começo do pregão concentra a informação da noite e o rompimento da faixa pode marcar a direção do dia. Tende a funcionar em dias de tendência; sofre em dias laterais, com rompimentos falsos para os dois lados, e é sensível ao deslizamento logo depois da abertura.",
     estrategia: {
       direcao: "ambos",
       entrada: comparar(preco, "cruzouAcima", faixa("superior")),
       entradaVendida: comparar(preco, "cruzouAbaixo", faixa("inferior")),
       saida: comparar(preco, "<", faixa("meio")),
       saidaVendida: comparar(preco, ">", faixa("meio")),
-      stop: 0.003,
-      stopAtr: { periodo: 14, multiplo: 2 },
+      stop: 0.01,
+      stopAtr: { periodo: 14, multiplo: 4 },
       alvoLiquido: 0.01,
       taxa: SEM_TAXA,
     },
