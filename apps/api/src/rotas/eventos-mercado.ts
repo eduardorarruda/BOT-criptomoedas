@@ -11,7 +11,7 @@ import { z } from "zod";
 import { usuarioIdDe } from "../autenticacao/plugin.js";
 import type { Dependencias } from "../dependencias.js";
 import { ErroApi, naoEncontrado } from "../erros.js";
-import { montarResposta } from "../integracoes/assistente.js";
+import { montarResposta, type ClienteAssistente } from "../integracoes/assistente.js";
 import { extrairSugestao, pedidoDeSugestao } from "../integracoes/sugestao-eventos.js";
 import { exigirUuid, ParamId } from "./comum.js";
 
@@ -90,7 +90,11 @@ export const rotasEventosMercado: FastifyPluginAsyncZod<{ deps: Dependencias }> 
         de: hoje,
         ate: diaNoFuso(deps.agora() + DIAS_DA_SUGESTAO * DIA_MS, deps.config.ZENTRADE_FUSO),
       };
-      const texto = await pedirAoClaude(deps, usuarioId, pedidoDeSugestao(periodo.de, periodo.ate));
+      const texto = await pedirAoClaude(
+        deps.assistente,
+        usuarioId,
+        pedidoDeSugestao(periodo.de, periodo.ate),
+      );
       const sugestao = extrairSugestao(texto, periodo);
       if (sugestao.eventos.length === 0 && sugestao.descartados > 0)
         throw new ErroApi(
@@ -109,11 +113,15 @@ export const rotasEventosMercado: FastifyPluginAsyncZod<{ deps: Dependencias }> 
 };
 
 /** Pergunta ao assistente (o provedor que a pessoa configurou) e junta o texto da resposta. */
-async function pedirAoClaude(deps: Dependencias, usuarioId: string, pergunta: string): Promise<string> {
+async function pedirAoClaude(
+  assistente: ClienteAssistente,
+  usuarioId: string,
+  pergunta: string,
+): Promise<string> {
   const montada = montarResposta();
   const prazo = AbortSignal.timeout(TEMPO_SUGESTAO_MS);
   try {
-    for await (const e of deps.assistente!.responder({ usuarioId, historico: [], pergunta }, prazo))
+    for await (const e of assistente.responder({ usuarioId, historico: [], pergunta }, prazo))
       montada.aplicar(e);
   } catch {
     throw new ErroApi(
