@@ -65,14 +65,17 @@ const pregoes = contextoDeCandles(
 );
 
 describe("modelos do mini índice (WIN)", () => {
-  it("são do WIN em 5 minutos, nos dois sentidos, sem taxa (os custos vêm do mercado)", () => {
+  it("são do WIN em 5 minutos, nos dois sentidos ou só comprados, sem taxa (os custos vêm do mercado)", () => {
     expect(MODELOS_WIN.length).toBeGreaterThanOrEqual(3);
     for (const m of MODELOS_WIN) {
       expect(m).toMatchObject({ mercado: "win", intervalo: "5m" });
-      expect(m.estrategia.direcao).toBe("ambos");
+      expect([undefined, "comprado", "ambos"]).toContain(m.estrategia.direcao);
       expect(m.estrategia.taxa).toBe(0);
       expect(problemasNoMercado(m.estrategia, "win")).toEqual([]);
-      expect(problemasNoMercado(m.estrategia, "cripto")).toHaveLength(1);
+      // só os que vendem a descoberto ficam de fora do cripto (à vista, só comprado)
+      expect(problemasNoMercado(m.estrategia, "cripto")).toHaveLength(
+        m.estrategia.direcao === "ambos" ? 1 : 0,
+      );
       expect(m.descricao).not.toMatch(/recomend/i);
     }
     // os de cripto continuam só comprados

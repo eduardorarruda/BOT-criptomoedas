@@ -256,10 +256,12 @@ describe("Construtor de estratégias", () => {
       TODOS_OS_MODELOS.length,
     );
     const lista = within(document.querySelector<HTMLElement>(".modelos__lista")!);
-    expect(lista.getAllByText("Mini índice (WIN) · 5 min · nos dois sentidos")).toHaveLength(
-      MODELOS_WIN.length,
+    const nosDoisSentidos = MODELOS_WIN.filter((m) => m.estrategia.direcao === "ambos").length;
+    expect(lista.getAllByText("Mini índice (WIN) · 5 min · nos dois sentidos")).toHaveLength(nosDoisSentidos);
+    expect(lista.getAllByText("Mini índice (WIN) · 5 min · só comprado")).toHaveLength(
+      MODELOS_WIN.length - nosDoisSentidos,
     );
-    expect(lista.getAllByText("Vende quando")).toHaveLength(MODELOS_WIN.length);
+    expect(lista.getAllByText("Vende quando")).toHaveLength(nosDoisSentidos);
     expect(lista.getAllByText("Compra quando")).toHaveLength(TODOS_OS_MODELOS.length);
   });
 

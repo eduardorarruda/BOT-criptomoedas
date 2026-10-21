@@ -233,7 +233,18 @@ describe("construtor: saídas", () => {
 describe("construtor: direção e lado vendido", () => {
   const nomeado = () => aplicar(estadoVazio(), { tipo: "nome", nome: "Vende" });
 
-  it.each(MODELOS_WIN.map((m) => [m.nome, m] as const))(
+  it.each(MODELOS_WIN.filter((m) => m.estrategia.direcao !== "ambos").map((m) => [m.nome, m] as const))(
+    "modelo do WIN só comprado %s: volta igual ao modelo, sem regras vendidas",
+    (_, modelo) => {
+      const e = deModelo(modelo);
+      expect(e.entradaVendida).toBeNull();
+      const m = montar(e);
+      expect(m.problemas).toEqual([]);
+      expect(m.estrategia).toEqual({ nome: modelo.nome, ...modelo.estrategia });
+    },
+  );
+
+  it.each(MODELOS_WIN.filter((m) => m.estrategia.direcao === "ambos").map((m) => [m.nome, m] as const))(
     "modelo do WIN %s: guarda a direção e as regras vendidas e volta igual ao modelo",
     (_, modelo) => {
       const e = deModelo(modelo);

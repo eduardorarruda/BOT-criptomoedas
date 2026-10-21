@@ -287,6 +287,30 @@ export const MODELOS_WIN: readonly ModeloEstrategia[] = [
       taxa: SEM_TAXA,
     },
   },
+  {
+    id: "win-p1-tendencia-horario",
+    nome: "Mini índice: rompimento a favor da tendência, fora da abertura e do almoço",
+    mercado: "win",
+    intervalo: "5m",
+    descricao:
+      "Compra quando o preço passa da maior máxima dos 20 candles anteriores e está acima da média de 200 candles, e sai quando fecha abaixo da menor mínima dos 10 anteriores (ou no stop, ou na zeragem do fim do dia). Não abre operação na primeira hora do pregão (9h–10h) nem no almoço (12h–14h), horários de muito ruído e pouca direção. É a versão para o mini índice do rompimento com filtro de tendência que se sustentou nos testes do ZenTrade em cripto (15 moedas, 2021–2026) e nos 20 pregões da B3 de 21/09 a 19/10/2026 — amostra ainda pequena. Só compra: no período testado, a versão espelhada (vendendo nos rompimentos para baixo) perdeu. Tende a funcionar em dias de tendência e de evento (é neles que estão os ganhos grandes); sofre em dias laterais, com rompimentos falsos.",
+    estrategia: {
+      entrada: {
+        tipo: "e",
+        regras: [
+          comparar(preco, ">", donchian(20, "superior")),
+          comparar(preco, ">", { tipo: "indicador", nome: "sma", periodo: 200 }),
+          { tipo: "nao", regra: { tipo: "horario", de: "09:00", ate: "10:00" } },
+          { tipo: "nao", regra: { tipo: "horario", de: "12:00", ate: "14:00" } },
+        ],
+      },
+      saida: comparar(preco, "<", donchian(10, "inferior")),
+      stop: 0.1,
+      stopAtr: { periodo: 20, multiplo: 2 },
+      alvoLiquido: 0.6,
+      taxa: SEM_TAXA,
+    },
+  },
 ];
 
 /** Todos os modelos: os de cripto e os do mini índice. */
