@@ -1,0 +1,1334 @@
+<!doctype html>
+<html lang="pt-BR" class="sem-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ZenTrade — Calma para decidir. Disciplina para executar.</title>
+    <meta
+      name="description"
+      content="ZenTrade: robôs com regras claras, um analista de IA que pensa em três cenários e um motor de risco que dá a palavra final. Cripto, mini índice da B3, renda fixa e imóveis num só lugar. Open source."
+    />
+    <meta name="theme-color" content="#070c0a" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ZenTrade — Calma para decidir. Disciplina para executar." />
+    <meta
+      property="og:description"
+      content="Robôs, IA que pensa em cenários e um motor de risco que decide. Cripto, mini índice, renda fixa e imóveis."
+    />
+    <meta property="og:image" content="img/social.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="img/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+    />
+    <link rel="stylesheet" href="estilos.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "ZenTrade",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Linux, macOS, Windows (Docker)",
+        "description": "Plataforma open source de trading disciplinado e patrimônio: robôs com regras, analista de IA com três cenários, motor de risco determinístico, backtest honesto, mini índice da B3, renda fixa e imóveis.",
+        "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+        "inLanguage": "pt-BR",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" }
+      }
+    </script>
+  </head>
+  <body>
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+    <div class="brilho-cursor" aria-hidden="true"></div>
+    <a class="progresso" href="#topo" aria-label="Voltar ao topo">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" pathLength="1" /></svg>
+      <span aria-hidden="true"></span>
+    </a>
+
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <filter id="pincel" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7" result="ruido" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="ruido"
+            scale="7"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+        <filter id="brilho" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="14" />
+        </filter>
+        <symbol
+          id="i-escudo"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 3 4.5 6v6c0 4.5 3.2 7.8 7.5 9 4.3-1.2 7.5-4.5 7.5-9V6L12 3Z" />
+          <path d="M8.5 12h7" />
+        </symbol>
+        <symbol
+          id="i-balanca"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M12 4v16M7 20h10M5 7h14M5 7l-2.5 6a2.5 2.5 0 0 0 5 0L5 7Zm14 0-2.5 6a2.5 2.5 0 0 0 5 0L19 7Z"
+          />
+        </symbol>
+        <symbol
+          id="i-pausa"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M10 9v6M14 9v6" />
+        </symbol>
+        <symbol
+          id="i-camadas"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+          <path d="m3 13 9 5 9-5" />
+        </symbol>
+        <symbol
+          id="i-casa"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 11 12 4l8 7v9H4v-9Z" />
+          <path d="M10 20v-5h4v5" />
+        </symbol>
+        <symbol
+          id="i-banco"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 9 12 4l9 5H3ZM5 9v8M9.5 9v8M14.5 9v8M19 9v8M3 20h18" />
+        </symbol>
+        <symbol
+          id="i-moeda"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M8 12h8M12 8v8" />
+        </symbol>
+        <symbol
+          id="i-cadeado"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="5" y="10" width="14" height="10" rx="2" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+        </symbol>
+        <symbol
+          id="i-codigo"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" />
+        </symbol>
+        <symbol
+          id="i-olho"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+          <circle cx="12" cy="12" r="3" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <header class="topo" id="topo">
+      <div class="conteiner">
+        <a class="marca" href="#conteudo" aria-label="ZenTrade, início"
+          ><img src="img/simbolo.webp" alt="" width="34" height="34" />ZenTrade</a
+        >
+        <nav class="menu" aria-label="Seções">
+          <a href="#como">Como decide</a>
+          <a href="#ia">IA</a>
+          <a href="#backtest">Backtest</a>
+          <a href="#mini-indice">Mini índice</a>
+          <a href="#patrimonio">Patrimônio</a>
+          <a href="#seguranca">Segurança</a>
+        </nav>
+        <a class="botao primario magnetico" href="#comecar">Começar</a>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="hero" aria-labelledby="titulo-hero">
+        <div class="hero-imagem" aria-hidden="true"></div>
+        <canvas id="fumaca" aria-hidden="true"></canvas>
+        <div class="hero-palco" aria-hidden="true">
+          <div class="horizonte"></div>
+          <svg class="enso-pincel" viewBox="0 0 600 600">
+            <g filter="url(#pincel)">
+              <path
+                class="traco"
+                pathLength="1"
+                d="M194 499.6A226 226 0 1 1 280.3 525.1"
+                stroke="#c9d6cd"
+                stroke-width="5"
+                opacity="0.45"
+              />
+              <path
+                class="traco"
+                pathLength="1"
+                d="M179.5 472A210 210 0 1 1 318.3 509.2"
+                stroke="#dfe8e1"
+                stroke-width="30"
+                opacity="0.92"
+              />
+              <path
+                class="traco"
+                pathLength="1"
+                d="M171.5 442.7A192 192 0 1 1 365.7 480.5"
+                stroke="#b9c9bf"
+                stroke-width="8"
+                opacity="0.55"
+              />
+              <path
+                class="traco"
+                pathLength="1"
+                d="M136.1 437.6A214 214 0 1 1 407 485.3"
+                stroke="#e9f0eb"
+                stroke-width="2.5"
+                opacity="0.5"
+              />
+            </g>
+            <g class="ponto-vivo" opacity="0">
+              <circle cx="300" cy="300" r="34" fill="#3ddc8e" opacity="0.55" filter="url(#brilho)" />
+              <circle cx="300" cy="300" r="15" fill="#3ddc8e" />
+            </g>
+          </svg>
+        </div>
+        <div class="conteiner">
+          <span class="selo"
+            ><span class="pulso" aria-hidden="true"></span>Robôs ao vivo · IA que pensa antes de agir</span
+          >
+          <h1 id="titulo-hero">
+            <span class="palavra">Calma</span> <span class="palavra">para</span>
+            <span class="palavra">decidir.</span> <em><span class="palavra">Disciplina</span></em>
+            <span class="palavra">para</span> <span class="palavra">executar.</span>
+          </h1>
+          <p class="lead entrada">
+            O ZenTrade junta robôs com regras claras, um analista de IA que pensa em três futuros possíveis e
+            um motor de risco que dá a palavra final. Cripto e mini índice da B3, renda fixa e imóveis — tudo
+            num lugar só, tudo testado antes de valer dinheiro.
+          </p>
+          <div class="acoes entrada">
+            <a class="botao primario magnetico" href="#como">Ver como ele decide →</a>
+            <a class="botao magnetico" href="#backtest">Por que confiar nos números</a>
+          </div>
+        </div>
+      </section>
+
+      <div
+        class="faixa"
+        aria-label="Integrações: Binance, B3, MetaTrader 5, Claude, Pluggy, Banco Central, TimescaleDB, n8n, Telegram e Docker"
+      >
+        <div class="faixa-trilho" aria-hidden="true">
+          <span>Binance</span><span>B3 · mini índice</span><span>MetaTrader 5</span
+          ><span>Claude · Anthropic</span><span>Claude Code</span><span>Pluggy · Open Finance</span
+          ><span>Banco Central · CDI e IPCA</span><span>TimescaleDB</span><span>pgvector</span><span>n8n</span
+          ><span>Telegram</span><span>Docker</span><span>Binance</span><span>B3 · mini índice</span
+          ><span>MetaTrader 5</span><span>Claude · Anthropic</span><span>Claude Code</span
+          ><span>Pluggy · Open Finance</span><span>Banco Central · CDI e IPCA</span><span>TimescaleDB</span
+          ><span>pgvector</span><span>n8n</span><span>Telegram</span><span>Docker</span>
+        </div>
+      </div>
+
+      <div class="numeros">
+        <div class="conteiner grade g4">
+          <div class="numero revelar">
+            <strong data-contar="2994">2.994</strong><span>testes automatizados protegendo cada regra</span>
+          </div>
+          <div class="numero revelar">
+            <strong data-contar="125" data-sufixo=" mi">125 mi</strong
+            ><span>negócios da B3 lidos, um a um, para montar as velas do mini índice</span>
+          </div>
+          <div class="numero revelar">
+            <strong data-contar="59">59</strong
+            ><span>fontes científicas e regulatórias na fundamentação</span>
+          </div>
+          <div class="numero revelar"><strong>0</strong><span>ordens que pulam o motor de risco</span></div>
+        </div>
+      </div>
+
+      <section id="como" class="palco-como" aria-labelledby="titulo-como">
+        <div class="conteiner">
+          <span class="rotulo">Como decide</span>
+          <h2 id="titulo-como" class="titulo-anim">Três camadas entre o impulso e a ordem.</h2>
+          <p class="intro">
+            Nenhuma ordem nasce de um palpite. A regra aponta, a IA questiona, o risco decide. Se qualquer
+            camada disser "não", não tem operação — e tudo fica registrado com o porquê.
+          </p>
+          <div class="decisao-palco">
+            <div class="camadas">
+              <div class="linha-pulso" aria-hidden="true"><i></i></div>
+              <article class="cartao camada">
+                <span class="no" aria-hidden="true">01</span>
+                <div>
+                  <small>Regras</small>
+                  <h3>O robô vê o sinal</h3>
+                  <p>
+                    Estratégias montadas em blocos visuais — rompimentos, médias, ATR, VWAP, faixa de
+                    abertura, filtro de horário. Cada sinal vem com a explicação em português.
+                  </p>
+                </div>
+              </article>
+              <article class="cartao camada">
+                <span class="no" aria-hidden="true">02</span>
+                <div>
+                  <small>Analista de IA</small>
+                  <h3>O Claude pensa em três futuros</h3>
+                  <p>
+                    Alta, lateral e baixa, com probabilidade, gatilho e o que invalida a ideia. O código
+                    calcula o valor esperado já com taxas — e a IA escreve o melhor argumento contra a própria
+                    proposta.
+                  </p>
+                </div>
+              </article>
+              <article class="cartao camada">
+                <span class="no" aria-hidden="true">03</span>
+                <div>
+                  <small>Motor de risco</small>
+                  <h3>Um juiz que não se empolga</h3>
+                  <p>
+                    Determinístico, sem IA: perda do dia, exposição, frequência, pausa depois de perda,
+                    tamanho da posição e stop direto na corretora. A IA só pode pedir menos, nunca mais.
+                  </p>
+                </div>
+              </article>
+            </div>
+            <div class="cartao terminal" aria-label="Simulação de decisões em tempo real">
+              <div class="terminal-topo">
+                <i></i><i></i><i></i>&nbsp;decisoes.log
+                <span class="ao-vivo"><span class="pulso" aria-hidden="true"></span>simulação</span>
+              </div>
+              <div class="terminal-corpo" id="terminal" aria-live="off"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="ia" class="alternada" aria-labelledby="titulo-ia">
+        <div class="conteiner dividida">
+          <div class="revelar">
+            <span class="rotulo">Inteligência que presta contas</span>
+            <h2 id="titulo-ia" class="titulo-anim">Uma IA que mostra o raciocínio — e a nota.</h2>
+            <p class="intro">
+              Toda decisão do Claude ganha nota depois: o que ele aprovou deu certo? O que ele vetou teria
+              dado errado? O placar mostra o acerto real, se a confiança dele é calibrada e quanto dinheiro
+              ele agregou ou poupou.
+            </p>
+            <ul class="checagens">
+              <li>
+                <span><b>Três cenários</b> com probabilidades que somam 100%, conferidas pelo código.</span>
+              </li>
+              <li>
+                <span><b>Contra-argumento obrigatório:</b> a IA aponta a maior falha da própria ideia.</span>
+              </li>
+              <li>
+                <span
+                  ><b>Contexto completo:</b> taxas reais, ATR, tendência em 1h e 4h, horário do pregão, agenda
+                  de eventos e o próprio histórico de acertos.</span
+                >
+              </li>
+              <li>
+                <span
+                  ><b>Imune a manipulação:</b> textos da internet entram como dado, nunca como ordem.</span
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="grade" style="margin-top: 0">
+            <div class="cartao revelar inclinavel">
+              <h3 id="titulo-cenarios">Experimente: como a IA pesa um sinal</h3>
+              <div class="abas" role="tablist" aria-labelledby="titulo-cenarios">
+                <button role="tab" id="aba-0" aria-controls="painel-cenarios" aria-selected="true">
+                  BTC · rompimento
+                </button>
+                <button
+                  role="tab"
+                  id="aba-1"
+                  aria-controls="painel-cenarios"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  SOL · rompimento fraco
+                </button>
+                <button
+                  role="tab"
+                  id="aba-2"
+                  aria-controls="painel-cenarios"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  WIN · abertura agitada
+                </button>
+              </div>
+              <div role="tabpanel" id="painel-cenarios" aria-labelledby="aba-0" aria-live="polite">
+                <p class="sinal-titulo" id="sinal-descricao"></p>
+                <div class="barra alta">
+                  <span>alta</span>
+                  <div class="trilho"><div class="cheio"></div></div>
+                  <span class="valor">–</span>
+                </div>
+                <div class="barra lateral">
+                  <span>lateral</span>
+                  <div class="trilho"><div class="cheio"></div></div>
+                  <span class="valor">–</span>
+                </div>
+                <div class="barra baixa">
+                  <span>baixa</span>
+                  <div class="trilho"><div class="cheio"></div></div>
+                  <span class="valor">–</span>
+                </div>
+                <div class="veredito" id="veredito"></div>
+              </div>
+              <p class="nota">
+                Exemplo ilustrativo. A regra real: só opera com valor esperado positivo depois das taxas e
+                cenário favorável com pelo menos 60%.
+              </p>
+            </div>
+
+            <div class="cartao revelar inclinavel">
+              <h3>Placar do Claude</h3>
+              <div class="placar">
+                <div class="metrica">
+                  <b data-contar="93" data-sufixo="%">93%</b><span>dos vetos estavam certos</span>
+                </div>
+                <div class="metrica"><b data-contar="28">28</b><span>decisões avaliadas</span></div>
+                <div class="metrica"><b>80%</b><span>meta nas aprovações</span></div>
+              </div>
+              <div class="calibracao" aria-hidden="true">
+                <i data-altura="38"></i><i data-altura="52"></i><i data-altura="61"></i
+                ><i data-altura="74"></i><i data-altura="86"></i>
+              </div>
+              <p class="nota">
+                Robôs em teste, outubro de 2026. Medido decisão por decisão — inclusive o que a IA deixou
+                passar.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="backtest" aria-labelledby="titulo-backtest">
+        <div class="conteiner dividida">
+          <div class="revelar">
+            <span class="rotulo">Backtest honesto</span>
+            <h2 id="titulo-backtest" class="titulo-anim">A gente prefere a verdade a um gráfico bonito.</h2>
+            <p class="intro">
+              Antes de um real ir para o mercado, cada estratégia passa por um laboratório que tenta
+              derrubá-la. Se ela só funciona no passado, o ZenTrade avisa — com todas as letras.
+            </p>
+            <ul class="checagens">
+              <li>
+                <span
+                  ><b>Custos de verdade:</b> taxa, deslizamento e spread; no mini índice, tarifa da B3 e
+                  ticks.</span
+                >
+              </li>
+              <li>
+                <span
+                  ><b>Pior caso dentro da vela:</b> se stop e alvo cabem no mesmo candle, conta o stop.</span
+                >
+              </li>
+              <li>
+                <span
+                  ><b>Fora da amostra e walk-forward:</b> a estratégia é julgada em dados que nunca viu.</span
+                >
+              </li>
+              <li>
+                <span
+                  ><b>Monte Carlo e Sharpe deflacionado:</b> separa sorte de habilidade, contando cada
+                  tentativa.</span
+                >
+              </li>
+              <li>
+                <span
+                  ><b>Pesquisa pré-registrada:</b> o plano é escrito antes de ver o resultado — e publicado
+                  mesmo quando dá errado.</span
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="cartao revelar inclinavel">
+            <h3>Veredito de uma estratégia real</h3>
+            <p class="nota" style="margin: 0 0 4px">
+              Donchian + tendência longa · 15 moedas · 2021 a 2026 · entrada na abertura seguinte
+            </p>
+            <svg
+              class="grafico"
+              viewBox="0 0 600 240"
+              role="img"
+              aria-label="Curvas ilustrativas: a estratégia sobe devagar com quedas pequenas; comprar e segurar termina mais alto, com quedas enormes no caminho"
+            >
+              <line class="grade-linha" x1="0" y1="60" x2="600" y2="60" />
+              <line class="grade-linha" x1="0" y1="120" x2="600" y2="120" />
+              <line class="grade-linha" x1="0" y1="180" x2="600" y2="180" />
+              <path
+                class="curva segurar"
+                pathLength="1"
+                d="M0 170 C40 150 60 90 95 70 S140 40 170 95 S220 205 260 200 S320 190 350 175 S400 120 430 110 S470 140 500 100 S560 30 600 22"
+              />
+              <path
+                class="curva estrategia"
+                pathLength="1"
+                d="M0 170 C60 165 90 158 130 156 S200 150 240 146 S300 143 340 140 S420 132 460 129 S540 125 600 121"
+              />
+              <text x="6" y="232">2021</text>
+              <text x="562" y="232">2026</text>
+            </svg>
+            <div class="legenda">
+              <span><i style="background: var(--jade)"></i>estratégia</span
+              ><span><i style="background: var(--apagado)"></i>comprar e segurar</span
+              ><span>ilustrativo</span>
+            </div>
+            <div class="linha-veredito">
+              <span class="ponto ok"></span>
+              <div>
+                Lucro em 13 de 15 moedas · Sharpe 1,47 · maior queda 3,9%<small
+                  >vantagem estável, com quedas pequenas</small
+                >
+              </div>
+            </div>
+            <div class="linha-veredito">
+              <span class="ponto atencao"></span>
+              <div>
+                Fora da amostra: 8 de 15 positivas<small
+                  >a vantagem pode estar diminuindo — fica em observação</small
+                >
+              </div>
+            </div>
+            <div class="linha-veredito">
+              <span class="ponto ruim"></span>
+              <div>
+                Comprar e segurar rendeu mais no período<small
+                  >com quedas de 70% a 90% no caminho — o ZenTrade mostra os dois lados</small
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="mini-indice" class="alternada" aria-labelledby="titulo-win">
+        <div class="conteiner dividida">
+          <div class="revelar">
+            <span class="rotulo">Mini índice · B3</span>
+            <h2 id="titulo-win" class="titulo-anim">O mini índice, negócio por negócio.</h2>
+            <p class="intro">
+              O ZenTrade lê os arquivos oficiais da B3 com cada negócio do pregão e monta as próprias velas —
+              sem intermediário e sem atalho. Arraste os arquivos na tela e pronto. Com o MetaTrader 5 da sua
+              corretora, ele busca anos de histórico e atualiza sozinho todo dia.
+            </p>
+            <ul class="checagens">
+              <li>
+                <span><b>Contrato certo a cada dia:</b> troca de vencimento automática (rolagem).</span>
+              </li>
+              <li>
+                <span
+                  ><b>Regras do pregão:</b> horário de entrada, leilão de abertura, zeragem antes do
+                  fechamento.</span
+                >
+              </li>
+              <li>
+                <span
+                  ><b>Agenda de eventos:</b> Copom, IPCA e dados dos EUA podem pausar ou reduzir o robô no
+                  dia.</span
+                >
+              </li>
+              <li>
+                <span
+                  ><b>Comprado e vendido,</b> com contratos pelo risco em reais e imposto do day trade
+                  estimado.</span
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="funil revelar" aria-label="Do arquivo da B3 ao backtest">
+            <div>
+              <span>Negócios lidos de 20 pregões</span
+              ><b data-contar="125" data-sufixo=" milhões">125 milhões</b>
+            </div>
+            <div><span>Velas de 5 min, 15 min e 1 h</span><b data-contar="3219">3.219</b></div>
+            <div><span>Custo por contrato, ida e volta</span><b>≈ R$ 2,50</b></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="patrimonio" aria-labelledby="titulo-patrimonio">
+        <div class="conteiner">
+          <span class="rotulo">Patrimônio completo</span>
+          <h2 id="titulo-patrimonio" class="titulo-anim">Do bitcoin ao apartamento, numa tela só.</h2>
+          <p class="intro">
+            Trading é só uma parte da sua vida financeira. O ZenTrade consolida tudo em reais, com câmbio ao
+            vivo — e o assistente responde sobre qualquer pedaço.
+          </p>
+          <div class="grade g4">
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-moeda" /></svg
+              ></span>
+              <h3>Carteira cripto</h3>
+              <p>Saldo por moeda direto da corretora, com comprado, vendido, bruto e líquido de taxas.</p>
+            </article>
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-banco" /></svg
+              ></span>
+              <h3>Renda fixa</h3>
+              <p>
+                CDB, Tesouro, LCI, LCA e poupança pelo Open Finance, com CDI e IPCA oficiais do Banco Central.
+              </p>
+            </article>
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-casa" /></svg
+              ></span>
+              <h3>Imobiliário</h3>
+              <p>
+                Imóvel, temporada, flip, terreno, FIIs, REITs, crowdfunding e consórcio — com simuladores para
+                cada um.
+              </p>
+            </article>
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-camadas" /></svg
+              ></span>
+              <h3>Visão consolidada</h3>
+              <p>Tudo somado em reais, com evolução, filtros e visões — o retrato real do seu patrimônio.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="alternada" aria-labelledby="titulo-assistente">
+        <div class="conteiner dividida">
+          <div class="revelar">
+            <span class="rotulo">Assistente de IA</span>
+            <h2 id="titulo-assistente" class="titulo-anim">Pergunte. Ele já leu tudo.</h2>
+            <p class="intro">
+              Um chat no estilo do Claude Desktop que conhece seus robôs, sua carteira, sua renda fixa e seus
+              imóveis — e a sua base de conhecimento, com notas, estudos e notícias. Ele lê e explica. Ordens,
+              nunca.
+            </p>
+            <ul class="checagens">
+              <li>
+                <span><b>Use a sua conta do Claude</b> ou uma chave de API — você escolhe na tela.</span>
+              </li>
+              <li>
+                <span
+                  ><b>Base de conhecimento por pessoa,</b> com busca por palavras ou por significado.</span
+                >
+              </li>
+              <li>
+                <span
+                  ><b>Orçamento de IA com teto:</b> você define quanto pode gastar por dia e por mês.</span
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="cartao chat revelar inclinavel" aria-label="Exemplo de conversa com o assistente">
+            <div class="bolha voce">Como estão meus robôs hoje e quanto rende minha renda fixa?</div>
+            <span class="ferramenta">✓ consultou 3 fontes dos seus dados</span>
+            <div class="bolha ia">
+              <b>Hoje:</b> 10 robôs ativos, nenhuma posição aberta. O Claude analisou 6 sinais e vetou 5 — o
+              rompimento do BTC passou e aguarda o fechamento da vela.<br /><br />
+              <b>Renda fixa:</b> seus 3 CDBs rendem em média 104% do CDI; o próximo vencimento é em março.
+            </div>
+            <p class="nota">Conversa ilustrativa.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="seguranca" aria-labelledby="titulo-seguranca">
+        <div class="conteiner">
+          <span class="rotulo">Segurança e controle</span>
+          <h2 id="titulo-seguranca" class="titulo-anim">
+            Seu dinheiro protegido por desenho, não por promessa.
+          </h2>
+          <div class="grade g3">
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-escudo" /></svg
+              ></span>
+              <h3>Stop na corretora</h3>
+              <p>A proteção fica na própria Binance. Se o computador desligar, o stop continua lá.</p>
+            </article>
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-pausa" /></svg
+              ></span>
+              <h3>"Parar tudo"</h3>
+              <p>
+                Um botão congela as entradas de todos os robôs na hora — e nunca bloqueia um stop de proteção.
+              </p>
+            </article>
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-cadeado" /></svg
+              ></span>
+              <h3>Chaves cifradas e 2FA</h3>
+              <p>
+                Chaves da corretora cifradas, chave com saque recusada, dois fatores e reautenticação para
+                dinheiro real.
+              </p>
+            </article>
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-balanca" /></svg
+              ></span>
+              <h3>Limites da conta</h3>
+              <p>
+                Perda do dia, exposição, frequência e pausa depois de sequência de stops — no robô e na conta
+                inteira.
+              </p>
+            </article>
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-olho" /></svg
+              ></span>
+              <h3>Tudo auditável</h3>
+              <p>
+                Cada sinal, proposta, veto e ordem fica registrado com o porquê. Nada some, nada é mágico.
+              </p>
+            </article>
+            <article class="cartao revelar inclinavel">
+              <span class="icone"
+                ><svg aria-hidden="true"><use href="#i-codigo" /></svg
+              ></span>
+              <h3>Seu servidor, seu dado</h3>
+              <p>
+                Roda na sua máquina com Docker. Open source (AGPL-3.0), dados separados por pessoa e LGPD
+                desde o início.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="alternada" aria-labelledby="titulo-integracoes">
+        <div class="conteiner dividida">
+          <div class="revelar">
+            <span class="rotulo">Integrações</span>
+            <h2 id="titulo-integracoes" class="titulo-anim">Conectado a quem importa.</h2>
+            <ul class="checagens">
+              <li>
+                <span><b>Binance:</b> ordens, carteira, stop na corretora, testnet e papel.</span>
+              </li>
+              <li>
+                <span><b>B3 e MetaTrader 5:</b> arquivos oficiais e anos de histórico do mini índice.</span>
+              </li>
+              <li>
+                <span><b>Claude:</b> API da Anthropic ou a sua conta do Claude Code.</span>
+              </li>
+              <li>
+                <span><b>Pluggy e Banco Central:</b> Open Finance, CDI, Selic e IPCA oficiais.</span>
+              </li>
+              <li>
+                <span><b>n8n e Telegram:</b> alertas, relatórios diários e automações.</span>
+              </li>
+              <li>
+                <span><b>TimescaleDB e pgvector:</b> séries de preço rápidas e busca por significado.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="orbita" aria-hidden="true">
+            <div class="anel a1">
+              <span style="--a: 0deg; --r: -31cqw"><b>Claude</b></span>
+              <span style="--a: 120deg; --r: -31cqw"><b>Binance</b></span>
+              <span style="--a: 240deg; --r: -31cqw"><b>B3</b></span>
+            </div>
+            <div class="anel a2">
+              <span style="--a: 30deg; --r: -46cqw"><b>MetaTrader 5</b></span>
+              <span style="--a: 90deg; --r: -46cqw"><b>Pluggy</b></span>
+              <span style="--a: 150deg; --r: -46cqw"><b>Banco Central</b></span>
+              <span style="--a: 210deg; --r: -46cqw"><b>n8n</b></span>
+              <span style="--a: 270deg; --r: -46cqw"><b>Telegram</b></span>
+              <span style="--a: 330deg; --r: -46cqw"><b>TimescaleDB</b></span>
+            </div>
+            <img class="centro" src="img/simbolo.webp" alt="" width="120" height="120" />
+          </div>
+        </div>
+      </section>
+
+      <section class="faq" aria-labelledby="titulo-faq">
+        <div class="conteiner">
+          <span class="rotulo">Perguntas francas</span>
+          <h2 id="titulo-faq" class="titulo-anim">Sem letra miúda.</h2>
+          <details>
+            <summary>O ZenTrade garante lucro?</summary>
+            <p>
+              Não — e desconfie de quem garante. O que ele garante é método: cada estratégia testada com
+              custos reais, cada decisão explicada e medida, e um motor de risco que não deixa um dia ruim
+              virar um mês ruim.
+            </p>
+          </details>
+          <details>
+            <summary>Preciso pagar pela IA?</summary>
+            <p>
+              Você pode usar a sua própria conta do Claude ou uma chave de API, com teto de gasto por dia e
+              por mês. Os robôs também funcionam só com as regras e o motor de risco, sem IA nenhuma.
+            </p>
+          </details>
+          <details>
+            <summary>Ele opera com dinheiro de verdade?</summary>
+            <p>
+              Só quando você liga, com dois fatores e reautenticação. Antes disso, há três modos de treino:
+              observar, papel (preços reais, ordens simuladas) e testnet da corretora.
+            </p>
+          </details>
+          <details>
+            <summary>Onde ele roda?</summary>
+            <p>
+              Na sua máquina ou no seu servidor, com Docker. Seus dados e suas chaves ficam com você — não há
+              uma nuvem no meio guardando nada seu.
+            </p>
+          </details>
+          <details>
+            <summary>É open source mesmo?</summary>
+            <p>Sim, sob a licença AGPL-3.0: você pode ler, auditar e melhorar cada linha.</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="final" id="comecar" aria-labelledby="titulo-final">
+        <svg class="enso" viewBox="0 0 200 200" aria-hidden="true">
+          <path
+            d="M118 176c-38 9-86-12-96-58C12 72 46 26 96 24c46-2 80 30 82 72 2 34-18 60-44 72"
+            fill="none"
+            stroke="#3ddc8e"
+            stroke-width="9"
+            stroke-linecap="round"
+            pathLength="1"
+            filter="url(#pincel)"
+          />
+        </svg>
+        <div class="conteiner revelar">
+          <span class="rotulo">Comece com calma</span>
+          <h2 id="titulo-final" class="titulo-anim">Respire. Teste. Só então, opere.</h2>
+          <p class="intro">
+            Suba o ZenTrade com Docker, conecte a corretora em modo de treino e deixe os robôs provarem o
+            valor deles antes de você arriscar um real.
+          </p>
+          <div class="acoes">
+            <a class="botao primario magnetico" href="https://github.com/eduardorarruda" rel="noopener"
+              >Acompanhar no GitHub</a
+            >
+            <a class="botao magnetico" href="#como">Rever como funciona</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="rodape">
+      <div class="conteiner">
+        <a class="marca" href="#topo" aria-label="Voltar ao topo"
+          ><img src="img/simbolo.webp" alt="" width="34" height="34" />ZenTrade</a
+        >
+        <p class="aviso">
+          O ZenTrade é uma ferramenta de software. Nada nesta página é recomendação de investimento. Operar
+          cripto e derivativos envolve risco de perda, inclusive total do capital, e resultados passados —
+          inclusive de backtests — não garantem resultados futuros. Exemplos marcados como ilustrativos ou
+          simulação não são resultados reais.
+        </p>
+        <p class="aviso">© 2026 ZenTrade · Open source sob AGPL-3.0 · Feito no Brasil.</p>
+      </div>
+    </footer>
+
+    <script>
+      document.documentElement.classList.remove("sem-js");
+      window.addEventListener("DOMContentLoaded", () => {
+        const reduzir = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const ponteiroFino = matchMedia("(hover: hover) and (pointer: fine)").matches;
+        const temGsap =
+          !reduzir && typeof window.gsap !== "undefined" && typeof window.ScrollTrigger !== "undefined";
+        if (reduzir) document.documentElement.classList.add("sem-anim");
+
+        /* ---------- rolagem suave ---------- */
+        let lenis = null;
+        if (!reduzir && typeof window.Lenis !== "undefined") {
+          lenis = new window.Lenis({ lerp: 0.09, smoothWheel: true });
+          if (temGsap) {
+            lenis.on("scroll", window.ScrollTrigger.update);
+            window.gsap.ticker.add((t) => lenis.raf(t * 1000));
+            window.gsap.ticker.lagSmoothing(0);
+          } else {
+            const loop = (t) => (lenis.raf(t), requestAnimationFrame(loop));
+            requestAnimationFrame(loop);
+          }
+          document.querySelectorAll('a[href^="#"]').forEach((a) =>
+            a.addEventListener("click", (e) => {
+              const alvo = document.querySelector(a.getAttribute("href"));
+              if (!alvo) return;
+              e.preventDefault();
+              lenis.scrollTo(alvo, { offset: -60, duration: 1.4 });
+            }),
+          );
+        }
+
+        /* ---------- topo e progresso ---------- */
+        const topo = document.getElementById("topo");
+        const anelProgresso = document.querySelector(".progresso circle");
+        const aoRolar = () => {
+          topo.classList.toggle("rolou", scrollY > 24);
+          const max = document.documentElement.scrollHeight - innerHeight;
+          anelProgresso.style.strokeDashoffset = String(1 - (max > 0 ? scrollY / max : 0));
+        };
+        addEventListener("scroll", aoRolar, { passive: true });
+        aoRolar();
+
+        /* ---------- fumaça ---------- */
+        const tela = document.getElementById("fumaca");
+        const ctx = tela.getContext("2d");
+        const hero = document.querySelector(".hero");
+        const ESCALA = 0.5;
+        let L = 0,
+          A = 0,
+          quadro = 0,
+          heroVisivel = true;
+        const mouse = { x: -9999, y: -9999 };
+        function ajustar() {
+          const r = hero.getBoundingClientRect();
+          L = tela.width = Math.round(r.width * ESCALA);
+          A = tela.height = Math.round(r.height * ESCALA);
+        }
+        const nova = (inicio) => {
+          const jade = Math.random() < 0.28;
+          return {
+            x: L * (0.25 + Math.random() * 0.8),
+            y: inicio ? A * (0.3 + Math.random() * 0.7) : A * (0.75 + Math.random() * 0.35),
+            r: (50 + Math.random() * 130) * (L / 700),
+            vx: (Math.random() - 0.5) * 0.2,
+            vy: -0.1 - Math.random() * 0.25,
+            vida: inicio ? Math.random() * 700 : 0,
+            max: 700 + Math.random() * 600,
+            cor: jade ? "61,220,142" : Math.random() < 0.5 ? "196,210,201" : "150,170,160",
+            forca: jade ? 0.07 : 0.11,
+          };
+        };
+        ajustar();
+        let fumacas = Array.from({ length: L < 300 ? 34 : 60 }, () => nova(true));
+        function desenharFumaca() {
+          quadro++;
+          ctx.clearRect(0, 0, L, A);
+          ctx.globalCompositeOperation = "lighter";
+          for (const p of fumacas) {
+            const ang = Math.sin(p.x * 0.012 + quadro * 0.004) + Math.cos(p.y * 0.015 - quadro * 0.003);
+            p.vx += Math.cos(ang * 1.7) * 0.012;
+            p.vy += Math.sin(ang) * 0.006 - 0.0025;
+            const dx = p.x - mouse.x,
+              dy = p.y - mouse.y,
+              d2 = dx * dx + dy * dy;
+            if (d2 < 9000) {
+              const f = (9000 - d2) / 9000;
+              p.vx += (dx / 60) * f * 0.35;
+              p.vy += (dy / 60) * f * 0.35;
+            }
+            p.vx *= 0.985;
+            p.vy *= 0.985;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.r += 0.06;
+            p.vida++;
+            const a = Math.sin(Math.PI * Math.min(1, p.vida / p.max)) * p.forca;
+            const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+            g.addColorStop(0, `rgba(${p.cor},${a})`);
+            g.addColorStop(0.55, `rgba(${p.cor},${a * 0.45})`);
+            g.addColorStop(1, `rgba(${p.cor},0)`);
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          fumacas = fumacas.map((p) => (p.vida >= p.max || p.y + p.r < -20 ? nova(false) : p));
+        }
+        let rodando = false;
+        function laco() {
+          if (!heroVisivel || document.hidden) return (rodando = false);
+          desenharFumaca();
+          requestAnimationFrame(laco);
+        }
+        function iniciarFumaca() {
+          if (rodando || reduzir) return;
+          rodando = true;
+          requestAnimationFrame(laco);
+        }
+        if (reduzir) {
+          for (let i = 0; i < 120; i++) desenharFumaca();
+        } else {
+          new IntersectionObserver(([e]) => {
+            heroVisivel = e.isIntersecting;
+            if (heroVisivel) iniciarFumaca();
+          }).observe(hero);
+          document.addEventListener("visibilitychange", () => !document.hidden && iniciarFumaca());
+          hero.addEventListener("pointermove", (e) => {
+            const r = hero.getBoundingClientRect();
+            mouse.x = (e.clientX - r.left) * ESCALA;
+            mouse.y = (e.clientY - r.top) * ESCALA;
+          });
+          hero.addEventListener("pointerleave", () => (mouse.x = mouse.y = -9999));
+          iniciarFumaca();
+        }
+        addEventListener("resize", () => {
+          ajustar();
+          if (reduzir) for (let i = 0; i < 120; i++) desenharFumaca();
+        });
+
+        /* ---------- ensō a pincel + entrada do hero ---------- */
+        const tracos = [...document.querySelectorAll(".enso-pincel .traco")];
+        const ponto = document.querySelector(".ponto-vivo");
+        const horizonte = document.querySelector(".horizonte");
+        const palavras = [...document.querySelectorAll("#titulo-hero .palavra")];
+        const entradas = [...document.querySelectorAll(".hero .entrada, .hero .selo")];
+        if (temGsap) {
+          const g = window.gsap;
+          const tl = g.timeline({ defaults: { ease: "power3.out" } });
+          tl.from(".hero .selo", { y: 16, opacity: 0, duration: 0.8 })
+            .from(
+              palavras,
+              { yPercent: 70, opacity: 0, filter: "blur(10px)", duration: 1.1, stagger: 0.08 },
+              "-=0.4",
+            )
+            .from(
+              entradas.filter((e) => !e.matches(".selo")),
+              { y: 20, opacity: 0, duration: 0.9, stagger: 0.12 },
+              "-=0.6",
+            );
+          const pincel = g.timeline({ delay: 0.3 });
+          tracos.forEach((t, i) =>
+            pincel.to(t, { strokeDashoffset: 0, duration: 2.4 - i * 0.2, ease: "power2.inOut" }, i * 0.12),
+          );
+          pincel
+            .to(horizonte, { scaleX: 1, opacity: 1, duration: 1.4, ease: "expo.out" }, "-=0.9")
+            .fromTo(
+              ponto,
+              { scale: 0, opacity: 0, svgOrigin: "300 300" },
+              { scale: 1, opacity: 1, svgOrigin: "300 300", duration: 1, ease: "back.out(2.5)" },
+              "-=1.1",
+            )
+            .to(ponto, {
+              scale: 1.12,
+              svgOrigin: "300 300",
+              duration: 2.6,
+              repeat: -1,
+              yoyo: true,
+              ease: "sine.inOut",
+            });
+          g.to(".hero-palco", {
+            yPercent: 18,
+            rotate: 8,
+            ease: "none",
+            scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true },
+          });
+        } else {
+          tracos.forEach((t) => (t.style.strokeDashoffset = "0"));
+          ponto.setAttribute("opacity", "1");
+          horizonte.style.transform = "none";
+          horizonte.style.opacity = "1";
+        }
+
+        /* ---------- contadores ---------- */
+        function contar(el) {
+          if (reduzir || el.dataset.contado) return;
+          el.dataset.contado = "1";
+          const alvo = Number(el.dataset.contar);
+          const sufixo = el.dataset.sufixo ?? "";
+          const inicio = performance.now();
+          const passo = (agora) => {
+            const t = Math.min(1, (agora - inicio) / 1600);
+            el.textContent = Math.round(alvo * (1 - Math.pow(1 - t, 3))).toLocaleString("pt-BR") + sufixo;
+            if (t < 1) requestAnimationFrame(passo);
+          };
+          requestAnimationFrame(passo);
+        }
+
+        /* ---------- revelar ao rolar ---------- */
+        const observador = new IntersectionObserver(
+          (lista) => {
+            for (const e of lista) {
+              if (!e.isIntersecting) continue;
+              e.target.classList.add("visivel");
+              e.target.querySelectorAll("[data-contar]").forEach(contar);
+              e.target
+                .querySelectorAll("[data-altura]")
+                .forEach((b) => (b.style.height = b.dataset.altura + "%"));
+              if (e.target.matches(".grafico"))
+                e.target.querySelectorAll(".curva").forEach((c) => (c.style.strokeDashoffset = "0"));
+              observador.unobserve(e.target);
+            }
+          },
+          { threshold: 0.18 },
+        );
+        document.querySelectorAll(".revelar, .enso").forEach((el) => observador.observe(el));
+
+        /* ---------- títulos palavra por palavra ---------- */
+        if (temGsap) {
+          const g = window.gsap;
+          document.querySelectorAll(".titulo-anim").forEach((h) => {
+            const partes = h.textContent.trim().split(/\s+/);
+            h.setAttribute("aria-label", h.textContent.trim());
+            h.innerHTML = partes.map((p) => `<span class="palavra" aria-hidden="true">${p}</span>`).join(" ");
+            g.from(h.querySelectorAll(".palavra"), {
+              yPercent: 60,
+              opacity: 0,
+              filter: "blur(8px)",
+              duration: 1,
+              stagger: 0.05,
+              ease: "power3.out",
+              scrollTrigger: { trigger: h, start: "top 85%" },
+            });
+          });
+
+          /* curva do backtest desenhada ao rolar */
+          document.querySelectorAll(".grafico .curva").forEach((c, i) =>
+            g.to(c, {
+              strokeDashoffset: 0,
+              ease: "none",
+              scrollTrigger: {
+                trigger: ".grafico",
+                start: "top 85%",
+                end: "bottom 45%",
+                scrub: 0.6 + i * 0.3,
+              },
+            }),
+          );
+
+          /* ensō final desenhado ao rolar */
+          g.to(".final .enso path", {
+            strokeDashoffset: 0,
+            ease: "none",
+            scrollTrigger: { trigger: ".final", start: "top 85%", end: "center center", scrub: 1 },
+          });
+        } else {
+          document.querySelectorAll(".grafico").forEach((el) => observador.observe(el));
+        }
+
+        /* ---------- palco do "como decide" ---------- */
+        const camadas = [...document.querySelectorAll(".camada")];
+        const pulso = document.querySelector(".linha-pulso i");
+        const ativar = (p) =>
+          camadas.forEach((c, i) => c.classList.toggle("ativa", p >= i / camadas.length + 0.02));
+        if (temGsap && matchMedia("(min-width: 961px)").matches) {
+          window.ScrollTrigger.create({
+            trigger: ".palco-como",
+            start: "top top",
+            end: "+=110%",
+            pin: true,
+            scrub: true,
+            onUpdate: (st) => {
+              pulso.style.transform = `scaleY(${st.progress})`;
+              ativar(st.progress);
+            },
+          });
+        } else {
+          camadas.forEach((c) => c.classList.add("ativa"));
+          pulso.style.transform = "scaleY(1)";
+        }
+
+        /* ---------- terminal de decisões (simulação) ---------- */
+        const terminal = document.getElementById("terminal");
+        const ROTEIRO = [
+          [
+            ["h", "21:00:00  BTC/USDT 4h  vela fechada"],
+            ["s", "regra    rompeu o topo de 20 velas · acima da média de 200"],
+            ["c", "claude   alta 62% · lateral 26% · baixa 12%"],
+            ["c", "claude   valor esperado +1,33% depois das taxas"],
+            ["c", "claude   contra: volume abaixo da média, rompimento pode falhar"],
+            ["ok", "risco    APROVADO · 0,004 BTC · stop 61.230 na corretora"],
+          ],
+          [
+            ["h", "21:00:00  SOL/USDT 1h  vela fechada"],
+            ["s", "regra    rompeu o topo por só 0,02%"],
+            ["c", "claude   alta 40% · lateral 38% · baixa 22%"],
+            ["no", "claude   AGUARDAR · cenário favorável abaixo de 60%"],
+            ["h", "placar   veto registrado · avaliado daqui a 20 velas"],
+          ],
+          [
+            ["h", "09:20:00  WIN 5 min  agenda: Copom às 18h30"],
+            ["s", "regra    rompeu a faixa de abertura"],
+            ["no", "eventos  dia de evento · robô em modo reduzido"],
+            ["c", "claude   valor esperado -0,12% · lateral provável"],
+            ["no", "risco    BARRADO · nada operado"],
+          ],
+        ];
+        let roteiro = 0,
+          terminalIniciado = false;
+        const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+        async function digitar(classe, texto) {
+          const p = document.createElement("p");
+          p.className = classe + " cursor-terminal";
+          terminal.appendChild(p);
+          while (terminal.children.length > 14) terminal.firstChild.remove();
+          if (reduzir) p.textContent = texto;
+          else
+            for (let i = 1; i <= texto.length; i++) ((p.textContent = texto.slice(0, i)), await espera(12));
+          p.classList.remove("cursor-terminal");
+        }
+        async function rodarTerminal() {
+          for (;;) {
+            for (const [classe, texto] of ROTEIRO[roteiro]) {
+              await digitar(classe, texto);
+              await espera(reduzir ? 0 : 260);
+            }
+            await digitar("h", " ");
+            roteiro = (roteiro + 1) % ROTEIRO.length;
+            await espera(reduzir ? 60000 : 1600);
+          }
+        }
+        new IntersectionObserver(([e]) => {
+          if (e.isIntersecting && !terminalIniciado) {
+            terminalIniciado = true;
+            rodarTerminal();
+          }
+        }).observe(terminal);
+
+        /* ---------- cenários (ilustrativo) ---------- */
+        const SINAIS = [
+          {
+            texto: "BTC/USDT · 4h · rompimento do topo de 20 velas",
+            p: [0.62, 0.26, 0.12],
+            r: [2.6, -0.3, -1.7],
+          },
+          {
+            texto: "SOL/USDT · 1h · rompimento de 0,02% acima do topo",
+            p: [0.4, 0.38, 0.22],
+            r: [1.9, -0.35, -1.4],
+          },
+          {
+            texto: "WIN · 5 min · 09:20, abertura com notícia forte",
+            p: [0.48, 0.17, 0.35],
+            r: [0.6, -0.15, -1.1],
+          },
+        ];
+        const LIMIAR = 0.6;
+        const painel = document.getElementById("painel-cenarios");
+        const barras = [...painel.querySelectorAll(".barra")];
+        const veredito = document.getElementById("veredito");
+        const abas = [...document.querySelectorAll(".abas [role=tab]")];
+        const pct = (x) => Math.round(x * 100) + "%";
+        function mostrar(i) {
+          const s = SINAIS[i];
+          abas.forEach((b, j) => {
+            b.setAttribute("aria-selected", String(i === j));
+            b.tabIndex = i === j ? 0 : -1;
+          });
+          painel.setAttribute("aria-labelledby", abas[i].id);
+          document.getElementById("sinal-descricao").textContent = s.texto;
+          barras.forEach((b, j) => {
+            b.querySelector(".cheio").style.width = pct(s.p[j]);
+            b.querySelector(".valor").textContent = pct(s.p[j]);
+          });
+          const ve = s.p.reduce((soma, p, j) => soma + p * s.r[j], 0);
+          const aprova = ve > 0 && s.p[0] >= LIMIAR;
+          const texto = (ve >= 0 ? "+" : "") + ve.toFixed(2).replace(".", ",") + "%";
+          veredito.className = "veredito" + (aprova ? "" : " aguardar");
+          veredito.innerHTML = aprova
+            ? `Valor esperado depois das taxas: <strong>${texto}</strong>. Cenário de alta em ${pct(s.p[0])}. <strong>Propõe comprar</strong> — e o motor de risco ainda confere.`
+            : `Valor esperado depois das taxas: <strong>${texto}</strong>.${s.p[0] < LIMIAR ? ` Cenário de alta em só ${pct(s.p[0])}, abaixo de 60%.` : ""} <strong>Aguarda</strong> — melhor não operar.`;
+        }
+        abas.forEach((b, i) => {
+          b.addEventListener("click", () => mostrar(i));
+          b.addEventListener("keydown", (e) => {
+            if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+            const j = (i + (e.key === "ArrowRight" ? 1 : abas.length - 1)) % abas.length;
+            abas[j].focus();
+            mostrar(j);
+          });
+        });
+        mostrar(0);
+
+        /* ---------- luz, inclinação, ímã e brilho do cursor ---------- */
+        if (ponteiroFino && !reduzir) {
+          document.querySelectorAll(".cartao").forEach((c) => {
+            c.addEventListener("pointermove", (e) => {
+              const r = c.getBoundingClientRect();
+              const x = (e.clientX - r.left) / r.width,
+                y = (e.clientY - r.top) / r.height;
+              c.style.setProperty("--mx", `${x * 100}%`);
+              c.style.setProperty("--my", `${y * 100}%`);
+              if (c.classList.contains("inclinavel"))
+                c.style.transform = `perspective(900px) rotateX(${(0.5 - y) * 6}deg) rotateY(${(x - 0.5) * 7}deg)`;
+            });
+            c.addEventListener("pointerleave", () => (c.style.transform = ""));
+          });
+          document.querySelectorAll(".magnetico").forEach((b) => {
+            b.addEventListener("pointermove", (e) => {
+              const r = b.getBoundingClientRect();
+              b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.25}px, ${(e.clientY - r.top - r.height / 2) * 0.35}px)`;
+            });
+            b.addEventListener("pointerleave", () => (b.style.transform = ""));
+          });
+          const brilho = document.querySelector(".brilho-cursor");
+          let bx = innerWidth / 2,
+            by = innerHeight / 2,
+            ax = bx,
+            ay = by;
+          addEventListener("pointermove", (e) => ((ax = e.clientX), (ay = e.clientY)), { passive: true });
+          const seguir = () => {
+            bx += (ax - bx) * 0.12;
+            by += (ay - by) * 0.12;
+            brilho.style.transform = `translate(${bx}px, ${by}px)`;
+            requestAnimationFrame(seguir);
+          };
+          requestAnimationFrame(seguir);
+        }
+      });
+    </script>
+  </body>
+</html>
