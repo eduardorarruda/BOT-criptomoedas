@@ -36,6 +36,7 @@ const pedido = (
   simbolo = "WIN-IBOV",
 ): BacktestParaRodar => ({
   id: "w1",
+  usuarioId: "u1",
   estrategiaId: "e1",
   versao: 1,
   simbolo,

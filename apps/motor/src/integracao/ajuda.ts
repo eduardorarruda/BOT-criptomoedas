@@ -62,6 +62,7 @@ export async function montarAmbiente(): Promise<AmbienteIntegracao> {
       riscoPorOperacao: "10",
       ordensPorHoraMax: 10,
       pausaAposPerdaMin: 0,
+      diasDeEvento: "ignorar",
       confiancaMinima: 0.5,
     },
   });

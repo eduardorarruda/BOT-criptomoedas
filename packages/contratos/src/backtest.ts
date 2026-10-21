@@ -1,6 +1,7 @@
 import { dec, problemasSessao } from "@zentrade/dominio";
 import { z } from "zod";
 import { Fracao, Id, Instante, Intervalo, TextoDecimal } from "./comum.js";
+import { ModoDiasDeEventoEsquema } from "./agenda-eventos.js";
 import { LimitesRiscoEsquema, type LimitesRiscoDTO } from "./dados.js";
 import { HorarioEsquema } from "./regra.js";
 
@@ -57,6 +58,7 @@ export function limitesPadraoDoBacktest(saldoInicial: string): LimitesRiscoDTO {
     ordensPorHoraMax: p.ordensPorHoraMax,
     pausaAposPerdaMin: p.pausaAposPerdaMin,
     confiancaMinima: p.confiancaMinima,
+    diasDeEvento: "ignorar",
   };
 }
 
@@ -168,6 +170,12 @@ export const ConfiguracaoBacktestEsquema = z.object({
   win: ConfiguracaoWinEsquema.optional(),
   /** Onde executa a ordem decidida no fechamento do candle. Backtests antigos: no fechamento. */
   execucao: ModoExecucaoBacktest.default("fechamento"),
+  /**
+   * Filtro de dia de evento, com a agenda da pessoa no período: `ignorar` (padrão),
+   * `bloquear` (não abre posição em dia de evento de alto impacto; os candles ficam) ou
+   * `reduzir` (entra com metade do tamanho). Vale para cripto e WIN.
+   */
+  diasDeEvento: ModoDiasDeEventoEsquema.default("ignorar"),
 });
 export type ConfiguracaoBacktest = z.infer<typeof ConfiguracaoBacktestEsquema>;
 export type ConfiguracaoBacktestEntrada = z.input<typeof ConfiguracaoBacktestEsquema>;
@@ -380,6 +388,10 @@ export const MetricasBacktestEsquema = z.object({
   alvosIntrabar: z.number().int().nonnegative().optional(),
   candlesAmbiguos: z.number().int().nonnegative().optional(),
   precisaoMinuto: z.boolean().optional(),
+  /** Sinais de entrada barrados pelo filtro de dia de evento (modo bloquear). Só com o filtro ligado. */
+  entradasBarradasPorEvento: z.number().int().nonnegative().optional(),
+  /** Entradas abertas com metade do tamanho pelo filtro de dia de evento (modo reduzir). Só com o filtro ligado. */
+  entradasReduzidasPorEvento: z.number().int().nonnegative().optional(),
   /** Só nos backtests do mini índice. */
   win: MetricasWinEsquema.optional(),
 });

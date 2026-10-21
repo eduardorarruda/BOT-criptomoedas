@@ -1,6 +1,7 @@
 import type {
   Candle,
   Estrategia,
+  EventoMercado,
   EstadoConta,
   Execucao,
   Lado,
@@ -240,6 +241,15 @@ export interface PortaAprovacao {
  */
 export interface PortaRiscoConta {
   estado(roboId: string, agora: number): Promise<EstadoConta>;
+}
+
+/**
+ * A agenda de eventos de mercado da dona do robô, para o filtro opcional de dia de
+ * evento. Lida sob RLS: só enxerga os eventos da própria pessoa.
+ */
+export interface PortaAgendaEventos {
+  /** Os eventos cadastrados para o dia (AAAA-MM-DD, no fuso do mercado do robô). */
+  doDia(roboId: string, dia: string): Promise<EventoMercado[]>;
 }
 
 /**

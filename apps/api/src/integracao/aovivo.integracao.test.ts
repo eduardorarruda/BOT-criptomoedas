@@ -12,6 +12,7 @@ const LIMITES = {
   ordensPorHoraMax: 5,
   pausaAposPerdaMin: 0,
   confiancaMinima: 0.5,
+  diasDeEvento: "ignorar" as const,
 };
 
 describe("ao vivo: histórico recente por robô", () => {

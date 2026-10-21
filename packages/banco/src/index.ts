@@ -41,6 +41,7 @@ export type {
 export { portaCredenciais } from "./portas/credenciais.js";
 export { portaRiscoConta, type AtivoDoSimbolo } from "./portas/risco-conta.js";
 export type { NovoAviso, RepositorioAvisos } from "./repositorios/avisos.js";
+export type { RepositorioEventosMercado } from "./repositorios/eventos-mercado.js";
 export type {
   Aceite,
   AjusteDePosicao,

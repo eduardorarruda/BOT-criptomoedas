@@ -2,6 +2,7 @@ import type {
   Corretora,
   EstadoDecisao,
   PortaAgente,
+  PortaAgendaEventos,
   PortaAprovacao,
   PortaCandles,
   PortaDecisoes,
@@ -96,6 +97,8 @@ export interface Dependencias {
   readonly candles?: PortaCandles;
   /** Limites da conta (todos os robôs da pessoa na rede). Sem banco, só os do robô valem. */
   readonly riscoConta?: PortaRiscoConta;
+  /** Agenda de eventos de mercado, para o filtro opcional de dia de evento. Sem ela, o filtro não atua. */
+  readonly agendaEventos?: PortaAgendaEventos;
   readonly relogio: Relogio;
   readonly registro: Registro;
   readonly dormir: (ms: number) => Promise<void>;

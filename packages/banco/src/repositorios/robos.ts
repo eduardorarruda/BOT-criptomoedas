@@ -25,6 +25,7 @@ const colunasDosLimites = (l: LimitesRiscoDTO) => ({
   ordensPorHoraMax: l.ordensPorHoraMax,
   pausaAposPerdaMin: l.pausaAposPerdaMin,
   confiancaMinima: String(l.confiancaMinima),
+  diasDeEvento: l.diasDeEvento,
 });
 
 async function obterNa(tx: Tx, id: string): Promise<RoboDTO | null> {

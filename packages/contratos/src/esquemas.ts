@@ -3,6 +3,7 @@
  * tipos e constantes. É o que a tela importa (`@zentrade/contratos/esquemas`).
  * A assinatura dos webhooks e as portas ficam só em `@zentrade/contratos`.
  */
+export * from "./agenda-eventos.js";
 export * from "./alertas.js";
 export * from "./api.js";
 export * from "./assistente.js";

@@ -4,6 +4,9 @@ import {
   contratosPeloRisco,
   decidirComSentido,
   deveZerar,
+  eventoDeAltoImpactoNoInstante,
+  FUSO_B3,
+  fatorDoModoDeEvento,
   iniciarAcompanhamento,
   podeAbrirNaSessao,
   precoAlvo,
@@ -11,7 +14,9 @@ import {
   type Candle,
   type ContextoMercado,
   type Estrategia,
+  type EventoMercado,
   type LimitesRisco,
+  type ModoDiasDeEvento,
   type Sentido,
   type Valor,
 } from "@zentrade/dominio";
@@ -45,6 +50,10 @@ export interface EstadoWin {
   zeragens: number;
   semEspaco: number;
   barradas: number;
+  /** Sinais de entrada barrados pelo filtro de dia de evento. */
+  barradasPorEvento: number;
+  /** Entradas abertas com metade do tamanho pelo filtro de dia de evento. */
+  reduzidasPorEvento: number;
   /** Ordem decidida no fechamento do candle anterior, à espera da abertura deste (`proximaAbertura`). */
   pendente: OrdemPendente | null;
   readonly intrabar: { -readonly [K in keyof SaidasIntrabar]: number };
@@ -56,7 +65,13 @@ export interface EstadoWin {
  * e o tamanho saem do preço de abertura, que é o executado.
  */
 export type OrdemPendente =
-  | { readonly tipo: "entrar"; readonly sentido: Sentido; readonly distanciaRisco: Valor | undefined }
+  | {
+      readonly tipo: "entrar";
+      readonly sentido: Sentido;
+      readonly distanciaRisco: Valor | undefined;
+      /** Dia de evento no modo "reduzir": o risco da entrada é a metade. */
+      readonly reduzida: boolean;
+    }
   | { readonly tipo: "sair"; readonly motivo: MotivoSaidaWin };
 
 export interface Simulacao {
@@ -65,6 +80,9 @@ export interface Simulacao {
   readonly limites: LimitesRisco | null;
   /** Onde executa a ordem decidida no fechamento. Sem ele: no fechamento. */
   readonly execucao?: ModoExecucaoBacktest;
+  /** Filtro opcional de dia de evento (padrão: ignorar), com a agenda da pessoa no período. */
+  readonly diasDeEvento?: ModoDiasDeEvento;
+  readonly eventos?: readonly EventoMercado[];
 }
 
 export interface MomentoCandle {
@@ -156,11 +174,21 @@ export function executarPendente(
     registrarSaida(st, s.modelo, { referencia: c.abre, motivo: ordem.motivo, em: c.abertura, dia: t.dia });
     return;
   }
-  const posicao = montarPosicao(s, ordem.sentido, c.abre, c.abertura, ctx, ordem.distanciaRisco, st.caixa);
+  const posicao = montarPosicao(
+    s,
+    ordem.sentido,
+    c.abre,
+    c.abertura,
+    ctx,
+    ordem.distanciaRisco,
+    st.caixa,
+    ordem.reduzida,
+  );
   if (!posicao) {
     st.semEspaco++;
     return;
   }
+  if (ordem.reduzida) st.reduzidasPorEvento++;
   st.caixa = st.caixa.minus(custoDeUmLado(s.modelo, posicao.contratos));
   st.aberta = posicao;
   st.ordens.push(c.abertura);
@@ -190,8 +218,11 @@ export function montarPosicao(
   ctx: ContextoMercado,
   distanciaRisco: Valor | undefined,
   capital: Valor,
+  reduzida = false,
 ): PosicaoWin | null {
-  const m = s.modelo;
+  const m = reduzida
+    ? { ...s.modelo, riscoPorOperacao: s.modelo.riscoPorOperacao.times(fatorDoModoDeEvento("reduzir")) }
+    : s.modelo;
   const entrada = precoDeEntrada(m, sentido, referencia);
   const { stop } = stopDeEntrada(s.estrategia, entrada, ctx, sentido);
   const distancia = entrada.minus(stop).abs();
@@ -217,25 +248,46 @@ export function montarPosicao(
   };
 }
 
+/** O evento de alto impacto que vale para o WIN no fechamento do candle (dia e janela no fuso da B3). */
+const eventoDoCandle = (s: Simulacao, c: Candle): EventoMercado | null =>
+  eventoDeAltoImpactoNoInstante(s.eventos ?? [], "win", c.fechamento, FUSO_B3);
+
 /** Sem posição: abre se a sessão, a regra, os limites e o tamanho deixarem. */
 export function tentarAbrir(st: EstadoWin, s: Simulacao, c: Candle, ctx: ContextoMercado, t: MomentoCandle) {
   if (st.aberta || t.ultimoDoDia || deveZerar(t.decisao, s.modelo.sessao)) return;
   if (!podeAbrirNaSessao(t.decisao, s.modelo.sessao, t.primeiroDoDia).pode) return;
   const sinal = decidirComSentido(s.estrategia, { ...ctx, preco: c.fecha }, null);
   if (sinal.acao !== "ABRIR") return;
+  const modoEvento = s.diasDeEvento ?? "ignorar";
+  const emEvento = modoEvento !== "ignorar" && Boolean(eventoDoCandle(s, c));
+  if (emEvento && modoEvento === "bloquear") {
+    st.barradasPorEvento++;
+    return;
+  }
   if (barreira(st, s.limites, c.fechamento)) {
     st.barradas++;
     return;
   }
+  const reduzida = emEvento && modoEvento === "reduzir";
   if (naAbertura(s)) {
-    st.pendente = { tipo: "entrar", sentido: sinal.sentido, distanciaRisco: sinal.distanciaRisco };
+    st.pendente = { tipo: "entrar", sentido: sinal.sentido, distanciaRisco: sinal.distanciaRisco, reduzida };
     return;
   }
-  const posicao = montarPosicao(s, sinal.sentido, c.fecha, c.fechamento, ctx, sinal.distanciaRisco, st.caixa);
+  const posicao = montarPosicao(
+    s,
+    sinal.sentido,
+    c.fecha,
+    c.fechamento,
+    ctx,
+    sinal.distanciaRisco,
+    st.caixa,
+    reduzida,
+  );
   if (!posicao) {
     st.semEspaco++;
     return;
   }
+  if (reduzida) st.reduzidasPorEvento++;
   st.caixa = st.caixa.minus(custoDeUmLado(s.modelo, posicao.contratos));
   st.aberta = posicao;
   st.ordens.push(c.fechamento);

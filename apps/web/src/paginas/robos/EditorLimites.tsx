@@ -3,7 +3,7 @@ import type { LimitesRiscoDTO } from "@zentrade/contratos/esquemas";
 import { Save } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Botao } from "../../componentes/Botao";
-import { CampoTexto } from "../../componentes/Campo";
+import { CampoSelecao, CampoTexto } from "../../componentes/Campo";
 import { deLimites, validarLimites, type CamposLimitesTexto as Campos } from "../../lib/limites";
 
 export function CamposLimites({
@@ -53,9 +53,22 @@ export function CamposLimites({
         "Abaixo disso, o risco barra a proposta.",
         "numeric",
       )}
+      <CampoSelecao
+        rotulo="Dias de evento (Copom, payroll, eleição)"
+        value={campos.diasDeEvento}
+        onChange={(e) => mudar("diasDeEvento", e.target.value)}
+        dica={DICA_DIAS_DE_EVENTO}
+      >
+        <option value="ignorar">Ignorar (padrão): operar normalmente</option>
+        <option value="bloquear">Bloquear: não abrir posição nesses dias</option>
+        <option value="reduzir">Reduzir: abrir com metade do tamanho</option>
+      </CampoSelecao>
     </div>
   );
 }
+
+const DICA_DIAS_DE_EVENTO =
+  "Vale para entradas de dias com evento de alto impacto na sua Agenda de eventos (em Risco); saída e stop nunca são barrados. Cuidado: estratégias de tendência costumam ganhar justamente nesses dias. Nos 20 pregões do WIN que medimos, bloquear piorou as de tendência e ajudou um pouco as de volta à média.";
 
 export function useCamposLimites(inicial: LimitesRiscoDTO) {
   const [campos, setCampos] = useState<Campos>(() => deLimites(inicial));

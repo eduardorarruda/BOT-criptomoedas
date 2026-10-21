@@ -81,6 +81,7 @@ describe("webhooks do n8n e tempo real", () => {
         ordensPorHoraMax: 1,
         pausaAposPerdaMin: 0,
         confiancaMinima: 0.5,
+        diasDeEvento: "ignorar",
       },
     });
     roboAna = robo.id;

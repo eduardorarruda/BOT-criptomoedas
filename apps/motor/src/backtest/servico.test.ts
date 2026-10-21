@@ -24,6 +24,7 @@ const PRECOS = [...Array<number>(30).fill(100), 94, 94, 96, 97, 98, ...Array<num
 
 const pedido = (extra: Partial<BacktestParaRodar> = {}): BacktestParaRodar => ({
   id: "b1",
+  usuarioId: "u1",
   estrategiaId: "e1",
   versao: 1,
   simbolo: "BTCUSDT",
@@ -208,5 +209,47 @@ describe("job de backtest", () => {
     expect(r[0]?.em).toBe(0);
     expect(r.at(-1)?.em).toBe(4999);
     expect(reduzirCurva(curva.slice(0, 10), 1000)).toHaveLength(10);
+  });
+});
+
+describe("job de backtest com filtro de dia de evento", () => {
+  // PRECOS começam em 10/01 00:00 UTC, de hora em hora; a compra cai no candle 30 (11/01 06:00 UTC, 03:00 em Brasília)
+  const COPOM = { data: "2026-01-11", mercado: "cripto", titulo: "Copom", impacto: "alto" } as const;
+  const config = (diasDeEvento: "ignorar" | "bloquear" | "reduzir") =>
+    ConfiguracaoBacktestEsquema.parse({ diasDeEvento });
+
+  it("bloquear: lê a agenda da dona do pedido no período e grava as contagens", async () => {
+    const m = montar(pedido({ configuracao: config("bloquear") }));
+    const pedidos: unknown[][] = [];
+    const agenda = {
+      listar: async (...args: [string, string, string]) => {
+        pedidos.push(args);
+        return [COPOM];
+      },
+    };
+    expect(await processarBacktest({ ...m.deps, agenda }, m.opcoes, "b1")).toBe("concluido");
+    expect(pedidos).toHaveLength(1);
+    expect(pedidos[0]?.[0]).toBe("u1");
+    expect(m.gravado.concluido?.metricas).toMatchObject({ operacoes: 0 });
+    expect(
+      MetricasBacktestEsquema.parse(m.gravado.concluido?.metricas).entradasBarradasPorEvento,
+    ).toBeGreaterThan(0);
+  });
+
+  it("ignorar (padrão): nem consulta a agenda e as métricas não trazem as contagens", async () => {
+    const m = montar(pedido());
+    const agenda = {
+      listar: async () => {
+        throw new Error("não devia consultar");
+      },
+    };
+    expect(await processarBacktest({ ...m.deps, agenda }, m.opcoes, "b1")).toBe("concluido");
+    expect(m.gravado.concluido?.metricas).not.toHaveProperty("entradasBarradasPorEvento");
+  });
+
+  it("filtro ligado sem agenda disponível: falha dizendo por quê, em vez de rodar sem o filtro", async () => {
+    const m = montar(pedido({ configuracao: config("bloquear") }));
+    expect(await processarBacktest(m.deps, m.opcoes, "b1")).toBe("falhou");
+    expect(m.gravado.falhou).toContain("agenda de eventos");
   });
 });

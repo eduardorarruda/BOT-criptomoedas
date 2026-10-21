@@ -181,6 +181,7 @@ export const LIMITES_PADRAO: LimitesRiscoDTO = {
   ordensPorHoraMax: 4,
   pausaAposPerdaMin: 60,
   confiancaMinima: 0.65,
+  diasDeEvento: "ignorar",
 };
 
 export function robosIniciais(agora: number): RoboDTO[] {

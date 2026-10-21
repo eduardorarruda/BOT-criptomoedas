@@ -83,6 +83,8 @@ function lerResultado(b: typeof backtests.$inferSelect) {
 
 /** O que o motor precisa para rodar um backtest: o pedido e a versão exata da estratégia. */
 export interface BacktestParaRodar extends Backtest {
+  /** A dona do pedido: o motor lê a agenda de eventos dela quando o filtro de dia de evento está ligado. */
+  readonly usuarioId: string;
   readonly estrategia: Estrategia;
 }
 
@@ -190,7 +192,7 @@ export function repositorioBacktests(db: Db) {
           ),
         );
       if (!v) throw new ErroDados("nao_encontrado", `a estratégia do backtest ${id} não existe mais`);
-      return { ...paraBacktest(b), estrategia: estrategiaDominio(v) };
+      return { ...paraBacktest(b), usuarioId: b.usuarioId, estrategia: estrategiaDominio(v) };
     },
 
     /**

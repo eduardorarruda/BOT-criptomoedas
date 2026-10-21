@@ -19,6 +19,7 @@ const LIMITES_INICIAIS = {
   ordensPorHoraMax: 4,
   pausaAposPerdaMin: 60,
   confiancaMinima: 0.65,
+  diasDeEvento: "ignorar" as const,
 };
 
 /** As saídas da estratégia em uma linha, para saber como o robô vai sair antes de criá-lo. */

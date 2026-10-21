@@ -4,6 +4,7 @@ export * from "./contexto.js";
 export * from "./dimensionamento.js";
 export * from "./dinheiro.js";
 export * from "./estrategia.js";
+export * from "./eventos.js";
 export * from "./formatar.js";
 export * from "./fuso.js";
 export * from "./indicadores.js";

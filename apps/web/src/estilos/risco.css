@@ -102,3 +102,10 @@
   margin-top: 4px;
   font-size: var(--t-legenda);
 }
+
+/* Agenda de eventos: ações de cada evento ficam juntas, abaixo do texto. */
+.agenda__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+}

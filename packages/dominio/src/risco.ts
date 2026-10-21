@@ -1,5 +1,6 @@
 import { ehMultiplo, type Valor } from "./dinheiro.js";
 import { precoAlvo } from "./estrategia.js";
+import { motivoDiaDeEvento, type DiaDeEvento, type ModoDiasDeEvento } from "./eventos.js";
 import { formatarDolar, formatarNumero } from "./formatar.js";
 import { barreirasDaConta, type CodigoBarreiraConta, type EstadoConta } from "./risco-conta.js";
 import type { FiltrosAtivo, Lado } from "./tipos.js";
@@ -18,6 +19,8 @@ export interface LimitesRisco {
   readonly ordensPorHoraMax: number;
   readonly pausaAposPerdaMs: number;
   readonly confiancaMinima: number;
+  /** Filtro opcional de dia de evento (padrão "ignorar"); o motor traduz em `EstadoRisco.diaDeEvento`. */
+  readonly diasDeEvento?: ModoDiasDeEvento;
 }
 
 export interface EstadoRisco {
@@ -29,6 +32,8 @@ export interface EstadoRisco {
   readonly agora: number;
   /** Limites da conta (todos os robôs da pessoa na rede). Sem isto, só os do robô valem. */
   readonly conta?: EstadoConta;
+  /** Há evento de alto impacto hoje para o mercado do robô e o robô pediu para respeitá-lo. */
+  readonly diaDeEvento?: DiaDeEvento;
 }
 
 /**
@@ -69,6 +74,7 @@ export type CodigoBarreira =
   | "passo_quantidade"
   | "valor_minimo"
   | "poeira"
+  | "dia_de_evento"
   | CodigoBarreiraConta;
 
 export interface Barreira {
@@ -152,6 +158,11 @@ function barreirasDeOperacao(e: EstadoRisco, l: LimitesRisco): Barreira[] {
 
 function barreirasDaCompra(p: PropostaOrdem, e: EstadoRisco, l: LimitesRisco, taxa: number): Barreira[] {
   const b: Barreira[] = [];
+  if (e.diaDeEvento?.modo === "bloquear")
+    b.push({
+      codigo: "dia_de_evento",
+      mensagem: `Entrada barrada — ${motivoDiaDeEvento(e.diaDeEvento.titulo)}. Este robô está configurado para não abrir posição em dia de evento; a saída e o stop seguem valendo.`,
+    });
   if (e.resultadoDoDia.lte(l.perdaDiariaMaxima.neg()))
     b.push({
       codigo: "perda_diaria",

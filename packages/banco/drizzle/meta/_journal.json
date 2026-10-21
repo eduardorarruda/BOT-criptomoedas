@@ -127,6 +127,13 @@
       "when": 1792583003442,
       "tag": "0017_intervalo_30m",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792591941849,
+      "tag": "0018_eventos_mercado",
+      "breakpoints": true
     }
   ]
 }

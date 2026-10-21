@@ -23,6 +23,7 @@ const LIMITES = {
   ordensPorHoraMax: 5,
   pausaAposPerdaMin: 0,
   confiancaMinima: 0.5,
+  diasDeEvento: "ignorar" as const,
 };
 const CINCO_MIN = 5 * 60_000;
 

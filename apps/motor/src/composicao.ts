@@ -7,6 +7,7 @@ import type {
   PortaDecisoes,
   PortaOrdens,
   PortaProtecoes,
+  PortaAgendaEventos,
   PortaRiscoConta,
   PortaRobos,
   RoboConfig,
@@ -96,6 +97,8 @@ export interface FontesMotor {
     readonly credenciais?: PortaCredenciais | null;
     /** Limites da conta (todos os robôs da pessoa na rede), lidos sob RLS. */
     readonly riscoConta?: PortaRiscoConta | null;
+    /** Agenda de eventos de mercado (filtro de dia de evento), lida sob RLS. */
+    readonly agendaEventos?: PortaAgendaEventos | null;
   };
   readonly redis?: ClienteRedis;
   readonly arquivo?: RobosCarregados;
@@ -222,6 +225,7 @@ export function montarMotor(config: Config, f: FontesMotor, registro: Registro) 
     eventos: f.redis ? new EventosRedis(f.redis) : new EventosNoRegistro(registro),
     aprovacao: portas.aprovacao,
     ...(f.banco ? { candles: f.banco.mercado } : {}),
+    ...(f.banco?.agendaEventos ? { agendaEventos: f.banco.agendaEventos } : {}),
     ...(f.banco?.riscoConta ? { riscoConta: riscoContaSeguro(f.banco.riscoConta, registro) } : {}),
     relogio,
     registro,

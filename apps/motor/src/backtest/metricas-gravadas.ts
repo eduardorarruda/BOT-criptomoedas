@@ -1,5 +1,5 @@
 import type { MetricasBacktest } from "@zentrade/contratos";
-import { paraTexto, type Valor } from "@zentrade/dominio";
+import { paraTexto, type ModoDiasDeEvento, type Valor } from "@zentrade/dominio";
 import { duracaoDaQueda, maiorQueda } from "./metricas.js";
 import { estatisticasDasOperacoes } from "./metricas-operacoes.js";
 import { ANO_MS, cagr, calmar, metricasDosRetornos, retornosDaCurva } from "./metricas-retorno.js";
@@ -13,6 +13,8 @@ export interface ContextoMetricas {
   readonly inicio: number;
   readonly fim: number;
   readonly precisaoMinuto: boolean;
+  /** Com o filtro de dia de evento ligado, as métricas contam as entradas barradas e reduzidas. */
+  readonly diasDeEvento?: ModoDiasDeEvento;
 }
 
 const fracao = (resultado: Valor, base: Valor): number =>
@@ -88,6 +90,12 @@ export function metricasGravadas(r: ResultadoBacktest, c: ContextoMetricas): Met
     alvosIntrabar: r.saidasIntrabar.alvo,
     candlesAmbiguos: r.saidasIntrabar.ambiguos,
     precisaoMinuto: c.precisaoMinuto,
+    ...(c.diasDeEvento && c.diasDeEvento !== "ignorar"
+      ? {
+          entradasBarradasPorEvento: r.entradasBarradasPorEvento,
+          entradasReduzidasPorEvento: r.entradasReduzidasPorEvento,
+        }
+      : {}),
     ...deRisco(r, c, (c.fim - c.inicio) / ANO_MS),
     ...dasOperacoes(r),
     ...deBuyHold(r, c),

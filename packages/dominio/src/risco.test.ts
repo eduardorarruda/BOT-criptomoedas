@@ -200,3 +200,42 @@ describe("motor de risco", () => {
     for (const b of r.barreiras) expect(b.mensagem.length).toBeGreaterThan(10);
   });
 });
+
+describe("dia de evento (filtro opcional por robô)", () => {
+  const evento = { titulo: "Copom — decisão da Selic" };
+
+  it("bloquear barra a entrada com o motivo legível", () => {
+    const r = avaliarRisco(
+      compra,
+      { ...estado, diaDeEvento: { modo: "bloquear", ...evento } },
+      limites,
+      filtros,
+      taxa,
+    );
+    expect(codigos(r)).toEqual(["dia_de_evento"]);
+    if (!r.aprovada) expect(r.barreiras[0]?.mensagem).toContain("dia de evento: Copom — decisão da Selic");
+  });
+
+  it("reduzir e ignorar não barram (reduzir mexe só no tamanho, no motor)", () => {
+    for (const modo of ["reduzir", "ignorar"] as const)
+      expect(
+        avaliarRisco(compra, { ...estado, diaDeEvento: { modo, ...evento } }, limites, filtros, taxa),
+      ).toEqual({
+        aprovada: true,
+      });
+  });
+
+  it("nunca barra a saída: nem a pela regra, nem a proteção (stop e alvo)", () => {
+    const e = { ...estado, diaDeEvento: { modo: "bloquear" as const, ...evento } };
+    for (const finalidade of ["saida", "protecao"] as const)
+      expect(
+        avaliarRisco(
+          { lado: "VENDA", quantidade: dec("0.005"), precoReferencia: dec(60000), confianca: 0, finalidade },
+          e,
+          limites,
+          filtros,
+          taxa,
+        ),
+      ).toEqual({ aprovada: true });
+  });
+});

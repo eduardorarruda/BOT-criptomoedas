@@ -1,4 +1,10 @@
-import type { PortaAgente, PortaCandles, PortaRiscoConta, RoboConfig } from "@zentrade/contratos";
+import type {
+  PortaAgendaEventos,
+  PortaAgente,
+  PortaCandles,
+  PortaRiscoConta,
+  RoboConfig,
+} from "@zentrade/contratos";
 import { PapelCorretora } from "@zentrade/corretora";
 import { dec, type Estrategia, type LimitesRisco } from "@zentrade/dominio";
 import type { Dependencias, Registro } from "../nucleo/tipos.js";
@@ -88,6 +94,10 @@ export interface OpcoesCenario {
   /** Distância do limite abaixo do stop na corretora. Padrão: o do motor. */
   readonly stopLimiteBps?: number;
   readonly riscoConta?: PortaRiscoConta;
+  /** A agenda de eventos de mercado (filtro de dia de evento). */
+  readonly agendaEventos?: PortaAgendaEventos;
+  /** O fuso da instância (ZENTRADE_FUSO). Padrão: o do motor. */
+  readonly fuso?: string;
 }
 
 export const USUARIO = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
@@ -134,6 +144,7 @@ export function montarCenario(o: OpcoesCenario = {}) {
     aprovacao: new AprovacaoMemoria((id) => o.aoSolicitar?.(id, decisoes)),
     ...(o.candles ? { candles: o.candles } : {}),
     ...(o.riscoConta ? { riscoConta: o.riscoConta } : {}),
+    ...(o.agendaEventos ? { agendaEventos: o.agendaEventos } : {}),
     relogio,
     registro,
     dormir: o.dormir ?? relogio.dormir,
@@ -142,6 +153,7 @@ export function montarCenario(o: OpcoesCenario = {}) {
       agenteObrigatorio: o.agenteObrigatorio ?? true,
       tamanhoHistorico: o.tamanhoHistorico ?? 100,
       ...(o.stopLimiteBps ? { stopLimiteBps: o.stopLimiteBps } : {}),
+      ...(o.fuso ? { fuso: o.fuso } : {}),
     },
   } satisfies Dependencias;
 

@@ -88,6 +88,10 @@ export const robos = pgTable(
     ordensPorHoraMax: integer("ordens_por_hora_max").notNull(),
     pausaAposPerdaMin: integer("pausa_apos_perda_min").notNull(),
     confiancaMinima: decimal("confianca_minima").notNull(),
+    /** Filtro opcional de dia de evento (padrão ignorar); ver esquema/eventos-mercado.ts. */
+    diasDeEvento: text("dias_de_evento", { enum: ["ignorar", "bloquear", "reduzir"] })
+      .notNull()
+      .default("ignorar"),
     pausado: boolean("pausado").notNull().default(false),
     criadoEm: instante("criado_em").notNull().defaultNow(),
   },
@@ -102,6 +106,7 @@ export const robos = pgTable(
     check("robos_intervalo", sql`${t.intervalo} in (${intervalos})`),
     check("robos_modo", sql`${t.modo} in ('observar', 'sugerir', 'auto')`),
     check("robos_rede", sql`${t.rede} in ('papel', 'testnet', 'real')`),
+    check("robos_dias_de_evento", sql`${t.diasDeEvento} in ('ignorar', 'bloquear', 'reduzir')`),
   ],
 );
 

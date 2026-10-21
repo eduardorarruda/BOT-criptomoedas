@@ -3,10 +3,12 @@ import {
   BARREIRA_PAUSADO,
   formatarNumero,
   paraTexto,
+  textoReducaoPorEvento,
   type FinalidadeOrdem,
   type Sinal,
 } from "@zentrade/dominio";
 import { concorda, consultarAgente } from "./analise.js";
+import { diaDeEventoDaEntrada } from "./dia-de-evento.js";
 import { registrarDecisao, mudarEstado, type DecisaoRegistrada } from "./diario.js";
 import { exposicao, montarEstadoRisco } from "./estado-risco.js";
 import { executarDecisao } from "./execucao.js";
@@ -104,8 +106,13 @@ function montarDecisao(
   comAgente: Pick<NovaDecisao, "proposta" | "custoIaUsd">,
 ): NovaDecisao {
   const estado = !risco.aprovada ? "barrada" : estadoInicial(robo, e.sinal);
+  // Entrada reduzida por dia de evento: o diário diz por que o tamanho é a metade.
+  const sinal = plano.reducaoPorEvento
+    ? { ...e.sinal, explicacao: `${e.sinal.explicacao} ${textoReducaoPorEvento(plano.reducaoPorEvento)}` }
+    : e.sinal;
   return {
     ...base(robo, e),
+    sinal,
     ...comAgente,
     quantidade: plano.quantidade,
     risco,
@@ -125,7 +132,10 @@ async function planejarEDecidir(
   comAgente: Pick<NovaDecisao, "proposta" | "custoIaUsd">,
 ): Promise<ResultadoCiclo> {
   const filtros = await deps.corretora.filtros(robo.simbolo);
-  const estado = await montarEstadoRisco(deps, robo.id, exposicao(e.posicao, e.preco));
+  const estadoBase = await montarEstadoRisco(deps, robo.id, exposicao(e.posicao, e.preco));
+  // O filtro de dia de evento só mexe em ABRIR posição; saída e stop não passam por ele.
+  const diaDeEvento = sinal.acao === "COMPRAR" ? await diaDeEventoDaEntrada(deps, robo) : undefined;
+  const estado = diaDeEvento ? { ...estadoBase, diaDeEvento } : estadoBase;
   const plano = await planejar(deps, robo, sinal, {
     preco: e.preco,
     posicao: e.posicao,

@@ -2,6 +2,7 @@ import type { PropostaAgente, RoboConfig } from "@zentrade/contratos";
 import {
   avaliarRisco,
   dec,
+  fatorDoModoDeEvento,
   type Barreira,
   type EstadoRisco,
   type FiltrosAtivo,
@@ -30,6 +31,8 @@ export interface Plano {
   readonly alvo?: Valor;
   readonly confianca: number;
   readonly ajuste?: AjustePosicao;
+  /** Título do evento que reduziu a entrada à metade (filtro de dia de evento no modo "reduzir"). */
+  readonly reducaoPorEvento?: string;
 }
 
 export interface Avaliacao {
@@ -62,7 +65,7 @@ async function planejarCompra(
       taxa,
       ...(sinal.distanciaRisco ? { distanciaRisco: sinal.distanciaRisco } : {}),
     },
-    ctx.proposta?.tamanhoRelativo ?? 1,
+    (ctx.proposta?.tamanhoRelativo ?? 1) * fatorDoModoDeEvento(ctx.estado.diaDeEvento?.modo ?? "ignorar"),
   );
   return {
     lado: "COMPRA",
@@ -71,6 +74,9 @@ async function planejarCompra(
     ...protecao,
     confianca: ctx.proposta?.confianca ?? 1,
     ajuste: ajusteDaPosicao(protecao, ctx.preco, taxa),
+    ...(ctx.estado.diaDeEvento?.modo === "reduzir"
+      ? { reducaoPorEvento: ctx.estado.diaDeEvento.titulo }
+      : {}),
   };
 }
 

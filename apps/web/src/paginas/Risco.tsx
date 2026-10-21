@@ -14,6 +14,7 @@ import { useLoja } from "../lib/loja";
 import { formatarRelativo } from "../lib/tempo";
 import { FormLimites } from "./risco/FormLimites";
 import { useSituacaoConta } from "./risco/ganchos";
+import { PainelAgenda } from "./risco/PainelAgenda";
 import { PainelAvisos } from "./risco/PainelAvisos";
 import { PainelConta } from "./risco/PainelConta";
 import { PainelDivergencias } from "./risco/PainelDivergencias";
@@ -21,6 +22,12 @@ import { PainelOrcamentoIa } from "./risco/PainelOrcamentoIa";
 import { PainelPausas } from "./risco/PainelPausas";
 import { ProximoPasso } from "../componentes/ProximoPasso";
 import { TabelaRolagem } from "../componentes/TabelaRolagem";
+
+const DIAS_DE_EVENTO = {
+  ignorar: "Ignora",
+  bloquear: "Bloqueia entradas",
+  reduzir: "Metade do tamanho",
+} as const;
 
 function ParadaTotal() {
   const resumo = useResumo();
@@ -131,6 +138,7 @@ function Limites() {
             <th scope="col" className="tabela__num">
               Confiança mín.
             </th>
+            <th scope="col">Dias de evento</th>
           </tr>
         </thead>
         <tbody>
@@ -145,6 +153,7 @@ function Limites() {
               <td className="tabela__num num">
                 {formatarPercentual(r.limites.confiancaMinima, { casas: 0 })}
               </td>
+              <td>{DIAS_DE_EVENTO[r.limites.diasDeEvento]}</td>
             </tr>
           ))}
         </tbody>
@@ -261,6 +270,7 @@ export function Risco() {
         >
           <Limites />
         </Painel>
+        <PainelAgenda />
         <Painel titulo="Barrado recentemente" id="titulo-barreiras" icone={ShieldAlert}>
           <Barreiras />
         </Painel>

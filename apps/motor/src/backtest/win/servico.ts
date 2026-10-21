@@ -8,7 +8,7 @@ import {
   type MetricasBacktest,
   type ValidacaoBacktest,
 } from "@zentrade/contratos";
-import { dec } from "@zentrade/dominio";
+import { dec, type EventoMercado } from "@zentrade/dominio";
 import { candlesHistoricos, type FontesCandles } from "../candles-historicos.js";
 import { validarBacktest } from "../validacao/index.js";
 import { barrasPorAnoDaSerie, metricasGravadasWin } from "./metricas.js";
@@ -55,6 +55,7 @@ export async function rodarWin(
   fontes: FontesCandles,
   p: BacktestParaRodar,
   config: ConfiguracaoBacktest,
+  eventos?: readonly EventoMercado[],
 ): Promise<{
   readonly metricas: MetricasBacktest;
   readonly curva: ResultadoBacktestWin["curva"];
@@ -76,6 +77,8 @@ export async function rodarWin(
     inicio: p.inicio,
     fim: p.fim,
     execucao: config.execucao,
+    diasDeEvento: config.diasDeEvento,
+    ...(eventos ? { eventos } : {}),
   });
   const contexto = {
     simbolo: p.simbolo,
@@ -83,6 +86,7 @@ export async function rodarWin(
     riscoPorOperacao: modelo.riscoPorOperacao,
     inicio: p.inicio,
     fim: p.fim,
+    diasDeEvento: config.diasDeEvento,
   };
   const porAno = barrasPorAnoDaSerie(r.candles.length, p.inicio, p.fim);
   const validacao = validarBacktest(

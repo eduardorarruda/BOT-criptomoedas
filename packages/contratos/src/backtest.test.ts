@@ -39,6 +39,7 @@ describe("configuração do backtest", () => {
       risco: { modo: "robo" },
       precisaoMinuto: false,
       execucao: "fechamento",
+      diasDeEvento: "ignorar",
       validacao: {
         fracaoDentroDaAmostra: 0.7,
         janelas: 5,
@@ -75,7 +76,7 @@ describe("configuração do backtest", () => {
     };
     expect(ConfiguracaoBacktestEsquema.parse({ risco: { modo: "robo", limites } }).risco).toEqual({
       modo: "robo",
-      limites,
+      limites: { ...limites, diasDeEvento: "ignorar" },
     });
   });
 
@@ -107,6 +108,7 @@ describe("configuração do backtest", () => {
       ordensPorHoraMax: LIMITES_BACKTEST_PADRAO.ordensPorHoraMax,
       pausaAposPerdaMin: 60,
       confiancaMinima: 0.65,
+      diasDeEvento: "ignorar",
     });
     expect(limitesPadraoDoBacktest("250").riscoPorOperacao).toBe("1.25");
   });
@@ -226,5 +228,13 @@ describe("resultado do backtest", () => {
     expect(ValidacaoBacktestEsquema.safeParse(v).success).toBe(true);
     const aviso = { codigo: "x", nivel: "grave", base: "formal", mensagem: "?" };
     expect(ValidacaoBacktestEsquema.safeParse({ ...v, avisos: [aviso] }).success).toBe(false);
+  });
+});
+
+describe("filtro de dia de evento no backtest", () => {
+  it("o padrão é ignorar, em backtests novos e nos antigos (sem o campo)", () => {
+    expect(ConfiguracaoBacktestEsquema.parse({}).diasDeEvento).toBe("ignorar");
+    expect(ConfiguracaoBacktestEsquema.parse({ diasDeEvento: "bloquear" }).diasDeEvento).toBe("bloquear");
+    expect(ConfiguracaoBacktestEsquema.safeParse({ diasDeEvento: "remover" }).success).toBe(false);
   });
 });
