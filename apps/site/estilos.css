@@ -1808,7 +1808,7 @@ main > div {
   }
 }
 
-/* ---------- fundo: tinta neutra, grão de papel, luz suave e linhas finas ---------- */
+/* ---------- fundo: tinta neutra, grão de papel e luz suave ---------- */
 body::before {
   content: "";
   position: fixed;
@@ -1818,30 +1818,16 @@ body::before {
   opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
 }
-main {
-  /* as duas guias verticais na borda do conteúdo */
-  background: linear-gradient(
-    90deg,
-    transparent calc(50% - min(600px, 50% - 16px) - 1px),
-    rgba(238, 242, 236, 0.045) calc(50% - min(600px, 50% - 16px) - 1px),
-    rgba(238, 242, 236, 0.045) calc(50% - min(600px, 50% - 16px)),
-    transparent calc(50% - min(600px, 50% - 16px)),
-    transparent calc(50% + min(600px, 50% - 16px)),
-    rgba(238, 242, 236, 0.045) calc(50% + min(600px, 50% - 16px)),
-    rgba(238, 242, 236, 0.045) calc(50% + min(600px, 50% - 16px) + 1px),
-    transparent calc(50% + min(600px, 50% - 16px) + 1px)
-  );
-}
 main > section:not(.hero) {
+  /* luzes por dentro da seção, que somem antes da borda: sem emenda entre uma e outra */
   --lx: 78%;
-  --ly: 0%;
-  --jx: 12%;
-  --jy: 100%;
+  --ly: 38%;
+  --jx: 14%;
+  --jy: 66%;
   position: relative;
   background:
-    linear-gradient(90deg, transparent, rgba(238, 242, 236, 0.1) 50%, transparent) top / 100% 1px no-repeat,
-    radial-gradient(55% 45% at var(--lx) var(--ly), rgba(238, 242, 236, 0.06), transparent 70%),
-    radial-gradient(40% 40% at var(--jx) var(--jy), rgba(61, 220, 142, 0.05), transparent 70%);
+    radial-gradient(min(640px, 60vw) 300px at var(--lx) var(--ly), rgba(238, 242, 236, 0.05), transparent),
+    radial-gradient(min(520px, 50vw) 260px at var(--jx) var(--jy), rgba(61, 220, 142, 0.045), transparent);
 }
 main > section:nth-of-type(even):not(.hero) {
   --lx: 18%;
@@ -1849,22 +1835,9 @@ main > section:nth-of-type(even):not(.hero) {
 }
 main > section.final {
   --lx: 50%;
-  --ly: 100%;
+  --ly: 50%;
   --jx: 50%;
-  --jy: 40%;
-}
-/* o ponto onde a guia encontra a linha de cima de cada seção */
-main > section:not(.hero)::after {
-  content: "";
-  position: absolute;
-  top: -3px;
-  left: calc(50% - min(600px, 50% - 16px) - 3px);
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  border: 1px solid rgba(61, 220, 142, 0.5);
-  background: var(--tinta);
-  pointer-events: none;
+  --jy: 50%;
 }
 .alternada {
   border-block: 0;
