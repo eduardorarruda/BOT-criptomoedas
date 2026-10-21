@@ -26,7 +26,8 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
     />
-    <link rel="preload" as="image" href="img/hero-gl.webp" />
+    <link rel="preload" as="image" href="img/hero-limpo.webp" />
+    <link rel="preload" as="image" href="img/enso.webp" />
     <link rel="stylesheet" href="estilos.css" />
     <script type="application/ld+json">
       {
@@ -194,6 +195,50 @@
       <section class="hero" aria-labelledby="titulo-hero">
         <div class="hero-imagem" aria-hidden="true"></div>
         <canvas id="fumaca" aria-hidden="true"></canvas>
+        <svg
+          class="hero-arte"
+          viewBox="0 0 2752 1536"
+          preserveAspectRatio="xMaxYMid slice"
+          aria-hidden="true"
+        >
+          <defs>
+            <mask id="pincelada" maskUnits="userSpaceOnUse" x="0" y="0" width="2752" height="1536">
+              <path
+                class="mascara-pincel"
+                d="M1927.9 1160.6A418 418 0 1 1 2079.9 1169.9"
+                fill="none"
+                stroke="#fff"
+                stroke-width="240"
+                stroke-linecap="round"
+                pathLength="1"
+              />
+            </mask>
+            <radialGradient id="halo-ponto">
+              <stop offset="0" stop-color="#3ddc8e" stop-opacity="0.6" />
+              <stop offset="0.45" stop-color="#3ddc8e" stop-opacity="0.18" />
+              <stop offset="1" stop-color="#3ddc8e" stop-opacity="0" />
+            </radialGradient>
+            <linearGradient id="linha-horizonte" x1="0" x2="1">
+              <stop offset="0" stop-color="#cfe9da" stop-opacity="0" />
+              <stop offset="0.35" stop-color="#cfe9da" stop-opacity="0.45" />
+              <stop offset="0.54" stop-color="#9ff0c4" stop-opacity="0.9" />
+              <stop offset="1" stop-color="#cfe9da" stop-opacity="0.3" />
+            </linearGradient>
+          </defs>
+          <rect
+            class="horizonte-arte"
+            x="1150"
+            y="766"
+            width="1602"
+            height="4"
+            fill="url(#linha-horizonte)"
+          />
+          <image href="img/enso.webp" x="1459" y="185" width="1140" height="1140" mask="url(#pincelada)" />
+          <g class="ponto-arte">
+            <circle cx="2012" cy="768" r="200" fill="url(#halo-ponto)" />
+            <circle cx="2012" cy="768" r="56" fill="#3ddc8e" />
+          </g>
+        </svg>
         <div class="hero-veu" aria-hidden="true"></div>
         <div class="conteiner">
           <span class="selo"
@@ -857,73 +902,47 @@
           { passive: true },
         );
 
-        /* ---------- hero: pincelada do ensō e fumaça que segue o mouse (WebGL) ---------- */
+        /* ---------- hero: fundo limpo com fumaça que responde ao mouse (WebGL) ---------- */
         const hero = document.querySelector(".hero");
         const tela = document.getElementById("fumaca");
         const gl = tela.getContext("webgl", { alpha: false, antialias: false, powerPreference: "low-power" });
-        const IMG = [2752, 1536]; // coordenadas da imagem original: ensō e ponto medidos nela
+        const IMG = [2752, 1536]; // mesmo enquadramento do SVG do ensō (xMaxYMid slice)
         const N = 16;
         function iniciarGl(imagem) {
           const VS = "attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}";
-          const FS = `precision highp float;
+          const FS = `precision mediump float;
 varying vec2 v;
 uniform sampler2D img;
 uniform vec2 tela, tam;
-uniform float t, pinta, luz;
+uniform float t;
 uniform vec3 rastro[${N}];
-const vec2 C = vec2(2029., 755.);
-const vec2 PONTO = vec2(2012., 768.);
-const float R1 = 330., R2 = 515., RM = 418.;
-const float INICIO = 100., VOLTA = 343.;
 float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float rn(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);
   return mix(mix(h(i),h(i+vec2(1,0)),u.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),u.x),u.y);}
 float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*rn(p);p*=2.03;a*=.5;}return s;}
-vec4 am(vec2 q){return texture2D(img,clamp(q/tam,0.,1.));}
 void main(){
   vec2 fp=vec2(v.x*tela.x,(1.-v.y)*tela.y);
   float s=max(tela.x/tam.x,tela.y/tam.y);
   vec2 off=vec2(tela.x-tam.x*s,(tela.y-tam.y*s)*.5);
   vec2 q=(fp-off)/s;
-  vec2 d=q-C; float r=length(d);
-  float ang=mod(degrees(atan(d.y,d.x))+360.,360.);
-  float banda=smoothstep(R1-30.,R1,r)*(1.-smoothstep(R2,R2+30.,r));
-  vec4 cor=am(q);
-  // pincelada: a frente anda pelo ângulo, com ponta arredondada e borda macia
-  float dd=mod(ang-INICIO+360.,360.);
-  if(dd>349.) dd-=360.;
-  float x=clamp((r-RM)/((R2-R1)*.5),-1.,1.);
-  float frente=pinta*(VOLTA+24.)-12.-x*x*9.;
-  float feito=1.-smoothstep(frente-10.,frente,dd);
-  if(pinta>=1.) feito=1.;
-  float rr=r<RM?R1-(r-R1)-12.:R2+(R2-r)+12.;
-  vec4 fundo=am(C+normalize(d)*rr);
-  cor=mix(cor,mix(fundo,cor,feito),banda);
-  // ponto: escondido até o pincel terminar, depois acende e respira
-  float dp=length(q-PONTO);
-  float disco=1.-smoothstep(125.,205.,dp);
-  float verde=clamp((cor.g-max(cor.r,cor.b))*12.,0.,1.)*disco;
-  float cinza=dot(cor.rgb,vec3(.3,.59,.11));
-  cor.rgb=mix(cor.rgb,vec3(cinza*.12),verde*(1.-luz));
-  cor.rgb+=vec3(.24,.86,.56)*exp(-dp*dp/(110.*110.))*luz*(.12+.06*sin(t*1.5));
-  // fumaça: a imagem não é entortada; a névoa aparece por cima onde o mouse passa
-  float fum=smoothstep(tam.y*.42,tam.y*.62,q.y)*(1.-banda)*(1.-disco);
+  vec3 cor=texture2D(img,clamp(q/tam,0.,1.)).rgb;
+  float fum=smoothstep(tam.y*.40,tam.y*.62,q.y);
   if(fum>.01){
     float inf=0.; vec2 arraste=vec2(0.);
     for(int i=0;i<${N};i++){
       vec3 m=rastro[i];
       vec2 dm=q-m.xy;
-      float f=exp(-dot(dm,dm)/(190.*190.))*m.z;
+      float f=exp(-dot(dm,dm)/(200.*200.))*m.z;
       inf+=f; arraste+=dm*f;
     }
     inf=min(inf,1.);
-    vec2 p=q*.004+vec2(t*.05,-t*.03)+arraste*.0015;
+    vec2 p=q*.004+vec2(t*.05,-t*.03)+arraste*.0016;
     float w=fbm(p+fbm(p*1.6+vec2(0.,t*.04)));
-    float ambiente=smoothstep(.55,.9,w)*.07;
-    float mexida=smoothstep(.38,.85,w)*inf*.46;
-    cor.rgb=mix(cor.rgb,vec3(.8,.86,.82),(ambiente+mexida)*fum);
+    float ambiente=smoothstep(.55,.9,w)*.08;
+    float mexida=smoothstep(.36,.85,w)*inf*.5;
+    cor=mix(cor,vec3(.8,.86,.82),(ambiente+mexida)*fum);
   }
-  gl_FragColor=vec4(cor.rgb,1.);
+  gl_FragColor=vec4(cor,1.);
 }`;
           const sh = (tipo, src) => {
             const s = gl.createShader(tipo);
@@ -938,42 +957,23 @@ void main(){
           gl.linkProgram(prog);
           if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
           gl.useProgram(prog);
-          const buf = gl.createBuffer();
-          gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+          gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
           gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
           const loc = gl.getAttribLocation(prog, "p");
           gl.enableVertexAttribArray(loc);
           gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-          const tex = gl.createTexture();
-          gl.bindTexture(gl.TEXTURE_2D, tex);
+          gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, imagem);
           const u = (n) => gl.getUniformLocation(prog, n);
-          const U = {
-            tela: u("tela"),
-            tam: u("tam"),
-            t: u("t"),
-            pinta: u("pinta"),
-            luz: u("luz"),
-            rastro: u("rastro"),
-          };
+          const U = { tela: u("tela"), tam: u("tam"), t: u("t"), rastro: u("rastro") };
           gl.uniform2f(U.tam, IMG[0], IMG[1]);
 
           const rastro = new Float32Array(N * 3);
           let cursor = 0;
-          function ajustar() {
-            const r = hero.getBoundingClientRect();
-            const dpr = Math.min(devicePixelRatio || 1, 1.25);
-            const escala = r.width * dpr > 1600 ? 1600 / r.width : dpr;
-            tela.width = Math.round(r.width * escala);
-            tela.height = Math.round(r.height * escala);
-            gl.viewport(0, 0, tela.width, tela.height);
-            gl.uniform2f(U.tela, tela.width, tela.height);
-            acordar();
-          }
           const paraImagem = (cx, cy) => {
             const r = hero.getBoundingClientRect();
             const s = Math.max(r.width / IMG[0], r.height / IMG[1]);
@@ -994,27 +994,16 @@ void main(){
           });
 
           const inicio = performance.now();
-          const PINTA_ATRASO = 350;
-          const PINTA_DURACAO = 2300;
-          const suave = (x) => 1 - Math.pow(1 - x, 2.2);
           let visivel = true;
           let rodando = false;
           let alterna = false;
           function quadro(agora) {
-            const ms = agora - inicio;
-            const ocioso =
-              ms > PINTA_ATRASO + PINTA_DURACAO + 1400 && rastro.every((v, i) => i % 3 !== 2 || v < 0.03);
+            const mexendo = rastro.some((v, i) => i % 3 === 2 && v > 0.03);
             alterna = !alterna;
-            if (ocioso && alterna && !reduzir && visivel && !document.hidden)
+            if (!mexendo && alterna && !reduzir && visivel && !document.hidden)
               return requestAnimationFrame(quadro);
-            const p = reduzir ? 1 : suave(Math.min(1, Math.max(0, (ms - PINTA_ATRASO) / PINTA_DURACAO)));
-            const luz = reduzir
-              ? 1
-              : Math.min(1, Math.max(0, (ms - PINTA_ATRASO - PINTA_DURACAO + 300) / 900));
-            for (let i = 0; i < N; i++) rastro[i * 3 + 2] *= 0.965;
-            gl.uniform1f(U.t, reduzir ? 0 : ms / 1000);
-            gl.uniform1f(U.pinta, p);
-            gl.uniform1f(U.luz, luz);
+            for (let i = 0; i < N; i++) rastro[i * 3 + 2] *= 0.95;
+            gl.uniform1f(U.t, reduzir ? 0 : (agora - inicio) / 1000);
             gl.uniform3fv(U.rastro, rastro);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
             if (reduzir || !visivel || document.hidden) return (rodando = false);
@@ -1024,6 +1013,16 @@ void main(){
             if (rodando) return;
             rodando = true;
             requestAnimationFrame(quadro);
+          }
+          function ajustar() {
+            const r = hero.getBoundingClientRect();
+            const dpr = Math.min(devicePixelRatio || 1, 1.25);
+            const escala = r.width * dpr > 1600 ? 1600 / r.width : dpr;
+            tela.width = Math.round(r.width * escala);
+            tela.height = Math.round(r.height * escala);
+            gl.viewport(0, 0, tela.width, tela.height);
+            gl.uniform2f(U.tela, tela.width, tela.height);
+            acordar();
           }
           new IntersectionObserver(([e]) => {
             visivel = e.isIntersecting;
@@ -1044,7 +1043,7 @@ void main(){
               console.error("hero WebGL:", erro);
             }
           };
-          imagem.src = "img/hero-gl.webp";
+          imagem.src = "img/hero-limpo.webp";
         }
 
         /* ---------- títulos palavra por palavra ---------- */
