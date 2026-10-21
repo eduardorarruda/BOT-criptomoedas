@@ -1,9 +1,9 @@
 :root {
-  --tinta: #070c0a;
-  --sup-1: #0c1411;
-  --sup-2: #121c18;
-  --sup-3: #18241f;
-  --linha: #1f2d27;
+  --tinta: #090b0a;
+  --sup-1: #0e1110;
+  --sup-2: #131715;
+  --sup-3: #191e1c;
+  --linha: #232927;
   --texto: #e6eee8;
   --texto-2: #c3d0c9;
   --apagado: #8ea198;
@@ -88,7 +88,7 @@ em {
   border-bottom: 1px solid transparent;
 }
 .topo.rolou {
-  background: rgba(7, 12, 10, 0.82);
+  background: rgba(9, 11, 10, 0.82);
   backdrop-filter: blur(14px);
   border-color: var(--linha);
 }
@@ -185,7 +185,7 @@ em {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, var(--tinta) 30%, rgba(7, 12, 10, 0.55) 60%, rgba(7, 12, 10, 0.1)),
+    linear-gradient(90deg, var(--tinta) 30%, rgba(9, 11, 10, 0.55) 60%, rgba(9, 11, 10, 0.1)),
     linear-gradient(0deg, var(--tinta), transparent 30%);
 }
 @media (max-width: 900px) {
@@ -203,7 +203,7 @@ em {
   font-size: 13px;
   color: var(--texto-2);
   border: 1px solid var(--linha);
-  background: rgba(12, 20, 17, 0.7);
+  background: rgba(16, 19, 18, 0.7);
   padding: 6px 14px;
   border-radius: 999px;
 }
@@ -838,15 +838,15 @@ h3 {
   pointer-events: none;
   background: linear-gradient(
     90deg,
-    rgba(7, 12, 10, 0.88) 18%,
-    rgba(7, 12, 10, 0.45) 42%,
-    rgba(7, 12, 10, 0) 62%
+    rgba(9, 11, 10, 0.88) 18%,
+    rgba(9, 11, 10, 0.45) 42%,
+    rgba(9, 11, 10, 0) 62%
   );
 }
 @media (max-width: 900px) {
   .hero-veu {
     background:
-      linear-gradient(90deg, rgba(7, 12, 10, 0.92) 30%, rgba(7, 12, 10, 0.55)),
+      linear-gradient(90deg, rgba(9, 11, 10, 0.92) 30%, rgba(9, 11, 10, 0.55)),
       linear-gradient(0deg, var(--tinta), transparent 30%);
   }
 }
@@ -912,7 +912,7 @@ h3 {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(7, 12, 10, 0.7);
+  background: rgba(9, 11, 10, 0.7);
   backdrop-filter: blur(8px);
   border: 1px solid var(--linha);
   text-decoration: none;
@@ -1806,4 +1806,111 @@ main > div {
   .cartoes-vivos .vivo .icone svg {
     stroke-dashoffset: 0;
   }
+}
+
+/* ---------- fundo: tinta neutra, grão de papel, luz suave e linhas finas ---------- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+main {
+  /* as duas guias verticais na borda do conteúdo */
+  background: linear-gradient(
+    90deg,
+    transparent calc(50% - min(600px, 50% - 16px) - 1px),
+    rgba(238, 242, 236, 0.045) calc(50% - min(600px, 50% - 16px) - 1px),
+    rgba(238, 242, 236, 0.045) calc(50% - min(600px, 50% - 16px)),
+    transparent calc(50% - min(600px, 50% - 16px)),
+    transparent calc(50% + min(600px, 50% - 16px)),
+    rgba(238, 242, 236, 0.045) calc(50% + min(600px, 50% - 16px)),
+    rgba(238, 242, 236, 0.045) calc(50% + min(600px, 50% - 16px) + 1px),
+    transparent calc(50% + min(600px, 50% - 16px) + 1px)
+  );
+}
+main > section:not(.hero) {
+  --lx: 78%;
+  --ly: 0%;
+  --jx: 12%;
+  --jy: 100%;
+  position: relative;
+  background:
+    linear-gradient(90deg, transparent, rgba(238, 242, 236, 0.1) 50%, transparent) top / 100% 1px no-repeat,
+    radial-gradient(55% 45% at var(--lx) var(--ly), rgba(238, 242, 236, 0.06), transparent 70%),
+    radial-gradient(40% 40% at var(--jx) var(--jy), rgba(61, 220, 142, 0.05), transparent 70%);
+}
+main > section:nth-of-type(even):not(.hero) {
+  --lx: 18%;
+  --jx: 88%;
+}
+main > section.final {
+  --lx: 50%;
+  --ly: 100%;
+  --jx: 50%;
+  --jy: 40%;
+}
+/* o ponto onde a guia encontra a linha de cima de cada seção */
+main > section:not(.hero)::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: calc(50% - min(600px, 50% - 16px) - 3px);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(61, 220, 142, 0.5);
+  background: var(--tinta);
+  pointer-events: none;
+}
+.alternada {
+  border-block: 0;
+}
+.alternada,
+.faixa {
+  background-color: transparent;
+}
+.faixa {
+  border-block-color: rgba(238, 242, 236, 0.07);
+}
+.cartao {
+  background: linear-gradient(180deg, rgba(238, 242, 236, 0.035), rgba(238, 242, 236, 0.012));
+  border-color: rgba(238, 242, 236, 0.08);
+  backdrop-filter: none;
+}
+.hero::after {
+  /* o hero se dissolve no resto da página */
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 22%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(0deg, var(--tinta), transparent);
+}
+/* um traço do ensō, bem apagado, saindo pela borda e alternando de lado */
+main > section:not(.hero, .final) {
+  isolation: isolate;
+}
+main > section:not(.hero, .final)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: max(-420px, -30vw);
+  width: min(860px, 80vw);
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  rotate: 24deg;
+  background: url("img/enso.webp") center / contain no-repeat;
+  opacity: 0.075;
+  pointer-events: none;
+}
+main > section:nth-of-type(even):not(.hero, .final)::before {
+  right: auto;
+  left: max(-420px, -30vw);
+  rotate: -140deg;
 }

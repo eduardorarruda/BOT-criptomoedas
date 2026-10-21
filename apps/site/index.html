@@ -9,7 +9,7 @@
       data-i18n-content="meta.descricao"
       content="Robôs com regras claras, um analista de IA que avalia três cenários e um motor de risco que dá a palavra final. Cripto, mini índice da B3, renda fixa e imóveis. Código aberto."
     />
-    <meta name="theme-color" content="#070c0a" />
+    <meta name="theme-color" content="#090b0a" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="ZenTrade | Calma para decidir. Disciplina para executar." />
     <meta
@@ -902,19 +902,17 @@
         });
         aoRolar();
 
-        /* ---------- cena do hero: fundo, grade, horizonte, fumaça e partículas (WebGL) ---------- */
+        /* ---------- cena do hero: fundo de tinta, horizonte e fumaça lenta (WebGL) ---------- */
         const hero = document.querySelector(".hero");
         const tela = document.getElementById("cena");
         const gl = tela.getContext("webgl", { alpha: false, antialias: false, powerPreference: "low-power" });
         if (gl) {
           try {
-            const N = 16;
             const VS = "attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}";
             const FS = `precision mediump float;
 varying vec2 v;
 uniform vec2 tela, centro;
 uniform float t;
-uniform vec3 rastro[${N}];
 float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float rn(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);
   return mix(mix(h(i),h(i+vec2(1,0)),u.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),u.x),u.y);}
@@ -923,54 +921,23 @@ float fbm3(vec2 p){float s=0.,a=.5;for(int i=0;i<3;i++){s+=a*rn(p);p=p*2.02+vec2
 void main(){
   vec2 fp=vec2(v.x*tela.x,(1.-v.y)*tela.y);
   float H=tela.y, hy=centro.y;
-  vec3 jade=vec3(.24,.86,.56);
-  vec3 cor=mix(vec3(.022,.04,.034),vec3(.05,.085,.07),smoothstep(0.,hy,fp.y));
-  if(fp.y>hy) cor=mix(vec3(.045,.075,.062),vec3(.018,.032,.027),smoothstep(hy,H,fp.y));
+  vec3 cor=mix(vec3(.028,.032,.031),vec3(.05,.056,.054),smoothstep(0.,hy,fp.y));
+  if(fp.y>hy) cor=mix(vec3(.045,.05,.048),vec3(.022,.025,.024),smoothstep(hy,H,fp.y));
   float dyh=abs(fp.y-hy);
   float dx=(fp.x-centro.x)/tela.x;
-  cor+=jade*(exp(-dyh/(H*.0035))*.32+exp(-dyh/(H*.06))*.05)*exp(-dx*dx*2.5);
-  if(fp.y>hy+.5){
-    float py=(fp.y-hy)/H;
-    float z=.07/py;
-    float xw=(fp.x-centro.x)/H*z*7.;
-    float zw=z*5.+t*.28;
-    float wx=clamp(z*.02,.022,.5), wz=clamp(z*z*.03,.022,.5);
-    float lv=smoothstep(.5-wx,.5,abs(fract(xw)-.5))*(1.-smoothstep(.12,.3,wx));
-    float lh=smoothstep(.5-wz,.5,abs(fract(zw)-.5))*(1.-smoothstep(.12,.3,wz));
-    float apaga=exp(-z*.25)*smoothstep(0.,.05,py);
-    cor+=jade*max(lv,lh)*apaga*.38;
-  }
-  vec2 sw=vec2(0.); float inf=0.;
-  for(int i=0;i<${N};i++){
-    vec3 m=rastro[i];
-    vec2 dm=fp-m.xy;
-    float R=H*.16;
-    float f=exp(-dot(dm,dm)/(R*R))*m.z;
-    sw+=vec2(-dm.y,dm.x)/R*f; inf+=f;
-  }
-  inf=min(inf,1.);
-  float banda=smoothstep(H*.3,H*.5,fp.y);
+  vec3 jade=vec3(.24,.86,.56);
+  cor+=jade*(exp(-dyh/(H*.003))*.26+exp(-dyh/(H*.07))*.035)*exp(-dx*dx*3.);
+  float banda=smoothstep(H*.34,H*.56,fp.y);
   if(banda>.001){
-    vec2 p=fp/H*vec2(3.4,4.2)+vec2(t*.05,-t*.035)+sw*.75;
-    vec2 w1=vec2(fbm3(p*.7+vec2(0.,t*.04)),fbm3(p*.7+vec2(5.2,1.3)-t*.03));
-    vec2 w2=vec2(fbm3(p+2.2*w1+vec2(1.7,9.2)),fbm3(p+2.2*w1+vec2(8.3,2.8)+t*.02));
-    float d=fbm(p+2.4*w2);
-    float dens=smoothstep(.42,.78,d)*banda*(.55+.45*smoothstep(hy,H*.95,fp.y));
-    dens*=1.-.55*inf;
-    vec3 fum=mix(vec3(.42,.5,.46),vec3(.86,.92,.89),smoothstep(.55,.95,d));
-    cor=mix(cor,fum,clamp(dens*.95,0.,.8));
-    cor+=jade*inf*banda*smoothstep(.45,.8,d)*.12;
-  }
-  vec2 cel=vec2(fp.x,fp.y+t*H*.018)/(H*.075);
-  vec2 id=floor(cel), f=fract(cel)-.5;
-  float r=h(id);
-  if(r>.84){
-    vec2 pos=(vec2(h(id+1.3),h(id+7.1))-.5)*.7;
-    float br=smoothstep(.07,0.,length(f-pos))*(.45+.55*sin(t*1.7+r*50.));
-    cor+=vec3(.6,.95,.78)*br*.45*smoothstep(0.,H*.25,fp.y);
+    vec2 p=fp/H*vec2(2.6,3.4)+vec2(t*.018,-t*.012);
+    vec2 w=vec2(fbm3(p*.8+vec2(0.,t*.015)),fbm3(p*.8+vec2(5.2,1.3)-t*.01));
+    float d=fbm(p+2.*w);
+    float dens=smoothstep(.45,.82,d)*banda*(.5+.5*smoothstep(hy,H*.95,fp.y));
+    vec3 fum=mix(vec3(.36,.4,.38),vec3(.78,.81,.79),smoothstep(.55,.95,d));
+    cor=mix(cor,fum,clamp(dens*.7,0.,.55));
   }
   vec2 c2=v-.5;
-  cor*=1.-dot(c2,c2)*.35;
+  cor*=1.-dot(c2,c2)*.45;
   gl_FragColor=vec4(cor,1.);
 }`;
             const sh = (tipo, src) => {
@@ -992,11 +959,8 @@ void main(){
             gl.enableVertexAttribArray(loc);
             gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
             const U = Object.fromEntries(
-              ["tela", "centro", "t", "rastro"].map((n) => [n, gl.getUniformLocation(prog, n)]),
+              ["tela", "centro", "t"].map((n) => [n, gl.getUniformLocation(prog, n)]),
             );
-            const rastro = new Float32Array(N * 3);
-            let cursor = 0;
-            let escala = 1;
             let visivel = true;
             let rodando = false;
             let alterna = false;
@@ -1019,15 +983,12 @@ void main(){
               fator *= 0.8;
               ajustar();
             }
+            /* a fumaça anda devagar: um quadro sim, um não basta */
             function quadro(agora) {
               medir(agora);
-              const mexendo = rastro.some((x, i) => i % 3 === 2 && x > 0.03);
               alterna = !alterna;
-              if (!mexendo && alterna && !reduzir && visivel && !document.hidden)
-                return requestAnimationFrame(quadro);
-              for (let i = 0; i < N; i++) rastro[i * 3 + 2] *= 0.955;
+              if (alterna && !reduzir && visivel && !document.hidden) return requestAnimationFrame(quadro);
               gl.uniform1f(U.t, reduzir ? 0 : (agora - inicio) / 1000);
-              gl.uniform3fv(U.rastro, rastro);
               gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
               if (reduzir || !visivel || document.hidden) {
                 anterior = 0;
@@ -1042,7 +1003,7 @@ void main(){
             }
             function ajustar() {
               const r = hero.getBoundingClientRect();
-              escala = Math.min(0.42, 640 / r.width) * fator;
+              const escala = Math.min(0.42, 640 / r.width) * fator;
               tela.width = Math.round(r.width * escala);
               tela.height = Math.round(r.height * escala);
               gl.viewport(0, 0, tela.width, tela.height);
@@ -1052,16 +1013,6 @@ void main(){
               gl.uniform2f(U.centro, pontoX * escala, (r.height / 2) * escala);
               acordar();
             }
-            let ultimo = 0;
-            hero.addEventListener("pointermove", (e) => {
-              const agora = performance.now();
-              if (agora - ultimo < 30) return;
-              ultimo = agora;
-              const r = hero.getBoundingClientRect();
-              rastro.set([(e.clientX - r.left) * escala, (e.clientY - r.top) * escala, 1], cursor * 3);
-              cursor = (cursor + 1) % N;
-              acordar();
-            });
             new IntersectionObserver(([e]) => {
               visivel = e.isIntersecting;
               if (visivel) acordar();
