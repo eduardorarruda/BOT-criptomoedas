@@ -22,7 +22,8 @@
     "test:integracao": "vitest run --coverage --config vitest.integracao.config.ts",
     "importar-candles-b3": "node --env-file-if-exists=../../.env dist/comandos/importar-candles-b3.js",
     "importar-candles-csv": "node --env-file-if-exists=../../.env dist/comandos/importar-candles-csv.js",
-    "importar-negocios-b3": "node --env-file-if-exists=../../.env dist/comandos/importar-negocios-b3.js"
+    "importar-negocios-b3": "node --env-file-if-exists=../../.env dist/comandos/importar-negocios-b3.js",
+    "replay-claude": "node --env-file-if-exists=../../.env dist/comandos/replay-claude.js"
   },
   "dependencies": {
     "@zentrade/banco": "workspace:*",

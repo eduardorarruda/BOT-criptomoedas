@@ -63,6 +63,19 @@ export function repositorioReplay(db: Db) {
       }));
     },
 
+    /**
+     * Custo médio das últimas 200 análises do livro de gastos (US$), para estimar uma
+     * rodada antes de confirmar; `null` se o livro ainda não tem análise.
+     */
+    async custoMedioDeAnalise(): Promise<Valor | null> {
+      const linhas = await db.execute<{ media: string | null }>(sql`
+        select avg(custo_usd)::text as media from (
+          select custo_usd from gastos_ia where origem = 'analise' and custo_usd > 0 order by em desc limit 200
+        ) ultimas`);
+      const media = linhas[0]?.media;
+      return media ? dec(media) : null;
+    },
+
     /** Quanto a rodada já gastou com o agente (US$). */
     async custoTotal(execucao: string): Promise<Valor> {
       const [r] = await db

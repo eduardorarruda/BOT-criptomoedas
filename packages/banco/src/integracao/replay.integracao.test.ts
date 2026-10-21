@@ -35,6 +35,15 @@ describe("replay histórico: armazém próprio", () => {
     expect((await r.custoTotal("nenhuma")).toString()).toBe("0");
   });
 
+  it("o custo médio de análise vem do livro de gastos, ou null se vazio", async () => {
+    const r = repositorioReplay(c.banco.conexao.db);
+    expect(await r.custoMedioDeAnalise()).toBeNull();
+    await c.banco.conexao.sql.unsafe(
+      `insert into gastos_ia (usuario_id, origem, custo_usd) values ('${c.ana.id}', 'analise', 0.2), ('${c.ana.id}', 'analise', 0.4), ('${c.ana.id}', 'assistente', 9)`,
+    );
+    expect((await r.custoMedioDeAnalise())?.toString()).toBe("0.3");
+  });
+
   it("a aplicação (zentrade_app) não enxerga o replay e o banco rejeita veredito inválido", async () => {
     const r = repositorioReplay(c.banco.conexao.db);
     await expect(r.gravar({ ...base, simbolo: "ETHUSDT", veredito: "talvez" as never })).rejects.toThrow();
