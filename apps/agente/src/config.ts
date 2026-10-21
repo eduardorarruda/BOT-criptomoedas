@@ -36,7 +36,7 @@ const Ambiente = z.object({
   AGENTE_CLI_MAX_TURNOS: inteiro(1, 50, 8),
   AGENTE_CLI_TETO_USD: z.coerce.number().min(0.01).max(50).default(1),
   // Prévias de futuro: probabilidade mínima do cenário favorável para abrir posição.
-  AGENTE_CENARIO_LIMIAR: z.coerce.number().min(0.5).max(0.95).default(LIMIAR_PADRAO),
+  AGENTE_CENARIO_LIMIAR: z.coerce.number().min(0.1).max(0.95).default(LIMIAR_PADRAO),
   // Assistente (chat): prazo de uma resposta e teto de respostas.
   AGENTE_CHAT_TIMEOUT_MS: inteiro(10_000, 1_800_000, 300_000),
   AGENTE_CHAT_MAX_SIMULTANEAS: inteiro(1, 64, 4),

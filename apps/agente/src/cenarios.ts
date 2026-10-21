@@ -11,9 +11,13 @@ import { pct, pctSinal } from "./pedido/formato.js";
 
 /**
  * Probabilidade mínima do cenário favorável para a proposta abrir posição. Configurável
- * (AGENTE_CENARIO_LIMIAR); a calibração real vem do placar das decisões.
+ * (AGENTE_CENARIO_LIMIAR); a calibração real vem do placar das decisões. O critério
+ * principal é o valor esperado líquido > 0: estratégias de tendência acertam ~30% e
+ * ganham pelos ganhos grandes, então um limiar alto (os 60% de antes) barrava quase
+ * todo sinal delas, mesmo com valor esperado positivo. O limiar só evita apostar em
+ * cenário que o próprio modelo acha quase impossível.
  */
-export const LIMIAR_PADRAO = 0.6;
+export const LIMIAR_PADRAO = 0.3;
 const LIMITE_JUSTIFICATIVA = 2000;
 const CASAS = 6;
 

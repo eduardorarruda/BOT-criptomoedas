@@ -128,7 +128,18 @@ describe("regra dos cenários", () => {
     expect(p.avaliacao).toMatchObject({ favoravel: "baixa", probabilidadeFavoravel: 0.6, aprovada: true });
   });
 
-  it("o limiar padrão é 0,6", () => {
-    expect(LIMIAR_PADRAO).toBe(0.6);
+  it("o limiar padrão é 0,3: o critério principal é o valor esperado, não a chance de acerto", () => {
+    expect(LIMIAR_PADRAO).toBe(0.3);
+  });
+
+  it("tendência que acerta pouco e ganha muito: 42% de alta com valor esperado positivo passa no padrão", () => {
+    // o sinal de BNB de 20/10 21:59, barrado pelo limiar antigo de 60% (o preço subiu 0,9% depois)
+    const p = aplicarRegraDosCenarios(
+      { ...PROPOSTA_GERADA, confianca: 0.7, cenarios: comProbabilidades(0.42, 0.33, 0.25) },
+      pedidoExemplo(),
+    );
+    expect(p.acao).toBe("comprar");
+    expect(p.avaliacao).toMatchObject({ aprovada: true, probabilidadeFavoravel: 0.42, limiar: 0.3 });
+    expect(p.confianca).toBe(0.42);
   });
 });

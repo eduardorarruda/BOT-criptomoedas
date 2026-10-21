@@ -116,10 +116,10 @@ describe("chave mestra no agente (token do Claude Code de cada pessoa)", () => {
     }
   });
 
-  it("prévias de futuro: limiar do cenário favorável (padrão 0,6, de 0,5 a 0,95)", () => {
-    expect(configDoAgente(valido).limiarCenarios).toBe(0.6);
+  it("prévias de futuro: limiar do cenário favorável (padrão 0,3, de 0,1 a 0,95)", () => {
+    expect(configDoAgente(valido).limiarCenarios).toBe(0.3);
     expect(configDoAgente({ ...valido, AGENTE_CENARIO_LIMIAR: "0.7" }).limiarCenarios).toBe(0.7);
-    expect(() => configDoAgente({ ...valido, AGENTE_CENARIO_LIMIAR: "0.3" })).toThrow(
+    expect(() => configDoAgente({ ...valido, AGENTE_CENARIO_LIMIAR: "0.05" })).toThrow(
       /AGENTE_CENARIO_LIMIAR/,
     );
   });
