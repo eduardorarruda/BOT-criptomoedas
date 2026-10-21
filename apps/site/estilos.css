@@ -836,9 +836,12 @@ h3 {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    linear-gradient(90deg, var(--tinta) 22%, rgba(7, 12, 10, 0.6) 48%, rgba(7, 12, 10, 0) 70%),
-    linear-gradient(0deg, var(--tinta), transparent 22%);
+  background: linear-gradient(
+    90deg,
+    rgba(7, 12, 10, 0.88) 18%,
+    rgba(7, 12, 10, 0.45) 42%,
+    rgba(7, 12, 10, 0) 62%
+  );
 }
 @media (max-width: 900px) {
   .hero-veu {
