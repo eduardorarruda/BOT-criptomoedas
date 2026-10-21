@@ -50,15 +50,11 @@ export function ferramentasDaAnalise(
   deps: DependenciasFerramentas,
   aoUsar?: AoUsarFerramenta,
 ): FerramentaLeitura[] {
-  return observar(
-    [
-      retratoMercado(ctx),
-      posicaoEOrcamento(ctx),
-      buscarConhecimento(ctx, deps),
-      historicoDecisoes(ctx, deps),
-    ],
-    aoUsar,
-  );
+  // Replay histórico (`ate`): as duas ferramentas que leem o banco AO VIVO saem, porque
+  // trariam decisões e notícias posteriores ao sinal. As outras só usam o próprio pedido.
+  const doBancoAoVivo =
+    ctx.pedido.ate === undefined ? [buscarConhecimento(ctx, deps), historicoDecisoes(ctx, deps)] : [];
+  return observar([retratoMercado(ctx), posicaoEOrcamento(ctx), ...doBancoAoVivo], aoUsar);
 }
 
 /** As mesmas ferramentas no formato do Tool Runner do SDK da Anthropic. */

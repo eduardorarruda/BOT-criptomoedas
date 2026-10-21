@@ -1,5 +1,6 @@
 import {
   Id,
+  Instante,
   Intervalo,
   OperacaoPedidoEsquema,
   TextoDecimal,
@@ -48,6 +49,8 @@ export const PedidoAnaliseJson = z.object({
   operacao: OperacaoPedidoEsquema.optional(),
   /** Máximas, mínimas, volumes e instantes alinhados com os fechamentos. */
   velas: VelasPedidoEsquema.optional(),
+  /** Replay histórico: o "agora" da análise (ms UTC); desliga as ferramentas que leem o banco ao vivo. */
+  ate: Instante.optional(),
 });
 export type PedidoAnaliseJson = z.infer<typeof PedidoAnaliseJson>;
 
@@ -119,6 +122,7 @@ export function pedidoParaJson(p: PedidoAnalise): PedidoAnaliseJson {
     ...(p.analiseId ? { analiseId: p.analiseId } : {}),
     ...(p.operacao ? { operacao: p.operacao } : {}),
     ...(p.velas ? { velas: p.velas } : {}),
+    ...(p.ate !== undefined ? { ate: p.ate } : {}),
   };
 }
 
@@ -132,6 +136,7 @@ export function pedidoDeJson(j: PedidoAnaliseJson): PedidoAnalise {
     ...(j.analiseId ? { analiseId: j.analiseId } : {}),
     ...(j.operacao ? { operacao: j.operacao } : {}),
     ...(j.velas ? { velas: j.velas } : {}),
+    ...(j.ate !== undefined ? { ate: j.ate } : {}),
   };
 }
 

@@ -204,6 +204,12 @@ export interface PedidoAnalise {
   readonly operacao?: OperacaoPedido;
   /** Máximas, mínimas, volumes e instantes das velas, alinhados com `fechamentos`. */
   readonly velas?: VelasPedido;
+  /**
+   * Replay histórico: o instante (ms UTC) em que a análise "acontece". Com ele o agente
+   * usa este instante como "agora" e não consulta nada que dependa do banco ao vivo
+   * (histórico de decisões e base de conhecimento): nada pode vir do futuro do sinal.
+   */
+  readonly ate?: number;
 }
 
 export interface RespostaAnalise {

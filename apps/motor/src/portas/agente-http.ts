@@ -53,6 +53,7 @@ export function pedidoNoFio(p: PedidoAnalise) {
     // Como a operação sai e quanto custa, e as velas: números puros, vão como estão.
     ...(p.operacao ? { operacao: p.operacao } : {}),
     ...(p.velas ? { velas: p.velas } : {}),
+    ...(p.ate !== undefined ? { ate: p.ate } : {}),
     ...(o
       ? {
           orcamento: {

@@ -124,7 +124,8 @@ export class AnalistaCli {
   async analisar(pedido: PedidoAnalise, opcoes: OpcoesAnalise): Promise<RespostaAnalise> {
     const inicio = Date.now();
     const registro = new RegistroFontes();
-    const agora = this.#agora();
+    // Replay histórico: o "agora" é o instante do sinal, nunca o relógio de hoje.
+    const agora = pedido.ate !== undefined ? new Date(pedido.ate) : this.#agora();
     const previo = await buscarContextoPrevio(pedido, opcoes.usuarioId, this.#deps, agora);
     const entrada = mensagemDoPedido(pedido, agora, { previo, fuso: this.#fuso ?? this.#deps.fuso });
     const primeira = await this.#executar(pedido, opcoes, registro, entrada);
