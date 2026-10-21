@@ -38,6 +38,7 @@ async function rodar(estrategia: BacktestParaRodar["estrategia"]): Promise<Resul
   let gravado: ResultadoBacktestGravado | undefined;
   const p: BacktestParaRodar = {
     id: "r1",
+    usuarioId: "u1",
     estrategiaId: "e1",
     versao: 1,
     simbolo: "BTCUSDT",

@@ -14,6 +14,9 @@ const doDTO = (l: LimitesRiscoDTO): LimitesRisco => ({
 });
 
 /**
+ * O filtro de dia de evento do backtest é o da configuração (`diasDeEvento`), nos dois
+ * modos de risco; o `diasDeEvento` dos limites de um robô copiado não vale aqui.
+ *
  * `robo` (padrão): os limites do robô de verdade — os informados ou os de um robô novo
  * proporcionais ao saldo. `sem_limites`: só a estratégia, sem freio de perda diária,
  * frequência ou pausa após perda (menos realista); risco por operação do ambiente.
@@ -31,9 +34,13 @@ export function limitesDoBacktest(
         ordensPorHoraMax: 1_000,
         pausaAposPerdaMs: 0,
         confiancaMinima: 0,
+        diasDeEvento: c.diasDeEvento,
       },
       riscoPorOperacao: saldo.times(riscoSemLimites),
     };
   const l = c.risco.limites ?? limitesPadraoDoBacktest(paraTexto(saldo));
-  return { limites: doDTO(l), riscoPorOperacao: dec(l.riscoPorOperacao) };
+  return {
+    limites: { ...doDTO(l), diasDeEvento: c.diasDeEvento },
+    riscoPorOperacao: dec(l.riscoPorOperacao),
+  };
 }

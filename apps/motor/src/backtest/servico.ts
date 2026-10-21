@@ -1,6 +1,11 @@
 import type { BacktestParaRodar, ResultadoBacktestGravado } from "@zentrade/banco";
-import { ConfiguracaoBacktestEsquema, mercadoDo, type PontoCurvaBacktest } from "@zentrade/contratos";
-import { dec, paraTexto, type Valor } from "@zentrade/dominio";
+import {
+  ConfiguracaoBacktestEsquema,
+  mercadoDo,
+  type ConfiguracaoBacktest,
+  type PontoCurvaBacktest,
+} from "@zentrade/contratos";
+import { dec, paraTexto, type EventoMercado, type Valor } from "@zentrade/dominio";
 import type { Registro } from "../nucleo/tipos.js";
 import { candlesHistoricos, type FontesCandles } from "./candles-historicos.js";
 import { limitesDoBacktest } from "./limites.js";
@@ -20,8 +25,15 @@ export interface RepositorioBacktestsDoMotor {
   falhar(id: string, erro: string): Promise<void>;
 }
 
+/** A agenda de eventos de mercado da pessoa (packages/banco), lida sob RLS. */
+export interface AgendaDoBacktest {
+  listar(usuarioId: string, de: string, ate: string): Promise<readonly EventoMercado[]>;
+}
+
 export interface DependenciasBacktest {
   readonly backtests: RepositorioBacktestsDoMotor;
+  /** Sem ela, backtest com o filtro de dia de evento ligado falha com a explicação. */
+  readonly agenda?: AgendaDoBacktest;
   readonly fontes: FontesCandles;
   readonly registro: Registro;
 }
@@ -58,10 +70,31 @@ function curvaGravada(curva: readonly PontoCurva[], referencia: readonly PontoCu
   return reduzirCurva(pontos, PONTOS_CURVA);
 }
 
+const DIA_MS = 86_400_000;
+
+/**
+ * Os eventos da pessoa no período, quando o filtro de dia de evento está ligado. Pede
+ * dois dias a mais de cada lado: o dia do evento é o do fuso do mercado, não o de UTC.
+ */
+async function eventosDoPeriodo(
+  d: DependenciasBacktest,
+  p: BacktestParaRodar,
+  config: ConfiguracaoBacktest,
+): Promise<readonly EventoMercado[] | undefined> {
+  if (config.diasDeEvento === "ignorar") return undefined;
+  if (!d.agenda)
+    throw new Error(
+      "O filtro de dias de evento está ligado, mas a agenda de eventos não está disponível neste motor; desligue o filtro ou verifique o banco.",
+    );
+  const dia = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+  return d.agenda.listar(p.usuarioId, dia(p.inicio - 2 * DIA_MS), dia(p.fim + 2 * DIA_MS));
+}
+
 async function rodar(d: DependenciasBacktest, o: OpcoesBacktest, p: BacktestParaRodar) {
   const config = ConfiguracaoBacktestEsquema.parse(p.configuracao ?? {});
+  const eventos = await eventosDoPeriodo(d, p, config);
   if (mercadoDo(config) === "win") {
-    const w = await rodarWin(d.fontes, p, config);
+    const w = await rodarWin(d.fontes, p, config, eventos);
     return { metricas: w.metricas, curva: curvaGravada(w.curva, w.referencia.curva), validacao: w.validacao };
   }
   const saldo = config.saldoInicial ? dec(config.saldoInicial) : o.saldoInicial;
@@ -82,11 +115,19 @@ async function rodar(d: DependenciasBacktest, o: OpcoesBacktest, p: BacktestPara
     aquecimento: AQUECIMENTO,
     custos: config.custos,
     execucao: config.execucao,
+    ...(eventos ? { eventos } : {}),
     ...(minutos ? { minutos } : {}),
     ...(o.fuso ? { fuso: o.fuso } : {}),
   });
   const porAno = barrasPorAno(p.intervalo);
-  const contexto = { saldoInicial: saldo, riscoPorOperacao, porAno, inicio: p.inicio, fim: p.fim };
+  const contexto = {
+    saldoInicial: saldo,
+    riscoPorOperacao,
+    porAno,
+    inicio: p.inicio,
+    fim: p.fim,
+    diasDeEvento: config.diasDeEvento,
+  };
   const metricas = metricasGravadas(r, { ...contexto, precisaoMinuto: Boolean(minutos?.length) });
   const validacao = validarBacktest(
     { saldoInicial: saldo, curva: r.curva, buyHold: r.buyHold.curva, operacoes: r.operacoesFechadas, porAno },

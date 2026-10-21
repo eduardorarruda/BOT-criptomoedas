@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   eventoDeAltoImpactoNoInstante,
   fatorDoModoDeEvento,
+  foiReduzidaPorEvento,
   fusoDoMercado,
+  textoReducaoPorEvento,
   type EventoMercado,
 } from "./eventos.js";
 
@@ -77,5 +79,14 @@ describe("fatorDoModoDeEvento", () => {
     expect(fatorDoModoDeEvento("reduzir")).toBe(0.5);
     expect(fatorDoModoDeEvento("ignorar")).toBe(1);
     expect(fatorDoModoDeEvento("bloquear")).toBe(1);
+  });
+});
+
+describe("marca de entrada reduzida", () => {
+  it("o texto acrescentado é reconhecido e cita o evento", () => {
+    const t = textoReducaoPorEvento("Payroll (EUA)");
+    expect(t).toContain("dia de evento: Payroll (EUA)");
+    expect(foiReduzidaPorEvento(`Preço abaixo de 95 ${t}`)).toBe(true);
+    expect(foiReduzidaPorEvento("Preço abaixo de 95")).toBe(false);
   });
 });

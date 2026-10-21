@@ -31,6 +31,8 @@ export interface Plano {
   readonly alvo?: Valor;
   readonly confianca: number;
   readonly ajuste?: AjustePosicao;
+  /** Título do evento que reduziu a entrada à metade (filtro de dia de evento no modo "reduzir"). */
+  readonly reducaoPorEvento?: string;
 }
 
 export interface Avaliacao {
@@ -72,6 +74,9 @@ async function planejarCompra(
     ...protecao,
     confianca: ctx.proposta?.confianca ?? 1,
     ajuste: ajusteDaPosicao(protecao, ctx.preco, taxa),
+    ...(ctx.estado.diaDeEvento?.modo === "reduzir"
+      ? { reducaoPorEvento: ctx.estado.diaDeEvento.titulo }
+      : {}),
   };
 }
 

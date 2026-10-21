@@ -23,8 +23,8 @@ export interface EventoMercado {
   readonly titulo: string;
   readonly impacto: ImpactoEvento;
   /** Janela de horário opcional (HH:MM, no fuso do mercado). Sem janela, vale o dia todo. */
-  readonly de?: string | null;
-  readonly ate?: string | null;
+  readonly de?: string | null | undefined;
+  readonly ate?: string | null | undefined;
 }
 
 /** O evento que está valendo agora: o que a barreira cita. */
@@ -70,3 +70,13 @@ export const fatorDoModoDeEvento = (modo: ModoDiasDeEvento): number => (modo ===
 
 /** O "dia de evento: …" que a barreira e as telas mostram. */
 export const motivoDiaDeEvento = (titulo: string): string => `dia de evento: ${titulo}`;
+
+const MARCA_REDUCAO = "tamanho reduzido à metade";
+
+/** O que o diário acrescenta à explicação da entrada que saiu com metade do tamanho. */
+export const textoReducaoPorEvento = (titulo: string): string =>
+  `(${MARCA_REDUCAO} — ${motivoDiaDeEvento(titulo)})`;
+
+/** A explicação de uma decisão diz que a entrada foi reduzida por dia de evento? */
+export const foiReduzidaPorEvento = (explicacao: string): boolean =>
+  explicacao.includes(`(${MARCA_REDUCAO} —`);

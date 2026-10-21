@@ -61,6 +61,7 @@ function ligarBacktests(config: Config, infra: Infra, registro: Logger): Consumi
   }
   const deps = {
     backtests: banco.backtests,
+    agenda: banco.eventosMercado,
     fontes: {
       banco: cacheDeCandlesDoBacktest(redeDosDadosAoVivo(config), banco.mercado),
       corretora: criarDadosHistoricos(registro),

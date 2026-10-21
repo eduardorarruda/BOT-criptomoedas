@@ -10,7 +10,9 @@ import {
   type Candle,
   type ContextoMercado,
   type Estrategia,
+  type EventoMercado,
   type LimitesRisco,
+  type ModoDiasDeEvento,
   type Valor,
 } from "@zentrade/dominio";
 import { contextoEntre } from "../acompanhamento.js";
@@ -47,6 +49,13 @@ export interface EntradaBacktestWin {
    * último candle, e uma entrada sinalizada no último candle não abre.
    */
   readonly execucao?: ModoExecucaoBacktest;
+  /**
+   * Filtro opcional de dia de evento (padrão: ignorar) com a agenda da pessoa: `bloquear`
+   * não abre posição no dia (e janela) de um evento de alto impacto do WIN; `reduzir` abre
+   * com metade do risco por operação. As velas NÃO são removidas (distorceria os indicadores).
+   */
+  readonly diasDeEvento?: ModoDiasDeEvento;
+  readonly eventos?: readonly EventoMercado[];
 }
 
 export interface ResultadoBacktestWin {
@@ -65,6 +74,10 @@ export interface ResultadoBacktestWin {
   readonly zeragens: number;
   readonly semEspacoNoRisco: number;
   readonly barradasPelosLimites: number;
+  /** Sinais de entrada barrados pelo filtro de dia de evento. */
+  readonly entradasBarradasPorEvento: number;
+  /** Entradas abertas com metade do risco pelo filtro de dia de evento. */
+  readonly entradasReduzidasPorEvento: number;
   /** Pregões na janela. */
   readonly dias: number;
 }
@@ -115,6 +128,8 @@ function estadoInicial(saldo: Valor): EstadoWin {
     zeragens: 0,
     semEspaco: 0,
     barradas: 0,
+    barradasPorEvento: 0,
+    reduzidasPorEvento: 0,
     pendente: null,
     intrabar: { stop: 0, alvo: 0, ambiguos: 0 },
   };
@@ -180,6 +195,8 @@ export function rodarBacktestWin(entrada: EntradaBacktestWin): ResultadoBacktest
     zeragens: st.zeragens,
     semEspacoNoRisco: st.semEspaco,
     barradasPelosLimites: st.barradas,
+    entradasBarradasPorEvento: st.barradasPorEvento,
+    entradasReduzidasPorEvento: st.reduzidasPorEvento,
     dias: new Set(janela.map((c) => diaB3(c.abertura))).size,
   };
 }

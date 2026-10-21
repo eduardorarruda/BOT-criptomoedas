@@ -48,6 +48,8 @@ function resultado(ops: OperacaoWin[], referenciaFinal: Valor = dec(4990)): Resu
     zeragens: ops.length,
     semEspacoNoRisco: 1,
     barradasPelosLimites: 2,
+    entradasBarradasPorEvento: 0,
+    entradasReduzidasPorEvento: 0,
     dias: new Set(ops.map((o) => o.dia)).size,
   };
 }

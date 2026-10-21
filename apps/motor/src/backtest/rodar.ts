@@ -1,7 +1,14 @@
-import type { CustosBacktest, Intervalo, ModoExecucaoBacktest, RoboConfig } from "@zentrade/contratos";
+import type {
+  CustosBacktest,
+  Intervalo,
+  ModoExecucaoBacktest,
+  PortaAgendaEventos,
+  RoboConfig,
+} from "@zentrade/contratos";
 import { ativosDoSimbolo, PapelCorretora } from "@zentrade/corretora";
 import {
   contextoDeCandles,
+  foiReduzidaPorEvento,
   formatarNumero,
   limiteInferior,
   posicaoDe,
@@ -11,6 +18,7 @@ import {
   type Candle,
   type ContextoMercado,
   type Estrategia,
+  type EventoMercado,
   type FiltrosAtivo,
   type LimitesRisco,
   type Posicao,
@@ -68,6 +76,13 @@ export interface EntradaBacktest {
    * ou por tempo executa no fechamento dele.
    */
   readonly execucao?: ModoExecucaoBacktest;
+  /**
+   * A agenda de eventos da pessoa no período. Só atua com `limites.diasDeEvento` em
+   * "bloquear" ou "reduzir": em dia de evento de alto impacto a entrada é barrada ou
+   * sai com metade do tamanho (o mesmo filtro do robô ao vivo). Os candles NÃO são
+   * removidos: tirar velas distorceria os indicadores.
+   */
+  readonly eventos?: readonly EventoMercado[];
 }
 
 export interface SaidasIntrabar {
@@ -91,6 +106,10 @@ export interface ResultadoBacktest extends MetricasOperacoes {
   readonly saidasIntrabar: SaidasIntrabar;
   /** Candles da janela operada. */
   readonly candles: readonly Candle[];
+  /** Sinais de entrada barrados pelo filtro de dia de evento (modo bloquear). */
+  readonly entradasBarradasPorEvento: number;
+  /** Entradas abertas com metade do tamanho pelo filtro de dia de evento (modo reduzir). */
+  readonly entradasReduzidasPorEvento: number;
 }
 
 const ID = "backtest";
@@ -98,6 +117,11 @@ const nada = () => undefined;
 
 const custosDe = (e: EntradaBacktest): CustosBacktest =>
   e.custos ?? { taxaPorLado: e.estrategia.taxa, deslizamentoBps: 0, meioSpreadBps: 0 };
+
+/** A agenda em memória: o motor pergunta por dia, como faria ao banco. */
+const agendaDaLista = (eventos: readonly EventoMercado[]): PortaAgendaEventos => ({
+  doDia: (_roboId, dia) => Promise.resolve(eventos.filter((ev) => ev.data === dia)),
+});
 
 function montar(e: EntradaBacktest, aquecimento: number) {
   const relogio = new RelogioManual(0);
@@ -137,6 +161,9 @@ function montar(e: EntradaBacktest, aquecimento: number) {
     agente: new AgenteFixo(e.agente),
     eventos: { publicar: () => Promise.resolve() },
     aprovacao: new AprovacaoMemoria(),
+    ...(e.eventos && (e.limites.diasDeEvento ?? "ignorar") !== "ignorar"
+      ? { agendaEventos: agendaDaLista(e.eventos) }
+      : {}),
     relogio,
     registro,
     dormir: relogio.dormir,
@@ -335,6 +362,20 @@ export async function rodarBacktest(e: EntradaBacktest): Promise<ResultadoBackte
     barrasExpostas: st.expostas,
     saidasIntrabar: st.intrabar,
     candles: janela,
+    ...contarEventos(m),
+  };
+}
+
+/** Quantas entradas o filtro de dia de evento barrou e quantas abriu com metade do tamanho. */
+function contarEventos(m: Montagem) {
+  const decisoes = m.decisoes.todas();
+  return {
+    entradasBarradasPorEvento: decisoes.filter((d) =>
+      d.risco.barreiras.some((b) => b.codigo === "dia_de_evento"),
+    ).length,
+    entradasReduzidasPorEvento: decisoes.filter(
+      (d) => d.estado !== "barrada" && foiReduzidaPorEvento(d.sinal.explicacao),
+    ).length,
   };
 }
 

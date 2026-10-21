@@ -1,5 +1,12 @@
 import type { MetricasBacktest, MetricasWin } from "@zentrade/contratos";
-import { apurarIrDayTrade, dec, paraTexto, pontosDosReais, type Valor } from "@zentrade/dominio";
+import {
+  apurarIrDayTrade,
+  dec,
+  paraTexto,
+  pontosDosReais,
+  type ModoDiasDeEvento,
+  type Valor,
+} from "@zentrade/dominio";
 import { metricasGravadas } from "../metricas-gravadas.js";
 import { ANO_MS } from "../metricas-retorno.js";
 import type { ResultadoBacktest } from "../rodar.js";
@@ -13,6 +20,7 @@ export interface ContextoMetricasWin {
   /** Período pedido (ms). */
   readonly inicio: number;
   readonly fim: number;
+  readonly diasDeEvento?: ModoDiasDeEvento;
 }
 
 /** Símbolo da aproximação pelo Ibovespa à vista. */
@@ -52,6 +60,8 @@ function comoBacktest(r: ResultadoBacktestWin): ResultadoBacktest {
     barrasExpostas: r.barrasExpostas,
     saidasIntrabar: r.saidasIntrabar,
     candles: r.candles,
+    entradasBarradasPorEvento: r.entradasBarradasPorEvento,
+    entradasReduzidasPorEvento: r.entradasReduzidasPorEvento,
   };
 }
 
@@ -128,6 +138,7 @@ export function metricasGravadasWin(r: ResultadoBacktestWin, c: ContextoMetricas
       inicio: c.inicio,
       fim: c.fim,
       precisaoMinuto: false,
+      ...(c.diasDeEvento ? { diasDeEvento: c.diasDeEvento } : {}),
     }),
     win: metricasDoWin(r, c),
   };

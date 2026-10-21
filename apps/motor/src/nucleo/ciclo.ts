@@ -3,6 +3,7 @@ import {
   BARREIRA_PAUSADO,
   formatarNumero,
   paraTexto,
+  textoReducaoPorEvento,
   type FinalidadeOrdem,
   type Sinal,
 } from "@zentrade/dominio";
@@ -105,8 +106,13 @@ function montarDecisao(
   comAgente: Pick<NovaDecisao, "proposta" | "custoIaUsd">,
 ): NovaDecisao {
   const estado = !risco.aprovada ? "barrada" : estadoInicial(robo, e.sinal);
+  // Entrada reduzida por dia de evento: o diário diz por que o tamanho é a metade.
+  const sinal = plano.reducaoPorEvento
+    ? { ...e.sinal, explicacao: `${e.sinal.explicacao} ${textoReducaoPorEvento(plano.reducaoPorEvento)}` }
+    : e.sinal;
   return {
     ...base(robo, e),
+    sinal,
     ...comAgente,
     quantidade: plano.quantidade,
     risco,

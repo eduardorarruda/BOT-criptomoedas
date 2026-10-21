@@ -79,6 +79,10 @@ describe("filtro de dia de evento no motor", () => {
     const cheio = Number(quantidadeComprada(normal));
     expect(cheio).toBeGreaterThan(0);
     expect(Number(quantidadeComprada(reduzido))).toBeCloseTo(cheio / 2, 3);
+    // o diário diz por que o tamanho é a metade
+    expect(reduzido.decisoes.todas().at(-1)?.sinal.explicacao).toContain(
+      "tamanho reduzido à metade — dia de evento: Copom",
+    );
   });
 
   it("nunca barra a saída: stop e regra de saída executam em dia de evento", async () => {
