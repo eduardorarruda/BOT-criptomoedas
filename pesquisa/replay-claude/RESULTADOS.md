@@ -11,15 +11,15 @@ Contra a regra pura (entrar em todos): -969,04 US$ (regra + Claude menos regra p
 
 ## Comparação
 
-|  | Regra pura (todos) | Regra + Claude (aprovados) | Aleatório (117 sorteados, média) |
-| --- | ---: | ---: | ---: |
-| Entradas | 200 | 117 | 117 |
-| Acerto (lucro > 0) | 33,0% | 31,6% | 33,1% |
-| Ganho médio (%) | +5,50 | +5,29 | — |
-| Perda média (%) | -1,42 | -1,50 | — |
-| Média por operação (%) | +0,86 | +0,65 | +0,86 |
-| Resultado líquido somado (%) | +172,64 | +75,80 | +100,80 |
-| Resultado líquido (US$, 1000 por operação) | +1727,60 | +758,56 | +1008,67 |
+|                                            | Regra pura (todos) | Regra + Claude (aprovados) | Aleatório (117 sorteados, média) |
+| ------------------------------------------ | -----------------: | -------------------------: | -------------------------------: |
+| Entradas                                   |                200 |                        117 |                              117 |
+| Acerto (lucro > 0)                         |              33,0% |                      31,6% |                            33,1% |
+| Ganho médio (%)                            |              +5,50 |                      +5,29 |                                — |
+| Perda média (%)                            |              -1,42 |                      -1,50 |                                — |
+| Média por operação (%)                     |              +0,86 |                      +0,65 |                            +0,86 |
+| Resultado líquido somado (%)               |            +172,64 |                     +75,80 |                          +100,80 |
+| Resultado líquido (US$, 1000 por operação) |           +1727,60 |                    +758,56 |                         +1008,67 |
 
 ## Precisão do Claude
 
