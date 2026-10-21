@@ -2,6 +2,7 @@ import type { PropostaAgente, RoboConfig } from "@zentrade/contratos";
 import {
   avaliarRisco,
   dec,
+  fatorDoModoDeEvento,
   type Barreira,
   type EstadoRisco,
   type FiltrosAtivo,
@@ -62,7 +63,7 @@ async function planejarCompra(
       taxa,
       ...(sinal.distanciaRisco ? { distanciaRisco: sinal.distanciaRisco } : {}),
     },
-    ctx.proposta?.tamanhoRelativo ?? 1,
+    (ctx.proposta?.tamanhoRelativo ?? 1) * fatorDoModoDeEvento(ctx.estado.diaDeEvento?.modo ?? "ignorar"),
   );
   return {
     lado: "COMPRA",

@@ -53,6 +53,7 @@ function paraConfig(r: RoboArquivo): RoboConfig {
       ordensPorHoraMax: l.ordensPorHoraMax,
       pausaAposPerdaMs: l.pausaAposPerdaMin * 60_000,
       confiancaMinima: l.confiancaMinima,
+      diasDeEvento: l.diasDeEvento,
     },
     riscoPorOperacao: dec(l.riscoPorOperacao),
   };
