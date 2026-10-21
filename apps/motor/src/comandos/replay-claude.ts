@@ -53,6 +53,14 @@ async function principal(): Promise<void> {
         url && segredo && !args.soRelatorio
           ? new AgenteHttp({ url, segredo, timeoutMs: TIMEOUT_AGENTE_MS })
           : null,
+      conferirAgente: async () => {
+        const resposta = await fetch(`${url}/saude`, { signal: AbortSignal.timeout(10_000) });
+        const corpo = (await resposta.json().catch(() => null)) as { replay?: boolean } | null;
+        if (corpo?.replay !== true)
+          throw new Error(
+            `o agente em ${url} não entende o modo replay (imagem antiga): ele analisaria os sinais com o banco ao vivo e a data de hoje. Suba um agente com este código e aponte AGENTE_URL para ele.`,
+          );
+      },
       armazem: banco.replay,
       escrever: (linha) => process.stdout.write(`${linha}\n`),
       escreverArquivo: async (caminho, texto) => {

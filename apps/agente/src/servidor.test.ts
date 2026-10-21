@@ -148,7 +148,8 @@ describe("POST /analisar", () => {
   it("GET /saude responde sem autenticação", async () => {
     app = servidor(vi.fn());
     const r = await app.inject({ method: "GET", url: "/saude" });
-    expect(r.json()).toEqual({ ok: true });
+    // `replay: true` avisa quem faz replay que este agente entende o `ate` do pedido.
+    expect(r.json()).toEqual({ ok: true, replay: true });
   });
 });
 

@@ -18,6 +18,8 @@ export interface DependenciasComando {
   readonly escreverArquivo: (caminho: string, texto: string) => Promise<void>;
   readonly agora: () => number;
   readonly dadosAte: string;
+  /** Falha se o agente não entende o modo replay (imagem antiga): sem isso ele analisaria com o banco ao vivo. */
+  readonly conferirAgente?: () => Promise<void>;
   /** Só testes: o agente fixo não devolve cenários. */
   readonly aceitarSemCenarios?: boolean;
 }
@@ -95,6 +97,7 @@ export async function rodarComando(a: ArgumentosReplay, d: DependenciasComando):
   if (!a.soRelatorio) {
     if (!d.agente)
       throw new Error("defina AGENTE_URL e AGENTE_SEGREDO: o replay só roda contra o agente de verdade.");
+    if (a.confirmar) await d.conferirAgente?.();
     const medio = await d.armazem.custoMedioDeAnalise?.();
     resumo = await executarReplay(
       sinais,

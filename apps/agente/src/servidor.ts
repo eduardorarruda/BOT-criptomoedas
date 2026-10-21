@@ -167,7 +167,8 @@ export function criarServidor(o: OpcoesServidor): FastifyInstance {
     app.log.error({ err: e }, "erro inesperado");
     return erro(resposta, 500, "erro_interno", "Erro inesperado no agente. Veja o log do serviço.");
   });
-  app.get("/saude", async () => ({ ok: true }));
+  // `replay`: este agente entende o `ate` do pedido (o comando de replay confere antes de enviar).
+  app.get("/saude", async () => ({ ok: true, replay: true }));
   registrarAnalisar(app, o);
   for (const registrar of o.extras ?? []) registrar(app);
   return app;

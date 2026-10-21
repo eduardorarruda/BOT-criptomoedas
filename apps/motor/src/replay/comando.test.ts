@@ -72,6 +72,23 @@ describe("comando do replay (agente fixo, sem rede e sem IA)", () => {
     expect(r.relatorio).toMatch(/SEM VEREDITO/);
   });
 
+  it("agente que não entende o modo replay barra antes de enviar qualquer sinal", async () => {
+    const analisar = vi.fn();
+    const { deps, gravadas } = montar({ analisar });
+    const conferirAgente = vi.fn(async () => {
+      throw new Error("o agente não conhece o modo replay");
+    });
+    await expect(
+      rodarComando(lerArgumentosReplay([...JANELA, "--confirmar"]), { ...deps, conferirAgente }),
+    ).rejects.toThrow(/modo replay/);
+    expect(analisar).not.toHaveBeenCalled();
+    expect(gravadas).toHaveLength(0);
+    // só estimando (sem --confirmar) não precisa conferir
+    conferirAgente.mockClear();
+    await rodarComando(lerArgumentosReplay(JANELA), { ...deps, conferirAgente });
+    expect(conferirAgente).not.toHaveBeenCalled();
+  });
+
   it("sem agente configurado, recusa em vez de cair num agente fixo", async () => {
     const { deps } = montar(null);
     await expect(rodarComando(lerArgumentosReplay([...JANELA, "--confirmar"]), deps)).rejects.toThrow(
