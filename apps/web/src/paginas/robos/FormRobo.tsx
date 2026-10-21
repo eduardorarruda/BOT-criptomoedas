@@ -11,7 +11,7 @@ import { REDE } from "../../lib/rotulos";
 import { CamposLimites, useCamposLimites } from "./EditorLimites";
 
 const PARES = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
-const INTERVALOS: readonly Intervalo[] = ["5m", "15m", "1h", "4h", "1d"];
+const INTERVALOS: readonly Intervalo[] = ["5m", "15m", "30m", "1h", "4h", "1d"];
 const LIMITES_INICIAIS = {
   perdaDiariaMaxima: "20",
   exposicaoMaxima: "300",

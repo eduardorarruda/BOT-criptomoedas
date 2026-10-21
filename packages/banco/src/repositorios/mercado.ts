@@ -45,10 +45,11 @@ const AGREGADOS: Partial<Record<Intervalo, string>> = { "5m": "candles_5m", "1h"
 
 /**
  * Intervalos sem agregado próprio: saem de time_bucket sobre a fonte mais fina que
- * ainda é barata (15m a partir de 1m; 4h e 1d a partir do agregado de 1h).
+ * ainda é barata (15m e 30m a partir de 1m; 4h e 1d a partir do agregado de 1h).
  */
 const REAGRUPADOS: Partial<Record<Intervalo, { readonly passo: string; readonly fonte: "1m" | "1h" }>> = {
   "15m": { passo: "15 minutes", fonte: "1m" },
+  "30m": { passo: "30 minutes", fonte: "1m" },
   "4h": { passo: "4 hours", fonte: "1h" },
   "1d": { passo: "1 day", fonte: "1h" },
 };

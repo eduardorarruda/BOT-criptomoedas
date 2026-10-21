@@ -23,6 +23,7 @@ const INTERVALOS: readonly { valor: Intervalo; rotulo: string }[] = [
   { valor: "1m", rotulo: "1 min" },
   { valor: "5m", rotulo: "5 min" },
   { valor: "15m", rotulo: "15 min" },
+  { valor: "30m", rotulo: "30 min" },
   { valor: "1h", rotulo: "1 h" },
   { valor: "4h", rotulo: "4 h" },
   { valor: "1d", rotulo: "1 dia" },

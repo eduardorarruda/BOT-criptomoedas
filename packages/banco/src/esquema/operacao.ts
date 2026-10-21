@@ -17,7 +17,7 @@ import {
 import { usuarios } from "./acesso.js";
 import { decimal, instante } from "./tipos.js";
 
-const INTERVALOS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
+const INTERVALOS = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"] as const;
 const intervalos = sql.raw(INTERVALOS.map((i) => `'${i}'`).join(", "));
 
 // As chaves estrangeiras levam usuario_id junto: a checagem de FK não passa pelo RLS,
