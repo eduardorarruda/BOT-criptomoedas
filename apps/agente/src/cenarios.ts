@@ -76,6 +76,55 @@ function avaliar(proposta: PropostaGerada, pedido: PedidoAnalise, limiar: number
 }
 
 /**
+ * O modelo propôs aguardar, mas os próprios cenários dele compensam (valor esperado > 0
+ * e o favorável no limiar): a regra decide pela entrada. Os modelos tendem a aguardar
+ * mesmo com a conta a favor (21/10: P1 de 30 min e 1 h com valor esperado positivo
+ * ficaram de fora); quem estima são os cenários, quem decide é o código. Um veto grave
+ * concreto do modelo mantém o aguardar.
+ */
+function entradaPelosCenarios(
+  proposta: PropostaGerada,
+  pedido: PedidoAnalise,
+  limiar: number,
+): PropostaAgente | null {
+  const acao = pedido.sinal.acao;
+  if (proposta.acao !== "aguardar" || !pedido.posicao.quantidade.isZero()) return null;
+  if (acao !== "COMPRAR" && acao !== "VENDER") return null;
+  const sentido: Sentido = pedido.operacao?.sentido ?? (acao === "VENDER" ? "vendido" : "comprado");
+  const favoravel: NomeCenario = sentido === "comprado" ? "alta" : "baixa";
+  const probabilidadeFavoravel = proposta.cenarios.find((c) => c.nome === favoravel)?.probabilidade ?? 0;
+  const ve = valorEsperado(proposta.cenarios);
+  if (ve <= 0 || probabilidadeFavoravel < limiar) return null;
+  const base = { valorEsperado: ve, favoravel, probabilidadeFavoravel, limiar, aplicada: true };
+  const conta = `os cenários do próprio modelo dão valor esperado ${pctSinal(ve / 100)} e ${pct(probabilidadeFavoravel, 0)} de ${favoravel} (limiar ${pct(limiar, 0)})`;
+  if (proposta.vetoGrave)
+    return {
+      ...proposta,
+      avaliacao: {
+        ...base,
+        aprovada: false,
+        motivo: `${conta}, mas há um veto grave: ${proposta.vetoGrave}`,
+      },
+    };
+  return {
+    ...proposta,
+    acao: sentido === "comprado" ? "comprar" : "vender",
+    confianca: probabilidadeFavoravel,
+    tamanhoRelativo: proposta.tamanhoRelativo > 0 ? proposta.tamanhoRelativo : 1,
+    justificativa:
+      `Regra dos cenários: ${conta}; a regra decide pela entrada (o modelo tinha proposto aguardar). ${proposta.justificativa}`.slice(
+        0,
+        LIMITE_JUSTIFICATIVA,
+      ),
+    avaliacao: {
+      ...base,
+      aprovada: true,
+      motivo: `${conta}: a regra decide pela entrada, mesmo o modelo tendo proposto aguardar`,
+    },
+  };
+}
+
+/**
  * A regra determinística sobre as "prévias de futuro": só abre posição com valor
  * esperado líquido > 0 E cenário favorável com probabilidade ≥ limiar; senão,
  * "aguardar" com o motivo (cenários e contra-argumento ficam, para a tela e o placar).
@@ -86,6 +135,8 @@ export function aplicarRegraDosCenarios(
   pedido: PedidoAnalise,
   limiar: number = LIMIAR_PADRAO,
 ): PropostaAgente {
+  const pelosCenarios = entradaPelosCenarios(proposta, pedido, limiar);
+  if (pelosCenarios) return pelosCenarios;
   const avaliacao = avaliar(proposta, pedido, limiar);
   if (!avaliacao.aplicada) return { ...proposta, avaliacao };
   if (avaliacao.aprovada)

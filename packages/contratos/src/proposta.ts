@@ -88,6 +88,16 @@ const PropostaBase = z.object({
   justificativa: z.string().min(1).max(2000),
   riscos: z.array(z.string().max(300)).max(10),
   fontes: z.array(FonteEsquema).max(20),
+  /**
+   * Só com um risco concreto e grave que justifique NÃO operar mesmo com valor esperado
+   * positivo nos cenários (notícia relevante, dado inconsistente, falta de liquidez).
+   */
+  vetoGrave: z
+    .string()
+    .min(1)
+    .max(300)
+    .optional()
+    .describe("só um risco concreto e grave que justifique não operar mesmo com valor esperado positivo"),
 });
 
 /**

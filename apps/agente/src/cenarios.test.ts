@@ -142,4 +142,52 @@ describe("regra dos cenários", () => {
     expect(p.avaliacao).toMatchObject({ aprovada: true, probabilidadeFavoravel: 0.42, limiar: 0.3 });
     expect(p.confianca).toBe(0.42);
   });
+
+  describe("o modelo propôs aguardar, mas os próprios cenários dele compensam", () => {
+    const aguardar = (extra: Partial<typeof PROPOSTA_GERADA> = {}) => {
+      const { stop: _s, alvo: _a, ...sem } = PROPOSTA_GERADA;
+      return { ...sem, acao: "aguardar" as const, confianca: 0.6, tamanhoRelativo: 0, ...extra };
+    };
+
+    it("valor esperado > 0 e chance ≥ limiar: a regra decide pela entrada (como o P1 de 21/10 10:29)", () => {
+      const p = aplicarRegraDosCenarios(
+        aguardar({ cenarios: comProbabilidades(0.36, 0.32, 0.32) }),
+        pedidoExemplo(),
+      );
+      expect(p.acao).toBe("comprar");
+      expect(p.tamanhoRelativo).toBe(1);
+      expect(p.confianca).toBe(0.36);
+      expect(p.avaliacao).toMatchObject({ aplicada: true, aprovada: true });
+      expect(p.avaliacao?.motivo).toMatch(/os cenários do próprio modelo/);
+    });
+
+    it("com um veto grave concreto, continua aguardando e diz por quê", () => {
+      const p = aplicarRegraDosCenarios(
+        aguardar({
+          cenarios: comProbabilidades(0.36, 0.32, 0.32),
+          vetoGrave: "notícia de hack na corretora",
+        }),
+        pedidoExemplo(),
+      );
+      expect(p.acao).toBe("aguardar");
+      expect(p.avaliacao).toMatchObject({ aplicada: true, aprovada: false });
+      expect(p.avaliacao?.motivo).toMatch(/veto grave: notícia de hack/);
+    });
+
+    it("valor esperado ≤ 0: continua aguardando", () => {
+      const p = aplicarRegraDosCenarios(
+        aguardar({ cenarios: comProbabilidades(0.2, 0.4, 0.4) }),
+        pedidoExemplo(),
+      );
+      expect(p.acao).toBe("aguardar");
+    });
+
+    it("com posição aberta, aguardar não vira entrada", () => {
+      const p = aplicarRegraDosCenarios(
+        aguardar({ cenarios: comProbabilidades(0.6, 0.2, 0.2) }),
+        pedidoExemplo({ posicao: posicaoAberta }),
+      );
+      expect(p.acao).toBe("aguardar");
+    });
+  });
 });
