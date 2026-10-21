@@ -5,6 +5,7 @@ import { portaAgendaEventos } from "./portas/agenda-eventos.js";
 import { portaCredenciais } from "./portas/credenciais.js";
 import { portaDecisoes } from "./portas/decisoes.js";
 import { portaOrdens } from "./portas/ordens.js";
+import { repositorioReplay } from "./repositorios/replay.js";
 import { portaPlacar } from "./portas/placar.js";
 import { portaProtecoes } from "./portas/protecoes.js";
 import { portaRiscoConta, type AtivoDoSimbolo } from "./portas/risco-conta.js";
@@ -115,6 +116,7 @@ export function criarBancoDoMotor(opcoes: OpcoesBancoDoMotor) {
     importacoesB3: repositorioImportacoesB3(conexao.db),
     credenciaisMt5: opcoes.chaveMestra ? repositorioCredenciaisMt5(conexao.db, opcoes.chaveMestra) : null,
     placar: portaPlacar(conexao.db),
+    replay: repositorioReplay(conexao.db),
     fechar: () => conexao.fechar(),
   };
 }
