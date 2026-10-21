@@ -60,27 +60,34 @@ Com menos de **30 decisões avaliadas** a tela avisa que as porcentagens ainda m
 - Executada sem o resultado real gravado (a venda veio por fora e o motor não achou a compra) fica pendente até sair da janela de 30 dias.
 - A confiança do contrato é a da proposta, sem distinguir "confiança em comprar" de "confiança em aguardar": a calibração mede "a escolha dele estava certa".
 
-## Fase 2: replay histórico (desenhado, não implementado)
+## Fase 2: replay histórico (implementado)
 
-O placar ao vivo precisa de semanas para juntar 30 decisões por estratégia. O replay mede o Claude em dias, sobre velas já gravadas.
+O placar ao vivo precisa de semanas para juntar 30 decisões por estratégia. O replay mede o Claude em horas, sobre velas já gravadas, e responde se ele como filtro **melhora ou piora** a estratégia P1 (modelo `donchian-20-10` com a regra extra preço > SMA(200)).
 
 ### O comando
 
 ```
-pnpm --filter @zentrade/motor replay-placar -- \
-  --robo <id> --inicio 2026-07-01 --fim 2026-09-30 --maximo 40 [--custo-maximo-usd 2] [--confirmar]
+pnpm --filter @zentrade/motor replay-claude -- \
+  [--inicio 2026-07-01] [--fim 2026-10-20] [--maximo 200] [--custo-maximo-usd 15] \
+  [--paralelo 2] [--cache replay-cache] [--saida RESULTADOS.md] [--confirmar | --so-relatorio]
 ```
 
-1. Carrega as velas do robô no período (banco: o BTC gravado ao vivo, ou o WIN importado por `importar-candles-*`).
-2. Recusa a janela se ela começa **antes do corte de conhecimento do modelo** (configurável; o modelo não pode "lembrar" o que aconteceu).
-3. Roda as regras candle a candle (as mesmas de `decidir`/`decidirComSentido`) e junta os sinais de entrada; mostra quantos são, o custo estimado (sinais × custo médio por análise do livro `gastos_ia`) e **para**. Só com `--confirmar` segue; `--maximo` e `--custo-maximo-usd` cortam antes de passar do limite.
-4. Para cada sinal, chama o serviço do agente (`AgenteHttp`, o mesmo do robô) com o pedido montado **só até aquele candle**.
-5. Grava cada resposta como decisão com a marca `origem = 'replay'` (coluna nova, com `check`), estado `registrada`, **sem quantidade executável**. O motor e a API nunca executam nem pedem aprovação de decisão `replay` (barreira no `processarSinal` e no `decidirNa`).
-6. O avaliador do placar avalia essas decisões como as outras; o placar ganha o filtro `origem` (ao vivo, replay, ambos).
+Sem `--confirmar` só gera os sinais e estima o custo. Os parâmetros do experimento (pares, janela, tamanho por operação, custos, rodadas do acaso) estão fixados em `apps/motor/src/replay/p1.ts` (pré-registrados: mudar é outro experimento).
 
-### O que precisa mudar antes (e por que não entrou agora)
+1. **Candles**: Binance **real** pública (nunca os candles da testnet gravados no banco), em cache de arquivo: o relatório de hoje e o de amanhã usam os mesmos dados.
+2. **Corte de conhecimento**: recusa janela que começa antes de `--corte` (padrão 2026-07-01): o modelo não pode "lembrar" o que aconteceu.
+3. **Sinais**: a regra pura candle a candle, uma posição por vez em cada par; a entrada é na abertura do candle seguinte, com os custos do backtest, e o desfecho vem do mesmo `simularDesfecho` do placar.
+4. **Análise**: cada sinal vai ao agente (`AgenteHttp`) com o pedido montado só até o candle dele, mais o campo `ate` (o instante do sinal). Seleciona os primeiros `--maximo` sinais em ordem cronológica e registra quantos sobraram; para no `--custo-maximo-usd`, sem orçamento de IA ou depois de 5 falhas seguidas.
+5. **Gravação**: tabela própria `replay_analises` (migração 0019), sem robô, usuário nem ordem e sem permissão para a aplicação. O motor ao vivo, a API e o placar ao vivo nunca a leem; o replay e o ao vivo ficam separados por construção. Refazer a mesma rodada não repete análise (única por execução, par e instante).
+6. **Resultado**: `RESULTADOS.md` com regra pura × regra + Claude × filtro aleatório de mesma taxa de aprovação (1.000 rodadas, semente fixa), precisão de aprovações e vetos com intervalo de Wilson e o veredito: acima do p95 do acaso o Claude agrega, abaixo do p5 ele tira, no meio é indistinguível.
 
-- **Sem olhar o futuro no agente.** Hoje as ferramentas leem o banco "agora": `historico_decisoes` traria decisões posteriores ao candle, `buscar_conhecimento` notas e notícias publicadas depois. O pedido de análise precisa de um `ate` (instante do candle) que todas as ferramentas respeitem (`em < ate`, `publicado_em < ate`). Isso mexe no serviço do agente, que está sendo alterado em paralelo (prompt e cenários), então fica para depois desse merge.
-- **Nunca enviar ordem.** Além da marca `replay`, o comando roda sem corretora (porta nula que recusa qualquer ordem) e num processo próprio, fora do `robos`.
-- **Custo.** Limite por execução (`--maximo`, `--custo-maximo-usd`) e o orçamento de IA da conta valendo como sempre (o agente já recusa sem orçamento).
-- **Testes.** Unidade: geração de sinais sem olhar adiante (o contexto de cada sinal termina no candle dele), corte de conhecimento, limites e confirmação. Integração: um replay curto contra o agente fixo (`AgenteFixo`) gravando decisões `replay` e o placar separando as origens.
+### Sem olhar o futuro (como o agente se comporta com `ate`)
+
+Com `ate` no pedido, o agente: usa esse instante como "agora" no prompt (não a data de hoje); **desliga** `buscar_conhecimento` e `historico_decisoes` (leem o banco ao vivo e trariam notícias e decisões posteriores ao sinal); e o contexto prévio diz que não há histórico nem base nesta análise. Sobram `retrato_mercado` e `posicao_e_orcamento`, que só usam o próprio pedido. Foi a forma mais simples e segura: filtrar por data exigiria que todo documento tivesse data confiável. O `/saude` do agente passa a devolver `replay: true` e o comando confere antes de enviar: um agente de imagem antiga ignoraria o `ate` e analisaria com o banco ao vivo.
+
+### Limites
+
+- Sem orçamento de risco nem saldo no pedido (não existe robô num replay).
+- Os sinais seguintes não mudam com os vetos do Claude: as duas pontas avaliam o mesmo conjunto de sinais da regra pura.
+- Posição da regra pura ainda aberta no fim dos dados fica de fora (sem desfecho), nas duas pontas.
+- Sinais do mesmo dia em vários pares são correlacionados: a amostra efetiva é menor que o número de sinais.
