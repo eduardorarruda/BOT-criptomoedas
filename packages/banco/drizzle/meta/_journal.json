@@ -120,6 +120,13 @@
       "when": 1792438813671,
       "tag": "0016_credenciais_mt5",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792583003442,
+      "tag": "0017_intervalo_30m",
+      "breakpoints": true
     }
   ]
 }

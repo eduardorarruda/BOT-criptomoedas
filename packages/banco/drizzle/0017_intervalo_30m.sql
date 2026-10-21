@@ -1,0 +1,2 @@
+ALTER TABLE "robos" DROP CONSTRAINT "robos_intervalo";--> statement-breakpoint
+ALTER TABLE "robos" ADD CONSTRAINT "robos_intervalo" CHECK ("robos"."intervalo" in ('1m', '5m', '15m', '30m', '1h', '4h', '1d'));
