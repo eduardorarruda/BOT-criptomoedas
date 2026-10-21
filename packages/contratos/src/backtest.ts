@@ -57,6 +57,7 @@ export function limitesPadraoDoBacktest(saldoInicial: string): LimitesRiscoDTO {
     ordensPorHoraMax: p.ordensPorHoraMax,
     pausaAposPerdaMin: p.pausaAposPerdaMin,
     confiancaMinima: p.confiancaMinima,
+    diasDeEvento: "ignorar",
   };
 }
 

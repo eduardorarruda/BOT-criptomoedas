@@ -1,6 +1,7 @@
 import type { Estrategia } from "@zentrade/dominio";
 import { z } from "zod";
 import { Fracao, Id, Instante, Intervalo, Lado, ModoRobo, Rede, TextoDecimal } from "./comum.js";
+import { ModoDiasDeEventoEsquema } from "./agenda-eventos.js";
 import { AvaliacaoDecisaoEsquema } from "./placar.js";
 import { PropostaAgenteEsquema } from "./proposta.js";
 import { RegraEsquema } from "./regra.js";
@@ -72,6 +73,8 @@ export const LimitesRiscoEsquema = z.object({
   ordensPorHoraMax: z.number().int().min(1).max(120),
   pausaAposPerdaMin: z.number().int().min(0).max(1440),
   confiancaMinima: Fracao,
+  /** Filtro opcional de dia de evento (Copom, payroll…): ignorar (padrão), bloquear entradas ou reduzir à metade. */
+  diasDeEvento: ModoDiasDeEventoEsquema.default("ignorar"),
 });
 export type LimitesRiscoDTO = z.infer<typeof LimitesRiscoEsquema>;
 
