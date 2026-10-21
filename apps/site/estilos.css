@@ -1914,3 +1914,49 @@ main > section:nth-of-type(even):not(.hero, .final)::before {
   left: max(-420px, -30vw);
   rotate: -140deg;
 }
+/* a vela no centro do ensō: o pavio cresce, o corpo sobe do meio */
+.vela-pavio,
+.vela-corpo {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.ponto-arte .vela-pavio {
+  animation: vela-pavio 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 2.7s backwards;
+}
+.ponto-arte .vela-corpo {
+  animation: vela-corpo 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 2.55s backwards;
+}
+@keyframes vela-pavio {
+  from {
+    transform: scaleY(0.3);
+  }
+}
+@keyframes vela-corpo {
+  from {
+    transform: scaleY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ponto-arte .vela-pavio,
+  .ponto-arte .vela-corpo {
+    animation: none;
+  }
+}
+/* a velinha do botão de voltar ao topo */
+.progresso span {
+  position: relative;
+  width: 5px;
+  height: 10px;
+  border-radius: 1px;
+}
+.progresso span::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  width: 1.5px;
+  height: 18px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: var(--jade);
+}
