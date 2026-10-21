@@ -148,7 +148,7 @@ export class Analista {
 
   async analisar(pedido: PedidoAnalise, opcoes: OpcoesAnalise): Promise<RespostaAnalise> {
     const registro = new RegistroFontes();
-    const agora = (this.#o.agora ?? (() => new Date()))();
+    const agora = pedido.ate !== undefined ? new Date(pedido.ate) : (this.#o.agora ?? (() => new Date()))();
     const previo = await buscarContextoPrevio(pedido, opcoes.usuarioId, this.#o.dependencias, agora);
     const pergunta: BetaMessageParam = {
       role: "user",

@@ -134,6 +134,13 @@
       "when": 1792591941849,
       "tag": "0018_eventos_mercado",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792610620108,
+      "tag": "0019_replay_claude",
+      "breakpoints": true
     }
   ]
 }

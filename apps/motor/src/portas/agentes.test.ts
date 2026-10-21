@@ -64,7 +64,7 @@ describe("agente por HTTP", () => {
 
   it("erro HTTP, resposta torta e falha de rede viram erro explicado", async () => {
     const respostas = [
-      () => new Response("x", { status: 500 }),
+      () => new Response("falha no meio", { status: 500 }),
       () => new Response(JSON.stringify({ proposta: { acao: "x" } }), { status: 200 }),
       () => {
         throw new TypeError("fetch failed");
@@ -72,7 +72,7 @@ describe("agente por HTTP", () => {
     ];
     const fetch = vi.fn(async () => respostas.shift()!());
     const a = new AgenteHttp({ url: "http://agente:8081", segredo: "s".repeat(32), fetch });
-    await expect(a.analisar(pedido("COMPRAR"))).rejects.toThrow(/HTTP 500/);
+    await expect(a.analisar(pedido("COMPRAR"))).rejects.toThrow(/HTTP 500 \(falha no meio\)/);
     await expect(a.analisar(pedido("COMPRAR"))).rejects.toThrow(/formato/);
     await expect(a.analisar(pedido("COMPRAR"))).rejects.toThrow(/não respondeu/);
   });

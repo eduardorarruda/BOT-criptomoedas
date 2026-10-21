@@ -53,6 +53,7 @@ export function pedidoNoFio(p: PedidoAnalise) {
     // Como a operação sai e quanto custa, e as velas: números puros, vão como estão.
     ...(p.operacao ? { operacao: p.operacao } : {}),
     ...(p.velas ? { velas: p.velas } : {}),
+    ...(p.ate !== undefined ? { ate: p.ate } : {}),
     ...(o
       ? {
           orcamento: {
@@ -80,8 +81,13 @@ export class AgenteHttp implements PortaAgente {
 
   async analisar(pedido: PedidoAnalise): Promise<RespostaAnalise> {
     const resposta = await this.enviar(pedido);
-    if (!resposta.ok)
-      throw new Error(`O agente respondeu HTTP ${resposta.status}. Veja os registros do apps/agente.`);
+    if (!resposta.ok) {
+      // O corpo do erro do agente (ex.: "PedidoAnalise inválido: …") diz o que corrigir.
+      const detalhe = (await resposta.text().catch(() => "")).slice(0, 300);
+      throw new Error(
+        `O agente respondeu HTTP ${resposta.status}${detalhe ? ` (${detalhe})` : ""}. Veja os registros do apps/agente.`,
+      );
+    }
     const corpo = Resposta.safeParse(await resposta.json().catch(() => null));
     if (!corpo.success)
       throw new Error(

@@ -98,3 +98,10 @@ export { VALIDADE_APROVACAO_PADRAO_MS } from "./portas/decisoes.js";
 export { portaPlacar } from "./portas/placar.js";
 export { LIMITE_PLACAR, type FiltroPlacarBanco, type RepositorioPlacar } from "./repositorios/placar.js";
 export * as esquema from "./esquema/index.js";
+export {
+  repositorioReplay,
+  type AnaliseReplay,
+  type NovaAnaliseReplay,
+  type RepositorioReplay,
+  type VereditoReplay,
+} from "./repositorios/replay.js";

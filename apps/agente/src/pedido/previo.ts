@@ -41,6 +41,8 @@ export interface ContextoPrevio {
   readonly base: FrescorDaBase | null;
   /** O placar do Claude neste robô em frases (precisão, vetos, calibração); `null` sem placar. */
   readonly placar?: string | null;
+  /** Replay histórico: histórico e base ao vivo ficam desligados (não existiam no instante do sinal). */
+  readonly replay?: boolean;
 }
 
 async function placarDoRobo(pedido: PedidoAnalise, deps: DependenciasFerramentas): Promise<string | null> {
@@ -83,6 +85,7 @@ export async function buscarContextoPrevio(
   deps: DependenciasFerramentas,
   agora: Date,
 ): Promise<ContextoPrevio> {
+  if (pedido.ate !== undefined) return { decisoes: null, base: null, replay: true };
   const [decisoes, base, placar] = await Promise.allSettled([
     deps.historico.recentes(pedido.robo.id, LIMITE_DECISOES_PREVIAS),
     frescor(pedido, usuarioId, deps, agora),
@@ -129,6 +132,10 @@ function linhaDecisao(d: DecisaoPassada, fuso: string): string {
 }
 
 export function linhasDoPrevio(previo: ContextoPrevio, fuso: string): string[] {
+  if (previo.replay)
+    return [
+      "Replay histórico: não há histórico de decisões do robô nem base de conhecimento nesta análise (nada posterior ao sinal pode entrar). Julgue só pelos dados do pedido e pelo que as ferramentas de mercado devolvem.",
+    ];
   const { decisoes, base } = previo;
   const historico =
     decisoes === null
