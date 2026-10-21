@@ -825,11 +825,27 @@ h3 {
 /* =========================================================
    v2 — fumaça, ensō a pincel, palco fixo, órbita e luz
    ========================================================= */
-.hero-imagem {
-  opacity: 0.28;
-}
-html:not(.sem-js) .hero-imagem {
+.gl .hero-imagem {
   display: none;
+}
+.hero-imagem {
+  opacity: 1;
+}
+.hero-veu {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, var(--tinta) 22%, rgba(7, 12, 10, 0.6) 48%, rgba(7, 12, 10, 0) 70%),
+    linear-gradient(0deg, var(--tinta), transparent 22%);
+}
+@media (max-width: 900px) {
+  .hero-veu {
+    background:
+      linear-gradient(90deg, rgba(7, 12, 10, 0.92) 30%, rgba(7, 12, 10, 0.55)),
+      linear-gradient(0deg, var(--tinta), transparent 30%);
+  }
 }
 #fumaca {
   position: absolute;
@@ -839,51 +855,6 @@ html:not(.sem-js) .hero-imagem {
   z-index: -1;
   pointer-events: none;
 }
-.hero-palco {
-  position: absolute;
-  right: max(-4vw, calc((100vw - 1400px) / 2));
-  top: 50%;
-  translate: 0 -50%;
-  width: min(54vw, 720px);
-  aspect-ratio: 1;
-  z-index: -1;
-  pointer-events: none;
-}
-.enso-pincel {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-.enso-pincel .traco {
-  fill: none;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-}
-.horizonte {
-  position: absolute;
-  left: -60%;
-  right: -20%;
-  top: 50%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(61, 220, 142, 0.85) 45%,
-    rgba(61, 220, 142, 0.85) 55%,
-    transparent
-  );
-  box-shadow: 0 0 18px rgba(61, 220, 142, 0.6);
-  transform: scaleX(0);
-  opacity: 0;
-}
-@media (max-width: 900px) {
-  .hero-palco {
-    width: 120vw;
-    right: -40vw;
-    opacity: 0.45;
-  }
-}
 .palavra {
   display: inline-block;
   will-change: transform, filter, opacity;
@@ -892,23 +863,10 @@ html:not(.sem-js) .hero-imagem {
   will-change: auto;
 }
 
-/* rolagem suave (Lenis) */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-
 /* luz que segue o mouse + inclinação */
 .cartao {
   --mx: 50%;
   --my: 50%;
-  transform-style: preserve-3d;
-  transition:
-    transform 0.25s ease,
-    border-color 0.25s ease;
 }
 .cartao::before {
   content: "";
@@ -938,26 +896,6 @@ html.lenis body {
 .cartao:hover::before,
 .cartao:hover::after {
   opacity: 1;
-}
-
-/* cursor com brilho */
-.brilho-cursor {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 420px;
-  height: 420px;
-  margin: -210px 0 0 -210px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(61, 220, 142, 0.07), transparent 60%);
-  pointer-events: none;
-  z-index: 1;
-  mix-blend-mode: screen;
-}
-@media (hover: none), (pointer: coarse) {
-  .brilho-cursor {
-    display: none;
-  }
 }
 
 /* progresso em ensō */
@@ -1262,20 +1200,12 @@ html.lenis body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .horizonte {
-    transform: none;
-    opacity: 1;
-  }
-  .enso-pincel .traco,
   .grafico .curva,
   .progresso circle {
     stroke-dashoffset: 0;
   }
   .camada {
     opacity: 1;
-  }
-  .brilho-cursor {
-    display: none;
   }
 }
 
@@ -1291,5 +1221,63 @@ main > div {
   .orbita .centro {
     width: 84px;
     height: 84px;
+  }
+}
+
+/* títulos palavra por palavra (sem biblioteca) */
+.titulo-anim .palavra {
+  opacity: 0;
+  transform: translateY(0.45em);
+  filter: blur(6px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.7s ease;
+  transition-delay: calc(var(--i) * 45ms);
+}
+.titulo-anim.visivel .palavra {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+/* camadas acendem quando a seção aparece */
+.decisao-palco.visivel .linha-pulso i {
+  transform: scaleY(1);
+  transition: transform 2.4s cubic-bezier(0.6, 0, 0.2, 1);
+}
+.decisao-palco.visivel .camada {
+  opacity: 1;
+  border-color: var(--jade-profundo);
+}
+.decisao-palco.visivel .camada .no {
+  border-color: var(--jade);
+  box-shadow:
+    0 0 0 6px rgba(61, 220, 142, 0.08),
+    0 0 28px rgba(61, 220, 142, 0.35);
+}
+.decisao-palco .camada,
+.decisao-palco .camada .no {
+  transition-duration: 0.6s;
+}
+.decisao-palco.visivel .camada:nth-child(3),
+.decisao-palco.visivel .camada:nth-child(3) .no {
+  transition-delay: 0.8s;
+}
+.decisao-palco.visivel .camada:nth-child(4),
+.decisao-palco.visivel .camada:nth-child(4) .no {
+  transition-delay: 1.6s;
+}
+.grafico.visivel .curva {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 2.4s cubic-bezier(0.6, 0, 0.2, 1);
+}
+.grafico.visivel .curva.estrategia {
+  transition-delay: 0.4s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .titulo-anim .palavra {
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }
