@@ -2,6 +2,7 @@ import {
   ConsultaAgendaEsquema,
   EventoMercadoEsquema,
   NovoEventoMercadoEsquema,
+  ResultadoSugestaoEventosEsquema,
   type EventoMercadoDTO,
 } from "@zentrade/contratos";
 import { diaNoFuso } from "@zentrade/dominio";
@@ -19,12 +20,6 @@ const DIA_MS = 86_400_000;
 const DIAS_DA_SUGESTAO = 7;
 const LIMITE_SUGESTOES = { max: 10, timeWindow: "1 minute" } as const;
 const TEMPO_SUGESTAO_MS = 120_000;
-
-const RespostaSugestao = z.object({
-  criados: z.array(EventoMercadoEsquema),
-  descartados: z.number().int().nonnegative(),
-  jaExistiam: z.number().int().nonnegative(),
-});
 
 /**
  * Agenda de eventos de mercado (`/eventos-mercado`). O filtro de dia perigoso dos robôs
@@ -80,7 +75,7 @@ export const rotasEventosMercado: FastifyPluginAsyncZod<{ deps: Dependencias }> 
     "/eventos-mercado/sugerir",
     {
       config: { acesso: "operar", rateLimit: LIMITE_SUGESTOES },
-      schema: { response: { 200: RespostaSugestao } },
+      schema: { response: { 200: ResultadoSugestaoEventosEsquema } },
     },
     async (req) => {
       if (!deps.assistente)

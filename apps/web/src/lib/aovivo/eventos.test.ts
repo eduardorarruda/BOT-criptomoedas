@@ -101,6 +101,7 @@ describe("eventos ao vivo", () => {
           ordensPorHoraMax: 1,
           pausaAposPerdaMin: 0,
           confiancaMinima: 0.5,
+          diasDeEvento: "ignorar" as const,
         },
         pausado: false,
         criadoEm: 1,

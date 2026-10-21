@@ -6,6 +6,7 @@ import {
   type ModoExecucaoBacktest,
   type RoboDTO,
 } from "@zentrade/contratos/esquemas";
+import type { ModoDiasDeEvento } from "@zentrade/dominio";
 import { CampoSelecao, CampoTexto } from "../../componentes/Campo";
 import { Segmentado } from "../../componentes/Segmentado";
 
@@ -28,6 +29,8 @@ export interface Avancado {
   precisaoMinuto: boolean;
   /** Onde executa a ordem decidida no fechamento do candle. */
   execucao: ModoExecucaoBacktest;
+  /** Filtro de dia de evento com a agenda do período. */
+  diasDeEvento: ModoDiasDeEvento;
   fracaoDentro: string;
   janelas: string;
   modoJanelas: "rolante" | "ancorada";
@@ -41,6 +44,7 @@ export const AVANCADO_INICIAL: Avancado = {
   limites: "padrao",
   precisaoMinuto: false,
   execucao: "fechamento",
+  diasDeEvento: "ignorar",
   fracaoDentro: "0.7",
   janelas: "5",
   modoJanelas: "rolante",
@@ -73,6 +77,7 @@ export function configuracaoDoFormulario(
           : { modo: "robo" },
     precisaoMinuto: a.precisaoMinuto && dias <= DIAS_MAXIMOS_PRECISAO_MINUTO,
     execucao: a.execucao,
+    diasDeEvento: a.diasDeEvento,
     validacao: validacaoDoFormulario(a),
   };
 }
@@ -152,6 +157,7 @@ export function CamposAvancados({
         </label>
       </fieldset>
       <GrupoExecucao a={a} mudar={mudar} />
+      <GrupoDiasDeEvento a={a} mudar={mudar} />
       <GrupoValidacao a={a} mudar={mudar} />
     </div>
   );
@@ -180,6 +186,38 @@ export function GrupoExecucao({
       >
         <option value="fechamento">No fechamento do candle do sinal</option>
         <option value="proximaAbertura">Na abertura do candle seguinte (mais conservador)</option>
+      </CampoSelecao>
+    </fieldset>
+  );
+}
+
+const DICA_DIAS_DE_EVENTO: Record<ModoDiasDeEvento, string> = {
+  ignorar: "Opera em todos os dias, como sempre. É o padrão.",
+  bloquear:
+    "Não abre posição nos dias de evento de alto impacto da sua Agenda de eventos (Risco). As velas ficam: só a entrada é barrada. O resultado diz quantas entradas foram barradas.",
+  reduzir: "Nesses dias a entrada leva metade do tamanho. O resultado diz quantas entradas foram reduzidas.",
+};
+
+/** Filtro opcional de dias de evento (Copom, payroll…), com a agenda cadastrada em Risco. */
+export function GrupoDiasDeEvento({
+  a,
+  mudar,
+}: {
+  readonly a: Avancado;
+  readonly mudar: (parcial: Partial<Avancado>) => void;
+}) {
+  return (
+    <fieldset className="bt-avancado__grupo">
+      <legend>Dias de evento</legend>
+      <CampoSelecao
+        rotulo="Dias de Copom, payroll, eleição"
+        dica={`${DICA_DIAS_DE_EVENTO[a.diasDeEvento]} Atenção: estratégias de tendência costumam ganhar justamente nesses dias; nos 20 pregões do WIN que medimos, bloquear piorou as de tendência e ajudou um pouco as de volta à média.`}
+        value={a.diasDeEvento}
+        onChange={(e) => mudar({ diasDeEvento: e.target.value as ModoDiasDeEvento })}
+      >
+        <option value="ignorar">Ignorar (padrão)</option>
+        <option value="bloquear">Bloquear entradas nesses dias</option>
+        <option value="reduzir">Entrar com metade do tamanho</option>
       </CampoSelecao>
     </fieldset>
   );

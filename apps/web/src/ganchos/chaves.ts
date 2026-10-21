@@ -31,4 +31,6 @@ export const chaves = {
   aoVivo: (roboId?: string) => ["aovivo", roboId ?? "todos"] as const,
   /** Limites da conta, pausas, divergências, orçamento de IA e avisos (tela de Risco). */
   risco: ["risco"] as const,
+  /** Agenda de eventos de mercado (Copom, payroll…). */
+  agenda: ["agenda-eventos"] as const,
 };

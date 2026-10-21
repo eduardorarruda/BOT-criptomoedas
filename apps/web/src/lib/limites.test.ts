@@ -8,6 +8,7 @@ const LIMITES = {
   ordensPorHoraMax: 4,
   pausaAposPerdaMin: 60,
   confiancaMinima: 0.65,
+  diasDeEvento: "ignorar" as const,
 };
 
 describe("limites de risco", () => {
@@ -16,6 +17,13 @@ describe("limites de risco", () => {
     expect(campos.perdaDiariaMaxima).toBe("25,5");
     expect(campos.confiancaMinima).toBe("65");
     expect(validarLimites(campos)).toEqual({ erros: {}, limites: LIMITES });
+  });
+
+  it("dias de evento: vai e volta, e valor desconhecido cai no padrão (ignorar)", () => {
+    const campos = deLimites({ ...LIMITES, diasDeEvento: "reduzir" });
+    expect(campos.diasDeEvento).toBe("reduzir");
+    expect(validarLimites(campos).limites?.diasDeEvento).toBe("reduzir");
+    expect(validarLimites({ ...campos, diasDeEvento: "qualquer" }).limites?.diasDeEvento).toBe("ignorar");
   });
 
   it("explica cada campo errado", () => {

@@ -40,6 +40,27 @@ function PremissaExecucao({ c }: { readonly c: NonNullable<Backtest["configuraca
   );
 }
 
+/** O filtro de dia de evento com que o backtest rodou, e quantas entradas ele mexeu. */
+function PremissaDiasDeEvento({
+  b,
+  c,
+}: {
+  readonly b: Backtest;
+  readonly c: NonNullable<Backtest["configuracao"]>;
+}) {
+  const m = b.metricas;
+  return (
+    <li>
+      <strong>Dias de evento (Copom, payroll, eleição):</strong>{" "}
+      {c.diasDeEvento === "bloquear"
+        ? `entradas bloqueadas nos dias de evento de alto impacto da sua agenda (as velas ficam). Sinais de entrada barrados: ${m?.entradasBarradasPorEvento ?? 0}.`
+        : c.diasDeEvento === "reduzir"
+          ? `nos dias de evento de alto impacto da sua agenda, a entrada leva metade do tamanho. Entradas reduzidas: ${m?.entradasReduzidasPorEvento ?? 0}.`
+          : "ignorados: o backtest opera todos os dias (padrão)."}
+    </li>
+  );
+}
+
 /** O modelo do mini índice com que o backtest rodou. */
 function PremissasWin({ b, c }: { readonly b: Backtest; readonly c: NonNullable<Backtest["configuracao"]> }) {
   const w = configuracaoWin(c);
@@ -78,6 +99,7 @@ function PremissasWin({ b, c }: { readonly b: Backtest; readonly c: NonNullable<
           : "perda diária de 2% do capital, 4 ordens por hora e pausa de 60 min depois de uma perda."}
       </li>
       <PremissaExecucao c={c} />
+      <PremissaDiasDeEvento b={b} c={c} />
       <li>
         <strong>Referências:</strong> ficar de fora (zero) e sempre comprado na sessão (1 contrato da abertura
         à zeragem, todo pregão, com os mesmos custos). Comprar e segurar não faz sentido num futuro de day
@@ -122,6 +144,7 @@ export function Premissas({ b }: { readonly b: Backtest }) {
                 : "os de um robô novo (perda diária 2%, exposição 30%, risco 0,5% do saldo por operação, 4 ordens por hora, pausa de 60 min após perda)."}
           </li>
           <PremissaExecucao c={c} />
+          <PremissaDiasDeEvento b={b} c={c} />
           <li>
             <strong>Stop e alvo:</strong> vigiados dentro do candle pela mínima e pela máxima
             {m?.precisaoMinuto ? ", no caminho dos candles de 1 minuto" : ""}. Se os dois cabem no mesmo

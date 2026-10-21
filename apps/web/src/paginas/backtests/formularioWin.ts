@@ -6,7 +6,7 @@ import {
   type ModoExecucaoBacktest,
   type ConfiguracaoWinEntrada,
 } from "@zentrade/contratos/esquemas";
-import { problemasSessao } from "@zentrade/dominio";
+import { problemasSessao, type ModoDiasDeEvento } from "@zentrade/dominio";
 
 /**
  * O formulário do mini índice (WIN): o que a pessoa digita, a leitura dos campos e a
@@ -84,6 +84,7 @@ export function configuracaoWinDoFormulario(
   c: CamposWin,
   validacao: NonNullable<ConfiguracaoBacktestEntrada["validacao"]>,
   execucao: ModoExecucaoBacktest = "fechamento",
+  diasDeEvento: ModoDiasDeEvento = "ignorar",
 ): ConfiguracaoBacktestEntrada {
   const win: ConfiguracaoWinEntrada = {
     tarifaB3PorContrato: lerReais(c.tarifa) ?? "0.25",
@@ -102,6 +103,7 @@ export function configuracaoWinDoFormulario(
     saldoInicial: lerReais(c.capital, { positivo: true }) ?? SALDO_PADRAO_WIN,
     risco: c.limites === "sem" ? { modo: "sem_limites" } : { modo: "robo" },
     execucao,
+    diasDeEvento,
     validacao,
     win,
   };

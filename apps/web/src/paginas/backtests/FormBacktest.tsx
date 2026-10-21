@@ -109,6 +109,7 @@ export function FormBacktest() {
         camposWin,
         validacaoDoFormulario(avancado),
         avancado.execucao,
+        avancado.diasDeEvento,
       );
       const { inicio, fim } = janela;
       return {

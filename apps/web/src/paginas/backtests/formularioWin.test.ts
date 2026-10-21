@@ -48,6 +48,13 @@ describe("formulário do mini índice", () => {
     });
   });
 
+  it("filtro de dias de evento: padrão ignorar; o escolhido vai para a configuração", () => {
+    expect(configuracaoWinDoFormulario(CAMPOS_WIN_INICIAIS, validacao).diasDeEvento).toBe("ignorar");
+    expect(
+      configuracaoWinDoFormulario(CAMPOS_WIN_INICIAIS, validacao, "fechamento", "bloquear").diasDeEvento,
+    ).toBe("bloquear");
+  });
+
   it("janela: termina no último candle gravado e não começa antes do primeiro", () => {
     const DIA = 86_400_000;
     const dados = {

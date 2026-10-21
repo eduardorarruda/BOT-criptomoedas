@@ -91,6 +91,7 @@ describe("tela Backtests", () => {
     await userEvent.click(screen.getByRole("button", { name: "Rodar backtest" }));
     await waitFor(() => expect(criar).toHaveBeenCalled());
     expect(criar.mock.calls[0]?.[0].configuracao).toEqual({
+      diasDeEvento: "ignorar",
       custos: { taxaPorLado: 0.00075, deslizamentoBps: 8, meioSpreadBps: 2 },
       risco: { modo: "sem_limites" },
       precisaoMinuto: false,
@@ -206,6 +207,7 @@ describe("mini índice (WIN)", () => {
     const pedido = criar.mock.calls[0]![0];
     expect(pedido).toMatchObject({ estrategiaId: "e-win-faixa", simbolo: "WIN-IBOV", intervalo: "5m" });
     expect(pedido.configuracao).toEqual({
+      diasDeEvento: "ignorar",
       mercado: "win",
       saldoInicial: "5000",
       risco: { modo: "sem_limites" },
@@ -296,6 +298,7 @@ describe("configuração do formulário", () => {
       limites: "r1",
       precisaoMinuto: true,
       execucao: "fechamento" as const,
+      diasDeEvento: "ignorar" as const,
       fracaoDentro: "0.7",
       janelas: "5",
       modoJanelas: "rolante" as const,
@@ -306,6 +309,10 @@ describe("configuração do formulário", () => {
       precisaoMinuto: true,
     });
     expect(configuracaoDoFormulario(a, 90, [robo]).precisaoMinuto).toBe(false);
+    expect(configuracaoDoFormulario(a, 30, []).diasDeEvento).toBe("ignorar");
+    expect(configuracaoDoFormulario({ ...a, diasDeEvento: "bloquear" }, 30, []).diasDeEvento).toBe(
+      "bloquear",
+    );
     expect(configuracaoDoFormulario({ ...a, limites: "padrao" }, 30, []).risco).toEqual({ modo: "robo" });
   });
 });

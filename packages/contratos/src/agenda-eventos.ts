@@ -78,3 +78,11 @@ export const SugestaoEventosEsquema = z.strictObject({
   eventos: z.array(EventoSugeridoEsquema).max(MAX_EVENTOS_SUGERIDOS),
 });
 export type EventoSugeridoDTO = z.infer<typeof EventoSugeridoEsquema>;
+
+/** `POST /eventos-mercado/sugerir`: o que entrou como sugestão, o que o Claude mandou e foi descartado e o que já existia. */
+export const ResultadoSugestaoEventosEsquema = z.object({
+  criados: z.array(EventoMercadoEsquema),
+  descartados: z.number().int().nonnegative(),
+  jaExistiam: z.number().int().nonnegative(),
+});
+export type ResultadoSugestaoEventos = z.infer<typeof ResultadoSugestaoEventosEsquema>;

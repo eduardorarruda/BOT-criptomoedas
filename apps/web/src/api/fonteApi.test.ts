@@ -52,6 +52,7 @@ describe("fonte da API", () => {
         ordensPorHoraMax: 4,
         pausaAposPerdaMin: 30,
         confiancaMinima: 0.6,
+        diasDeEvento: "ignorar" as const,
       },
     });
     expect(pedir).toHaveBeenCalledWith(
