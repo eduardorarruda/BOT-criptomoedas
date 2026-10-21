@@ -2,3 +2,4 @@ dist
 coverage
 pnpm-lock.yaml
 infra/n8n
+pesquisa/replay-claude/cache/
