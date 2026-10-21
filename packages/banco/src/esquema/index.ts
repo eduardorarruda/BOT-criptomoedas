@@ -2,6 +2,7 @@ export * from "./acesso.js";
 export * from "./carteira.js";
 export * from "./assistente.js";
 export * from "./conhecimento.js";
+export * from "./eventos-mercado.js";
 export * from "./mercado.js";
 export * from "./mt5.js";
 export * from "./operacao.js";

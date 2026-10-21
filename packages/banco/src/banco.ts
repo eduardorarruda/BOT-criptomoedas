@@ -1,6 +1,7 @@
 import type { PortaDecisoes, PortaOrdens, PortaProtecoes, PortaRobos } from "@zentrade/contratos";
 import { exigirFuso, FUSO_PADRAO } from "@zentrade/dominio";
 import { conectar, type Conexao } from "./cliente.js";
+import { portaAgendaEventos } from "./portas/agenda-eventos.js";
 import { portaCredenciais } from "./portas/credenciais.js";
 import { portaDecisoes } from "./portas/decisoes.js";
 import { portaOrdens } from "./portas/ordens.js";
@@ -12,6 +13,7 @@ import { repositorioAssistente } from "./repositorios/assistente.js";
 import { repositorioConhecimentoDetalhe } from "./repositorios/assistente-conhecimento.js";
 import { repositorioAuditoria } from "./repositorios/auditoria.js";
 import { repositorioAvisos } from "./repositorios/avisos.js";
+import { repositorioEventosMercado } from "./repositorios/eventos-mercado.js";
 import { repositorioBacktests } from "./repositorios/backtests.js";
 import { repositorioCarteira } from "./repositorios/carteira.js";
 import { repositorioConfiguracao } from "./repositorios/configuracao.js";
@@ -103,6 +105,8 @@ export function criarBancoDoMotor(opcoes: OpcoesBancoDoMotor) {
     conexao,
     portas,
     credenciais: opcoes.chaveMestra ? portaCredenciais(conexao.db, opcoes.chaveMestra) : null,
+    agendaEventos: portaAgendaEventos(conexao.db),
+    eventosMercado: repositorioEventosMercado(conexao.db),
     riscoConta: opcoes.ativoDoSimbolo
       ? portaRiscoConta(conexao.db, opcoes.ativoDoSimbolo, fusoDe(opcoes))
       : null,
@@ -159,6 +163,7 @@ export function criarBanco(opcoes: OpcoesBanco) {
     riscoConta: repositorioRiscoConta(db, fuso),
     divergencias: repositorioDivergencias(db),
     avisos: repositorioAvisos(db),
+    eventosMercado: repositorioEventosMercado(db),
     gastosIa: repositorioGastosIa(db, fuso),
     fechar: () => conexao.fechar(),
   };

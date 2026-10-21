@@ -84,6 +84,7 @@ export function roboDeLinha(r: LinhaRobo): RoboDTO {
       ordensPorHoraMax: r.ordensPorHoraMax,
       pausaAposPerdaMin: r.pausaAposPerdaMin,
       confiancaMinima: fracao(r.confiancaMinima),
+      diasDeEvento: r.diasDeEvento,
     },
     pausado: r.pausado,
     criadoEm: ms(r.criadoEm),
@@ -105,6 +106,7 @@ export function roboConfigDeLinha(r: LinhaRobo, versao: LinhaVersao): RoboConfig
       ordensPorHoraMax: r.ordensPorHoraMax,
       pausaAposPerdaMs: r.pausaAposPerdaMin * 60_000,
       confiancaMinima: fracao(r.confiancaMinima),
+      diasDeEvento: r.diasDeEvento,
     },
     riscoPorOperacao: dec(r.riscoPorOperacao),
   };
