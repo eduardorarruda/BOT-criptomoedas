@@ -1,0 +1,60 @@
+{
+  "dinamico": {
+    "cenarios": {
+      "abas": ["BTC · rompimento", "SOL · rompimento fraco", "WIN · abertura agitada"],
+      "nomes": ["alta", "lateral", "baixa"],
+      "sinais": [
+        "BTC/USDT · 4h · rompimento do topo de 20 velas",
+        "SOL/USDT · 1h · rompimento de só 0,02% acima do topo",
+        "WIN · 5 min · 09h20, abertura com notícia forte"
+      ],
+      "aprova": "Valor esperado depois das taxas: <strong>{ve}</strong>. Cenário de alta em {p}. <strong>Propõe comprar</strong>, e o motor de risco ainda confere.",
+      "aguarda": "Valor esperado depois das taxas: <strong>{ve}</strong>. Cenário de alta em {p}, abaixo do mínimo de 60%. <strong>Aguarda.</strong>"
+    },
+    "terminal": [
+      [
+        ["h", "21:00:00  BTC/USDT 4h  vela fechada"],
+        ["s", "regra    rompeu o topo de 20 velas, acima da média de 200"],
+        ["c", "claude   alta 62% · lateral 26% · baixa 12%"],
+        ["c", "claude   valor esperado +1,33% depois das taxas"],
+        ["c", "claude   contra: volume abaixo da média, o rompimento pode falhar"],
+        ["ok", "risco    APROVADO · 0,004 BTC · stop 61.230 na corretora"]
+      ],
+      [
+        ["h", "21:00:00  SOL/USDT 1h  vela fechada"],
+        ["s", "regra    rompeu o topo por só 0,02%"],
+        ["c", "claude   alta 40% · lateral 38% · baixa 22%"],
+        ["no", "claude   AGUARDAR · cenário favorável abaixo de 60%"],
+        ["h", "placar   veto registrado, avaliado daqui a 20 velas"]
+      ],
+      [
+        ["h", "09:20:00  WIN 5 min  agenda: Copom às 18h30"],
+        ["s", "regra    rompeu a faixa de abertura"],
+        ["no", "eventos  dia de evento, robô em modo reduzido"],
+        ["c", "claude   valor esperado -0,12%, lateral provável"],
+        ["no", "risco    BARRADO · nada operado"]
+      ]
+    ],
+    "chat": [
+      {
+        "pergunta": "Como estão meus robôs hoje?",
+        "consultando": "consultando seus dados",
+        "ferramentas": ["robôs", "decisões", "placar"],
+        "resposta": "<b>Hoje:</b> 10 robôs ativos e nenhuma posição aberta. O Claude analisou 6 sinais e vetou 5. O rompimento do BTC passou e aguarda o fechamento da vela das 21h."
+      },
+      {
+        "pergunta": "Quanto rende minha renda fixa?",
+        "consultando": "consultando seus dados",
+        "ferramentas": ["renda fixa", "CDI do Banco Central"],
+        "resposta": "<b>Renda fixa:</b> seus 3 CDBs rendem em média 104% do CDI. O próximo vencimento é em março, de R$ 12.400."
+      },
+      {
+        "pergunta": "Vale a pena operar mini índice amanhã?",
+        "consultando": "consultando a agenda",
+        "ferramentas": ["agenda de eventos", "placar do WIN"],
+        "resposta": "Amanhã tem <b>Copom às 18h30</b>, então o robô do WIN fica em modo reduzido. Não é recomendação: a decisão continua com as suas regras e o motor de risco."
+      }
+    ],
+    "velas": { "abertura": "abertura", "maxima": "máxima", "minima": "mínima", "fechamento": "fechamento" }
+  }
+}

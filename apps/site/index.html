@@ -3,17 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ZenTrade — Calma para decidir. Disciplina para executar.</title>
+    <title data-i18n="meta.titulo">ZenTrade | Calma para decidir. Disciplina para executar.</title>
     <meta
       name="description"
-      content="ZenTrade: robôs com regras claras, um analista de IA que pensa em três cenários e um motor de risco que dá a palavra final. Cripto, mini índice da B3, renda fixa e imóveis num só lugar. Open source."
+      data-i18n-content="meta.descricao"
+      content="Robôs com regras claras, um analista de IA que avalia três cenários e um motor de risco que dá a palavra final. Cripto, mini índice da B3, renda fixa e imóveis. Código aberto."
     />
     <meta name="theme-color" content="#070c0a" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="ZenTrade — Calma para decidir. Disciplina para executar." />
+    <meta property="og:title" content="ZenTrade | Calma para decidir. Disciplina para executar." />
     <meta
       property="og:description"
-      content="Robôs, IA que pensa em cenários e um motor de risco que decide. Cripto, mini índice, renda fixa e imóveis."
+      content="Robôs, IA que avalia cenários e um motor de risco que decide. Cripto, mini índice, renda fixa e imóveis."
     />
     <meta property="og:image" content="img/social.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -26,7 +27,6 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
     />
-    <link rel="preload" as="image" href="img/hero-limpo.webp" />
     <link rel="preload" as="image" href="img/enso.webp" />
     <link rel="stylesheet" href="estilos.css" />
     <script type="application/ld+json">
@@ -36,138 +36,56 @@
         "name": "ZenTrade",
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Linux, macOS, Windows (Docker)",
-        "description": "Plataforma open source de trading disciplinado e patrimônio: robôs com regras, analista de IA com três cenários, motor de risco determinístico, backtest honesto, mini índice da B3, renda fixa e imóveis.",
+        "description": "Plataforma de código aberto para trading disciplinado e patrimônio: robôs com regras, analista de IA com três cenários, motor de risco determinístico, backtest honesto, mini índice da B3, renda fixa e imóveis.",
         "license": "https://www.gnu.org/licenses/agpl-3.0.html",
-        "inLanguage": "pt-BR",
+        "inLanguage": ["pt-BR", "en", "hi", "es", "zh-CN"],
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" }
       }
     </script>
   </head>
   <body>
-    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
-    <a class="progresso" href="#topo" aria-label="Voltar ao topo">
+    <a class="pular" href="#conteudo" data-i18n="a11y.pular">Pular para o conteúdo</a>
+    <a class="progresso" href="#topo" aria-label="Topo">
       <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" pathLength="1" /></svg>
       <span aria-hidden="true"></span>
     </a>
 
     <svg width="0" height="0" style="position: absolute" aria-hidden="true">
       <defs>
-        <symbol
-          id="i-escudo"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <symbol id="i-escudo" viewBox="0 0 24 24">
           <path d="M12 3 4.5 6v6c0 4.5 3.2 7.8 7.5 9 4.3-1.2 7.5-4.5 7.5-9V6L12 3Z" />
           <path d="M8.5 12h7" />
         </symbol>
-        <symbol
-          id="i-balanca"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <symbol id="i-balanca" viewBox="0 0 24 24">
           <path
             d="M12 4v16M7 20h10M5 7h14M5 7l-2.5 6a2.5 2.5 0 0 0 5 0L5 7Zm14 0-2.5 6a2.5 2.5 0 0 0 5 0L19 7Z"
           />
         </symbol>
-        <symbol
-          id="i-pausa"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <symbol id="i-pausa" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="9" />
           <path d="M10 9v6M14 9v6" />
         </symbol>
-        <symbol
-          id="i-camadas"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <symbol id="i-camadas" viewBox="0 0 24 24">
           <path d="m12 3 9 5-9 5-9-5 9-5Z" />
           <path d="m3 13 9 5 9-5" />
         </symbol>
-        <symbol
-          id="i-casa"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <symbol id="i-casa" viewBox="0 0 24 24">
           <path d="M4 11 12 4l8 7v9H4v-9Z" />
           <path d="M10 20v-5h4v5" />
         </symbol>
-        <symbol
-          id="i-banco"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <symbol id="i-banco" viewBox="0 0 24 24">
           <path d="M3 9 12 4l9 5H3ZM5 9v8M9.5 9v8M14.5 9v8M19 9v8M3 20h18" />
         </symbol>
-        <symbol
-          id="i-moeda"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <symbol id="i-moeda" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="9" />
           <path d="M8 12h8M12 8v8" />
         </symbol>
-        <symbol
-          id="i-cadeado"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <symbol id="i-cadeado" viewBox="0 0 24 24">
           <rect x="5" y="10" width="14" height="10" rx="2" />
           <path d="M8 10V7a4 4 0 0 1 8 0v3" />
         </symbol>
-        <symbol
-          id="i-codigo"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" />
-        </symbol>
-        <symbol
-          id="i-olho"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <symbol id="i-codigo" viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" /></symbol>
+        <symbol id="i-olho" viewBox="0 0 24 24">
           <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
           <circle cx="12" cy="12" r="3" />
         </symbol>
@@ -176,29 +94,39 @@
 
     <header class="topo" id="topo">
       <div class="conteiner">
-        <a class="marca" href="#conteudo" aria-label="ZenTrade, início"
+        <a class="marca" href="#conteudo" aria-label="ZenTrade"
           ><img src="img/simbolo.webp" alt="" width="34" height="34" />ZenTrade</a
         >
         <nav class="menu" aria-label="Seções">
-          <a href="#como">Como decide</a>
-          <a href="#ia">IA</a>
-          <a href="#backtest">Backtest</a>
-          <a href="#mini-indice">Mini índice</a>
-          <a href="#patrimonio">Patrimônio</a>
-          <a href="#seguranca">Segurança</a>
+          <a href="#como" data-i18n="nav.como">Como decide</a>
+          <a href="#ia" data-i18n="nav.ia">IA</a>
+          <a href="#backtest" data-i18n="nav.backtest">Backtest</a>
+          <a href="#mini-indice" data-i18n="nav.win">Mini índice</a>
+          <a href="#patrimonio" data-i18n="nav.patrimonio">Patrimônio</a>
+          <a href="#seguranca" data-i18n="nav.seguranca">Segurança</a>
         </nav>
-        <a class="botao primario magnetico" href="#comecar">Começar</a>
+        <label class="idioma">
+          <span class="sr" data-i18n="nav.idioma">Idioma</span>
+          <select id="idioma">
+            <option value="pt">PT</option>
+            <option value="en">EN</option>
+            <option value="hi">हिन्दी</option>
+            <option value="es">ES</option>
+            <option value="zh">中文</option>
+          </select>
+        </label>
+        <a class="botao primario" href="#comecar" data-i18n="nav.comecar">Começar</a>
       </div>
     </header>
 
     <main id="conteudo">
       <section class="hero" aria-labelledby="titulo-hero">
         <div class="hero-imagem" aria-hidden="true"></div>
-        <canvas id="fumaca" aria-hidden="true"></canvas>
+        <canvas id="cena" aria-hidden="true"></canvas>
         <svg
           class="hero-arte"
           viewBox="0 0 2752 1536"
-          preserveAspectRatio="xMaxYMid slice"
+          preserveAspectRatio="xMidYMid slice"
           aria-hidden="true"
         >
           <defs>
@@ -218,21 +146,7 @@
               <stop offset="0.45" stop-color="#3ddc8e" stop-opacity="0.18" />
               <stop offset="1" stop-color="#3ddc8e" stop-opacity="0" />
             </radialGradient>
-            <linearGradient id="linha-horizonte" x1="0" x2="1">
-              <stop offset="0" stop-color="#cfe9da" stop-opacity="0" />
-              <stop offset="0.35" stop-color="#cfe9da" stop-opacity="0.45" />
-              <stop offset="0.54" stop-color="#9ff0c4" stop-opacity="0.9" />
-              <stop offset="1" stop-color="#cfe9da" stop-opacity="0.3" />
-            </linearGradient>
           </defs>
-          <rect
-            class="horizonte-arte"
-            x="1150"
-            y="766"
-            width="1602"
-            height="4"
-            fill="url(#linha-horizonte)"
-          />
           <image href="img/enso.webp" x="1459" y="185" width="1140" height="1140" mask="url(#pincelada)" />
           <g class="ponto-arte">
             <circle cx="2012" cy="768" r="200" fill="url(#halo-ponto)" />
@@ -241,65 +155,64 @@
         </svg>
         <div class="hero-veu" aria-hidden="true"></div>
         <div class="conteiner">
-          <span class="selo"
-            ><span class="pulso" aria-hidden="true"></span>Robôs ao vivo · IA que pensa antes de agir</span
-          >
-          <h1 id="titulo-hero">
-            <span class="palavra">Calma</span> <span class="palavra">para</span>
-            <span class="palavra">decidir.</span> <em><span class="palavra">Disciplina</span></em>
-            <span class="palavra">para</span> <span class="palavra">executar.</span>
+          <h1 id="titulo-hero" data-i18n="hero.titulo">
+            Calma para decidir. <em>Disciplina</em> para executar.
           </h1>
-          <p class="lead entrada">
-            O ZenTrade junta robôs com regras claras, um analista de IA que pensa em três futuros possíveis e
-            um motor de risco que dá a palavra final. Cripto e mini índice da B3, renda fixa e imóveis — tudo
-            num lugar só, tudo testado antes de valer dinheiro.
+          <p class="lead entrada" data-i18n="hero.lead">
+            O ZenTrade junta robôs com regras claras, um analista de IA que avalia três cenários e um motor de
+            risco que dá a palavra final. Funciona com cripto, mini índice da B3, renda fixa e imóveis, e
+            testa cada estratégia antes de usar dinheiro de verdade.
           </p>
           <div class="acoes entrada">
-            <a class="botao primario magnetico" href="#como">Ver como ele decide →</a>
-            <a class="botao magnetico" href="#backtest">Por que confiar nos números</a>
+            <a class="botao primario" href="#como" data-i18n="hero.cta1">Ver como ele decide</a>
+            <a class="botao" href="#backtest" data-i18n="hero.cta2">Ver os testes</a>
           </div>
         </div>
       </section>
 
       <div
         class="faixa"
-        aria-label="Integrações: Binance, B3, MetaTrader 5, Claude, Pluggy, Banco Central, TimescaleDB, n8n, Telegram e Docker"
+        aria-label="Binance, B3, MetaTrader 5, Claude, Pluggy, Banco Central, TimescaleDB, n8n, Telegram, Docker"
       >
         <div class="faixa-trilho" aria-hidden="true">
-          <span>Binance</span><span>B3 · mini índice</span><span>MetaTrader 5</span
+          <span>Binance</span><span>B3 · WIN</span><span>MetaTrader 5</span><span>Claude · Anthropic</span
+          ><span>Claude Code</span><span>Pluggy · Open Finance</span><span>Banco Central · CDI · IPCA</span
+          ><span>TimescaleDB</span><span>pgvector</span><span>n8n</span><span>Telegram</span
+          ><span>Docker</span><span>Binance</span><span>B3 · WIN</span><span>MetaTrader 5</span
           ><span>Claude · Anthropic</span><span>Claude Code</span><span>Pluggy · Open Finance</span
-          ><span>Banco Central · CDI e IPCA</span><span>TimescaleDB</span><span>pgvector</span><span>n8n</span
-          ><span>Telegram</span><span>Docker</span><span>Binance</span><span>B3 · mini índice</span
-          ><span>MetaTrader 5</span><span>Claude · Anthropic</span><span>Claude Code</span
-          ><span>Pluggy · Open Finance</span><span>Banco Central · CDI e IPCA</span><span>TimescaleDB</span
-          ><span>pgvector</span><span>n8n</span><span>Telegram</span><span>Docker</span>
+          ><span>Banco Central · CDI · IPCA</span><span>TimescaleDB</span><span>pgvector</span><span>n8n</span
+          ><span>Telegram</span><span>Docker</span>
         </div>
       </div>
 
       <div class="numeros">
         <div class="conteiner grade g4">
           <div class="numero revelar">
-            <strong data-contar="2994">2.994</strong><span>testes automatizados protegendo cada regra</span>
+            <strong data-contar="2994">2.994</strong><span data-i18n="num.1">testes automatizados</span>
           </div>
           <div class="numero revelar">
             <strong data-contar="125" data-sufixo=" mi">125 mi</strong
-            ><span>negócios da B3 lidos, um a um, para montar as velas do mini índice</span>
+            ><span data-i18n="num.2">negócios da B3 lidos para montar as velas do mini índice</span>
           </div>
           <div class="numero revelar">
             <strong data-contar="59">59</strong
-            ><span>fontes científicas e regulatórias na fundamentação</span>
+            ><span data-i18n="num.3">fontes científicas e regulatórias</span>
           </div>
-          <div class="numero revelar"><strong>0</strong><span>ordens que pulam o motor de risco</span></div>
+          <div class="numero revelar">
+            <strong>0</strong><span data-i18n="num.4">ordens fora do motor de risco</span>
+          </div>
         </div>
       </div>
 
-      <section id="como" class="palco-como" aria-labelledby="titulo-como">
+      <section id="como" aria-labelledby="titulo-como">
         <div class="conteiner">
-          <span class="rotulo">Como decide</span>
-          <h2 id="titulo-como" class="titulo-anim">Três camadas entre o impulso e a ordem.</h2>
-          <p class="intro">
-            Nenhuma ordem nasce de um palpite. A regra aponta, a IA questiona, o risco decide. Se qualquer
-            camada disser "não", não tem operação — e tudo fica registrado com o porquê.
+          <span class="rotulo" data-i18n="como.rotulo">Como decide</span>
+          <h2 id="titulo-como" class="titulo-anim" data-i18n="como.titulo">
+            Três camadas entre o sinal e a ordem.
+          </h2>
+          <p class="intro" data-i18n="como.intro">
+            A regra encontra o sinal, a IA avalia e o motor de risco decide. Se uma das camadas recusar, a
+            ordem não sai, e o motivo fica registrado.
           </p>
           <div class="decisao-palco">
             <div class="camadas">
@@ -307,44 +220,47 @@
               <article class="cartao camada">
                 <span class="no" aria-hidden="true">01</span>
                 <div>
-                  <small>Regras</small>
-                  <h3>O robô vê o sinal</h3>
-                  <p>
-                    Estratégias montadas em blocos visuais — rompimentos, médias, ATR, VWAP, faixa de
-                    abertura, filtro de horário. Cada sinal vem com a explicação em português.
+                  <small data-i18n="c1.rotulo">Regras</small>
+                  <h3 data-i18n="c1.titulo">O robô encontra o sinal</h3>
+                  <p data-i18n="c1.texto">
+                    Estratégias montadas em blocos: rompimentos, médias, ATR, VWAP, faixa de abertura e janela
+                    de horário. Cada sinal vem com a explicação em português.
                   </p>
                 </div>
               </article>
               <article class="cartao camada">
                 <span class="no" aria-hidden="true">02</span>
                 <div>
-                  <small>Analista de IA</small>
-                  <h3>O Claude pensa em três futuros</h3>
-                  <p>
-                    Alta, lateral e baixa, com probabilidade, gatilho e o que invalida a ideia. O código
-                    calcula o valor esperado já com taxas — e a IA escreve o melhor argumento contra a própria
-                    proposta.
+                  <small data-i18n="c2.rotulo">Analista de IA</small>
+                  <h3 data-i18n="c2.titulo">O Claude avalia três cenários</h3>
+                  <p data-i18n="c2.texto">
+                    Alta, lateral e baixa, cada um com probabilidade, gatilho e ponto de invalidação. O código
+                    calcula o valor esperado já com as taxas, e a IA escreve o principal argumento contra a
+                    própria proposta.
                   </p>
                 </div>
               </article>
               <article class="cartao camada">
                 <span class="no" aria-hidden="true">03</span>
                 <div>
-                  <small>Motor de risco</small>
-                  <h3>Um juiz que não se empolga</h3>
-                  <p>
-                    Determinístico, sem IA: perda do dia, exposição, frequência, pausa depois de perda,
-                    tamanho da posição e stop direto na corretora. A IA só pode pedir menos, nunca mais.
+                  <small data-i18n="c3.rotulo">Motor de risco</small>
+                  <h3 data-i18n="c3.titulo">Um juiz sem IA</h3>
+                  <p data-i18n="c3.texto">
+                    Confere perda do dia, exposição, frequência e pausa após perda, calcula o tamanho da
+                    posição e coloca o stop na própria corretora. A IA pode pedir uma posição menor, nunca
+                    maior.
                   </p>
                 </div>
               </article>
             </div>
-            <div class="cartao terminal" aria-label="Simulação de decisões em tempo real">
+            <div class="cartao terminal" aria-hidden="true">
               <div class="terminal-topo">
                 <i></i><i></i><i></i>&nbsp;decisoes.log
-                <span class="ao-vivo"><span class="pulso" aria-hidden="true"></span>simulação</span>
+                <span class="ao-vivo"
+                  ><span class="pulso"></span><span data-i18n="term.simulacao">simulação</span></span
+                >
               </div>
-              <div class="terminal-corpo" id="terminal" aria-live="off"></div>
+              <div class="terminal-corpo" id="terminal"></div>
             </div>
           </div>
         </div>
@@ -353,40 +269,47 @@
       <section id="ia" class="alternada" aria-labelledby="titulo-ia">
         <div class="conteiner dividida">
           <div class="revelar">
-            <span class="rotulo">Inteligência que presta contas</span>
-            <h2 id="titulo-ia" class="titulo-anim">Uma IA que mostra o raciocínio — e a nota.</h2>
-            <p class="intro">
-              Toda decisão do Claude ganha nota depois: o que ele aprovou deu certo? O que ele vetou teria
-              dado errado? O placar mostra o acerto real, se a confiança dele é calibrada e quanto dinheiro
-              ele agregou ou poupou.
+            <span class="rotulo" data-i18n="ia.rotulo">IA com prestação de contas</span>
+            <h2 id="titulo-ia" class="titulo-anim" data-i18n="ia.titulo">
+              A IA mostra o raciocínio e recebe nota.
+            </h2>
+            <p class="intro" data-i18n="ia.intro">
+              Cada decisão do Claude é avaliada depois. Se aprovou, a operação deu lucro? Se vetou, a operação
+              teria dado prejuízo? O placar mostra o acerto real, a calibração da confiança e o resultado em
+              dinheiro.
             </p>
             <ul class="checagens">
               <li>
-                <span><b>Três cenários</b> com probabilidades que somam 100%, conferidas pelo código.</span>
-              </li>
-              <li>
-                <span><b>Contra-argumento obrigatório:</b> a IA aponta a maior falha da própria ideia.</span>
-              </li>
-              <li>
-                <span
-                  ><b>Contexto completo:</b> taxas reais, ATR, tendência em 1h e 4h, horário do pregão, agenda
-                  de eventos e o próprio histórico de acertos.</span
+                <span data-i18n="ia.l1"
+                  ><b>Três cenários</b> com probabilidades que somam 100%, conferidas pelo código.</span
                 >
               </li>
               <li>
-                <span
-                  ><b>Imune a manipulação:</b> textos da internet entram como dado, nunca como ordem.</span
+                <span data-i18n="ia.l2"
+                  ><b>Contra-argumento obrigatório:</b> a IA aponta a maior fraqueza da própria ideia.</span
+                >
+              </li>
+              <li>
+                <span data-i18n="ia.l3"
+                  ><b>Contexto completo:</b> taxas reais, ATR, tendência em 1h e 4h, horário do pregão, agenda
+                  de eventos e o histórico de acertos.</span
+                >
+              </li>
+              <li>
+                <span data-i18n="ia.l4"
+                  ><b>Proteção contra manipulação:</b> textos da internet entram como dado, nunca como
+                  instrução.</span
                 >
               </li>
             </ul>
           </div>
 
           <div class="grade" style="margin-top: 0">
-            <div class="cartao revelar inclinavel">
-              <h3 id="titulo-cenarios">Experimente: como a IA pesa um sinal</h3>
+            <div class="cartao revelar">
+              <h3 id="titulo-cenarios" data-i18n="cen.titulo">Como a IA pesa um sinal</h3>
               <div class="abas" role="tablist" aria-labelledby="titulo-cenarios">
                 <button role="tab" id="aba-0" aria-controls="painel-cenarios" aria-selected="true">
-                  BTC · rompimento
+                  BTC
                 </button>
                 <button
                   role="tab"
@@ -395,7 +318,7 @@
                   aria-selected="false"
                   tabindex="-1"
                 >
-                  SOL · rompimento fraco
+                  SOL
                 </button>
                 <button
                   role="tab"
@@ -404,51 +327,54 @@
                   aria-selected="false"
                   tabindex="-1"
                 >
-                  WIN · abertura agitada
+                  WIN
                 </button>
               </div>
               <div role="tabpanel" id="painel-cenarios" aria-labelledby="aba-0" aria-live="polite">
                 <p class="sinal-titulo" id="sinal-descricao"></p>
                 <div class="barra alta">
-                  <span>alta</span>
+                  <span class="nome"></span>
                   <div class="trilho"><div class="cheio"></div></div>
-                  <span class="valor">–</span>
+                  <span class="valor"></span>
                 </div>
                 <div class="barra lateral">
-                  <span>lateral</span>
+                  <span class="nome"></span>
                   <div class="trilho"><div class="cheio"></div></div>
-                  <span class="valor">–</span>
+                  <span class="valor"></span>
                 </div>
                 <div class="barra baixa">
-                  <span>baixa</span>
+                  <span class="nome"></span>
                   <div class="trilho"><div class="cheio"></div></div>
-                  <span class="valor">–</span>
+                  <span class="valor"></span>
                 </div>
                 <div class="veredito" id="veredito"></div>
+                <div class="ciclo" aria-hidden="true"><i></i></div>
               </div>
-              <p class="nota">
-                Exemplo ilustrativo. A regra real: só opera com valor esperado positivo depois das taxas e
-                cenário favorável com pelo menos 60%.
+              <p class="nota" data-i18n="cen.nota">
+                Exemplo ilustrativo. Regra real: só opera com valor esperado positivo depois das taxas e
+                cenário favorável de pelo menos 60%.
               </p>
             </div>
 
-            <div class="cartao revelar inclinavel">
-              <h3>Placar do Claude</h3>
+            <div class="cartao revelar">
+              <h3 data-i18n="placar.titulo">Placar do Claude</h3>
               <div class="placar">
                 <div class="metrica">
-                  <b data-contar="93" data-sufixo="%">93%</b><span>dos vetos estavam certos</span>
+                  <b data-contar="93" data-sufixo="%">93%</b
+                  ><span data-i18n="placar.m1">dos vetos estavam certos</span>
                 </div>
-                <div class="metrica"><b data-contar="28">28</b><span>decisões avaliadas</span></div>
-                <div class="metrica"><b>80%</b><span>meta nas aprovações</span></div>
+                <div class="metrica">
+                  <b data-contar="28">28</b><span data-i18n="placar.m2">decisões avaliadas</span>
+                </div>
+                <div class="metrica">
+                  <b>80%</b><span data-i18n="placar.m3">meta de acerto nas aprovações</span>
+                </div>
               </div>
               <div class="calibracao" aria-hidden="true">
                 <i data-altura="38"></i><i data-altura="52"></i><i data-altura="61"></i
                 ><i data-altura="74"></i><i data-altura="86"></i>
               </div>
-              <p class="nota">
-                Robôs em teste, outubro de 2026. Medido decisão por decisão — inclusive o que a IA deixou
-                passar.
-              </p>
+              <p class="nota" data-i18n="placar.nota">Robôs em teste, outubro de 2026.</p>
             </div>
           </div>
         </div>
@@ -457,53 +383,55 @@
       <section id="backtest" aria-labelledby="titulo-backtest">
         <div class="conteiner dividida">
           <div class="revelar">
-            <span class="rotulo">Backtest honesto</span>
-            <h2 id="titulo-backtest" class="titulo-anim">A gente prefere a verdade a um gráfico bonito.</h2>
-            <p class="intro">
-              Antes de um real ir para o mercado, cada estratégia passa por um laboratório que tenta
-              derrubá-la. Se ela só funciona no passado, o ZenTrade avisa — com todas as letras.
+            <span class="rotulo" data-i18n="bt.rotulo">Backtest honesto</span>
+            <h2 id="titulo-backtest" class="titulo-anim" data-i18n="bt.titulo">
+              Cada estratégia passa por testes feitos para derrubá-la.
+            </h2>
+            <p class="intro" data-i18n="bt.intro">
+              Antes de usar dinheiro de verdade, a estratégia enfrenta custos reais e dados que ela nunca viu.
+              Se só funciona no passado, o ZenTrade avisa.
             </p>
             <ul class="checagens">
               <li>
-                <span
-                  ><b>Custos de verdade:</b> taxa, deslizamento e spread; no mini índice, tarifa da B3 e
+                <span data-i18n="bt.l1"
+                  ><b>Custos reais:</b> taxa, deslizamento e spread; no mini índice, tarifa da B3 e
                   ticks.</span
                 >
               </li>
               <li>
-                <span
+                <span data-i18n="bt.l2"
                   ><b>Pior caso dentro da vela:</b> se stop e alvo cabem no mesmo candle, conta o stop.</span
                 >
               </li>
               <li>
-                <span
-                  ><b>Fora da amostra e walk-forward:</b> a estratégia é julgada em dados que nunca viu.</span
+                <span data-i18n="bt.l3"
+                  ><b>Fora da amostra e walk-forward:</b> avaliação em dados que a estratégia nunca viu.</span
                 >
               </li>
               <li>
-                <span
-                  ><b>Monte Carlo e Sharpe deflacionado:</b> separa sorte de habilidade, contando cada
+                <span data-i18n="bt.l4"
+                  ><b>Monte Carlo e Sharpe deflacionado:</b> separa habilidade de sorte, contando cada
                   tentativa.</span
                 >
               </li>
               <li>
-                <span
-                  ><b>Pesquisa pré-registrada:</b> o plano é escrito antes de ver o resultado — e publicado
-                  mesmo quando dá errado.</span
+                <span data-i18n="bt.l5"
+                  ><b>Pesquisa pré-registrada:</b> o plano é escrito antes do resultado e publicado mesmo
+                  quando dá errado.</span
                 >
               </li>
             </ul>
           </div>
-          <div class="cartao revelar inclinavel">
-            <h3>Veredito de uma estratégia real</h3>
-            <p class="nota" style="margin: 0 0 4px">
-              Donchian + tendência longa · 15 moedas · 2021 a 2026 · entrada na abertura seguinte
+          <div class="cartao revelar">
+            <h3 data-i18n="ver.titulo">Veredito de uma estratégia real</h3>
+            <p class="nota" style="margin: 0 0 4px" data-i18n="ver.sub">
+              Donchian com filtro de tendência, 15 moedas, 2021 a 2026, entrada na abertura seguinte
             </p>
             <svg
               class="grafico"
               viewBox="0 0 600 240"
               role="img"
-              aria-label="Curvas ilustrativas: a estratégia sobe devagar com quedas pequenas; comprar e segurar termina mais alto, com quedas enormes no caminho"
+              aria-label="Estratégia com quedas pequenas; comprar e segurar termina mais alto com quedas grandes"
             >
               <line class="grade-linha" x1="0" y1="60" x2="600" y2="60" />
               <line class="grade-linha" x1="0" y1="120" x2="600" y2="120" />
@@ -522,31 +450,33 @@
               <text x="562" y="232">2026</text>
             </svg>
             <div class="legenda">
-              <span><i style="background: var(--jade)"></i>estratégia</span
-              ><span><i style="background: var(--apagado)"></i>comprar e segurar</span
-              ><span>ilustrativo</span>
+              <span><i style="background: var(--jade)"></i><span data-i18n="ver.leg1">estratégia</span></span>
+              <span
+                ><i style="background: var(--apagado)"></i
+                ><span data-i18n="ver.leg2">comprar e segurar</span></span
+              >
+              <span data-i18n="ver.leg3">ilustrativo</span>
             </div>
             <div class="linha-veredito">
               <span class="ponto ok"></span>
               <div>
-                Lucro em 13 de 15 moedas · Sharpe 1,47 · maior queda 3,9%<small
-                  >vantagem estável, com quedas pequenas</small
-                >
+                <span data-i18n="ver.v1">Lucro em 13 de 15 moedas, Sharpe 1,47, maior queda de 3,9%</span
+                ><small data-i18n="ver.v1s">Ganhos estáveis e quedas pequenas.</small>
               </div>
             </div>
             <div class="linha-veredito">
               <span class="ponto atencao"></span>
               <div>
-                Fora da amostra: 8 de 15 positivas<small
-                  >a vantagem pode estar diminuindo — fica em observação</small
-                >
+                <span data-i18n="ver.v2">Fora da amostra: 8 de 15 positivas</span
+                ><small data-i18n="ver.v2s">A vantagem pode estar diminuindo e segue em observação.</small>
               </div>
             </div>
             <div class="linha-veredito">
               <span class="ponto ruim"></span>
               <div>
-                Comprar e segurar rendeu mais no período<small
-                  >com quedas de 70% a 90% no caminho — o ZenTrade mostra os dois lados</small
+                <span data-i18n="ver.v3">Comprar e segurar rendeu mais no período</span
+                ><small data-i18n="ver.v3s"
+                  >Com quedas de 70% a 90% no caminho. O relatório mostra os dois lados.</small
                 >
               </div>
             </div>
@@ -557,89 +487,110 @@
       <section id="mini-indice" class="alternada" aria-labelledby="titulo-win">
         <div class="conteiner dividida">
           <div class="revelar">
-            <span class="rotulo">Mini índice · B3</span>
-            <h2 id="titulo-win" class="titulo-anim">O mini índice, negócio por negócio.</h2>
-            <p class="intro">
-              O ZenTrade lê os arquivos oficiais da B3 com cada negócio do pregão e monta as próprias velas —
-              sem intermediário e sem atalho. Arraste os arquivos na tela e pronto. Com o MetaTrader 5 da sua
-              corretora, ele busca anos de histórico e atualiza sozinho todo dia.
+            <span class="rotulo" data-i18n="win.rotulo">Mini índice B3</span>
+            <h2 id="titulo-win" class="titulo-anim" data-i18n="win.titulo">
+              O mini índice, negócio por negócio.
+            </h2>
+            <p class="intro" data-i18n="win.intro">
+              O ZenTrade lê os arquivos oficiais da B3 com todos os negócios do pregão e monta as próprias
+              velas. Basta arrastar os arquivos na tela. Com o MetaTrader 5 da sua corretora, ele busca anos
+              de histórico e atualiza todo dia.
             </p>
             <ul class="checagens">
               <li>
-                <span><b>Contrato certo a cada dia:</b> troca de vencimento automática (rolagem).</span>
+                <span data-i18n="win.l1"
+                  >Contrato certo em cada dia, com a troca de vencimento feita automaticamente.</span
+                >
               </li>
               <li>
-                <span
-                  ><b>Regras do pregão:</b> horário de entrada, leilão de abertura, zeragem antes do
+                <span data-i18n="win.l2"
+                  >Regras do pregão: horário de entrada, leilão de abertura e zeragem antes do
                   fechamento.</span
                 >
               </li>
               <li>
-                <span
-                  ><b>Agenda de eventos:</b> Copom, IPCA e dados dos EUA podem pausar ou reduzir o robô no
-                  dia.</span
+                <span data-i18n="win.l3"
+                  >Agenda de eventos: Copom, IPCA e dados dos EUA podem pausar ou reduzir o robô.</span
                 >
               </li>
               <li>
-                <span
-                  ><b>Comprado e vendido,</b> com contratos pelo risco em reais e imposto do day trade
+                <span data-i18n="win.l4"
+                  >Operações compradas e vendidas, contratos pelo risco em reais e imposto do day trade
                   estimado.</span
                 >
               </li>
             </ul>
           </div>
-          <div class="funil revelar" aria-label="Do arquivo da B3 ao backtest">
-            <div>
-              <span>Negócios lidos de 20 pregões</span
-              ><b data-contar="125" data-sufixo=" milhões">125 milhões</b>
+          <div class="cartao velas-cartao revelar">
+            <div class="velas-topo">
+              <h3 data-i18n="win.grafico">WIN, velas de 1 hora</h3>
+              <span class="velas-preco" id="velas-preco"></span>
             </div>
-            <div><span>Velas de 5 min, 15 min e 1 h</span><b data-contar="3219">3.219</b></div>
-            <div><span>Custo por contrato, ida e volta</span><b>≈ R$ 2,50</b></div>
+            <svg
+              class="velas"
+              id="velas"
+              viewBox="0 0 640 300"
+              role="img"
+              aria-label="WIN, 14 a 19 de outubro de 2026"
+            ></svg>
+            <div class="velas-dica" id="velas-dica" aria-hidden="true"></div>
+            <p class="nota" data-i18n="win.nota">
+              Dados reais da B3, de 14 a 19 de outubro de 2026, importados pelo ZenTrade.
+            </p>
+            <div class="velas-numeros">
+              <div><b>125 mi</b><span data-i18n="win.s1">negócios lidos</span></div>
+              <div><b>3.219</b><span data-i18n="win.s2">velas montadas</span></div>
+              <div><b>≈ R$ 2,50</b><span data-i18n="win.s3">custo por contrato, ida e volta</span></div>
+            </div>
           </div>
         </div>
       </section>
 
       <section id="patrimonio" aria-labelledby="titulo-patrimonio">
         <div class="conteiner">
-          <span class="rotulo">Patrimônio completo</span>
-          <h2 id="titulo-patrimonio" class="titulo-anim">Do bitcoin ao apartamento, numa tela só.</h2>
-          <p class="intro">
-            Trading é só uma parte da sua vida financeira. O ZenTrade consolida tudo em reais, com câmbio ao
-            vivo — e o assistente responde sobre qualquer pedaço.
+          <span class="rotulo" data-i18n="pat.rotulo">Patrimônio completo</span>
+          <h2 id="titulo-patrimonio" class="titulo-anim" data-i18n="pat.titulo">
+            Do bitcoin ao apartamento, numa tela só.
+          </h2>
+          <p class="intro" data-i18n="pat.intro">
+            O ZenTrade consolida tudo em reais, com câmbio atualizado, e o assistente responde sobre qualquer
+            parte.
           </p>
-          <div class="grade g4">
-            <article class="cartao revelar inclinavel">
+          <div class="grade g4 cartoes-vivos">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-moeda" /></svg
               ></span>
-              <h3>Carteira cripto</h3>
-              <p>Saldo por moeda direto da corretora, com comprado, vendido, bruto e líquido de taxas.</p>
+              <h3 data-i18n="pat.c1t">Carteira cripto</h3>
+              <p data-i18n="pat.c1p">
+                Saldo por moeda direto da corretora, com posição comprada, vendida, bruta e líquida de taxas.
+              </p>
             </article>
-            <article class="cartao revelar inclinavel">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-banco" /></svg
               ></span>
-              <h3>Renda fixa</h3>
-              <p>
+              <h3 data-i18n="pat.c2t">Renda fixa</h3>
+              <p data-i18n="pat.c2p">
                 CDB, Tesouro, LCI, LCA e poupança pelo Open Finance, com CDI e IPCA oficiais do Banco Central.
               </p>
             </article>
-            <article class="cartao revelar inclinavel">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-casa" /></svg
               ></span>
-              <h3>Imobiliário</h3>
-              <p>
-                Imóvel, temporada, flip, terreno, FIIs, REITs, crowdfunding e consórcio — com simuladores para
-                cada um.
+              <h3 data-i18n="pat.c3t">Imobiliário</h3>
+              <p data-i18n="pat.c3p">
+                Imóvel, temporada, flip, terreno, FIIs, REITs, crowdfunding e consórcio, cada um com
+                simulador.
               </p>
             </article>
-            <article class="cartao revelar inclinavel">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-camadas" /></svg
               ></span>
-              <h3>Visão consolidada</h3>
-              <p>Tudo somado em reais, com evolução, filtros e visões — o retrato real do seu patrimônio.</p>
+              <h3 data-i18n="pat.c4t">Visão consolidada</h3>
+              <p data-i18n="pat.c4p">Tudo somado em reais, com evolução no tempo, filtros e visões.</p>
             </article>
           </div>
         </div>
@@ -648,101 +599,92 @@
       <section class="alternada" aria-labelledby="titulo-assistente">
         <div class="conteiner dividida">
           <div class="revelar">
-            <span class="rotulo">Assistente de IA</span>
-            <h2 id="titulo-assistente" class="titulo-anim">Pergunte. Ele já leu tudo.</h2>
-            <p class="intro">
-              Um chat no estilo do Claude Desktop que conhece seus robôs, sua carteira, sua renda fixa e seus
-              imóveis — e a sua base de conhecimento, com notas, estudos e notícias. Ele lê e explica. Ordens,
-              nunca.
+            <span class="rotulo" data-i18n="ass.rotulo">Assistente de IA</span>
+            <h2 id="titulo-assistente" class="titulo-anim" data-i18n="ass.titulo">
+              Pergunte sobre qualquer parte do seu patrimônio.
+            </h2>
+            <p class="intro" data-i18n="ass.intro">
+              Um chat no estilo do Claude Desktop que conhece seus robôs, carteira, renda fixa, imóveis e a
+              sua base de conhecimento. Ele consulta e explica, mas nunca envia ordens.
             </p>
             <ul class="checagens">
+              <li><span data-i18n="ass.l1">Use a sua conta do Claude ou uma chave de API.</span></li>
               <li>
-                <span><b>Use a sua conta do Claude</b> ou uma chave de API — você escolhe na tela.</span>
-              </li>
-              <li>
-                <span
-                  ><b>Base de conhecimento por pessoa,</b> com busca por palavras ou por significado.</span
+                <span data-i18n="ass.l2"
+                  >Base de conhecimento por pessoa, com busca por palavra ou por significado.</span
                 >
               </li>
-              <li>
-                <span
-                  ><b>Orçamento de IA com teto:</b> você define quanto pode gastar por dia e por mês.</span
-                >
-              </li>
+              <li><span data-i18n="ass.l3">Teto de gasto com IA por dia e por mês.</span></li>
             </ul>
           </div>
-          <div class="cartao chat revelar inclinavel" aria-label="Exemplo de conversa com o assistente">
-            <div class="bolha voce">Como estão meus robôs hoje e quanto rende minha renda fixa?</div>
-            <span class="ferramenta">✓ consultou 3 fontes dos seus dados</span>
-            <div class="bolha ia">
-              <b>Hoje:</b> 10 robôs ativos, nenhuma posição aberta. O Claude analisou 6 sinais e vetou 5 — o
-              rompimento do BTC passou e aguarda o fechamento da vela.<br /><br />
-              <b>Renda fixa:</b> seus 3 CDBs rendem em média 104% do CDI; o próximo vencimento é em março.
+          <div class="cartao chat-vivo revelar" aria-hidden="true">
+            <div class="chat-topo">
+              <img src="img/simbolo.webp" alt="" width="22" height="22" /><span data-i18n="ass.chat"
+                >Assistente ZenTrade</span
+              ><span class="chat-nota" data-i18n="ass.ilustrativo">conversa ilustrativa</span>
             </div>
-            <p class="nota">Conversa ilustrativa.</p>
+            <div class="chat-corpo" id="chat"></div>
           </div>
         </div>
       </section>
 
       <section id="seguranca" aria-labelledby="titulo-seguranca">
         <div class="conteiner">
-          <span class="rotulo">Segurança e controle</span>
-          <h2 id="titulo-seguranca" class="titulo-anim">
-            Seu dinheiro protegido por desenho, não por promessa.
-          </h2>
-          <div class="grade g3">
-            <article class="cartao revelar inclinavel">
+          <span class="rotulo" data-i18n="seg.rotulo">Segurança e controle</span>
+          <h2 id="titulo-seguranca" class="titulo-anim" data-i18n="seg.titulo">Proteção em cada etapa.</h2>
+          <div class="grade g3 cartoes-vivos">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-escudo" /></svg
               ></span>
-              <h3>Stop na corretora</h3>
-              <p>A proteção fica na própria Binance. Se o computador desligar, o stop continua lá.</p>
+              <h3 data-i18n="seg.c1t">Stop na corretora</h3>
+              <p data-i18n="seg.c1p">
+                A proteção fica na própria Binance. Se o computador desligar, o stop continua ativo.
+              </p>
             </article>
-            <article class="cartao revelar inclinavel">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-pausa" /></svg
               ></span>
-              <h3>"Parar tudo"</h3>
-              <p>
-                Um botão congela as entradas de todos os robôs na hora — e nunca bloqueia um stop de proteção.
+              <h3 data-i18n="seg.c2t">Parar tudo</h3>
+              <p data-i18n="seg.c2p">
+                Um botão bloqueia novas entradas de todos os robôs na hora, sem cancelar os stops de proteção.
               </p>
             </article>
-            <article class="cartao revelar inclinavel">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-cadeado" /></svg
               ></span>
-              <h3>Chaves cifradas e 2FA</h3>
-              <p>
-                Chaves da corretora cifradas, chave com saque recusada, dois fatores e reautenticação para
-                dinheiro real.
+              <h3 data-i18n="seg.c3t">Chaves cifradas e 2FA</h3>
+              <p data-i18n="seg.c3p">
+                Chaves da corretora cifradas, recusa de chaves com permissão de saque, dois fatores e
+                reautenticação para dinheiro real.
               </p>
             </article>
-            <article class="cartao revelar inclinavel">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-balanca" /></svg
               ></span>
-              <h3>Limites da conta</h3>
-              <p>
-                Perda do dia, exposição, frequência e pausa depois de sequência de stops — no robô e na conta
+              <h3 data-i18n="seg.c4t">Limites da conta</h3>
+              <p data-i18n="seg.c4p">
+                Perda do dia, exposição, frequência e pausa após sequência de stops, por robô e na conta
                 inteira.
               </p>
             </article>
-            <article class="cartao revelar inclinavel">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-olho" /></svg
               ></span>
-              <h3>Tudo auditável</h3>
-              <p>
-                Cada sinal, proposta, veto e ordem fica registrado com o porquê. Nada some, nada é mágico.
-              </p>
+              <h3 data-i18n="seg.c5t">Registro completo</h3>
+              <p data-i18n="seg.c5p">Cada sinal, proposta, veto e ordem fica registrado com o motivo.</p>
             </article>
-            <article class="cartao revelar inclinavel">
+            <article class="cartao vivo">
               <span class="icone"
                 ><svg aria-hidden="true"><use href="#i-codigo" /></svg
               ></span>
-              <h3>Seu servidor, seu dado</h3>
-              <p>
-                Roda na sua máquina com Docker. Open source (AGPL-3.0), dados separados por pessoa e LGPD
+              <h3 data-i18n="seg.c6t">Seus dados com você</h3>
+              <p data-i18n="seg.c6p">
+                Roda na sua máquina com Docker. Código aberto (AGPL-3.0), dados separados por pessoa e LGPD
                 desde o início.
               </p>
             </article>
@@ -753,26 +695,38 @@
       <section class="alternada" aria-labelledby="titulo-integracoes">
         <div class="conteiner dividida">
           <div class="revelar">
-            <span class="rotulo">Integrações</span>
-            <h2 id="titulo-integracoes" class="titulo-anim">Conectado a quem importa.</h2>
+            <span class="rotulo" data-i18n="int.rotulo">Integrações</span>
+            <h2 id="titulo-integracoes" class="titulo-anim" data-i18n="int.titulo">
+              Conectado às fontes certas.
+            </h2>
             <ul class="checagens">
               <li>
-                <span><b>Binance:</b> ordens, carteira, stop na corretora, testnet e papel.</span>
+                <span data-i18n="int.l1"
+                  ><b>Binance:</b> ordens, carteira, stop na corretora, testnet e papel.</span
+                >
               </li>
               <li>
-                <span><b>B3 e MetaTrader 5:</b> arquivos oficiais e anos de histórico do mini índice.</span>
+                <span data-i18n="int.l2"
+                  ><b>B3 e MetaTrader 5:</b> arquivos oficiais e anos de histórico do mini índice.</span
+                >
               </li>
               <li>
-                <span><b>Claude:</b> API da Anthropic ou a sua conta do Claude Code.</span>
+                <span data-i18n="int.l3"><b>Claude:</b> API da Anthropic ou a sua conta do Claude Code.</span>
               </li>
               <li>
-                <span><b>Pluggy e Banco Central:</b> Open Finance, CDI, Selic e IPCA oficiais.</span>
+                <span data-i18n="int.l4"
+                  ><b>Pluggy e Banco Central:</b> Open Finance, CDI, Selic e IPCA oficiais.</span
+                >
               </li>
               <li>
-                <span><b>n8n e Telegram:</b> alertas, relatórios diários e automações.</span>
+                <span data-i18n="int.l5"
+                  ><b>n8n e Telegram:</b> alertas, relatórios diários e automações.</span
+                >
               </li>
               <li>
-                <span><b>TimescaleDB e pgvector:</b> séries de preço rápidas e busca por significado.</span>
+                <span data-i18n="int.l6"
+                  ><b>TimescaleDB e pgvector:</b> séries de preço rápidas e busca por significado.</span
+                >
               </li>
             </ul>
           </div>
@@ -797,40 +751,38 @@
 
       <section class="faq" aria-labelledby="titulo-faq">
         <div class="conteiner">
-          <span class="rotulo">Perguntas francas</span>
-          <h2 id="titulo-faq" class="titulo-anim">Sem letra miúda.</h2>
+          <span class="rotulo" data-i18n="faq.rotulo">Perguntas frequentes</span>
+          <h2 id="titulo-faq" class="titulo-anim" data-i18n="faq.titulo">O que as pessoas perguntam.</h2>
           <details>
-            <summary>O ZenTrade garante lucro?</summary>
-            <p>
-              Não — e desconfie de quem garante. O que ele garante é método: cada estratégia testada com
-              custos reais, cada decisão explicada e medida, e um motor de risco que não deixa um dia ruim
-              virar um mês ruim.
+            <summary data-i18n="faq.q1">O ZenTrade garante lucro?</summary>
+            <p data-i18n="faq.a1">
+              Não. Ninguém pode garantir lucro. O ZenTrade oferece método: estratégias testadas com custos
+              reais, decisões explicadas e medidas, e um motor de risco que limita as perdas de cada dia.
             </p>
           </details>
           <details>
-            <summary>Preciso pagar pela IA?</summary>
-            <p>
-              Você pode usar a sua própria conta do Claude ou uma chave de API, com teto de gasto por dia e
-              por mês. Os robôs também funcionam só com as regras e o motor de risco, sem IA nenhuma.
+            <summary data-i18n="faq.q2">Preciso pagar pela IA?</summary>
+            <p data-i18n="faq.a2">
+              Você pode usar a sua conta do Claude ou uma chave de API, com teto de gasto. Os robôs também
+              funcionam só com as regras e o motor de risco.
             </p>
           </details>
           <details>
-            <summary>Ele opera com dinheiro de verdade?</summary>
-            <p>
-              Só quando você liga, com dois fatores e reautenticação. Antes disso, há três modos de treino:
-              observar, papel (preços reais, ordens simuladas) e testnet da corretora.
+            <summary data-i18n="faq.q3">Ele opera com dinheiro de verdade?</summary>
+            <p data-i18n="faq.a3">
+              Só quando você ativa, com dois fatores e reautenticação. Antes disso há três modos de treino:
+              observar, papel (preço real com ordens simuladas) e testnet da corretora.
             </p>
           </details>
           <details>
-            <summary>Onde ele roda?</summary>
-            <p>
-              Na sua máquina ou no seu servidor, com Docker. Seus dados e suas chaves ficam com você — não há
-              uma nuvem no meio guardando nada seu.
+            <summary data-i18n="faq.q4">Onde ele roda?</summary>
+            <p data-i18n="faq.a4">
+              Na sua máquina ou no seu servidor, com Docker. Seus dados e suas chaves ficam com você.
             </p>
           </details>
           <details>
-            <summary>É open source mesmo?</summary>
-            <p>Sim, sob a licença AGPL-3.0: você pode ler, auditar e melhorar cada linha.</p>
+            <summary data-i18n="faq.q5">O código é aberto?</summary>
+            <p data-i18n="faq.a5">Sim, sob a licença AGPL-3.0. Você pode ler, auditar e melhorar o código.</p>
           </details>
         </div>
       </section>
@@ -847,17 +799,21 @@
           />
         </svg>
         <div class="conteiner revelar">
-          <span class="rotulo">Comece com calma</span>
-          <h2 id="titulo-final" class="titulo-anim">Respire. Teste. Só então, opere.</h2>
-          <p class="intro">
-            Suba o ZenTrade com Docker, conecte a corretora em modo de treino e deixe os robôs provarem o
-            valor deles antes de você arriscar um real.
+          <span class="rotulo" data-i18n="fim.rotulo">Comece com calma</span>
+          <h2 id="titulo-final" class="titulo-anim" data-i18n="fim.titulo">Teste primeiro. Opere depois.</h2>
+          <p class="intro" data-i18n="fim.intro">
+            Suba o ZenTrade com Docker, conecte a corretora em modo de treino e veja os robôs trabalharem
+            antes de arriscar dinheiro.
           </p>
           <div class="acoes">
-            <a class="botao primario magnetico" href="https://github.com/eduardorarruda" rel="noopener"
+            <a
+              class="botao primario"
+              href="https://github.com/eduardorarruda"
+              rel="noopener"
+              data-i18n="fim.cta1"
               >Acompanhar no GitHub</a
             >
-            <a class="botao magnetico" href="#como">Rever como funciona</a>
+            <a class="botao" href="#como" data-i18n="fim.cta2">Rever como funciona</a>
           </div>
         </div>
       </section>
@@ -865,207 +821,256 @@
 
     <footer class="rodape">
       <div class="conteiner">
-        <a class="marca" href="#topo" aria-label="Voltar ao topo"
+        <a class="marca" href="#topo" aria-label="ZenTrade"
           ><img src="img/simbolo.webp" alt="" width="34" height="34" />ZenTrade</a
         >
-        <p class="aviso">
-          O ZenTrade é uma ferramenta de software. Nada nesta página é recomendação de investimento. Operar
-          cripto e derivativos envolve risco de perda, inclusive total do capital, e resultados passados —
-          inclusive de backtests — não garantem resultados futuros. Exemplos marcados como ilustrativos ou
-          simulação não são resultados reais.
+        <p class="aviso" data-i18n="rod.aviso">
+          O ZenTrade é um software. Nada nesta página é recomendação de investimento. Operar cripto e
+          derivativos envolve risco de perda, inclusive de todo o capital. Resultados passados, inclusive de
+          backtests, não garantem resultados futuros. Exemplos marcados como ilustrativos ou simulação não são
+          resultados reais.
         </p>
-        <p class="aviso">© 2026 ZenTrade · Open source sob AGPL-3.0 · Feito no Brasil.</p>
+        <p class="aviso" data-i18n="rod.copy">
+          © 2026 ZenTrade. Código aberto sob AGPL-3.0. Feito no Brasil.
+        </p>
       </div>
     </footer>
 
     <script>
       document.documentElement.classList.remove("sem-js");
-      (() => {
+      (async () => {
         const reduzir = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+
+        /* ---------- idioma ---------- */
+        const IDIOMAS = { pt: "pt-BR", en: "en", hi: "hi", es: "es", zh: "zh-CN" };
+        const LOCALES = { pt: "pt-BR", en: "en-US", hi: "hi-IN", es: "es-ES", zh: "zh-CN" };
+        let idioma = "pt";
+        try {
+          const salvo = localStorage.getItem("zt-idioma");
+          const nav = (navigator.language || "pt").slice(0, 2).toLowerCase();
+          idioma = IDIOMAS[salvo] ? salvo : IDIOMAS[nav] ? nav : "pt";
+        } catch {
+          idioma = "pt";
+        }
+        let T;
+        try {
+          T = await (await fetch(`i18n/${idioma}.json`)).json();
+        } catch {
+          idioma = "pt";
+          T = await (await fetch("i18n/pt.json")).json();
+        }
+        if (T.estatico) {
+          for (const el of document.querySelectorAll("[data-i18n]")) {
+            const v = T.estatico[el.dataset.i18n];
+            if (v) el.innerHTML = v;
+          }
+          for (const el of document.querySelectorAll("[data-i18n-content]")) {
+            const v = T.estatico[el.dataset.i18nContent];
+            if (v) el.setAttribute("content", v);
+          }
+        }
+        const D = T.dinamico;
+        const LOCALE = LOCALES[idioma];
+        document.documentElement.lang = IDIOMAS[idioma];
+        document.documentElement.classList.add("idioma-" + idioma);
+        const seletor = document.getElementById("idioma");
+        seletor.value = idioma;
+        seletor.addEventListener("change", () => {
+          try {
+            localStorage.setItem("zt-idioma", seletor.value);
+          } catch {
+            /* sem armazenamento: só recarrega */
+          }
+          location.reload();
+        });
+        const numero = (n, casas = 0) =>
+          n.toLocaleString(LOCALE, { minimumFractionDigits: casas, maximumFractionDigits: casas });
 
         /* ---------- topo e progresso ---------- */
         const topo = document.getElementById("topo");
         const anel = document.querySelector(".progresso circle");
         let pedido = false;
-        addEventListener(
-          "scroll",
-          () => {
-            if (pedido) return;
-            pedido = true;
-            requestAnimationFrame(() => {
-              pedido = false;
-              topo.classList.toggle("rolou", scrollY > 24);
-              const max = document.documentElement.scrollHeight - innerHeight;
-              anel.style.strokeDashoffset = String(1 - (max > 0 ? scrollY / max : 0));
-            });
-          },
-          { passive: true },
-        );
+        const aoRolar = () => {
+          pedido = false;
+          topo.classList.toggle("rolou", scrollY > 24);
+          const max = document.documentElement.scrollHeight - innerHeight;
+          anel.style.strokeDashoffset = String(1 - (max > 0 ? scrollY / max : 0));
+        };
+        addEventListener("scroll", () => !pedido && (pedido = true) && requestAnimationFrame(aoRolar), {
+          passive: true,
+        });
+        aoRolar();
 
-        /* ---------- hero: fundo limpo com fumaça que responde ao mouse (WebGL) ---------- */
+        /* ---------- cena do hero: fundo, grade, horizonte, fumaça e partículas (WebGL) ---------- */
         const hero = document.querySelector(".hero");
-        const tela = document.getElementById("fumaca");
+        const tela = document.getElementById("cena");
         const gl = tela.getContext("webgl", { alpha: false, antialias: false, powerPreference: "low-power" });
-        const IMG = [2752, 1536]; // mesmo enquadramento do SVG do ensō (xMaxYMid slice)
-        const N = 16;
-        function iniciarGl(imagem) {
-          const VS = "attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}";
-          const FS = `precision mediump float;
+        if (gl) {
+          try {
+            const N = 16;
+            const VS = "attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}";
+            const FS = `precision mediump float;
 varying vec2 v;
-uniform sampler2D img;
-uniform vec2 tela, tam;
+uniform vec2 tela, centro;
 uniform float t;
 uniform vec3 rastro[${N}];
 float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float rn(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);
   return mix(mix(h(i),h(i+vec2(1,0)),u.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),u.x),u.y);}
-float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*rn(p);p*=2.03;a*=.5;}return s;}
+float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*rn(p);p=p*2.02+vec2(1.7,9.2);a*=.5;}return s;}
 void main(){
   vec2 fp=vec2(v.x*tela.x,(1.-v.y)*tela.y);
-  float s=max(tela.x/tam.x,tela.y/tam.y);
-  vec2 off=vec2(tela.x-tam.x*s,(tela.y-tam.y*s)*.5);
-  vec2 q=(fp-off)/s;
-  vec3 cor=texture2D(img,clamp(q/tam,0.,1.)).rgb;
-  float fum=smoothstep(tam.y*.40,tam.y*.62,q.y);
-  if(fum>.01){
-    float inf=0.; vec2 arraste=vec2(0.);
-    for(int i=0;i<${N};i++){
-      vec3 m=rastro[i];
-      vec2 dm=q-m.xy;
-      float f=exp(-dot(dm,dm)/(200.*200.))*m.z;
-      inf+=f; arraste+=dm*f;
-    }
-    inf=min(inf,1.);
-    vec2 p=q*.004+vec2(t*.05,-t*.03)+arraste*.0016;
-    float w=fbm(p+fbm(p*1.6+vec2(0.,t*.04)));
-    float ambiente=smoothstep(.55,.9,w)*.08;
-    float mexida=smoothstep(.36,.85,w)*inf*.5;
-    cor=mix(cor,vec3(.8,.86,.82),(ambiente+mexida)*fum);
+  float H=tela.y, hy=centro.y;
+  vec3 jade=vec3(.24,.86,.56);
+  vec3 cor=mix(vec3(.022,.04,.034),vec3(.05,.085,.07),smoothstep(0.,hy,fp.y));
+  if(fp.y>hy) cor=mix(vec3(.045,.075,.062),vec3(.018,.032,.027),smoothstep(hy,H,fp.y));
+  float dyh=abs(fp.y-hy);
+  float dx=(fp.x-centro.x)/tela.x;
+  cor+=jade*(exp(-dyh/(H*.0035))*.32+exp(-dyh/(H*.06))*.05)*exp(-dx*dx*2.5);
+  if(fp.y>hy+.5){
+    float py=(fp.y-hy)/H;
+    float z=.07/py;
+    float xw=(fp.x-centro.x)/H*z*7.;
+    float zw=z*5.+t*.28;
+    float wx=clamp(z*.012,.006,.5), wz=clamp(z*z*.02,.006,.5);
+    float lv=smoothstep(.5-wx,.5,abs(fract(xw)-.5))*(1.-smoothstep(.12,.3,wx));
+    float lh=smoothstep(.5-wz,.5,abs(fract(zw)-.5))*(1.-smoothstep(.12,.3,wz));
+    float apaga=exp(-z*.25)*smoothstep(0.,.05,py);
+    cor+=jade*max(lv,lh)*apaga*.2;
   }
+  vec2 sw=vec2(0.); float inf=0.;
+  for(int i=0;i<${N};i++){
+    vec3 m=rastro[i];
+    vec2 dm=fp-m.xy;
+    float R=H*.16;
+    float f=exp(-dot(dm,dm)/(R*R))*m.z;
+    sw+=vec2(-dm.y,dm.x)/R*f; inf+=f;
+  }
+  inf=min(inf,1.);
+  float banda=smoothstep(H*.28,H*.5,fp.y);
+  if(banda>.001){
+    vec2 p=fp/H*vec2(2.1,2.6)+vec2(t*.03,-t*.018)+sw*.18;
+    vec2 w1=vec2(fbm(p+vec2(0.,t*.025)),fbm(p+vec2(5.2,1.3)-t*.02));
+    float d=fbm(p+1.7*w1);
+    float dens=smoothstep(.36,.8,d)*banda*(.5+.5*smoothstep(hy,H*.95,fp.y));
+    dens*=1.-.45*inf;
+    vec3 fum=mix(vec3(.26,.32,.29),vec3(.6,.68,.64),smoothstep(.45,.95,d));
+    cor=mix(cor,fum,dens*.72);
+  }
+  vec2 cel=vec2(fp.x,fp.y+t*H*.018)/(H*.075);
+  vec2 id=floor(cel), f=fract(cel)-.5;
+  float r=h(id);
+  if(r>.84){
+    vec2 pos=(vec2(h(id+1.3),h(id+7.1))-.5)*.7;
+    float br=smoothstep(.07,0.,length(f-pos))*(.45+.55*sin(t*1.7+r*50.));
+    cor+=vec3(.6,.95,.78)*br*.45*smoothstep(0.,H*.25,fp.y);
+  }
+  vec2 c2=v-.5;
+  cor*=1.-dot(c2,c2)*.55;
   gl_FragColor=vec4(cor,1.);
 }`;
-          const sh = (tipo, src) => {
-            const s = gl.createShader(tipo);
-            gl.shaderSource(s, src);
-            gl.compileShader(s);
-            if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
-            return s;
-          };
-          const prog = gl.createProgram();
-          gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
-          gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
-          gl.linkProgram(prog);
-          if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
-          gl.useProgram(prog);
-          gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-          const loc = gl.getAttribLocation(prog, "p");
-          gl.enableVertexAttribArray(loc);
-          gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-          gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, imagem);
-          const u = (n) => gl.getUniformLocation(prog, n);
-          const U = { tela: u("tela"), tam: u("tam"), t: u("t"), rastro: u("rastro") };
-          gl.uniform2f(U.tam, IMG[0], IMG[1]);
-
-          const rastro = new Float32Array(N * 3);
-          let cursor = 0;
-          const paraImagem = (cx, cy) => {
-            const r = hero.getBoundingClientRect();
-            const s = Math.max(r.width / IMG[0], r.height / IMG[1]);
-            return [
-              (cx - r.left - (r.width - IMG[0] * s)) / s,
-              (cy - r.top - (r.height - IMG[1] * s) / 2) / s,
-            ];
-          };
-          let ultimo = 0;
-          hero.addEventListener("pointermove", (e) => {
-            const agora = performance.now();
-            if (agora - ultimo < 28) return;
-            ultimo = agora;
-            const [x, y] = paraImagem(e.clientX, e.clientY);
-            rastro.set([x, y, 1], cursor * 3);
-            cursor = (cursor + 1) % N;
-            acordar();
-          });
-
-          const inicio = performance.now();
-          let visivel = true;
-          let rodando = false;
-          let alterna = false;
-          function quadro(agora) {
-            const mexendo = rastro.some((v, i) => i % 3 === 2 && v > 0.03);
-            alterna = !alterna;
-            if (!mexendo && alterna && !reduzir && visivel && !document.hidden)
-              return requestAnimationFrame(quadro);
-            for (let i = 0; i < N; i++) rastro[i * 3 + 2] *= 0.95;
-            gl.uniform1f(U.t, reduzir ? 0 : (agora - inicio) / 1000);
-            gl.uniform3fv(U.rastro, rastro);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-            if (reduzir || !visivel || document.hidden) return (rodando = false);
-            requestAnimationFrame(quadro);
-          }
-          function acordar() {
-            if (rodando) return;
-            rodando = true;
-            requestAnimationFrame(quadro);
-          }
-          function ajustar() {
-            const r = hero.getBoundingClientRect();
-            const dpr = Math.min(devicePixelRatio || 1, 1.25);
-            const escala = r.width * dpr > 1600 ? 1600 / r.width : dpr;
-            tela.width = Math.round(r.width * escala);
-            tela.height = Math.round(r.height * escala);
-            gl.viewport(0, 0, tela.width, tela.height);
-            gl.uniform2f(U.tela, tela.width, tela.height);
-            acordar();
-          }
-          new IntersectionObserver(([e]) => {
-            visivel = e.isIntersecting;
-            if (visivel) acordar();
-          }).observe(hero);
-          document.addEventListener("visibilitychange", acordar);
-          addEventListener("resize", ajustar);
-          ajustar();
-          document.documentElement.classList.add("gl");
-        }
-        if (gl) {
-          const imagem = new Image();
-          imagem.decoding = "async";
-          imagem.onload = () => {
-            try {
-              iniciarGl(imagem);
-            } catch (erro) {
-              console.error("hero WebGL:", erro);
+            const sh = (tipo, src) => {
+              const s = gl.createShader(tipo);
+              gl.shaderSource(s, src);
+              gl.compileShader(s);
+              if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+              return s;
+            };
+            const prog = gl.createProgram();
+            gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+            gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+            gl.linkProgram(prog);
+            if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+            gl.useProgram(prog);
+            gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+            const loc = gl.getAttribLocation(prog, "p");
+            gl.enableVertexAttribArray(loc);
+            gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+            const U = Object.fromEntries(
+              ["tela", "centro", "t", "rastro"].map((n) => [n, gl.getUniformLocation(prog, n)]),
+            );
+            const rastro = new Float32Array(N * 3);
+            let cursor = 0;
+            let escala = 1;
+            let visivel = true;
+            let rodando = false;
+            let alterna = false;
+            const inicio = performance.now();
+            function quadro(agora) {
+              const mexendo = rastro.some((x, i) => i % 3 === 2 && x > 0.03);
+              alterna = !alterna;
+              if (!mexendo && alterna && !reduzir && visivel && !document.hidden)
+                return requestAnimationFrame(quadro);
+              for (let i = 0; i < N; i++) rastro[i * 3 + 2] *= 0.955;
+              gl.uniform1f(U.t, reduzir ? 0 : (agora - inicio) / 1000);
+              gl.uniform3fv(U.rastro, rastro);
+              gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+              if (reduzir || !visivel || document.hidden) return (rodando = false);
+              requestAnimationFrame(quadro);
             }
-          };
-          imagem.src = "img/hero-limpo.webp";
+            function acordar() {
+              if (rodando) return;
+              rodando = true;
+              requestAnimationFrame(quadro);
+            }
+            function ajustar() {
+              const r = hero.getBoundingClientRect();
+              escala = Math.min(0.65, 1100 / r.width);
+              tela.width = Math.round(r.width * escala);
+              tela.height = Math.round(r.height * escala);
+              gl.viewport(0, 0, tela.width, tela.height);
+              gl.uniform2f(U.tela, tela.width, tela.height);
+              const s = Math.max(r.width / 2752, r.height / 1536);
+              const pontoX = 2012 * s + (r.width - 2752 * s) / 2;
+              gl.uniform2f(U.centro, pontoX * escala, (r.height / 2) * escala);
+              acordar();
+            }
+            let ultimo = 0;
+            hero.addEventListener("pointermove", (e) => {
+              const agora = performance.now();
+              if (agora - ultimo < 30) return;
+              ultimo = agora;
+              const r = hero.getBoundingClientRect();
+              rastro.set([(e.clientX - r.left) * escala, (e.clientY - r.top) * escala, 1], cursor * 3);
+              cursor = (cursor + 1) % N;
+              acordar();
+            });
+            new IntersectionObserver(([e]) => {
+              visivel = e.isIntersecting;
+              if (visivel) acordar();
+            }).observe(hero);
+            document.addEventListener("visibilitychange", acordar);
+            addEventListener("resize", ajustar);
+            ajustar();
+            document.documentElement.classList.add("gl");
+          } catch (erro) {
+            console.error("cena do hero:", erro);
+          }
         }
 
         /* ---------- títulos palavra por palavra ---------- */
         document.querySelectorAll(".titulo-anim").forEach((t) => {
           const texto = t.textContent.trim();
           t.setAttribute("aria-label", texto);
-          t.innerHTML = texto
-            .split(/\s+/)
+          const partes = idioma === "zh" ? [...texto] : texto.split(/\s+/);
+          t.innerHTML = partes
             .map((p, i) => `<span class="palavra" aria-hidden="true" style="--i:${i}">${p}</span>`)
-            .join(" ");
+            .join(idioma === "zh" ? "" : " ");
         });
 
         /* ---------- contadores ---------- */
         function contar(el) {
-          if (reduzir || el.dataset.contado) return;
+          if (el.dataset.contado) return;
           el.dataset.contado = "1";
           const alvo = Number(el.dataset.contar);
           const sufixo = el.dataset.sufixo ?? "";
-          const inicio = performance.now();
+          if (reduzir) return (el.textContent = numero(alvo) + sufixo);
+          const t0 = performance.now();
           const passo = (agora) => {
-            const k = Math.min(1, (agora - inicio) / 1600);
-            el.textContent = Math.round(alvo * (1 - Math.pow(1 - k, 3))).toLocaleString("pt-BR") + sufixo;
+            const k = Math.min(1, (agora - t0) / 1600);
+            el.textContent = numero(Math.round(alvo * (1 - Math.pow(1 - k, 3)))) + sufixo;
             if (k < 1) requestAnimationFrame(passo);
           };
           requestAnimationFrame(passo);
@@ -1077,6 +1082,7 @@ void main(){
             for (const e of lista) {
               if (!e.isIntersecting) continue;
               e.target.classList.add("visivel");
+              if (e.target.matches("[data-contar]")) contar(e.target);
               e.target.querySelectorAll("[data-contar]").forEach(contar);
               e.target
                 .querySelectorAll("[data-altura]")
@@ -1084,40 +1090,20 @@ void main(){
               observador.unobserve(e.target);
             }
           },
-          { threshold: 0.2 },
+          { threshold: 0.18 },
         );
         document
-          .querySelectorAll(".revelar, .enso, .titulo-anim, .decisao-palco, .grafico")
+          .querySelectorAll(
+            ".revelar, .enso, .titulo-anim, .decisao-palco, .grafico, .cartoes-vivos, .numero, .velas-cartao",
+          )
           .forEach((el) => observador.observe(el));
+        const quandoVisivel = (el, fn) =>
+          new IntersectionObserver(([e]) => fn(e.isIntersecting), { threshold: 0.15 }).observe(el);
 
         /* ---------- terminal de decisões (simulação) ---------- */
         const terminal = document.getElementById("terminal");
-        const ROTEIRO = [
-          [
-            ["h", "21:00:00  BTC/USDT 4h  vela fechada"],
-            ["s", "regra    rompeu o topo de 20 velas · acima da média de 200"],
-            ["c", "claude   alta 62% · lateral 26% · baixa 12%"],
-            ["c", "claude   valor esperado +1,33% depois das taxas"],
-            ["c", "claude   contra: volume abaixo da média, rompimento pode falhar"],
-            ["ok", "risco    APROVADO · 0,004 BTC · stop 61.230 na corretora"],
-          ],
-          [
-            ["h", "21:00:00  SOL/USDT 1h  vela fechada"],
-            ["s", "regra    rompeu o topo por só 0,02%"],
-            ["c", "claude   alta 40% · lateral 38% · baixa 22%"],
-            ["no", "claude   AGUARDAR · cenário favorável abaixo de 60%"],
-            ["h", "placar   veto registrado · avaliado daqui a 20 velas"],
-          ],
-          [
-            ["h", "09:20:00  WIN 5 min  agenda: Copom às 18h30"],
-            ["s", "regra    rompeu a faixa de abertura"],
-            ["no", "eventos  dia de evento · robô em modo reduzido"],
-            ["c", "claude   valor esperado -0,12% · lateral provável"],
-            ["no", "risco    BARRADO · nada operado"],
-          ],
-        ];
-        const espera = (ms) => new Promise((r) => setTimeout(r, ms));
         let terminalVisivel = false;
+        quandoVisivel(terminal, (v) => (terminalVisivel = v));
         async function digitar(classe, texto) {
           const p = document.createElement("p");
           p.className = classe + " cursor-terminal";
@@ -1128,80 +1114,246 @@ void main(){
           p.textContent = texto;
           p.classList.remove("cursor-terminal");
         }
-        async function rodarTerminal() {
-          for (let k = 0; ; k = (k + 1) % ROTEIRO.length) {
-            while (!terminalVisivel || document.hidden) await espera(500);
-            for (const [classe, texto] of ROTEIRO[k]) {
+        (async () => {
+          for (let k = 0; ; k = (k + 1) % D.terminal.length) {
+            while (!terminalVisivel || document.hidden) await espera(400);
+            for (const [classe, texto] of D.terminal[k]) {
               await digitar(classe, texto);
-              await espera(reduzir ? 0 : 280);
+              await espera(reduzir ? 0 : 260);
             }
             await digitar("h", " ");
             await espera(reduzir ? 60000 : 1800);
           }
-        }
-        let terminalIniciado = false;
-        new IntersectionObserver(([e]) => {
-          terminalVisivel = e.isIntersecting;
-          if (terminalVisivel && !terminalIniciado) {
-            terminalIniciado = true;
-            rodarTerminal();
-          }
-        }).observe(terminal);
+        })();
 
-        /* ---------- cenários (ilustrativo) ---------- */
+        /* ---------- cenários: passam sozinhos ---------- */
         const SINAIS = [
-          {
-            texto: "BTC/USDT · 4h · rompimento do topo de 20 velas",
-            p: [0.62, 0.26, 0.12],
-            r: [2.6, -0.3, -1.7],
-          },
-          {
-            texto: "SOL/USDT · 1h · rompimento de 0,02% acima do topo",
-            p: [0.4, 0.38, 0.22],
-            r: [1.9, -0.35, -1.4],
-          },
-          {
-            texto: "WIN · 5 min · 09:20, abertura com notícia forte",
-            p: [0.48, 0.17, 0.35],
-            r: [0.6, -0.15, -1.1],
-          },
+          { p: [0.62, 0.26, 0.12], r: [2.6, -0.3, -1.7] },
+          { p: [0.4, 0.38, 0.22], r: [1.9, -0.35, -1.4] },
+          { p: [0.48, 0.17, 0.35], r: [0.6, -0.15, -1.1] },
         ];
-        const LIMIAR = 0.6;
         const painel = document.getElementById("painel-cenarios");
         const barras = [...painel.querySelectorAll(".barra")];
         const veredito = document.getElementById("veredito");
         const abas = [...document.querySelectorAll(".abas [role=tab]")];
-        const pct = (x) => Math.round(x * 100) + "%";
+        const ciclo = painel.querySelector(".ciclo i");
+        abas.forEach((b, i) => (b.textContent = D.cenarios.abas[i]));
+        barras.forEach((b, j) => (b.querySelector(".nome").textContent = D.cenarios.nomes[j]));
+        const pct = (x) => numero(Math.round(x * 100)) + "%";
+        let atual = 0;
+        let automatico = !reduzir;
+        let cenariosVisiveis = false;
         function mostrar(i) {
+          atual = i;
           const s = SINAIS[i];
           abas.forEach((b, j) => {
             b.setAttribute("aria-selected", String(i === j));
             b.tabIndex = i === j ? 0 : -1;
           });
           painel.setAttribute("aria-labelledby", abas[i].id);
-          document.getElementById("sinal-descricao").textContent = s.texto;
+          document.getElementById("sinal-descricao").textContent = D.cenarios.sinais[i];
           barras.forEach((b, j) => {
-            b.querySelector(".cheio").style.width = pct(s.p[j]);
+            b.querySelector(".cheio").style.width = Math.round(s.p[j] * 100) + "%";
             b.querySelector(".valor").textContent = pct(s.p[j]);
           });
           const ve = s.p.reduce((soma, p, j) => soma + p * s.r[j], 0);
-          const aprova = ve > 0 && s.p[0] >= LIMIAR;
-          const texto = (ve >= 0 ? "+" : "") + ve.toFixed(2).replace(".", ",") + "%";
+          const aprova = ve > 0 && s.p[0] >= 0.6;
+          const texto = (ve >= 0 ? "+" : "") + numero(ve, 2) + "%";
           veredito.className = "veredito" + (aprova ? "" : " aguardar");
-          veredito.innerHTML = aprova
-            ? `Valor esperado depois das taxas: <strong>${texto}</strong>. Cenário de alta em ${pct(s.p[0])}. <strong>Propõe comprar</strong> — e o motor de risco ainda confere.`
-            : `Valor esperado depois das taxas: <strong>${texto}</strong>.${s.p[0] < LIMIAR ? ` Cenário de alta em só ${pct(s.p[0])}, abaixo de 60%.` : ""} <strong>Aguarda</strong> — melhor não operar.`;
+          veredito.innerHTML = (aprova ? D.cenarios.aprova : D.cenarios.aguarda)
+            .replace("{ve}", texto)
+            .replace("{p}", pct(s.p[0]));
+          if (ciclo) {
+            ciclo.style.transition = "none";
+            ciclo.style.transform = "scaleX(0)";
+            if (automatico) {
+              ciclo.getBoundingClientRect();
+              ciclo.style.transition = "transform 4.6s linear";
+              ciclo.style.transform = "scaleX(1)";
+            }
+          }
         }
+        const parar = () => {
+          automatico = false;
+          if (ciclo) ciclo.parentElement.hidden = true;
+        };
         abas.forEach((b, i) => {
-          b.addEventListener("click", () => mostrar(i));
+          b.addEventListener("click", () => (parar(), mostrar(i)));
           b.addEventListener("keydown", (e) => {
             if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
             const j = (i + (e.key === "ArrowRight" ? 1 : abas.length - 1)) % abas.length;
+            parar();
             abas[j].focus();
             mostrar(j);
           });
         });
+        quandoVisivel(painel, (v) => {
+          const entrou = v && !cenariosVisiveis;
+          cenariosVisiveis = v;
+          if (entrou) mostrar(atual);
+        });
         mostrar(0);
+        (async () => {
+          for (;;) {
+            await espera(4600);
+            if (automatico && cenariosVisiveis && !document.hidden) mostrar((atual + 1) % SINAIS.length);
+          }
+        })();
+
+        /* ---------- gráfico de velas (dados reais da B3) ---------- */
+        const VELAS = [
+          ["14/10 09h", 210500, 211115, 208890, 208970],
+          ["14/10 10h", 208975, 209325, 208160, 208270],
+          ["14/10 11h", 208270, 209595, 207615, 209435],
+          ["14/10 12h", 209435, 210325, 208705, 210180],
+          ["14/10 13h", 210185, 211005, 209785, 210845],
+          ["14/10 14h", 210850, 211635, 210785, 211155],
+          ["14/10 15h", 211160, 211750, 211025, 211260],
+          ["14/10 16h", 211260, 211365, 210480, 210885],
+          ["14/10 17h", 210880, 211050, 210785, 210935],
+          ["14/10 18h", 210935, 211210, 208380, 208645],
+          ["15/10 09h", 208000, 209285, 207435, 208085],
+          ["15/10 10h", 208085, 209560, 207235, 209210],
+          ["15/10 11h", 209210, 210610, 208785, 210340],
+          ["15/10 12h", 210340, 210800, 209815, 209885],
+          ["15/10 13h", 209890, 210710, 209730, 209835],
+          ["15/10 14h", 209840, 209930, 209215, 209370],
+          ["15/10 15h", 209365, 210095, 209365, 209890],
+          ["15/10 16h", 209890, 209945, 207440, 208100],
+          ["15/10 17h", 208095, 208800, 208080, 208140],
+          ["15/10 18h", 208135, 208475, 208050, 208435],
+          ["16/10 09h", 209500, 209555, 208075, 209285],
+          ["16/10 10h", 209280, 210210, 208640, 209535],
+          ["16/10 11h", 209535, 210535, 208340, 209515],
+          ["16/10 12h", 209510, 209550, 208525, 208580],
+          ["16/10 13h", 208580, 208965, 208280, 208900],
+          ["16/10 14h", 208900, 209055, 208215, 208650],
+          ["16/10 15h", 208650, 209605, 208520, 209270],
+          ["16/10 16h", 209270, 209550, 208980, 209295],
+          ["16/10 17h", 209300, 210250, 209165, 210170],
+          ["16/10 18h", 210170, 210355, 210030, 210300],
+          ["19/10 09h", 210900, 211245, 209765, 210695],
+          ["19/10 10h", 210690, 211540, 210225, 210635],
+          ["19/10 11h", 210635, 210660, 208750, 209005],
+          ["19/10 12h", 209005, 209355, 208490, 208755],
+          ["19/10 13h", 208755, 208870, 208170, 208480],
+          ["19/10 14h", 208485, 209340, 208320, 209315],
+          ["19/10 15h", 209320, 209610, 209005, 209400],
+          ["19/10 16h", 209400, 209585, 208850, 208945],
+          ["19/10 17h", 208950, 209980, 208920, 209705],
+          ["19/10 18h", 209700, 209800, 208845, 208845],
+        ];
+        const svgVelas = document.getElementById("velas");
+        const dica = document.getElementById("velas-dica");
+        const NS = "http://www.w3.org/2000/svg";
+        const el = (tag, at) => {
+          const n = document.createElementNS(NS, tag);
+          for (const [k, val] of Object.entries(at)) n.setAttribute(k, val);
+          return n;
+        };
+        const [LG, AL, ME, MD, MS, MI] = [640, 300, 8, 62, 14, 28];
+        const minimo = Math.min(...VELAS.map((c) => c[3])) - 150;
+        const maximo = Math.max(...VELAS.map((c) => c[2])) + 150;
+        const y = (p) => MS + ((maximo - p) / (maximo - minimo)) * (AL - MS - MI);
+        const passo = (LG - ME - MD) / VELAS.length;
+        for (let k = 0; k <= 4; k++) {
+          const p = minimo + ((maximo - minimo) * k) / 4;
+          svgVelas.append(el("line", { x1: ME, x2: LG - MD + 6, y1: y(p), y2: y(p), class: "velas-grade" }));
+          const t = el("text", { x: LG - MD + 12, y: y(p) + 4, class: "velas-eixo" });
+          t.textContent = numero(Math.round(p / 5) * 5);
+          svgVelas.append(t);
+        }
+        VELAS.forEach((c, i) => {
+          const [rotulo, ab, mx, mn, fe] = c;
+          const x = ME + passo * i + passo / 2;
+          if (i % 10 === 0) {
+            svgVelas.append(
+              el("line", { x1: x - passo / 2, x2: x - passo / 2, y1: MS, y2: AL - MI, class: "velas-dia" }),
+            );
+            const t = el("text", { x: x - passo / 2 + 4, y: AL - 8, class: "velas-eixo" });
+            t.textContent = rotulo.slice(0, 5);
+            svgVelas.append(t);
+          }
+          const g = el("g", { class: "vela " + (fe >= ab ? "sobe" : "desce"), style: `--i:${i}` });
+          g.append(el("line", { x1: x, x2: x, y1: y(mx), y2: y(mn) }));
+          const topoCorpo = y(Math.max(ab, fe));
+          g.append(
+            el("rect", {
+              x: x - passo * 0.32,
+              y: topoCorpo,
+              width: passo * 0.64,
+              height: Math.max(1.5, y(Math.min(ab, fe)) - topoCorpo),
+              rx: 1.5,
+            }),
+          );
+          if (i === VELAS.length - 1) g.classList.add("ultima");
+          g.addEventListener("pointerenter", () => {
+            dica.innerHTML = `<b>${rotulo}</b> ${D.velas.abertura} ${numero(ab)} · ${D.velas.maxima} ${numero(mx)} · ${D.velas.minima} ${numero(mn)} · ${D.velas.fechamento} ${numero(fe)}`;
+            dica.classList.add("ativa");
+          });
+          g.addEventListener("pointerleave", () => dica.classList.remove("ativa"));
+          svgVelas.append(g);
+        });
+        const ultima = VELAS[VELAS.length - 1];
+        svgVelas.append(
+          el("line", { x1: ME, x2: LG - MD + 6, y1: y(ultima[4]), y2: y(ultima[4]), class: "velas-ultimo" }),
+        );
+        const variacao = ((ultima[4] - VELAS[0][1]) / VELAS[0][1]) * 100;
+        document.getElementById("velas-preco").innerHTML =
+          `${numero(ultima[4])} <small class="${variacao >= 0 ? "sobe" : "desce"}">${variacao >= 0 ? "+" : ""}${numero(variacao, 2)}%</small>`;
+
+        /* ---------- conversa animada com o assistente ---------- */
+        const chat = document.getElementById("chat");
+        let chatVisivel = false;
+        quandoVisivel(chat, (v) => (chatVisivel = v));
+        const bolha = (classe, html = "") => {
+          const b = document.createElement("div");
+          b.className = "bolha " + classe;
+          b.innerHTML = html;
+          chat.appendChild(b);
+          return b;
+        };
+        (async () => {
+          for (let k = 0; ; k = (k + 1) % D.chat.length) {
+            while (!chatVisivel || document.hidden) await espera(400);
+            const c = D.chat[k];
+            chat.classList.remove("saindo");
+            chat.innerHTML = "";
+            const voce = bolha("voce");
+            if (reduzir) voce.textContent = c.pergunta;
+            else
+              for (let i = 1; i <= c.pergunta.length; i++)
+                ((voce.textContent = c.pergunta.slice(0, i)), await espera(22));
+            await espera(450);
+            const ferr = document.createElement("div");
+            ferr.className = "ferramentas";
+            ferr.innerHTML = `<span class="girando"></span><span>${c.consultando}</span>`;
+            chat.appendChild(ferr);
+            for (const f of c.ferramentas) {
+              await espera(reduzir ? 0 : 420);
+              const chip = document.createElement("span");
+              chip.className = "chip";
+              chip.textContent = "✓ " + f;
+              ferr.appendChild(chip);
+            }
+            ferr.querySelector(".girando").classList.add("feito");
+            await espera(300);
+            const ia = bolha("ia", '<span class="digitando"><i></i><i></i><i></i></span>');
+            await espera(reduzir ? 0 : 900);
+            const separador = idioma === "zh" ? "" : " ";
+            const pedacos =
+              idioma === "zh"
+                ? [...c.resposta.replace(/<[^>]+>/g, "")]
+                : c.resposta.replace(/<[^>]+>/g, "").split(" ");
+            if (!reduzir)
+              for (let i = 1; i <= pedacos.length; i += idioma === "zh" ? 2 : 1)
+                ((ia.textContent = pedacos.slice(0, i).join(separador)), await espera(38));
+            ia.innerHTML = c.resposta;
+            await espera(reduzir ? 60000 : 5200);
+            chat.classList.add("saindo");
+            await espera(500);
+          }
+        })();
 
         /* ---------- luz que segue o mouse nos cartões ---------- */
         if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduzir) {
@@ -1213,6 +1365,7 @@ void main(){
             }),
           );
         }
+        document.documentElement.classList.add("pronto");
       })();
     </script>
   </body>

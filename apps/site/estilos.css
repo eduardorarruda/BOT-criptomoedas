@@ -1364,3 +1364,443 @@ main > div {
     opacity: 1;
   }
 }
+
+/* =========================================================
+   v4 — cena, idiomas, velas, conversa e cartões vivos
+   ========================================================= */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.idioma select {
+  font: inherit;
+  font-size: 13px;
+  color: var(--texto-2);
+  background: var(--sup-2);
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.idioma select:focus-visible {
+  outline: 2px solid var(--jade);
+}
+.idioma-hi body,
+.idioma-hi h1,
+.idioma-hi h2 {
+  font-family: "Geist", "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+}
+.idioma-zh body,
+.idioma-zh h1,
+.idioma-zh h2 {
+  font-family: "Geist", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.idioma-hi h1,
+.idioma-zh h1,
+.idioma-hi h2,
+.idioma-zh h2 {
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+#cena {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+.hero h1 {
+  animation: subir 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.hero .entrada {
+  animation: subir 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.hero .lead.entrada {
+  animation-delay: 0.25s;
+}
+.hero .acoes.entrada {
+  animation-delay: 0.4s;
+}
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* números entram com leve subida */
+.numero {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.numero.visivel {
+  opacity: 1;
+  transform: none;
+}
+.numeros .numero:nth-child(2) {
+  transition-delay: 0.1s;
+}
+.numeros .numero:nth-child(3) {
+  transition-delay: 0.2s;
+}
+.numeros .numero:nth-child(4) {
+  transition-delay: 0.3s;
+}
+
+/* ciclo automático dos cenários */
+.ciclo {
+  height: 2px;
+  background: var(--sup-3);
+  border-radius: 2px;
+  margin-top: 14px;
+  overflow: hidden;
+}
+.ciclo i {
+  display: block;
+  height: 100%;
+  background: var(--jade);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.barra .nome {
+  font-family: var(--mono);
+}
+.veredito {
+  animation: aparecer 0.5s ease;
+}
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* gráfico de velas */
+.velas-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.velas-preco {
+  font-family: var(--mono);
+  font-size: 20px;
+}
+.velas-preco small {
+  font-size: 13px;
+  margin-left: 6px;
+}
+.velas-preco .sobe {
+  color: var(--jade);
+}
+.velas-preco .desce {
+  color: #e5735f;
+}
+.velas {
+  width: 100%;
+  height: auto;
+  margin-top: 10px;
+  overflow: visible;
+}
+.velas-grade {
+  stroke: var(--linha);
+  stroke-width: 1;
+}
+.velas-dia {
+  stroke: var(--linha);
+  stroke-dasharray: 3 4;
+}
+.velas-eixo {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--apagado);
+}
+.velas-ultimo {
+  stroke: var(--jade);
+  stroke-dasharray: 2 3;
+  opacity: 0.7;
+}
+.vela line {
+  stroke-width: 1.2;
+}
+.vela.sobe line,
+.vela.sobe rect {
+  stroke: var(--jade);
+  fill: var(--jade);
+}
+.vela.desce line {
+  stroke: #e5735f;
+}
+.vela.desce rect {
+  fill: rgba(229, 115, 95, 0.18);
+  stroke: #e5735f;
+}
+.vela {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  opacity: 0;
+  transform: scaleY(0.2);
+  transition:
+    opacity 0.45s ease,
+    transform 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  transition-delay: calc(var(--i) * 32ms);
+  cursor: crosshair;
+}
+.velas-cartao.visivel .vela {
+  opacity: 1;
+  transform: none;
+}
+.vela:hover rect {
+  filter: brightness(1.4);
+}
+.vela.ultima rect {
+  animation: vela-viva 1.6s ease-in-out infinite;
+}
+@keyframes vela-viva {
+  50% {
+    filter: drop-shadow(0 0 6px rgba(229, 115, 95, 0.7));
+  }
+}
+.velas-dica {
+  min-height: 22px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--apagado);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.velas-dica.ativa {
+  opacity: 1;
+}
+.velas-dica b {
+  color: var(--texto);
+  font-weight: 500;
+}
+.velas-numeros {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+.velas-numeros div {
+  border: 1px solid var(--linha);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--tinta);
+}
+.velas-numeros b {
+  display: block;
+  font-family: var(--mono);
+  font-weight: 500;
+  color: var(--jade);
+}
+.velas-numeros span {
+  font-size: 12.5px;
+  color: var(--apagado);
+}
+@media (max-width: 520px) {
+  .velas-numeros {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* conversa animada */
+.chat-vivo {
+  display: flex;
+  flex-direction: column;
+  min-height: 380px;
+  padding: 0;
+}
+.chat-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--linha);
+  font-size: 14px;
+  color: var(--texto-2);
+}
+.chat-nota {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--apagado);
+}
+.chat-corpo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  transition: opacity 0.45s ease;
+}
+.chat-corpo.saindo {
+  opacity: 0;
+}
+.chat-corpo .bolha {
+  animation: aparecer 0.35s ease;
+}
+.ferramentas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--apagado);
+  animation: aparecer 0.35s ease;
+}
+.chip {
+  border: 1px solid var(--jade-profundo);
+  color: var(--jade);
+  border-radius: 999px;
+  padding: 3px 9px;
+  animation: aparecer 0.3s ease;
+}
+.girando {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--sup-3);
+  border-top-color: var(--jade);
+  animation: girar-pequeno 0.8s linear infinite;
+}
+.girando.feito {
+  animation: none;
+  border-color: var(--jade);
+  background: var(--jade);
+}
+@keyframes girar-pequeno {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.digitando {
+  display: inline-flex;
+  gap: 4px;
+}
+.digitando i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--apagado);
+  animation: pular 1s ease-in-out infinite;
+}
+.digitando i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.digitando i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes pular {
+  40% {
+    transform: translateY(-5px);
+    background: var(--jade);
+  }
+}
+
+/* cartões vivos: entrada em cascata, ícone desenhado e borda de luz */
+@property --giro {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.icone svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cartoes-vivos .vivo {
+  opacity: 0;
+  transform: translateY(26px) scale(0.98);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.3s;
+}
+.cartoes-vivos.visivel .vivo {
+  opacity: 1;
+  transform: none;
+}
+.cartoes-vivos .vivo:nth-child(2) {
+  transition-delay: 0.08s;
+}
+.cartoes-vivos .vivo:nth-child(3) {
+  transition-delay: 0.16s;
+}
+.cartoes-vivos .vivo:nth-child(4) {
+  transition-delay: 0.24s;
+}
+.cartoes-vivos .vivo:nth-child(5) {
+  transition-delay: 0.32s;
+}
+.cartoes-vivos .vivo:nth-child(6) {
+  transition-delay: 0.4s;
+}
+.cartoes-vivos .vivo .icone svg {
+  stroke-dasharray: 90;
+  stroke-dashoffset: 90;
+  transition: stroke-dashoffset 1.6s cubic-bezier(0.6, 0, 0.2, 1) 0.4s;
+}
+.cartoes-vivos.visivel .vivo .icone svg {
+  stroke-dashoffset: 0;
+}
+.cartoes-vivos .vivo .icone {
+  transition:
+    transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.4),
+    box-shadow 0.4s;
+}
+.cartoes-vivos .vivo:hover {
+  transform: translateY(-6px);
+  transition-delay: 0s;
+}
+.cartoes-vivos .vivo:hover .icone {
+  transform: rotate(-8deg) scale(1.12);
+  box-shadow: 0 0 24px rgba(61, 220, 142, 0.35);
+}
+.cartoes-vivos .vivo::before {
+  background: conic-gradient(
+    from var(--giro),
+    transparent 0deg,
+    var(--jade) 60deg,
+    transparent 120deg,
+    transparent 360deg
+  );
+  animation: giro 3s linear infinite paused;
+}
+.cartoes-vivos .vivo:hover::before {
+  animation-play-state: running;
+}
+@keyframes giro {
+  to {
+    --giro: 360deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .numero,
+  .cartoes-vivos .vivo,
+  .vela {
+    opacity: 1;
+    transform: none;
+  }
+  .cartoes-vivos .vivo .icone svg {
+    stroke-dashoffset: 0;
+  }
+}
