@@ -10,9 +10,9 @@ import {
 } from "@zentrade/contratos";
 import { dec } from "@zentrade/dominio";
 import { candlesHistoricos, type FontesCandles } from "../candles-historicos.js";
-import { limitesDoBacktest } from "../limites.js";
 import { validarBacktest } from "../validacao/index.js";
 import { barrasPorAnoDaSerie, metricasGravadasWin } from "./metricas.js";
+import { limitesDoWin } from "./limites-win.js";
 import { modeloWinDe } from "./modelo.js";
 import { HISTORICO_WIN, rodarBacktestWin, type ResultadoBacktestWin } from "./rodar.js";
 
@@ -63,7 +63,7 @@ export async function rodarWin(
 }> {
   const saldo = dec(config.saldoInicial ?? SALDO_PADRAO_WIN);
   const modelo = modeloWinDe(configuracaoWin(config));
-  const { limites } = limitesDoBacktest(config, saldo, 0);
+  const { limites, avisos: avisosDosLimites } = limitesDoWin(config, saldo, modelo.riscoPorOperacao);
   const consulta = { simbolo: p.simbolo, intervalo: p.intervalo, inicio: p.inicio, fim: p.fim };
   const candles = await candlesHistoricos(fontes, consulta, AQUECIMENTO_WIN);
   const r = rodarBacktestWin({
@@ -99,6 +99,9 @@ export async function rodarWin(
     metricas: metricasGravadasWin(r, contexto),
     curva: r.curva,
     referencia: r.referencia,
-    validacao: { ...validacao, avisos: [...validacao.avisos, ...avisosDoWin(p.simbolo, r)] },
+    validacao: {
+      ...validacao,
+      avisos: [...avisosDosLimites, ...validacao.avisos, ...avisosDoWin(p.simbolo, r)],
+    },
   };
 }
