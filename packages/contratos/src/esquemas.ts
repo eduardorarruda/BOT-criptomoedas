@@ -16,6 +16,7 @@ export * from "./dados-b3-importacao.js";
 export * from "./mt5.js";
 export * from "./eventos.js";
 export * from "./pedido-analise.js";
+export * from "./pensamento.js";
 export * from "./fuso.js";
 export * from "./placar.js";
 export * from "./proposta.js";

@@ -6,6 +6,7 @@ import { portaCredenciais } from "./portas/credenciais.js";
 import { portaDecisoes } from "./portas/decisoes.js";
 import { portaOrdens } from "./portas/ordens.js";
 import { repositorioReplay } from "./repositorios/replay.js";
+import { portaPensamentos } from "./portas/pensamentos.js";
 import { portaPlacar } from "./portas/placar.js";
 import { portaProtecoes } from "./portas/protecoes.js";
 import { portaRiscoConta, type AtivoDoSimbolo } from "./portas/risco-conta.js";
@@ -32,6 +33,7 @@ import { repositorioLimitesConta } from "./repositorios/limites-conta.js";
 import { repositorioMercado } from "./repositorios/mercado.js";
 import { repositorioOrdens } from "./repositorios/ordens.js";
 import { repositorioPlacar } from "./repositorios/placar.js";
+import { repositorioPensamentos } from "./repositorios/pensamentos.js";
 import { repositorioPluggy } from "./repositorios/pluggy.js";
 import { repositorioIndicadores, repositorioRendaFixa } from "./repositorios/renda-fixa.js";
 import { repositorioResumo } from "./repositorios/resumo.js";
@@ -116,6 +118,7 @@ export function criarBancoDoMotor(opcoes: OpcoesBancoDoMotor) {
     importacoesB3: repositorioImportacoesB3(conexao.db),
     credenciaisMt5: opcoes.chaveMestra ? repositorioCredenciaisMt5(conexao.db, opcoes.chaveMestra) : null,
     placar: portaPlacar(conexao.db),
+    pensamentos: portaPensamentos(conexao.db),
     replay: repositorioReplay(conexao.db),
     fechar: () => conexao.fechar(),
   };
@@ -147,6 +150,7 @@ export function criarBanco(opcoes: OpcoesBanco) {
     robos: repositorioRobos(db),
     decisoes: repositorioDecisoes(db),
     placar: repositorioPlacar(db),
+    pensamentos: repositorioPensamentos(db),
     ordens: repositorioOrdens(db),
     mercado: repositorioMercado(db),
     backtests: repositorioBacktests(db),

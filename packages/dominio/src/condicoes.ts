@@ -10,7 +10,7 @@ export interface Condicao {
   readonly valor: boolean;
   /** Folha: a comparação com os números ("preço (98) < SMA(200) (100)"). Grupo: o nome do grupo. */
   readonly texto: string;
-  readonly filhos?: readonly Condicao[];
+  readonly filhos?: readonly Condicao[] | undefined;
 }
 
 const SUFIXO = /: (sim|não)$/;

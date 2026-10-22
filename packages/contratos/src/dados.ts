@@ -2,6 +2,7 @@ import type { Estrategia } from "@zentrade/dominio";
 import { z } from "zod";
 import { Fracao, Id, Instante, Intervalo, Lado, ModoRobo, Rede, TextoDecimal } from "./comum.js";
 import { ModoDiasDeEventoEsquema } from "./agenda-eventos.js";
+import { CondicaoEsquema, LeituraCenarioEsquema } from "./pensamento.js";
 import { AvaliacaoDecisaoEsquema } from "./placar.js";
 import { PropostaAgenteEsquema } from "./proposta.js";
 import { RegraEsquema } from "./regra.js";
@@ -126,6 +127,10 @@ export const DecisaoEsquema = z.object({
   desfecho: z.object({ resultado: TextoDecimal, avaliadoEm: Instante }).optional(),
   /** O placar do Claude nesta decisão: o que ele decidiu e como terminou (real ou contrafactual). */
   avaliacao: AvaliacaoDecisaoEsquema.optional(),
+  /** O cenário de mercado no momento da decisão. Decisões antigas não têm. */
+  regime: LeituraCenarioEsquema.optional(),
+  /** A regra aberta em condições (✓/✗ com valores) naquele momento. Decisões antigas não têm. */
+  condicoes: CondicaoEsquema.optional(),
 });
 export type DecisaoDTO = z.infer<typeof DecisaoEsquema>;
 
