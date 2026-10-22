@@ -63,4 +63,10 @@ describe("limite do robô: dias de evento", () => {
     expect(LimitesRiscoEsquema.parse({ ...limites, diasDeEvento: "reduzir" }).diasDeEvento).toBe("reduzir");
     expect(LimitesRiscoEsquema.safeParse({ ...limites, diasDeEvento: "parar" }).success).toBe(false);
   });
+
+  it("Claude no robô: o padrão é decide; aceita desligado; recusa outro valor", () => {
+    expect(LimitesRiscoEsquema.parse(limites).agente).toBe("decide");
+    expect(LimitesRiscoEsquema.parse({ ...limites, agente: "desligado" }).agente).toBe("desligado");
+    expect(LimitesRiscoEsquema.safeParse({ ...limites, agente: "talvez" }).success).toBe(false);
+  });
 });

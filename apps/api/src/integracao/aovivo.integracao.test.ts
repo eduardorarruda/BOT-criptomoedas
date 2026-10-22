@@ -13,6 +13,7 @@ const LIMITES = {
   pausaAposPerdaMin: 0,
   confiancaMinima: 0.5,
   diasDeEvento: "ignorar" as const,
+  agente: "decide" as const,
 };
 
 describe("ao vivo: histórico recente por robô", () => {

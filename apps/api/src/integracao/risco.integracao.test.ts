@@ -24,6 +24,7 @@ const LIMITES = {
   pausaAposPerdaMin: 0,
   confiancaMinima: 0.5,
   diasDeEvento: "ignorar" as const,
+  agente: "decide" as const,
 };
 const CINCO_MIN = 5 * 60_000;
 

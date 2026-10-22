@@ -21,7 +21,15 @@ export interface LimitesRisco {
   readonly confiancaMinima: number;
   /** Filtro opcional de dia de evento (padrão "ignorar"); o motor traduz em `EstadoRisco.diaDeEvento`. */
   readonly diasDeEvento?: ModoDiasDeEvento;
+  /**
+   * Se o Claude entra no ciclo deste robô: "decide" (padrão) consulta o agente e respeita
+   * o veto; "desligado" nem consulta — só a regra da estratégia e este motor de risco.
+   */
+  readonly agente?: ModoAgente;
 }
+
+export type ModoAgente = "decide" | "desligado";
+export const MODOS_AGENTE: readonly ModoAgente[] = ["decide", "desligado"];
 
 export interface EstadoRisco {
   readonly pausado: boolean;

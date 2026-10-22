@@ -92,6 +92,10 @@ export const robos = pgTable(
     diasDeEvento: text("dias_de_evento", { enum: ["ignorar", "bloquear", "reduzir"] })
       .notNull()
       .default("ignorar"),
+    /** O Claude no ciclo do robô: decide (padrão) ou desligado (só a regra, sem custo de IA). */
+    agente: text("agente", { enum: ["decide", "desligado"] })
+      .notNull()
+      .default("decide"),
     pausado: boolean("pausado").notNull().default(false),
     criadoEm: instante("criado_em").notNull().defaultNow(),
   },
@@ -107,6 +111,7 @@ export const robos = pgTable(
     check("robos_modo", sql`${t.modo} in ('observar', 'sugerir', 'auto')`),
     check("robos_rede", sql`${t.rede} in ('papel', 'testnet', 'real')`),
     check("robos_dias_de_evento", sql`${t.diasDeEvento} in ('ignorar', 'bloquear', 'reduzir')`),
+    check("robos_agente", sql`${t.agente} in ('decide', 'desligado')`),
   ],
 );
 

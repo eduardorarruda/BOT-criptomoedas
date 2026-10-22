@@ -84,6 +84,7 @@ function roboDe(estrategiaId: string) {
       pausaAposPerdaMin: 0,
       confiancaMinima: 0.5,
       diasDeEvento: "ignorar" as const,
+      agente: "decide" as const,
     },
   };
 }

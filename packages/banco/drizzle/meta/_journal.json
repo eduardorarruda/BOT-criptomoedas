@@ -141,6 +141,13 @@
       "when": 1792610620108,
       "tag": "0019_replay_claude",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792622083069,
+      "tag": "0020_agente_do_robo",
+      "breakpoints": true
     }
   ]
 }
