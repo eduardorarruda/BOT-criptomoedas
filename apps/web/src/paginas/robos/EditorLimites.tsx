@@ -63,9 +63,21 @@ export function CamposLimites({
         <option value="bloquear">Bloquear: não abrir posição nesses dias</option>
         <option value="reduzir">Reduzir: abrir com metade do tamanho</option>
       </CampoSelecao>
+      <CampoSelecao
+        rotulo="Claude neste robô"
+        value={campos.agente}
+        onChange={(e) => mudar("agente", e.target.value)}
+        dica={DICA_AGENTE}
+      >
+        <option value="decide">Decide: analisa e pode vetar (padrão)</option>
+        <option value="desligado">Desligado: só a regra, sem custo de IA</option>
+      </CampoSelecao>
     </div>
   );
 }
+
+const DICA_AGENTE =
+  "Desligado, o robô segue só a regra da estratégia e os limites de risco, sem consultar o Claude nem gastar com IA. No replay pré-registrado, o Claude como filtro da P1 ficou indistinguível do acaso. Para comparar, rode duas P1 iguais, uma de cada jeito, pelo mesmo tempo.";
 
 const DICA_DIAS_DE_EVENTO =
   "Vale para entradas de dias com evento de alto impacto na sua Agenda de eventos (em Risco); saída e stop nunca são barrados. Cuidado: estratégias de tendência costumam ganhar justamente nesses dias. Nos 20 pregões do WIN que medimos, bloquear piorou as de tendência e ajudou um pouco as de volta à média.";

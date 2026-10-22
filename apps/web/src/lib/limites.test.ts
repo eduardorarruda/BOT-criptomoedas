@@ -9,6 +9,7 @@ const LIMITES = {
   pausaAposPerdaMin: 60,
   confiancaMinima: 0.65,
   diasDeEvento: "ignorar" as const,
+  agente: "decide" as const,
 };
 
 describe("limites de risco", () => {
@@ -24,6 +25,13 @@ describe("limites de risco", () => {
     expect(campos.diasDeEvento).toBe("reduzir");
     expect(validarLimites(campos).limites?.diasDeEvento).toBe("reduzir");
     expect(validarLimites({ ...campos, diasDeEvento: "qualquer" }).limites?.diasDeEvento).toBe("ignorar");
+  });
+
+  it("Claude: vai e volta, e valor desconhecido cai no padrão (decide)", () => {
+    const campos = deLimites({ ...LIMITES, agente: "desligado" });
+    expect(campos.agente).toBe("desligado");
+    expect(validarLimites(campos).limites?.agente).toBe("desligado");
+    expect(validarLimites({ ...campos, agente: "qualquer" }).limites?.agente).toBe("decide");
   });
 
   it("explica cada campo errado", () => {

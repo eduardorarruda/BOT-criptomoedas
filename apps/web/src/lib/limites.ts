@@ -1,4 +1,8 @@
-import { ModoDiasDeEventoEsquema, type LimitesRiscoDTO } from "@zentrade/contratos/esquemas";
+import {
+  ModoAgenteEsquema,
+  ModoDiasDeEventoEsquema,
+  type LimitesRiscoDTO,
+} from "@zentrade/contratos/esquemas";
 import { erroInteiro, erroValorPositivo, lerDecimalDigitado, paraCampo } from "./entrada";
 
 /** Campos do formulário de limites de risco (texto como digitado) e sua validação. */
@@ -11,6 +15,8 @@ export interface CamposLimitesTexto {
   confiancaMinima: string;
   /** ignorar | bloquear | reduzir (o valor do seletor). */
   diasDeEvento: string;
+  /** decide | desligado (o Claude no ciclo do robô). */
+  agente: string;
 }
 
 export const deLimites = (l: LimitesRiscoDTO): CamposLimitesTexto => ({
@@ -21,6 +27,7 @@ export const deLimites = (l: LimitesRiscoDTO): CamposLimitesTexto => ({
   pausaAposPerdaMin: String(l.pausaAposPerdaMin),
   confiancaMinima: String(Math.round(l.confiancaMinima * 100)),
   diasDeEvento: l.diasDeEvento,
+  agente: l.agente,
 });
 
 export function validarLimites(c: CamposLimitesTexto): {
@@ -48,6 +55,7 @@ export function validarLimites(c: CamposLimitesTexto): {
       pausaAposPerdaMin: Number(c.pausaAposPerdaMin),
       confiancaMinima: Number(c.confiancaMinima) / 100,
       diasDeEvento: ModoDiasDeEventoEsquema.catch("ignorar").parse(c.diasDeEvento),
+      agente: ModoAgenteEsquema.catch("decide").parse(c.agente),
     },
   };
 }

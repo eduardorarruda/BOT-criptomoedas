@@ -182,6 +182,7 @@ export const LIMITES_PADRAO: LimitesRiscoDTO = {
   pausaAposPerdaMin: 60,
   confiancaMinima: 0.65,
   diasDeEvento: "ignorar",
+  agente: "decide",
 };
 
 export function robosIniciais(agora: number): RoboDTO[] {
@@ -234,7 +235,7 @@ export function robosIniciais(agora: number): RoboDTO[] {
       rede: "papel",
       estrategiaId: "e-medias",
       estrategiaVersao: 1,
-      limites: LIMITES_PADRAO,
+      limites: { ...LIMITES_PADRAO, agente: "desligado" },
       pausado: true,
       criadoEm: agora - 3 * DIA,
     },

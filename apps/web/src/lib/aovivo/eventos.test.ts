@@ -102,6 +102,7 @@ describe("eventos ao vivo", () => {
           pausaAposPerdaMin: 0,
           confiancaMinima: 0.5,
           diasDeEvento: "ignorar" as const,
+          agente: "decide" as const,
         },
         pausado: false,
         criadoEm: 1,
