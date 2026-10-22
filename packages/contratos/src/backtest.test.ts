@@ -76,7 +76,7 @@ describe("configuração do backtest", () => {
     };
     expect(ConfiguracaoBacktestEsquema.parse({ risco: { modo: "robo", limites } }).risco).toEqual({
       modo: "robo",
-      limites: { ...limites, diasDeEvento: "ignorar" },
+      limites: { ...limites, diasDeEvento: "ignorar", agente: "decide" },
     });
   });
 
@@ -109,6 +109,7 @@ describe("configuração do backtest", () => {
       pausaAposPerdaMin: 60,
       confiancaMinima: 0.65,
       diasDeEvento: "ignorar",
+      agente: "decide",
     });
     expect(limitesPadraoDoBacktest("250").riscoPorOperacao).toBe("1.25");
   });

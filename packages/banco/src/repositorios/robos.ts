@@ -26,6 +26,7 @@ const colunasDosLimites = (l: LimitesRiscoDTO) => ({
   pausaAposPerdaMin: l.pausaAposPerdaMin,
   confiancaMinima: String(l.confiancaMinima),
   diasDeEvento: l.diasDeEvento,
+  agente: l.agente,
 });
 
 async function obterNa(tx: Tx, id: string): Promise<RoboDTO | null> {

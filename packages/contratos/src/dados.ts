@@ -66,6 +66,8 @@ export function estrategiaDoDTO(e: CamposEstrategia): Estrategia {
   };
 }
 
+export const ModoAgenteEsquema = z.enum(["decide", "desligado"]);
+
 export const LimitesRiscoEsquema = z.object({
   perdaDiariaMaxima: TextoDecimal,
   exposicaoMaxima: TextoDecimal,
@@ -75,6 +77,8 @@ export const LimitesRiscoEsquema = z.object({
   confiancaMinima: Fracao,
   /** Filtro opcional de dia de evento (Copom, payroll…): ignorar (padrão), bloquear entradas ou reduzir à metade. */
   diasDeEvento: ModoDiasDeEventoEsquema.default("ignorar"),
+  /** O Claude no ciclo do robô: decide (analisa e pode vetar, padrão) ou desligado (só a regra, sem custo de IA). */
+  agente: ModoAgenteEsquema.default("decide"),
 });
 export type LimitesRiscoDTO = z.infer<typeof LimitesRiscoEsquema>;
 

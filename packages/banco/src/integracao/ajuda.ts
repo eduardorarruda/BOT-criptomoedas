@@ -33,6 +33,7 @@ export const LIMITES: RoboDTO["limites"] = {
   pausaAposPerdaMin: 30,
   confiancaMinima: 0.6,
   diasDeEvento: "ignorar",
+  agente: "decide",
 };
 
 async function pessoa(banco: Banco, email: string) {

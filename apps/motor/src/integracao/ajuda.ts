@@ -63,6 +63,7 @@ export async function montarAmbiente(): Promise<AmbienteIntegracao> {
       ordensPorHoraMax: 10,
       pausaAposPerdaMin: 0,
       diasDeEvento: "ignorar",
+      agente: "decide",
       confiancaMinima: 0.5,
     },
   });

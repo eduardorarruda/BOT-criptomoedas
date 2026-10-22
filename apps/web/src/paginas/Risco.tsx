@@ -23,6 +23,8 @@ import { PainelPausas } from "./risco/PainelPausas";
 import { ProximoPasso } from "../componentes/ProximoPasso";
 import { TabelaRolagem } from "../componentes/TabelaRolagem";
 
+const AGENTE = { decide: "Decide (pode vetar)", desligado: "Desligado" } as const;
+
 const DIAS_DE_EVENTO = {
   ignorar: "Ignora",
   bloquear: "Bloqueia entradas",
@@ -139,6 +141,7 @@ function Limites() {
               Confiança mín.
             </th>
             <th scope="col">Dias de evento</th>
+            <th scope="col">Claude</th>
           </tr>
         </thead>
         <tbody>
@@ -154,6 +157,7 @@ function Limites() {
                 {formatarPercentual(r.limites.confiancaMinima, { casas: 0 })}
               </td>
               <td>{DIAS_DE_EVENTO[r.limites.diasDeEvento]}</td>
+              <td>{AGENTE[r.limites.agente]}</td>
             </tr>
           ))}
         </tbody>

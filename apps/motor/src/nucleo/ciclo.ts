@@ -32,6 +32,9 @@ export const finalidadeDoSinal = (sinal: SinalOperacao): FinalidadeOrdem => {
   return ehProtecao(sinal) ? "protecao" : "saida";
 };
 
+export const TEXTO_CLAUDE_DESLIGADO =
+  "Claude desligado para este robô: decidido só pela regra da estratégia e pelo motor de risco.";
+
 const base = (robo: RoboConfig, e: EntradaCiclo) => ({
   roboId: robo.id,
   em: e.em,
@@ -56,7 +59,9 @@ export async function processarSinal(
     });
     return { estado: "barrada" };
   }
-  const analise = ehProtecao(sinal) ? null : await consultarAgente(deps, robo, e);
+  // Claude desligado neste robô: nem consulta (zero custo de IA); só a regra e o risco decidem.
+  const semClaude = robo.limites.agente === "desligado";
+  const analise = ehProtecao(sinal) || semClaude ? null : await consultarAgente(deps, robo, e);
   if (analise?.tipo === "falhou" && deps.opcoes.agenteObrigatorio) {
     const barreira = {
       codigo: "agente_indisponivel",
@@ -107,9 +112,15 @@ function montarDecisao(
 ): NovaDecisao {
   const estado = !risco.aprovada ? "barrada" : estadoInicial(robo, e.sinal);
   // Entrada reduzida por dia de evento: o diário diz por que o tamanho é a metade.
-  const sinal = plano.reducaoPorEvento
-    ? { ...e.sinal, explicacao: `${e.sinal.explicacao} ${textoReducaoPorEvento(plano.reducaoPorEvento)}` }
-    : e.sinal;
+  const comReducao = plano.reducaoPorEvento
+    ? `${e.sinal.explicacao} ${textoReducaoPorEvento(plano.reducaoPorEvento)}`
+    : e.sinal.explicacao;
+  // Claude desligado: o diário diz que ninguém analisou, para não parecer análise perdida.
+  const explicacao =
+    robo.limites.agente === "desligado" && !ehProtecao(e.sinal)
+      ? `${comReducao} ${TEXTO_CLAUDE_DESLIGADO}`
+      : comReducao;
+  const sinal = explicacao === e.sinal.explicacao ? e.sinal : { ...e.sinal, explicacao };
   return {
     ...base(robo, e),
     sinal,

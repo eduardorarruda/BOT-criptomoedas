@@ -85,6 +85,7 @@ export function roboDeLinha(r: LinhaRobo): RoboDTO {
       pausaAposPerdaMin: r.pausaAposPerdaMin,
       confiancaMinima: fracao(r.confiancaMinima),
       diasDeEvento: r.diasDeEvento,
+      agente: r.agente,
     },
     pausado: r.pausado,
     criadoEm: ms(r.criadoEm),
@@ -107,6 +108,7 @@ export function roboConfigDeLinha(r: LinhaRobo, versao: LinhaVersao): RoboConfig
       pausaAposPerdaMs: r.pausaAposPerdaMin * 60_000,
       confiancaMinima: fracao(r.confiancaMinima),
       diasDeEvento: r.diasDeEvento,
+      agente: r.agente,
     },
     riscoPorOperacao: dec(r.riscoPorOperacao),
   };

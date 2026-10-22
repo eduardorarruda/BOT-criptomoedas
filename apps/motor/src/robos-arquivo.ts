@@ -54,6 +54,7 @@ function paraConfig(r: RoboArquivo): RoboConfig {
       pausaAposPerdaMs: l.pausaAposPerdaMin * 60_000,
       confiancaMinima: l.confiancaMinima,
       diasDeEvento: l.diasDeEvento,
+      agente: l.agente,
     },
     riscoPorOperacao: dec(l.riscoPorOperacao),
   };

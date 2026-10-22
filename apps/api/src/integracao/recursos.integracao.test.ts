@@ -105,6 +105,26 @@ describe("rotas de recursos contra banco e Redis reais", () => {
     expect((await chamar(beto, "PATCH", `/robos/${roboId}`, { pausado: true })).statusCode).toBe(404);
   });
 
+  it("Claude por robô: padrão decide, PATCH liga o desligado e valor inválido é recusado", async () => {
+    expect((await chamar(ana, "GET", `/robos/${roboId}`)).json()).toMatchObject({
+      limites: { agente: "decide" },
+    });
+    const desligado = await chamar(ana, "PATCH", `/robos/${roboId}`, {
+      limites: { ...LIMITES, agente: "desligado" },
+    });
+    expect(desligado.statusCode).toBe(200);
+    expect(desligado.json()).toMatchObject({ limites: { agente: "desligado" } });
+    expect((await chamar(ana, "GET", `/robos/${roboId}`)).json()).toMatchObject({
+      limites: { agente: "desligado" },
+    });
+    const invalido = await chamar(ana, "PATCH", `/robos/${roboId}`, {
+      limites: { ...LIMITES, agente: "talvez" },
+    });
+    expect(invalido.statusCode).toBe(400);
+    const volta = await chamar(ana, "PATCH", `/robos/${roboId}`, { limites: LIMITES });
+    expect(volta.json()).toMatchObject({ limites: { agente: "decide" } });
+  });
+
   it("decisões: lista, detalha com a ordem, aprova uma vez e respeita a dona", async () => {
     const nova = (estado: "aguardando_aprovacao" | "registrada") =>
       api.banco.portas.decisoes.registrar({

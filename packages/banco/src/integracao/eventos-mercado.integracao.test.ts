@@ -116,4 +116,14 @@ describe("agenda de eventos de mercado", () => {
     const config = (await c.banco.portas.robos.ativos()).find((x) => x.id === c.ana.robo.id);
     expect(config?.limites.diasDeEvento).toBe("reduzir");
   });
+
+  it("o robô guarda o Claude ligado ou desligado (padrão decide), e o motor lê", async () => {
+    expect(c.ana.robo.limites.agente).toBe("decide");
+    const r = await c.banco.robos.atualizar(c.ana.id, c.ana.robo.id, {
+      limites: { ...LIMITES, agente: "desligado" },
+    });
+    expect(r?.limites.agente).toBe("desligado");
+    const config = (await c.banco.portas.robos.ativos()).find((x) => x.id === c.ana.robo.id);
+    expect(config?.limites.agente).toBe("desligado");
+  });
 });

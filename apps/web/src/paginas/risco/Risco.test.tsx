@@ -48,6 +48,15 @@ describe("tela Risco: conta, pausas, divergências, orçamento e avisos", () => 
     );
   });
 
+  it("limites por robô: mostra se o Claude decide ou está desligado em cada um", async () => {
+    montar();
+    const limites = await painel("Limites por robô");
+    expect(await within(limites).findByRole("columnheader", { name: "Claude" })).toBeInTheDocument();
+    expect((await within(limites).findAllByText("Decide (pode vetar)")).length).toBeGreaterThan(0);
+    const bnb = within(limites).getByRole("row", { name: /BNB em teste/ });
+    expect(within(bnb).getByText("Desligado")).toBeInTheDocument();
+  });
+
   it("barras da conta por rede e do orçamento de IA", async () => {
     montar();
     const conta = await painel("Limites da conta agora");
