@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { ESTRATEGIAS, ESTRATEGIA_WIN } from "../../demo/dados";
+import { ESTRATEGIAS, ESTRATEGIA_COFRE, ESTRATEGIA_WIN } from "../../demo/dados";
 import { FormRobo } from "./FormRobo";
 
 describe("criar robô", () => {
@@ -26,6 +26,17 @@ describe("criar robô", () => {
     expect(aoCriar).toHaveBeenCalledWith(
       expect.objectContaining({ limites: expect.objectContaining({ agente: "desligado" }) }),
     );
+  });
+
+  it("cofre de tendência: explica o tamanho por alocação e que foi estudado em velas de 4 h", async () => {
+    render(<FormRobo estrategias={ESTRATEGIAS} enviando={false} aoCriar={vi.fn()} aoCancelar={vi.fn()} />);
+    expect(screen.queryByText(/foi estudada em velas de 4 h/)).toBeNull();
+    await userEvent.selectOptions(screen.getByLabelText("Estratégia"), ESTRATEGIA_COFRE.id);
+    expect(
+      screen.getByText(/100% da exposição máxima do robô, sem olhar o risco por operação/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/foi estudada em velas de 4 h/)).toBeInTheDocument();
+    expect(screen.getByText(/a exposição máxima é o tamanho da compra/)).toBeInTheDocument();
   });
 
   it("só com estratégias que vendem: pede uma que só compra", () => {

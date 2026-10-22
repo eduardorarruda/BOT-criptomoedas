@@ -33,6 +33,8 @@ export const EstrategiaEsquema = z.object({
   empate: z.object({ gatilho: z.number().gt(0).lt(1) }).optional(),
   tempoMaximo: z.number().int().min(1).max(1000).optional(),
   tamanhoPorVolatilidade: UsoAtr.optional(),
+  /** Tamanho por alocação: fração (até 100%) da exposição máxima do robô, sem olhar o risco por operação. */
+  tamanhoPorAlocacao: z.object({ fracao: z.number().gt(0).max(1) }).optional(),
   /** Sem ela, comprado. Vendido e ambos só rodam no mini índice (o à vista não vende a descoberto). */
   direcao: z.enum(["comprado", "vendido", "ambos"]).optional(),
   entradaVendida: RegraEsquema.optional(),
@@ -61,6 +63,7 @@ export function estrategiaDoDTO(e: CamposEstrategia): Estrategia {
     ...(e.empate ? { empate: e.empate } : {}),
     ...(e.tempoMaximo !== undefined ? { tempoMaximo: e.tempoMaximo } : {}),
     ...(e.tamanhoPorVolatilidade ? { tamanhoPorVolatilidade: e.tamanhoPorVolatilidade } : {}),
+    ...(e.tamanhoPorAlocacao ? { tamanhoPorAlocacao: e.tamanhoPorAlocacao } : {}),
     ...(e.direcao ? { direcao: e.direcao } : {}),
     ...(e.entradaVendida ? { entradaVendida: e.entradaVendida } : {}),
     ...(e.saidaVendida ? { saidaVendida: e.saidaVendida } : {}),

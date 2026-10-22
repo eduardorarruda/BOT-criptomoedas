@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dec, paraTexto } from "./dinheiro.js";
-import { maiorQuantidade } from "./dimensionamento.js";
+import { FOLGA_DA_ALOCACAO, maiorQuantidade } from "./dimensionamento.js";
 import type { FiltrosAtivo } from "./tipos.js";
 
 const filtros: FiltrosAtivo = {
@@ -110,6 +110,53 @@ describe("dimensionamento por busca binária", () => {
         maiorQuantidade({ ...comum, stop: dec(99), distanciaRisco: dec(0.5) }),
       );
       expect(paraTexto(maiorQuantidade({ ...comum, stop: dec(99), distanciaRisco: dec(500) })!)).toBe("0.1");
+    });
+  });
+  describe("tamanho por alocação (valor alvo opcional, sem olhar o risco)", () => {
+    const comum = { preco: dec(100), stop: dec(50), filtros, taxa: 0 };
+
+    it("compra o valor alvo inteiro mesmo que o stop longe estoure o risco por operação", () => {
+      const q = maiorQuantidade({
+        ...comum,
+        riscoMaximo: dec(1),
+        disponivel: dec(100000),
+        valorAlvo: dec(1000),
+      });
+      expect(paraTexto(q!)).toBe("10");
+    });
+
+    it("o saldo livre e a exposição restante mandam, com folga de 0,5% para deslizamento e spread", () => {
+      const q = maiorQuantidade({
+        ...comum,
+        riscoMaximo: dec(1),
+        disponivel: dec(300),
+        valorAlvo: dec(1000),
+      });
+      // 300 × (1 − 0,005) = 298,5 → 2,985 unidades a 100: a ordem a mercado não estoura o saldo
+      expect(FOLGA_DA_ALOCACAO).toBe(0.005);
+      expect(paraTexto(q!)).toBe("2.985");
+    });
+
+    it("a taxa entra no custo: o valor alvo cobre preço mais a taxa de compra", () => {
+      const q = maiorQuantidade({
+        ...comum,
+        taxa: 0.001,
+        riscoMaximo: dec(1),
+        disponivel: dec(100000),
+        valorAlvo: dec(1001),
+      });
+      expect(paraTexto(q!)).toBe("10");
+    });
+
+    it("respeita a quantidade mínima e o valor mínimo da corretora", () => {
+      expect(
+        maiorQuantidade({ ...comum, riscoMaximo: dec(1), disponivel: dec(100000), valorAlvo: dec(4) }),
+      ).toBeNull();
+    });
+
+    it("sem valor alvo, o risco por operação manda como sempre", () => {
+      const q = maiorQuantidade({ ...comum, riscoMaximo: dec(10), disponivel: dec(100000) });
+      expect(paraTexto(q!)).toBe("0.2");
     });
   });
 });

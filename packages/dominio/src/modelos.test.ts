@@ -4,11 +4,11 @@ import { dec } from "./dinheiro.js";
 import { decidir, decidirComSentido, validarEstrategia } from "./estrategia.js";
 import { problemasNoMercado } from "./mercados/mercado.js";
 import { AVISO_MODELOS, MODELOS, MODELOS_WIN, TODOS_OS_MODELOS } from "./modelos.js";
-import { POSICAO_ZERADA } from "./posicao.js";
+import { POSICAO_ZERADA, type Posicao } from "./posicao.js";
 
-/** 300 candles com tendência, ciclos e volume variando: história suficiente para a SMA 200. */
+/** 450 candles com tendência, ciclos e volume variando: história suficiente para a SMA 400 do cofre. */
 const ctx = contextoDeCandles(
-  Array.from({ length: 300 }, (_, i) => {
+  Array.from({ length: 450 }, (_, i) => {
     const fecha = 100 + i * 0.2 + 8 * Math.sin(i / 9);
     return {
       abertura: i,
@@ -86,5 +86,78 @@ describe("modelos do mini índice (WIN)", () => {
     expect(validarEstrategia(m.estrategia)).toEqual([]);
     const s = decidirComSentido(m.estrategia, { ...pregoes, preco: dec(pregoes.fechamentos.at(-1)!) }, null);
     expect(s.explicacao).not.toMatch(/dados insuficientes/);
+  });
+});
+
+const HORA_4H = 14_400_000;
+
+/**
+ * 410 candles de 4h terminando num candle que abre às `horaUtcFinal` (UTC) do dia 2026-10-20: o
+ * preço fica acima ou abaixo da SMA 400 conforme o último fechamento.
+ */
+function velas4h(horaUtcFinal: number, ultimo: number) {
+  const fimAbertura = Date.parse("2026-10-20T00:00:00Z") + horaUtcFinal * 3_600_000;
+  return contextoDeCandles(
+    Array.from({ length: 410 }, (_, i) => {
+      const abertura = fimAbertura - (409 - i) * HORA_4H;
+      const fecha = i === 409 ? ultimo : 100;
+      return {
+        abertura,
+        fechamento: abertura + HORA_4H - 1,
+        abre: dec(100),
+        maxima: dec(Math.max(fecha, 100) + 1),
+        minima: dec(Math.min(fecha, 100) - 1),
+        fecha: dec(fecha),
+        volume: dec(10),
+      };
+    }),
+  );
+}
+
+describe("cofre de tendência (SMA 400, uma decisão por dia)", () => {
+  const cofre = MODELOS.find((m) => m.id === "cofre-tendencia-sma400")!;
+  const comprado: Posicao = { ...POSICAO_ZERADA, quantidade: dec(1), precoMedio: dec(100) };
+
+  it("é um modelo de cripto em 4h, só comprado, com tamanho por alocação e stop de catástrofe", () => {
+    expect(cofre).toBeDefined();
+    expect(cofre.intervalo).toBe("4h");
+    expect(cofre.mercado).toBeUndefined();
+    expect(cofre.nome.length).toBeLessThanOrEqual(80);
+    expect(cofre.estrategia).toMatchObject({
+      stop: 0.49,
+      alvoLiquido: 0.99,
+      taxa: 0.001,
+      tamanhoPorAlocacao: { fracao: 1 },
+    });
+    expect(cofre.estrategia.tamanhoPorVolatilidade).toBeUndefined();
+    expect(validarEstrategia(cofre.estrategia)).toEqual([]);
+    expect(problemasNoMercado(cofre.estrategia, "cripto")).toEqual([]);
+  });
+
+  it("a descrição é neutra: traz os números do estudo, os limites e que é teste", () => {
+    expect(cofre.descricao).not.toMatch(/recomend/i);
+    expect(cofre.descricao).not.toMatch(/\n/);
+    for (const trecho of ["1.348%", "−67%", "886%", "−87%", "viés de sobrevivência", "teste"])
+      expect(cofre.descricao).toContain(trecho);
+  });
+
+  it("compra só na vela que abre às 17:00 de Brasília (20:00 UTC), e só acima da SMA 400", () => {
+    const acima = (h: number) => ({ ...velas4h(h, 130), preco: dec(130) });
+    expect(decidir(cofre.estrategia, acima(20), POSICAO_ZERADA)).toMatchObject({ acao: "COMPRAR" });
+    expect(decidir(cofre.estrategia, acima(16), POSICAO_ZERADA).acao).toBe("AGUARDAR");
+    expect(decidir(cofre.estrategia, acima(0), POSICAO_ZERADA).acao).toBe("AGUARDAR");
+    const abaixo = { ...velas4h(20, 70), preco: dec(70) };
+    expect(decidir(cofre.estrategia, abaixo, POSICAO_ZERADA).acao).toBe("AGUARDAR");
+  });
+
+  it("sai só no mesmo horário e só abaixo da SMA 400 (o stop de 49% e o alvo de 99% ficam longe)", () => {
+    const abaixo = (h: number) => ({ ...velas4h(h, 70), preco: dec(70) });
+    expect(decidir(cofre.estrategia, abaixo(20), comprado)).toMatchObject({
+      acao: "VENDER",
+      motivo: "regra de saída",
+    });
+    expect(decidir(cofre.estrategia, abaixo(12), comprado).acao).toBe("AGUARDAR");
+    const acima = { ...velas4h(20, 130), preco: dec(130) };
+    expect(decidir(cofre.estrategia, acima, comprado).acao).toBe("AGUARDAR");
   });
 });

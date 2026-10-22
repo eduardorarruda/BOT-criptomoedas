@@ -5,7 +5,7 @@ import {
   type ConfiguracaoBacktest,
   type PontoCurvaBacktest,
 } from "@zentrade/contratos";
-import { dec, paraTexto, type EventoMercado, type Valor } from "@zentrade/dominio";
+import { candlesDeAquecimento, dec, paraTexto, type EventoMercado, type Valor } from "@zentrade/dominio";
 import type { Registro } from "../nucleo/tipos.js";
 import { candlesHistoricos, type FontesCandles } from "./candles-historicos.js";
 import { limitesDoBacktest } from "./limites.js";
@@ -47,6 +47,7 @@ export interface OpcoesBacktest {
   readonly fuso?: string;
 }
 
+/** Candles antes do início só para os indicadores; sobe se a estratégia usa período maior (veja `candlesDeAquecimento`). */
 const AQUECIMENTO = 200;
 const PONTOS_CURVA = 1000;
 
@@ -100,7 +101,8 @@ async function rodar(d: DependenciasBacktest, o: OpcoesBacktest, p: BacktestPara
   const saldo = config.saldoInicial ? dec(config.saldoInicial) : o.saldoInicial;
   const { limites, riscoPorOperacao } = limitesDoBacktest(config, saldo, o.riscoPorOperacao);
   const consulta = { simbolo: p.simbolo, intervalo: p.intervalo, inicio: p.inicio, fim: p.fim };
-  const candles = await candlesHistoricos(d.fontes, consulta, AQUECIMENTO);
+  const aquecimento = candlesDeAquecimento(p.estrategia, AQUECIMENTO);
+  const candles = await candlesHistoricos(d.fontes, consulta, aquecimento);
   const minutos = config.precisaoMinuto
     ? await candlesHistoricos(d.fontes, { ...consulta, intervalo: "1m" }, 0)
     : undefined;
@@ -112,7 +114,7 @@ async function rodar(d: DependenciasBacktest, o: OpcoesBacktest, p: BacktestPara
     riscoPorOperacao,
     saldoInicial: saldo,
     agente: "sempre_concorda",
-    aquecimento: AQUECIMENTO,
+    aquecimento,
     custos: config.custos,
     execucao: config.execucao,
     ...(eventos ? { eventos } : {}),

@@ -13,6 +13,7 @@ import {
   type Empate,
   type StopAtr,
   type StopMovel,
+  type TamanhoPorAlocacao,
   type TamanhoPorVolatilidade,
 } from "./saidas.js";
 
@@ -41,6 +42,8 @@ export interface Estrategia {
   readonly tempoMaximo?: number;
   /** Tamanho pela volatilidade: o risco por operação dividido por k × ATR(n). */
   readonly tamanhoPorVolatilidade?: TamanhoPorVolatilidade;
+  /** Tamanho por alocação: fração × exposição máxima, sem olhar o risco por operação (o cofre de tendência). */
+  readonly tamanhoPorAlocacao?: TamanhoPorAlocacao;
   /**
    * Para que lado abrir posição. Sem ele, "comprado" — o único lado do à vista de
    * cripto, onde o robô e o backtest recusam as outras direções. Com "vendido" ou
@@ -258,6 +261,12 @@ function problemasSaidas(e: Estrategia): string[] {
       `o tempo máximo precisa ser um número inteiro de candles entre 1 e ${TEMPO_MAXIMO_CANDLES}`,
     );
   if (e.tamanhoPorVolatilidade) problemas.push(...problemasAtr("do tamanho", e.tamanhoPorVolatilidade));
+  if (e.tamanhoPorAlocacao) {
+    if (!(e.tamanhoPorAlocacao.fracao > 0 && e.tamanhoPorAlocacao.fracao <= 1))
+      problemas.push("a fração da alocação precisa ser maior que 0% e no máximo 100% da exposição máxima");
+    if (e.tamanhoPorVolatilidade)
+      problemas.push("use um só jeito de definir o tamanho: pela volatilidade ou por alocação");
+  }
   return problemas;
 }
 

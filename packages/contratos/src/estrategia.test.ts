@@ -63,6 +63,15 @@ describe("esquema da estratégia com as saídas novas", () => {
     expect(com({ tempoMaximo: 1.5 })).toBe(false);
     expect(com({ tempoMaximo: 1001 })).toBe(false);
     expect(com({ tamanhoPorVolatilidade: { periodo: 20, multiplo: 2 } })).toBe(true);
+    expect(com({ tamanhoPorAlocacao: { fracao: 1 } })).toBe(true);
+    expect(com({ tamanhoPorAlocacao: { fracao: 0.25 } })).toBe(true);
+    expect(com({ tamanhoPorAlocacao: { fracao: 0 } })).toBe(false);
+    expect(com({ tamanhoPorAlocacao: { fracao: 1.5 } })).toBe(false);
+  });
+
+  it("o tamanho por alocação chega ao domínio", () => {
+    const dominio = estrategiaDoDTO(EstrategiaEsquema.parse({ ...base, tamanhoPorAlocacao: { fracao: 1 } }));
+    expect(dominio.tamanhoPorAlocacao).toEqual({ fracao: 1 });
   });
 
   it("sem os campos novos, o domínio recebe a estratégia sem chaves vazias", () => {

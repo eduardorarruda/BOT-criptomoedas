@@ -62,6 +62,27 @@ describe("como a operação sai", () => {
     expect(texto).toMatch(/Tempo máximo: 48 velas \(2 dias\)/);
   });
 
+  it("cofre (tamanho por alocação): stop e alvo largos são proteção contra desastre, não plano de risco", () => {
+    const operacao = {
+      ...OPERACAO_DONCHIAN,
+      stopPercentual: 0.49,
+      alvoLiquido: 0.99,
+      tamanhoPorVolatilidade: undefined,
+      tamanhoPorAlocacao: { fracao: 1 },
+    };
+    const alvo = precoAlvo(dec("60450"), 0.99, 0.001);
+    const pedido = pedidoExemplo({
+      operacao,
+      sinal: { acao: "COMPRAR", stop: dec("30825"), alvo, explicacao: "acima da SMA 400" },
+    });
+    const s = leituraDasSaidas(pedido, custoIdaEVolta(operacao.custos, pedido.preco), null);
+    expect(s.alvoDistante).toBe(true);
+    const texto = s.linhas.join("\n");
+    expect(texto).toMatch(/Tamanho por alocação: 100% da exposição máxima/);
+    expect(texto).toMatch(/proteção contra desastre/);
+    expect(texto).toMatch(/DISTANTE DE PROPÓSITO/);
+  });
+
   it("alvo perto do stop não é chamado de distante", () => {
     const pedido = pedidoExemplo({ operacao: OPERACAO_DONCHIAN });
     const s = leituraDasSaidas(pedido, custoIdaEVolta(OPERACAO_DONCHIAN.custos, pedido.preco), null);

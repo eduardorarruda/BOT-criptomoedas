@@ -6,11 +6,21 @@ import type { EstadoSaidas, TipoMovel, TipoStop } from "./saidas";
 
 /**
  * Proteção, alvo e as saídas opcionais: stop fixo ou por ATR, stop móvel, empate,
- * saída por tempo e tamanho pela volatilidade. Cada opção liga os próprios campos.
+ * saída por tempo e tamanho (pela volatilidade ou por alocação). Cada opção liga os próprios campos.
  */
 type CampoTextoSaida = {
   [K in keyof EstadoSaidas]: EstadoSaidas[K] extends string ? K : never;
 }[keyof EstadoSaidas];
+
+/** Os dois jeitos de definir o tamanho não convivem: ligar um desliga o outro. */
+function mudancaDoInterruptor(
+  chave: "empate" | "tempo" | "tamanho" | "alocacao",
+  ligado: boolean,
+): Partial<EstadoSaidas> {
+  if (chave === "tamanho" && ligado) return { tamanho: true, alocacao: false };
+  if (chave === "alocacao" && ligado) return { alocacao: true, tamanho: false };
+  return { [chave]: ligado };
+}
 
 export function EditorSaidas({
   estado,
@@ -31,9 +41,13 @@ export function EditorSaidas({
       className="campo--num"
     />
   );
-  const interruptor = (chave: "empate" | "tempo" | "tamanho", rotulo: string) => (
+  const interruptor = (chave: "empate" | "tempo" | "tamanho" | "alocacao", rotulo: string) => (
     <label className="interruptor">
-      <input type="checkbox" checked={s[chave]} onChange={(e) => mudar({ [chave]: e.target.checked })} />
+      <input
+        type="checkbox"
+        checked={s[chave]}
+        onChange={(e) => mudar(mudancaDoInterruptor(chave, e.target.checked))}
+      />
       <span>{rotulo}</span>
     </label>
   );
@@ -130,6 +144,16 @@ export function EditorSaidas({
             {campo("tamanhoPeriodo", "Período do ATR do tamanho")}
           </>
         ) : null}
+        <div className="construtor__linha">
+          {interruptor("alocacao", "Tamanho por alocação (fração da exposição máxima)")}
+        </div>
+        {s.alocacao
+          ? campo(
+              "alocacaoFracao",
+              "Fração da exposição máxima (%)",
+              "Compra este tanto da exposição máxima do robô, limitado ao saldo livre, sem dividir pelo risco por operação. Para estratégias sem stop de verdade, como o cofre de tendência: o stop vira só proteção contra desastre.",
+            )
+          : null}
       </fieldset>
     </>
   );

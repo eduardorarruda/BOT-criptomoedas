@@ -1,6 +1,13 @@
 import { dec, type Valor } from "./dinheiro.js";
 import type { FiltrosAtivo } from "./tipos.js";
 
+/**
+ * No tamanho por alocação o saldo livre pode ser o limite (o cofre aloca tudo): a ordem a
+ * mercado paga o deslizamento e o meio spread, que a conta não vê. Esta fração do saldo
+ * (0,5%, bem acima dos 7 pb de custo) fica de fora para a ordem não estourar o saldo.
+ */
+export const FOLGA_DA_ALOCACAO = 0.005;
+
 export interface EntradaDimensionamento {
   readonly preco: Valor;
   readonly stop: Valor;
@@ -16,6 +23,13 @@ export interface EntradaDimensionamento {
    * risco por operação é respeitado mesmo se o stop estiver mais longe.
    */
   readonly distanciaRisco?: Valor;
+  /**
+   * Tamanho por alocação (opcional): compra este valor, em moeda de cotação, e NÃO olha o
+   * risco por operação — para estratégias sem stop de verdade, como o cofre de tendência.
+   * O saldo livre e a exposição restante (`disponivel`) e os filtros da corretora continuam
+   * valendo.
+   */
+  readonly valorAlvo?: Valor;
 }
 
 /**
@@ -35,13 +49,17 @@ export function maiorQuantidade(e: EntradaDimensionamento): Valor | null {
   const perdaPorUnidade = e.preco.minus(saida).plus(e.preco.times(taxa)).plus(saida.times(taxa));
   const custoPorUnidade = e.preco.times(dec(1).plus(taxa));
 
+  const orcamento = e.valorAlvo
+    ? menor(e.disponivel.times(1 - FOLGA_DA_ALOCACAO), e.valorAlvo)
+    : e.disponivel;
   const cabe = (passos: Valor): boolean => {
     const q = passos.times(passo);
-    return q.times(perdaPorUnidade).lte(e.riscoMaximo) && q.times(custoPorUnidade).lte(e.disponivel);
+    const noRisco = e.valorAlvo !== undefined || q.times(perdaPorUnidade).lte(e.riscoMaximo);
+    return noRisco && q.times(custoPorUnidade).lte(orcamento);
   };
 
   let baixo = dec(0);
-  let alto = e.disponivel.div(custoPorUnidade).div(passo).floor();
+  let alto = orcamento.div(custoPorUnidade).div(passo).floor();
   if (quantidadeMaxima) alto = menor(alto, quantidadeMaxima.div(passo).floor());
   while (baixo.lt(alto)) {
     const meio = baixo.plus(alto).plus(1).div(2).floor();

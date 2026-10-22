@@ -1,5 +1,5 @@
 import type { CoberturaWin, EstrategiaDTO, LimitesRiscoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
-import { MODELOS_WIN } from "@zentrade/dominio";
+import { MODELOS, MODELOS_WIN } from "@zentrade/dominio";
 import type { Automacao, ContaCorretora, Documento, TokenApi, Usuario } from "../api/esquemas";
 
 /** Dados fixos do modo de demonstração. Tudo é fictício. */
@@ -148,7 +148,25 @@ export const ESTRATEGIA_WIN: EstrategiaDTO = {
   ...modeloWin("win-faixa-abertura-30"),
 };
 
-export const ESTRATEGIAS: readonly EstrategiaDTO[] = [...ESTRATEGIAS_CRIPTO, ESTRATEGIA_WIN];
+function modeloCripto(id: string) {
+  const modelo = MODELOS.find((m) => m.id === id);
+  if (!modelo) throw new Error(`modelo de cripto ${id} não existe`);
+  return modelo.estrategia;
+}
+
+/** O cofre de tendência (4h, SMA 400, tamanho por alocação), ao lado das estratégias de exemplo. */
+export const ESTRATEGIA_COFRE: EstrategiaDTO = {
+  id: "e-cofre",
+  nome: "Cofre de tendência (SMA 400)",
+  versao: 1,
+  ...modeloCripto("cofre-tendencia-sma400"),
+};
+
+export const ESTRATEGIAS: readonly EstrategiaDTO[] = [
+  ...ESTRATEGIAS_CRIPTO,
+  ESTRATEGIA_COFRE,
+  ESTRATEGIA_WIN,
+];
 
 /**
  * Candles do mini índice "gravados" no exemplo: 2 anos de WIN importado de um CSV do
