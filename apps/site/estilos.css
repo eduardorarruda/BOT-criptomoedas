@@ -478,6 +478,9 @@ ol.lista-editorial > li::before {
 .topo .botao {
   padding: 9px 16px;
 }
+.topo .so-largo + .so-largo {
+  margin-left: calc(var(--e-3) - var(--e-5));
+}
 .so-painel,
 .abre-menu {
   display: none;
@@ -505,6 +508,9 @@ ol.lista-editorial > li::before {
   .so-painel {
     display: inline-flex;
     margin-top: var(--e-4);
+  }
+  .so-painel + .so-painel {
+    margin-top: var(--e-3);
   }
   .so-largo {
     display: none;
@@ -801,7 +807,7 @@ ol.lista-editorial > li::before {
   border: 2px solid var(--tinta);
 }
 .m1 {
-  left: 27.3%;
+  left: 27.2%;
   top: 8%;
 }
 .m2 {
@@ -818,8 +824,8 @@ ol.lista-editorial > li::before {
     top: 10.5%;
   }
   .m2 {
-    left: 17%;
-    top: 80%;
+    left: 19.4%;
+    top: 87.7%;
   }
   .m3 {
     left: 83%;

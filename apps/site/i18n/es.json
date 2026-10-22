@@ -137,7 +137,7 @@
     "prod.rotulo": "El producto",
     "prod.titulo": "La pantalla que abres todos los días.",
     "prod.intro": "Visión general en el modo de ejemplo de la propia app: la pantalla es real, los números son ficticios.",
-    "prod.alt": "Pantalla de visión general de ZenTrade: dos órdenes esperando aprobación, resultado del día, exposición, mayor caída, comisiones y costo de IA.",
+    "prod.alt": "Pantalla de visión general de ZenTrade: una orden esperando aprobación, resultado del día, exposición, mayor caída, comisiones y costo de IA.",
     "prod.n1": "<b>Comisiones y costo de IA a la vista.</b> El resultado del día ya viene descontado.",
     "prod.n2": "<b>La propuesta te espera.</b> En modo semiautomático, nada llega al exchange sin tu sí.",
     "prod.n3": "<b>Detener todo</b> está arriba en todas las pantallas.",
@@ -171,7 +171,8 @@
     "e404.meta": "Página no encontrada | ZenTrade",
     "e404.titulo": "Esta página no está aquí.",
     "e404.texto": "La dirección puede haber cambiado, o nunca existió. No se perdió nada: el resto del sitio sigue donde estaba.",
-    "e404.voltar": "Volver al inicio"
+    "e404.voltar": "Volver al inicio",
+    "nav.entrar": "Entrar"
   },
   "dinamico": {
     "cenarios": {

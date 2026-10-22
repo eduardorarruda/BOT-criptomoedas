@@ -1,0 +1,35 @@
+/*
+ * A linguagem do site (apps/site) no app: o ensō a pincel com a vela, o grão de
+ * papel no fundo e a entrada calma das telas. Os tokens (tokens.css) já trazem as
+ * cores, os raios e as curvas do site; aqui ficam só as peças que o site também tem.
+ */
+
+/* ensō: o anel é a textura do pincel pintada com a cor do tom; a vela é sempre jade */
+.enso__anel {
+  fill: var(--marca);
+}
+.enso--tinta .enso__anel {
+  fill: var(--anel-simbolo);
+}
+.enso__vela {
+  fill: var(--marca);
+}
+
+/* grão de papel, fixo e discreto, como no site */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grao);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+:root[data-tema="claro"] body::before {
+  filter: invert(1);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-tema="escuro"]) body::before {
+    filter: invert(1);
+  }
+}

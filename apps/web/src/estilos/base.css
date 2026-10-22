@@ -120,9 +120,10 @@ svg {
 
 /* Rótulo curto em caixa alta (sobretítulos, grupos do menu, legendas de KPI). */
 .rotulo-caixa {
+  font-family: var(--fonte-numero);
   font-size: var(--t-micro);
-  font-weight: 600;
-  letter-spacing: var(--rastreio-rotulo);
+  font-weight: 400;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--apagado);
 }

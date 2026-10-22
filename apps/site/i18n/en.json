@@ -137,7 +137,7 @@
     "prod.rotulo": "The product",
     "prod.titulo": "The screen you open every day.",
     "prod.intro": "Overview in the app's own demo mode: the screen is real, the numbers are fictitious.",
-    "prod.alt": "ZenTrade overview screen: two orders waiting for approval, today's result, exposure, largest drawdown, fees and AI cost.",
+    "prod.alt": "ZenTrade overview screen: an order waiting for approval, today's result, exposure, largest drawdown, fees and AI cost.",
     "prod.n1": "<b>Fees and AI cost in plain sight.</b> Today's result already has them deducted.",
     "prod.n2": "<b>The proposal waits for you.</b> In semi-automatic mode, nothing reaches the exchange without your yes.",
     "prod.n3": "<b>Stop everything</b> sits at the top of every screen.",
@@ -171,7 +171,8 @@
     "e404.meta": "Page not found | ZenTrade",
     "e404.titulo": "This page is not here.",
     "e404.texto": "The address may have changed, or it never existed. Nothing was lost: the rest of the site is where it was.",
-    "e404.voltar": "Back to the home page"
+    "e404.voltar": "Back to the home page",
+    "nav.entrar": "Sign in"
   },
   "dinamico": {
     "cenarios": {

@@ -7,7 +7,7 @@ export function NaoEncontrada() {
   return (
     <main className="pagina-solta nao-encontrada">
       <div className="nao-encontrada__conteudo">
-        <Enso tamanho={104} animar />
+        <Enso tamanho={104} animar tom="tinta" />
         <p className="rotulo-caixa nao-encontrada__codigo">Erro 404</p>
         <h1 className="titulo-serif nao-encontrada__titulo">Esta página não existe</h1>
         <p className="nao-encontrada__texto">

@@ -56,7 +56,7 @@ export function Abertura() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
         >
-          <Enso tamanho={112} animar />
+          <Enso tamanho={112} animar tom="tinta" />
           <m.p
             className="abertura__frase"
             initial={{ opacity: 0, y: 6 }}

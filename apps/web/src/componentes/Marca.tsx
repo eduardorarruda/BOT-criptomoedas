@@ -1,6 +1,6 @@
 import { Enso } from "./Enso";
 
-/** Wordmark: "Zen" em Instrument Serif itálico jade + "Trade" em Geist 600. */
+/** A marca: o ensō a pincel com a vela e o nome "ZenTrade" em Instrument Serif, como no site. */
 export function Marca({
   tamanho = 28,
   animar = false,

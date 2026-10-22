@@ -16,6 +16,7 @@ import "./estilos/risco.css";
 import "./estilos/primeiros-passos.css";
 import "./estilos/interacoes.css";
 import "./estilos/responsivo.css";
+import "./estilos/marca.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import type { Fonte } from "./api/fonte";

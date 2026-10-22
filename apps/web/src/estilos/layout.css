@@ -471,18 +471,12 @@
   max-width: 72ch;
   min-width: 0;
 }
+/* o rótulo acima do título, como no site: mono, caixa alta, cinza */
 .cabecalho__sobretitulo {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--marca);
-}
-.cabecalho__sobretitulo::before {
-  content: "";
-  width: 14px;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.7;
+  font-family: var(--fonte-numero);
+  font-size: var(--t-legenda);
+  letter-spacing: 0.14em;
+  color: var(--apagado);
 }
 .cabecalho__titulo {
   font-size: var(--t-titulo-1);

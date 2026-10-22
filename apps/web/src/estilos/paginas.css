@@ -1,48 +1,53 @@
-/* ---------- entrar ---------- */
+/* ---------- entrar: o palco do site à esquerda, o formulário à direita ---------- */
 .entrar {
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
 }
 .entrar__marca {
+  /* o palco é sempre tinta, também no tema claro, como o topo do site */
+  --anel-simbolo: #e6eee8;
+  --texto: #e6eee8;
+  color-scheme: dark;
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   display: grid;
   place-content: center;
-  justify-items: start;
+  justify-items: center;
   gap: var(--espaco-6);
   padding: var(--espaco-7);
   border-right: 1px solid var(--linha);
-  background:
-    radial-gradient(70% 60% at 30% 40%, color-mix(in oklab, var(--marca) 9%, transparent), transparent 70%),
-    var(--fundo-lateral);
+  background: #070c0a;
+  color: var(--texto);
 }
-/* o anel do Ensō, grande e quase invisível, atrás do lema */
-.entrar__marca::before {
-  content: "";
+.entrar__cena {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: min(86%, 620px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1px solid color-mix(in oklab, var(--texto) 7%, transparent);
-  border-top-color: transparent;
-  border-right-color: color-mix(in oklab, var(--texto) 3%, transparent);
-  transform: translate(-50%, -50%) rotate(-30deg);
-  pointer-events: none;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
 }
-.entrar__marca > * {
-  position: relative;
+.entrar__enso {
+  width: clamp(200px, 24vw, 360px);
+  height: auto;
 }
 .entrar__lema {
-  font-size: clamp(34px, 3.6vw, 54px);
-  line-height: 1.08;
-  color: var(--texto);
+  font-size: clamp(32px, 3.2vw, 50px);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  text-align: center;
+  animation: entrar-subir var(--dur-longa) var(--curva) 1.1s backwards;
 }
 .entrar__lema-destaque {
   color: var(--marca);
   font-style: italic;
+}
+@keyframes entrar-subir {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
 }
 .entrar__formulario {
   display: grid;
@@ -51,11 +56,13 @@
   width: min(420px, 100%);
   margin: 0 auto;
   padding: var(--espaco-6) var(--espaco-4);
+  animation: entrar-subir var(--dur-longa) var(--curva) 0.2s backwards;
 }
 .entrar__titulo {
   display: flex;
   align-items: baseline;
-  font-size: 38px;
+  font-family: var(--fonte-titulo);
+  font-size: 44px;
   font-weight: 400;
 }
 .entrar__subtitulo {
@@ -66,8 +73,8 @@
   display: grid;
   gap: var(--espaco-3);
   padding: var(--espaco-4);
-  border-radius: var(--raio);
-  border: 1px dashed color-mix(in oklab, var(--atencao) 55%, transparent);
+  border-radius: var(--raio-g);
+  border: 1px solid color-mix(in oklab, var(--atencao) 45%, transparent);
   background: color-mix(in oklab, var(--atencao) 5%, transparent);
   font-size: var(--t-ui);
 }
@@ -87,17 +94,20 @@
   .entrar__marca {
     border-right: 0;
     border-bottom: 1px solid var(--linha);
-    padding: var(--espaco-6) var(--espaco-4) var(--espaco-5);
-    justify-items: center;
-    text-align: center;
+    padding: var(--espaco-7) var(--espaco-4) var(--espaco-6);
     gap: var(--espaco-4);
   }
-  .entrar__marca svg {
-    width: 88px;
-    height: 88px;
+  .entrar__enso {
+    width: clamp(140px, 40vw, 200px);
   }
   .entrar__lema {
     font-size: var(--t-titulo-2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entrar__lema,
+  .entrar__formulario {
+    animation: none;
   }
 }
 

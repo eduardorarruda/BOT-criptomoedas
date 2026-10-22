@@ -194,7 +194,8 @@
 .abertura__frase {
   display: flex;
   align-items: baseline;
-  font-size: 34px;
+  font-family: var(--fonte-titulo);
+  font-size: 38px;
 }
 
 /* 320 px (WCAG 1.4.10, ou 1280 px com zoom de 400%): os valores quebram em vez de vazar */

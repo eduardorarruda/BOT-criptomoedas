@@ -5,6 +5,7 @@ import { useFonte } from "../api/contexto";
 import { ehErroApi, mensagemDe } from "../api/erros";
 import { Botao } from "../componentes/Botao";
 import { CampoTexto } from "../componentes/Campo";
+import { CenaFumaca } from "../componentes/CenaFumaca";
 import { Enso } from "../componentes/Enso";
 import { useEntrar } from "../ganchos/mutacoes";
 import { RodapeLegal } from "../layout/RodapeLegal";
@@ -57,11 +58,12 @@ export function Entrar() {
   return (
     <div className="entrar">
       <section className="entrar__marca" aria-hidden="true">
-        <Enso tamanho={148} animar />
+        <CenaFumaca alvo=".enso" className="entrar__cena" />
+        <Enso tamanho={360} animar tom="tinta" className="entrar__enso" />
         <p className="entrar__lema titulo-serif">
-          Regras decidem.
-          <br />A IA argumenta.
-          <br />O risco tem a <span className="entrar__lema-destaque">palavra final.</span>
+          Calma para decidir.
+          <br />
+          <span className="entrar__lema-destaque">Disciplina</span> para executar.
         </p>
       </section>
       <section className="entrar__formulario" role="main" aria-labelledby="titulo-entrar">
