@@ -40,6 +40,13 @@ const base = (robo: RoboConfig, e: EntradaCiclo) => ({
   em: e.em,
   sinal: e.sinal,
   preco: e.preco,
+  // O cenário e as condições do momento ficam gravados com a decisão: a tela explica sem recalcular.
+  ...(e.pensamento
+    ? {
+        regime: e.pensamento.cenario,
+        ...(e.pensamento.condicoes ? { condicoes: e.pensamento.condicoes } : {}),
+      }
+    : {}),
 });
 
 /** O que acontece entre o sinal da regra e a ordem: agente → plano → risco → modo → execução. */

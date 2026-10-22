@@ -184,6 +184,7 @@ async function principal(): Promise<void> {
         credenciais: infra.banco.credenciais,
         riscoConta: infra.banco.riscoConta,
         agendaEventos: infra.banco.agendaEventos,
+        pensamentos: infra.banco.pensamentos,
       }
     : undefined;
   const fontes = {

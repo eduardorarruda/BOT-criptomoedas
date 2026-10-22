@@ -45,6 +45,7 @@ describe("eventos ao vivo de um ciclo completo", () => {
       "candle",
       "preco",
       "sinal:COMPRAR",
+      "pensamento",
       "analise:inicio",
       "analise:fim:comprar",
       "decisao:aprovada",
@@ -72,11 +73,11 @@ describe("eventos ao vivo de um ciclo completo", () => {
     expect(dec(posicao?.taxasPagas ?? "0").gt(0)).toBe(true);
   });
 
-  it("candle sem sinal: publica só o candle, o preço e o sinal AGUARDAR com o porquê", async () => {
+  it("candle sem sinal: publica o candle, o preço, o sinal AGUARDAR com o porquê e o pensamento do robô", async () => {
     const c = montarCenario();
     await c.aoVivo.iniciar();
     await c.fecharIntervalo(100);
-    expect(roteiro(c.eventos.todos())).toEqual(["candle", "preco", "sinal:AGUARDAR"]);
+    expect(roteiro(c.eventos.todos())).toEqual(["candle", "preco", "sinal:AGUARDAR", "pensamento"]);
     expect(c.eventos.doTipo("sinal")[0]?.explicacao.length).toBeGreaterThan(0);
   });
 
@@ -111,6 +112,7 @@ describe("eventos ao vivo de um ciclo completo", () => {
       "candle",
       "preco",
       "sinal:COMPRAR",
+      "pensamento",
       "analise:inicio",
       "analise:fim:falhou",
       "decisao:barrada",
