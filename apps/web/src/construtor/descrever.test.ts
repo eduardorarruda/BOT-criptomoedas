@@ -63,6 +63,10 @@ describe("prévia em linguagem natural", () => {
       "sai depois de 24 candles, se nada disso vier antes",
       "tamanho: risco por operação ÷ (1,5 × ATR(20))",
     ]);
+    expect(frasesSaidas({ stop: 0.49, tamanhoPorAlocacao: { fracao: 1 } })).toEqual([
+      "stop 49% abaixo da entrada",
+      "tamanho: 100% da exposição máxima do robô, sem olhar o risco por operação",
+    ]);
     expect(
       frasesSaidas({
         stop: null,

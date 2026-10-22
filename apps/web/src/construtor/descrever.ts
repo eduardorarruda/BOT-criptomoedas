@@ -142,6 +142,10 @@ export function frasesSaidas(
     frases.push(`sai depois de ${e.tempoMaximo} candles, se nada disso vier antes`);
   if (e.tamanhoPorVolatilidade)
     frases.push(`tamanho: risco por operação ÷ (${atr(e.tamanhoPorVolatilidade)})`);
+  if (e.tamanhoPorAlocacao)
+    frases.push(
+      `tamanho: ${pct(e.tamanhoPorAlocacao.fracao)} da exposição máxima do robô, sem olhar o risco por operação`,
+    );
   if (direcao === "ambos" && (e.stopAtr || e.stop !== null || e.stopMovel))
     frases.push("na venda, o espelho: stop acima da entrada e stop móvel pela menor mínima (só desce)");
   return frases;

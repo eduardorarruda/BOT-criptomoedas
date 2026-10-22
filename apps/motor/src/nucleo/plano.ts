@@ -10,6 +10,7 @@ import {
   type Lado,
   type Posicao,
   type Sinal,
+  valorDeAlocacao,
   type Valor,
 } from "@zentrade/dominio";
 import { ativosDoSimbolo } from "@zentrade/corretora";
@@ -55,6 +56,8 @@ async function planejarCompra(
   const saldo = await deps.corretora.saldoLivre(ativosDoSimbolo(robo.simbolo).cotacao);
   const restante = robo.limites.exposicaoMaxima.minus(ctx.estado.exposicaoAtual);
   const disponivel = restante.lte(0) ? dec(0) : menor(saldo, restante);
+  // Tamanho por alocação: fração × exposição máxima, sem olhar o risco por operação.
+  const alocacao = valorDeAlocacao(robo.estrategia, robo.limites.exposicaoMaxima);
   const quantidade = quantidadeCompra(
     {
       preco: ctx.preco,
@@ -64,6 +67,7 @@ async function planejarCompra(
       filtros: ctx.filtros,
       taxa,
       ...(sinal.distanciaRisco ? { distanciaRisco: sinal.distanciaRisco } : {}),
+      ...(alocacao ? { valorAlvo: alocacao } : {}),
     },
     (ctx.proposta?.tamanhoRelativo ?? 1) * fatorDoModoDeEvento(ctx.estado.diaDeEvento?.modo ?? "ignorar"),
   );

@@ -46,6 +46,16 @@ export interface TamanhoPorVolatilidade {
   readonly multiplo: number;
 }
 
+/**
+ * Tamanho por alocação: a compra usa `fracao × exposição máxima` do robô, sem olhar o
+ * risco por operação (1 = a exposição máxima inteira). Para estratégias que não têm
+ * stop de verdade — o stop é só uma proteção contra desastre —, em que "risco ÷
+ * distância do stop" daria uma posição minúscula.
+ */
+export interface TamanhoPorAlocacao {
+  readonly fracao: number;
+}
+
 /** Estado da posição aberta que o motor guarda entre candles. Imutável: cada passo devolve outro. */
 export interface Acompanhamento {
   /** Preço médio de entrada. */
@@ -122,6 +132,11 @@ export function distanciaDeRisco(e: Estrategia, ctx: ContextoMercado): Valor | n
   if (!e.tamanhoPorVolatilidade) return null;
   const valor = atrDe(ctx, e.tamanhoPorVolatilidade.periodo);
   return valor && valor.times(e.tamanhoPorVolatilidade.multiplo);
+}
+
+/** O valor a comprar com tamanho por alocação (fração × exposição máxima), ou `null` se a estratégia não usa. */
+export function valorDeAlocacao(e: Estrategia, exposicaoMaxima: Valor): Valor | null {
+  return e.tamanhoPorAlocacao ? exposicaoMaxima.times(e.tamanhoPorAlocacao.fracao) : null;
 }
 
 /** Acompanhamento de uma posição que acabou de abrir: o stop da estratégia (já ajustado pela entrada). */

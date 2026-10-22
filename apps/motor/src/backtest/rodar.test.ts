@@ -276,3 +276,66 @@ describe("maior queda", () => {
     expect(duracaoDaQueda([], maiorQueda([]))).toEqual({ duracaoMs: 0, recuperada: true });
   });
 });
+
+describe("tamanho por alocação (cofre de tendência)", () => {
+  const cofre: Estrategia = {
+    entrada: {
+      tipo: "comparar",
+      esquerda: { tipo: "preco" },
+      comparador: "<",
+      direita: { tipo: "numero", valor: 101 },
+    },
+    saida: {
+      tipo: "comparar",
+      esquerda: { tipo: "preco" },
+      comparador: ">",
+      direita: { tipo: "numero", valor: 105 },
+    },
+    stop: 0.49,
+    alvoLiquido: 0.99,
+    taxa: 0.001,
+  };
+  // compra a 100 no primeiro candle e sai a 110 na regra de saída: +10 por unidade
+  const precos = [100, 110, 110, 110];
+
+  it("compra fração × exposição máxima, ignorando o risco por operação", async () => {
+    const r = await rodarBacktest(
+      entrada(precos, { estrategia: { ...cofre, tamanhoPorAlocacao: { fracao: 0.5 } } }),
+    );
+    expect(r.operacoes).toBe(1);
+    // 500 de exposição = 5 unidades a 100 -> cerca de +50, menos as duas taxas (~1)
+    expect(r.resultadoLiquido.gt(48)).toBe(true);
+    expect(r.resultadoLiquido.lt(50)).toBe(true);
+    expect(r.saidasIntrabar.stop).toBe(0);
+  });
+
+  it("sem o campo, o tamanho continua sendo o do risco por operação (risco 10 ÷ stop 49 = 0,2 unidade)", async () => {
+    const r = await rodarBacktest(entrada(precos, { estrategia: cofre }));
+    expect(r.operacoes).toBe(1);
+    expect(r.resultadoLiquido.gt(1.5)).toBe(true);
+    expect(r.resultadoLiquido.lt(2)).toBe(true);
+  });
+
+  it("o saldo livre limita a alocação inteira (fração 1 sobre exposição maior que o saldo)", async () => {
+    const r = await rodarBacktest(
+      entrada(precos, {
+        estrategia: { ...cofre, tamanhoPorAlocacao: { fracao: 1 } },
+        limites: { ...entrada([]).limites, exposicaoMaxima: dec(5000) },
+      }),
+    );
+    // saldo de 1000: ~10 unidades a 100 -> cerca de +100 menos taxas, nunca +500
+    expect(r.resultadoLiquido.gt(95)).toBe(true);
+    expect(r.resultadoLiquido.lt(100)).toBe(true);
+  });
+  it("alocando o saldo inteiro, a folga de 0,5% evita ordem recusada por deslizamento e spread", async () => {
+    const r = await rodarBacktest(
+      entrada(precos, {
+        estrategia: { ...cofre, tamanhoPorAlocacao: { fracao: 1 } },
+        limites: { ...entrada([]).limites, exposicaoMaxima: dec(5000) },
+        custos: { taxaPorLado: 0.001, deslizamentoBps: 5, meioSpreadBps: 2 },
+      }),
+    );
+    expect(r.operacoes).toBe(1);
+    expect(r.resultadoLiquido.gt(90)).toBe(true);
+  });
+});

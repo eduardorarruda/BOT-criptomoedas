@@ -25,6 +25,17 @@ describe("tamanho de referência de uma entrada que não foi feita (cripto)", ()
     expect(q?.toString()).toBe("5");
   });
 
+  it("por alocação: fração × exposição máxima, sem olhar o risco por operação", () => {
+    const q = tamanhoDeReferenciaCripto({
+      estrategia: { ...e, stop: 0.49, tamanhoPorAlocacao: { fracao: 0.5 } },
+      preco: dec(100),
+      contexto: { fechamentos: [100] },
+      riscoPorOperacao: dec(1),
+      exposicaoMaxima: dec(1000),
+    });
+    expect(q?.toString()).toBe("5");
+  });
+
   it("limitado pela exposição máxima do robô", () => {
     const q = tamanhoDeReferenciaCripto({
       estrategia: e,

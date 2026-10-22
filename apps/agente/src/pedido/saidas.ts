@@ -33,6 +33,11 @@ function quemEncerra(op: OperacaoPedido): string {
 function linhasDaEstrategia(op: OperacaoPedido, pedido: PedidoAnalise): string[] {
   const favor = op.sentido === "comprado" ? "+" : "−";
   return [
+    ...(op.tamanhoPorAlocacao
+      ? [
+          `Tamanho por alocação: ${pct(op.tamanhoPorAlocacao.fracao)} da exposição máxima do robô, sem dividir pelo risco por operação; o stop e o alvo são só proteção contra desastre, e a perda no stop NÃO é o risco planejado da operação.`,
+        ]
+      : []),
     op.stopAtr
       ? `Stop por ATR: ${num(op.stopAtr.multiplo)} × ATR(${op.stopAtr.periodo}), no máximo ${pct(op.stopPercentual)} da entrada.`
       : `Stop fixo: ${pct(op.stopPercentual)} da entrada.`,
@@ -84,7 +89,8 @@ export function leituraDasSaidas(
     ];
     linhas.push(`Stop inicial: ${fmtPreco(stop)} (${medidas.join("; ")}).`);
     const multiplo = distStop > 0 ? Math.abs(alvo - p) / distStop : Infinity;
-    alvoDistante = op !== undefined && multiplo >= ALVO_DISTANTE_MULTIPLO;
+    // Com tamanho por alocação (o cofre), stop e alvo são só proteção contra desastre: o alvo é distante por definição.
+    alvoDistante = op !== undefined && (multiplo >= ALVO_DISTANTE_MULTIPLO || Boolean(op.tamanhoPorAlocacao));
     linhas.push(
       alvoDistante && op
         ? `Alvo fixo: ${fmtPreco(alvo)} (${pctSinal((alvo - p) / p)}) — DISTANTE DE PROPÓSITO (${num(multiplo, 0)}× a distância do stop): quem encerra é ${quemEncerra(op)}. Não use o alvo como expectativa de ganho nem para medir risco/retorno.`

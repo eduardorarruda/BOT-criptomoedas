@@ -2,7 +2,7 @@ import type { ContextoMercado } from "../contexto.js";
 import { dec, type Valor } from "../dinheiro.js";
 import { maiorQuantidade } from "../dimensionamento.js";
 import type { Estrategia } from "../estrategia.js";
-import { distanciaDeRisco, stopDeEntrada } from "../saidas.js";
+import { distanciaDeRisco, stopDeEntrada, valorDeAlocacao } from "../saidas.js";
 import type { FiltrosAtivo } from "../tipos.js";
 
 /**
@@ -29,9 +29,11 @@ const FILTROS_LIVRES: FiltrosAtivo = {
 };
 
 export function tamanhoDeReferenciaCripto(p: PedidoTamanhoCripto): Valor | null {
-  if (!p.riscoPorOperacao.gt(0) || !p.exposicaoMaxima.gt(0)) return null;
+  const semRisco = !p.riscoPorOperacao.gt(0) && !p.estrategia.tamanhoPorAlocacao;
+  if (semRisco || !p.exposicaoMaxima.gt(0)) return null;
   const { stop } = stopDeEntrada(p.estrategia, p.preco, p.contexto);
   const distancia = distanciaDeRisco(p.estrategia, p.contexto);
+  const alocacao = valorDeAlocacao(p.estrategia, p.exposicaoMaxima);
   return maiorQuantidade({
     preco: p.preco,
     stop,
@@ -40,5 +42,6 @@ export function tamanhoDeReferenciaCripto(p: PedidoTamanhoCripto): Valor | null 
     filtros: FILTROS_LIVRES,
     taxa: p.estrategia.taxa,
     ...(distancia ? { distanciaRisco: distancia } : {}),
+    ...(alocacao ? { valorAlvo: alocacao } : {}),
   });
 }

@@ -4,6 +4,7 @@ import {
   type PortaPlacar,
   type Relogio,
 } from "@zentrade/contratos";
+import { candlesDeAquecimento } from "@zentrade/dominio";
 import { candlesDoBanco, type CandlesDoBanco } from "../backtest/candles-historicos.js";
 import type { Registro } from "../nucleo/tipos.js";
 import { avaliarCandidata, OPCOES_PLACAR_PADRAO, type OpcoesPlacar, type VelasDaDecisao } from "./avaliar.js";
@@ -52,7 +53,7 @@ async function velasDe(
   const consulta = { simbolo: c.simbolo, intervalo: c.intervalo };
   const antes = await candlesDoBanco(d.candles, {
     ...consulta,
-    inicio: corte - o.aquecimento * ms,
+    inicio: corte - candlesDeAquecimento(c.estrategia, o.aquecimento) * ms,
     fim: corte,
   });
   const depois = await candlesDoBanco(d.candles, {

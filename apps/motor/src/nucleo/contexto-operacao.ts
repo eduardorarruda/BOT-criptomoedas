@@ -35,6 +35,7 @@ export function operacaoDoPedido(e: Estrategia, custos: CustosPedido, sentido: S
     ...(e.empate ? { empate: { ...e.empate } } : {}),
     ...(e.tempoMaximo !== undefined ? { tempoMaximo: e.tempoMaximo } : {}),
     ...(e.tamanhoPorVolatilidade ? { tamanhoPorVolatilidade: { ...e.tamanhoPorVolatilidade } } : {}),
+    ...(e.tamanhoPorAlocacao ? { tamanhoPorAlocacao: { ...e.tamanhoPorAlocacao } } : {}),
   };
 }
 

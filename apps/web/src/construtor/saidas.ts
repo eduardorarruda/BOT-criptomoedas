@@ -23,6 +23,10 @@ export interface EstadoSaidas {
   readonly tamanho: boolean;
   readonly tamanhoPeriodo: string;
   readonly tamanhoMultiplo: string;
+  /** Tamanho por alocação: fração da exposição máxima, sem olhar o risco por operação. */
+  readonly alocacao: boolean;
+  /** Em %, como a pessoa digita (100 = a exposição máxima inteira). */
+  readonly alocacaoFracao: string;
 }
 
 export const SAIDAS_PADRAO: EstadoSaidas = {
@@ -40,12 +44,14 @@ export const SAIDAS_PADRAO: EstadoSaidas = {
   tamanho: false,
   tamanhoPeriodo: "14",
   tamanhoMultiplo: "2",
+  alocacao: false,
+  alocacaoFracao: "100",
 };
 
 /** Os campos opcionais de saída do domínio. */
 export type CamposSaida = Pick<
   Estrategia,
-  "stopAtr" | "stopMovel" | "empate" | "tempoMaximo" | "tamanhoPorVolatilidade"
+  "stopAtr" | "stopMovel" | "empate" | "tempoMaximo" | "tamanhoPorVolatilidade" | "tamanhoPorAlocacao"
 >;
 
 /** Os mesmos campos vindos do DTO, onde opcional também aceita `undefined`. */
@@ -80,6 +86,8 @@ export function saidasDe(e: CamposSaidaDTO): EstadoSaidas {
     tamanhoMultiplo: e.tamanhoPorVolatilidade
       ? numeroCampo(e.tamanhoPorVolatilidade.multiplo)
       : s.tamanhoMultiplo,
+    alocacao: e.tamanhoPorAlocacao !== undefined,
+    alocacaoFracao: e.tamanhoPorAlocacao ? percentual(e.tamanhoPorAlocacao.fracao) : s.alocacaoFracao,
   };
 }
 
@@ -123,6 +131,8 @@ export function lerSaidas(s: EstadoSaidas): LeituraSaidas {
   if (s.tempo && tempo === null)
     problemas.push("o tempo máximo precisa ser um número inteiro de candles, como 24");
   const tamanho = s.tamanho ? atr(s.tamanhoPeriodo, s.tamanhoMultiplo, "do tamanho") : null;
+  const alocacao = s.alocacao ? fracaoDe(s.alocacaoFracao) : null;
+  if (s.alocacao && alocacao === null) problemas.push("a fração da alocação precisa ser um número, como 100");
 
   return {
     campos: {
@@ -131,6 +141,7 @@ export function lerSaidas(s: EstadoSaidas): LeituraSaidas {
       ...(gatilho !== null ? { empate: { gatilho } } : {}),
       ...(tempo !== null ? { tempoMaximo: tempo } : {}),
       ...(tamanho ? { tamanhoPorVolatilidade: tamanho } : {}),
+      ...(alocacao !== null ? { tamanhoPorAlocacao: { fracao: alocacao } } : {}),
     },
     problemas,
   };

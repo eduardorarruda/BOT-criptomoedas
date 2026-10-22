@@ -172,6 +172,21 @@ describe("construtor: saídas", () => {
     expect(percentual.estrategia?.stopMovel).toEqual({ tipo: "percentual", distancia: 0.015 });
   });
 
+  it("tamanho por alocação: a fração em % vira a fração da exposição máxima, e não convive com o da volatilidade", () => {
+    const e = aplicar(nomeado(), { tipo: "saidas", mudanca: { alocacao: true, alocacaoFracao: "50" } });
+    const m = montar(e);
+    expect(m.problemas).toEqual([]);
+    expect(m.estrategia).toMatchObject({ tamanhoPorAlocacao: { fracao: 0.5 } });
+    expect(m.estrategia).not.toHaveProperty("tamanhoPorVolatilidade");
+    const dois = montar(aplicar(e, { tipo: "saidas", mudanca: { tamanho: true } }));
+    expect(dois.estrategia).toBeNull();
+    expect(dois.problemas).toEqual([expect.stringMatching(/um só jeito de definir o tamanho/)]);
+    const fora = montar(aplicar(e, { tipo: "saidas", mudanca: { alocacaoFracao: "150" } }));
+    expect(fora.problemas).toEqual([expect.stringMatching(/fração da alocação/)]);
+    const ilegivel = montar(aplicar(e, { tipo: "saidas", mudanca: { alocacaoFracao: "abc" } }));
+    expect(ilegivel.problemas).toEqual([expect.stringMatching(/alocação precisa ser um número/)]);
+  });
+
   it("aponta o que não dá para ler e o que o domínio recusa", () => {
     const ilegivel = aplicar(nomeado(), {
       tipo: "saidas",

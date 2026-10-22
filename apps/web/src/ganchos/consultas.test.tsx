@@ -36,7 +36,7 @@ describe("consultas", () => {
     expect(r.resumo.data?.robosAtivos).toBe(3);
     expect(r.patrimonio.data).toHaveLength(120);
     expect(r.saude.data?.ok).toBe(true);
-    expect(r.estrategias.data).toHaveLength(4);
+    expect(r.estrategias.data).toHaveLength(5);
     expect(r.robos.data).toHaveLength(4);
     expect(r.posicoes.map((p) => p.data?.roboId)).toEqual(["r-sol", "r-btc"]);
     expect(r.decisoes.data?.every((d) => d.estado === "barrada")).toBe(true);

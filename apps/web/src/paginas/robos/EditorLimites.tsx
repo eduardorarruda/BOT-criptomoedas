@@ -10,10 +10,13 @@ export function CamposLimites({
   campos,
   erros,
   mudar,
+  porAlocacao = false,
 }: {
   campos: Campos;
   erros: Partial<Record<keyof Campos, string>>;
   mudar: (k: keyof Campos, v: string) => void;
+  /** A estratégia dimensiona por alocação (cofre): a exposição máxima é o tamanho da compra. */
+  porAlocacao?: boolean;
 }) {
   const campo = (k: keyof Campos, rotulo: string, dica: string, modo: "decimal" | "numeric" = "decimal") => (
     <CampoTexto
@@ -33,8 +36,20 @@ export function CamposLimites({
         "Perda diária máxima (US$)",
         "Passou disso no dia, o robô para de comprar.",
       )}
-      {campo("exposicaoMaxima", "Exposição máxima (US$)", "Soma das posições abertas deste robô.")}
-      {campo("riscoPorOperacao", "Risco por operação (US$)", "Quanto pode perder se o stop for atingido.")}
+      {campo(
+        "exposicaoMaxima",
+        "Exposição máxima (US$)",
+        porAlocacao
+          ? "Soma das posições abertas deste robô. Nesta estratégia, a exposição máxima é o tamanho da compra (a fração escolhida dela, limitada ao saldo livre)."
+          : "Soma das posições abertas deste robô.",
+      )}
+      {campo(
+        "riscoPorOperacao",
+        "Risco por operação (US$)",
+        porAlocacao
+          ? "Não define o tamanho desta estratégia (o tamanho é por alocação); o stop dela é só proteção contra desastre."
+          : "Quanto pode perder se o stop for atingido.",
+      )}
       {campo(
         "ordensPorHoraMax",
         "Ordens por hora (máx.)",

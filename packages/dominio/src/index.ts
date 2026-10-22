@@ -1,3 +1,4 @@
+export * from "./aquecimento.js";
 export * from "./busca.js";
 export * from "./catalogo.js";
 export * from "./contexto.js";
