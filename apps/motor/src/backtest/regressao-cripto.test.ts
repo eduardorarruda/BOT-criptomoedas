@@ -80,9 +80,13 @@ const ANTES: Record<string, string> = {
 };
 
 describe("regressão: backtests de cripto iguais aos de antes do mini índice", { timeout: 60_000 }, () => {
-  it.each(MODELOS.map((m) => [m.id, m] as const))("%s grava exatamente o mesmo resultado", async (id, m) => {
-    const r = await rodar(m.estrategia);
-    expect((r.metricas as { operacoes: number }).operacoes).toBeGreaterThan(0);
-    expect(impressao(r)).toBe(ANTES[id]);
-  });
+  // Só os modelos que já existiam: os novos (cofre) têm o seu próprio teste, sem impressão antiga.
+  it.each(MODELOS.filter((m) => m.id in ANTES).map((m) => [m.id, m] as const))(
+    "%s grava exatamente o mesmo resultado",
+    async (id, m) => {
+      const r = await rodar(m.estrategia);
+      expect((r.metricas as { operacoes: number }).operacoes).toBeGreaterThan(0);
+      expect(impressao(r)).toBe(ANTES[id]);
+    },
+  );
 });

@@ -169,6 +169,44 @@ describe("job de backtest", () => {
     expect((m.gravado.concluido?.metricas as Record<string, unknown>).precisaoMinuto).toBe(false);
   });
 
+  it("indicador longo (SMA 400 do cofre): carrega histórico suficiente e opera já no primeiro candle da janela", async () => {
+    const precos = Array.from({ length: 520 }, (_, i) => 100 + i * 0.1);
+    const papel = new PapelCorretora({ saldos: {}, taxa: 0, deslizamentoBps: 0 });
+    serie(INICIO, precos, H).forEach((c) => papel.alimentar("BTCUSDT", "1h", c));
+    let gravado: ResultadoBacktestGravado | undefined;
+    const backtests: RepositorioBacktestsDoMotor = {
+      paraRodar: async () =>
+        pedido({
+          inicio: INICIO + 450 * H,
+          fim: INICIO + 520 * H,
+          estrategia: {
+            entrada: {
+              tipo: "comparar",
+              esquerda: { tipo: "preco" },
+              comparador: ">",
+              direita: { tipo: "indicador", nome: "sma", periodo: 400 },
+            },
+            stop: 0.49,
+            alvoLiquido: 0.99,
+            taxa: 0.001,
+            tamanhoPorAlocacao: { fracao: 1 },
+          },
+        }),
+      concluir: async (_id, r) => void (gravado = r),
+      falhar: async (_id, erro) => {
+        throw new Error(erro);
+      },
+    };
+    const { registro } = registroDeTeste();
+    await processarBacktest(
+      { backtests, fontes: { corretora: papel }, registro },
+      { saldoInicial: dec(1000), riscoPorOperacao: 0.01 },
+      "b1",
+    );
+    // Com só 200 velas de aquecimento a SMA 400 não teria dados e a posição nunca abriria.
+    expect((gravado?.metricas as Record<string, number>).tempoExposto).toBeGreaterThan(0.9);
+  });
+
   it("limites do robô informados valem no lugar dos padrões", () => {
     const limites = {
       perdaDiariaMaxima: "7",
