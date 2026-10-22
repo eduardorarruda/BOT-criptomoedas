@@ -48,7 +48,11 @@ describe("motor com as portas do banco e o Redis (papel, ponta a ponta)", () => 
   function ligar(corretora: Corretora) {
     const r = registro();
     const fontes: FontesMotor = {
-      banco: { portas: a.motorBanco.portas, mercado: a.motorBanco.mercado },
+      banco: {
+        portas: a.motorBanco.portas,
+        mercado: a.motorBanco.mercado,
+        pensamentos: a.motorBanco.pensamentos,
+      },
       redis: a.redis,
       corretora,
     };
@@ -78,6 +82,12 @@ describe("motor com as portas do banco e o Redis (papel, ponta a ponta)", () => 
     const venda = lista.find((d) => d.sinal.acao === "VENDER");
     expect(compra?.estado).toBe("executada");
     expect(venda?.estado).toBe("executada");
+    // O pensamento do robô foi gravado no banco, e a compra leva o cenário e as condições do momento.
+    const pensados = await a.banco.pensamentos.atuais(a.usuarioId);
+    expect(pensados).toHaveLength(1);
+    expect(pensados[0]?.pensamento).toMatchObject({ sinal: "COMPRAR", regraAvaliada: "entrada" });
+    expect(compra?.regime?.cenario).toBe("indefinido");
+    expect(compra?.condicoes).toMatchObject({ tipo: "condicao", valor: true });
     expect(dec(compra?.desfecho?.resultado ?? "0").gt(0)).toBe(true);
     const posicao = await a.banco.robos.posicao(a.usuarioId, a.robo.id);
     expect(posicao?.quantidade).toBe("0");
