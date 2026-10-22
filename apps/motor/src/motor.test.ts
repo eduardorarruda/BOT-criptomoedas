@@ -140,4 +140,19 @@ describe("motor", () => {
     expect(c.erros.some((e) => /não ligou/.test(e.msg))).toBe(true);
     await motor.parar();
   });
+
+  it("robô que não ligou por falta de rede liga sozinho na recarga seguinte", async () => {
+    const c = montarCenario();
+    let semRede = true;
+    const motor = new Motor(c.deps, {
+      intervaloSaudeMs: 1_000,
+      corretoraDe: () =>
+        semRede ? Promise.reject(new Error("fetch failed")) : Promise.resolve(c.deps.corretora),
+    });
+    expect(await motor.iniciar()).toEqual({ ligados: 0, falharam: 1 });
+    semRede = false;
+    expect(await motor.recarregar()).toEqual({ ligados: 1, desligados: 0, falharam: 0 });
+    expect(motor.ligados()).toHaveLength(1);
+    await motor.parar();
+  });
 });
