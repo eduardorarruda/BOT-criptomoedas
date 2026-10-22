@@ -10,6 +10,7 @@ const INTERVALO: Record<NonNullable<ModeloEstrategia["intervalo"]>, string> = {
   "5m": "5 min",
   "15m": "15 min",
   "1h": "1 h",
+  "4h": "4 h",
 };
 
 const DIRECAO = { comprado: "só comprado", vendido: "só vendido", ambos: "nos dois sentidos" } as const;

@@ -122,6 +122,11 @@ export function FormRobo({
         </CampoSelecao>
         <CampoSelecao
           rotulo="Intervalo dos candles"
+          {...(escolhida?.tamanhoPorAlocacao
+            ? {
+                dica: "Esta estratégia foi estudada em velas de 4 h; em outro intervalo, as médias e o horário mudam de sentido.",
+              }
+            : {})}
           value={intervalo}
           onChange={(e) => setIntervalo(e.target.value as Intervalo)}
         >
@@ -149,7 +154,12 @@ export function FormRobo({
         </p>
       ) : null}
       <h3 className="formulario__secao">Limites de risco</h3>
-      <CamposLimites campos={limites.campos} erros={limites.erros} mudar={limites.mudar} />
+      <CamposLimites
+        campos={limites.campos}
+        erros={limites.erros}
+        mudar={limites.mudar}
+        porAlocacao={escolhida?.tamanhoPorAlocacao !== undefined}
+      />
       <div className="formulario__acoes">
         <Botao variante="fantasma" onClick={aoCancelar}>
           Cancelar

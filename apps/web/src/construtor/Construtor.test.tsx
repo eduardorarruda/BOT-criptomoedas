@@ -140,6 +140,34 @@ describe("Construtor de estratégias", () => {
     expect(estrategia).toEqual({ nome: modelo.nome, ...modelo.estrategia });
   });
 
+  it("começa do cofre de tendência: tamanho por alocação ligado, com a fração e a explicação, e os dois jeitos de dimensionar não convivem", async () => {
+    const { aoSalvar } = montar();
+    const usuario = userEvent.setup();
+    await usuario.click(screen.getByText("Começar de um modelo"));
+    const cofre = MODELOS.find((m) => m.id === "cofre-tendencia-sma400")!;
+    const item = within(screen.getByRole("heading", { name: cofre.nome }).closest("li")!);
+    expect(item.getByText(/não uma indicação de investimento/)).toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: `Usar este modelo: ${cofre.nome}` }));
+
+    const alocacao = screen.getByRole("checkbox", { name: /Tamanho por alocação/ });
+    expect(alocacao).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /Tamanho pela volatilidade/ })).not.toBeChecked();
+    expect(screen.getByLabelText("Fração da exposição máxima (%)")).toHaveValue("100");
+    expect(screen.getByText(/Compra este tanto da exposição máxima/)).toBeInTheDocument();
+    expect(
+      screen.getByText("tamanho: 100% da exposição máxima do robô, sem olhar o risco por operação"),
+    ).toBeInTheDocument();
+
+    await usuario.click(screen.getByRole("button", { name: "Criar estratégia" }));
+    expect(aoSalvar.mock.calls[0]![1]).toEqual({ nome: cofre.nome, ...cofre.estrategia });
+
+    // ligar o tamanho pela volatilidade desliga a alocação (e vice-versa)
+    await usuario.click(screen.getByRole("checkbox", { name: /Tamanho pela volatilidade/ }));
+    expect(alocacao).not.toBeChecked();
+    await usuario.click(alocacao);
+    expect(screen.getByRole("checkbox", { name: /Tamanho pela volatilidade/ })).not.toBeChecked();
+  });
+
   it("escolhe um indicador novo, a linha dele e os parâmetros", async () => {
     montar();
     const usuario = userEvent.setup();
