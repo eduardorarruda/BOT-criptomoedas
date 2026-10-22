@@ -30,6 +30,7 @@ import { MODO_ROBO, REDE } from "../lib/rotulos";
 import { ComeceAqui } from "./visao/ComeceAqui";
 import { ProximoPasso } from "../componentes/ProximoPasso";
 import { ResumoPlacar } from "../componentes/placar/ResumoPlacar";
+import { PainelCenarios } from "../componentes/cenario/PainelCenarios";
 
 /** O lightweight-charts (~57 kB) chega depois dos números: a curva não segura a primeira tela. */
 const GraficoLinha = lazy(() =>
@@ -286,6 +287,7 @@ export function VisaoGeral() {
       <ComeceAqui />
       {instalacaoNova ? <PainelVazio /> : null}
       {!instalacaoNova ? <Metricas /> : null}
+      {!instalacaoNova ? <PainelCenarios /> : null}
       {!instalacaoNova ? (
         <div className="grade-visao">
           <div className="pilha">

@@ -28,6 +28,7 @@ import {
   tokensIniciais,
 } from "./dados";
 import { backtestsIniciais, decisoesIniciais, ordensIniciais, patrimonioInicial } from "./historico";
+import { comRegimeDemo } from "./pensamentos";
 import { comPlacarDemo } from "./placar";
 
 /** Estado do exemplo, sempre substituído por cópias (nunca alterado no lugar). */
@@ -54,13 +55,14 @@ const REALIZADO_HOJE = "-1.84";
 const DIA = 86_400_000;
 
 export function estadoInicialDemo(agora: number): EstadoDemo {
+  const robos = robosIniciais(agora);
   return {
     usuario: null,
     confirmadoAte: 0,
     paradaTotal: false,
     estrategias: ESTRATEGIAS,
-    robos: robosIniciais(agora),
-    decisoes: comPlacarDemo(decisoesIniciais(agora), agora),
+    robos,
+    decisoes: comRegimeDemo(comPlacarDemo(decisoesIniciais(agora), agora), robos),
     ordens: ordensIniciais(agora),
     patrimonio: patrimonioInicial(agora),
     backtests: backtestsIniciais(agora),

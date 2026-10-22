@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ErroApi } from "../../api/erros";
 import type { Fonte } from "../../api/fonte";
 import { criarFonteDemo } from "../../demo/fonteDemo";
-import { renderizar } from "../../teste/renderizar";
+import { renderizarNaRota } from "../../teste/rota";
 import { CartaoDecisao } from "./CartaoDecisao";
 
 async function preparar(sobrescrever: Partial<Fonte> = {}) {
@@ -19,7 +19,8 @@ async function preparar(sobrescrever: Partial<Fonte> = {}) {
 describe("CartaoDecisao", () => {
   it("conta o porquê: sinal, argumento da IA, risco e custo", async () => {
     const { fonte, decisao, robo } = await preparar();
-    renderizar(<CartaoDecisao decisao={decisao} robo={robo} />, fonte);
+    renderizarNaRota(<CartaoDecisao decisao={decisao} robo={robo} />, { fonte });
+    await screen.findByRole("article");
     expect(screen.getByText("Por que o sinal disparou")).toBeInTheDocument();
     expect(screen.getByText(/RSI\(14\) caiu para 28/)).toBeInTheDocument();
     expect(screen.getByText(/passou por todas as barreiras/i)).toBeInTheDocument();
@@ -29,7 +30,8 @@ describe("CartaoDecisao", () => {
 
   it("mostra as prévias de futuro da proposta com cenários", async () => {
     const { fonte, decisao, robo } = await preparar();
-    renderizar(<CartaoDecisao decisao={decisao} robo={robo} />, fonte);
+    renderizarNaRota(<CartaoDecisao decisao={decisao} robo={robo} />, { fonte });
+    await screen.findByRole("article");
     expect(
       screen.getByRole("heading", { level: 3, name: "Prévias de futuro (cenários)" }),
     ).toBeInTheDocument();
@@ -38,10 +40,20 @@ describe("CartaoDecisao", () => {
     expect(screen.getByText("Principal argumento contra")).toBeInTheDocument();
   });
 
+  it("leva à decisão por dentro, dizendo qual é no nome do link", async () => {
+    const { fonte, decisao, robo } = await preparar();
+    renderizarNaRota(<CartaoDecisao decisao={decisao} robo={robo} />, { fonte });
+    await screen.findByRole("article");
+    const link = await screen.findByRole("link", { name: /Ver por dentro/ });
+    expect(link).toHaveAttribute("href", `/decisoes/${decisao.id}`);
+    expect(link).toHaveAccessibleName(/Compra de BTC paciente/);
+  });
+
   it("proposta anterior aos cenários aparece como antes, sem o bloco", async () => {
     const { fonte, decisao, robo } = await preparar();
     const { cenarios: _c, contraArgumento: _a, avaliacao: _v, ...antiga } = decisao.proposta!;
-    renderizar(<CartaoDecisao decisao={{ ...decisao, proposta: antiga }} robo={robo} />, fonte);
+    renderizarNaRota(<CartaoDecisao decisao={{ ...decisao, proposta: antiga }} robo={robo} />, { fonte });
+    await screen.findByRole("article");
     expect(screen.getByText("O que a IA argumentou")).toBeInTheDocument();
     expect(screen.queryByText("Prévias de futuro (cenários)")).toBeNull();
   });
@@ -49,7 +61,8 @@ describe("CartaoDecisao", () => {
   it("aprova a decisão que aguarda e avisa que a ordem vai sair", async () => {
     const { fonte, decisao, robo } = await preparar();
     const aprovar = vi.spyOn(fonte, "aprovarDecisao");
-    renderizar(<CartaoDecisao decisao={decisao} robo={robo} />, fonte);
+    renderizarNaRota(<CartaoDecisao decisao={decisao} robo={robo} />, { fonte });
+    await screen.findByRole("article");
     await userEvent.click(screen.getByRole("button", { name: "Aprovar" }));
     expect(aprovar).toHaveBeenCalledWith(decisao.id);
     expect(await screen.findByText(/Aprovada\. A ordem vai para a corretora/)).toBeInTheDocument();
@@ -60,7 +73,8 @@ describe("CartaoDecisao", () => {
       throw new ErroApi("conflito", "Essa decisão já foi respondida ou expirou. Atualize a lista.", 409);
     });
     const { fonte, decisao, robo } = await preparar({ recusarDecisao });
-    renderizar(<CartaoDecisao decisao={decisao} robo={robo} />, fonte);
+    renderizarNaRota(<CartaoDecisao decisao={decisao} robo={robo} />, { fonte });
+    await screen.findByRole("article");
     await userEvent.click(screen.getByRole("button", { name: "Recusar" }));
     expect(await screen.findByText(/já foi respondida ou expirou/)).toBeInTheDocument();
   });
@@ -80,7 +94,8 @@ describe("CartaoDecisao", () => {
       },
       estado: "barrada",
     };
-    renderizar(<CartaoDecisao decisao={barrada} robo={robo} />, fonte);
+    renderizarNaRota(<CartaoDecisao decisao={barrada} robo={robo} />, { fonte });
+    await screen.findByRole("article");
     expect(screen.getByText("A exposição passaria do limite.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Aprovar" })).toBeNull();
     expect(screen.getByText("sem IA")).toBeInTheDocument();
@@ -102,7 +117,8 @@ describe("CartaoDecisao", () => {
       },
       estado: "registrada",
     };
-    renderizar(<CartaoDecisao decisao={semIa} robo={robo} />, fonte);
+    renderizarNaRota(<CartaoDecisao decisao={semIa} robo={robo} />, { fonte });
+    await screen.findByRole("article");
     expect(screen.getByText(/A IA não concordou/)).toBeInTheDocument();
     expect(screen.getByText("O agente propôs aguardar.")).toBeInTheDocument();
     expect(screen.queryByText(/O risco barrou/)).toBeNull();

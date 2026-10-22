@@ -11,6 +11,7 @@ import { USUARIO_DEMO } from "./dados";
 import { comTentativasDemo, simularBacktest } from "./backtestDemo";
 import { paraDominio } from "../lib/estrategia";
 import { gerarVelas } from "./velas";
+import { historicoDemo } from "./pensamentos";
 import { placarDemo } from "./placar";
 
 /**
@@ -244,6 +245,13 @@ export function criarFonteDemo(opcoes: OpcoesDemo = {}): Fonte {
         .filter((d) => !f.antes || d.em < f.antes)
         .slice(0, Math.min(f.limite ?? 200, 200)),
     ),
+    decisao: comAtraso((id) => {
+      const d = estado.decisoes.find((x) => x.id === id);
+      if (!d) throw new ErroApi("nao_encontrado", "Essa decisão não existe mais. Volte para a lista.", 404);
+      return d;
+    }),
+    pensamentos: comAtraso(() => simulacao.pensamentos()),
+    historicoDoPensamento: comAtraso((roboId) => historicoDemo(roboOuErro(roboId), agora())),
     aprovarDecisao: comAtraso((id) => decidirAprovacao(id, true)),
     recusarDecisao: comAtraso((id) => decidirAprovacao(id, false)),
     placar: comAtraso((f = {}) => placarDemo(estado, f, agora())),

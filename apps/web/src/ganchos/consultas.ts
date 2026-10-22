@@ -1,5 +1,6 @@
 import type { Intervalo } from "@zentrade/contratos/esquemas";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import type { DecisaoDTO } from "@zentrade/contratos/esquemas";
 import { useFonte } from "../api/contexto";
 import type { FiltroDecisoes, FiltroPlacar } from "../api/fonte";
 import { chaves } from "./chaves";
@@ -59,6 +60,37 @@ export function usePosicoes(roboIds: readonly string[]) {
 export function useDecisoes(filtro: FiltroDecisoes = {}) {
   const fonte = useFonte();
   return useQuery({ queryKey: chaves.decisoes(filtro), queryFn: () => fonte.decisoes(filtro) });
+}
+
+/** Uma decisão aberta por inteiro; o que já está na lista serve de ponto de partida enquanto carrega. */
+export function useDecisao(id: string) {
+  const fonte = useFonte();
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: chaves.decisao(id),
+    queryFn: () => fonte.decisao(id),
+    initialData: () => lerDecisaoDaLista(qc, id),
+    // A lista não traz a ordem: com o dado da lista, relê assim mesmo.
+    initialDataUpdatedAt: 0,
+  });
+}
+
+/** O que cada robô está pensando; os eventos ao vivo trocam o item do robô na hora. */
+export function usePensamentos() {
+  const fonte = useFonte();
+  return useQuery({
+    queryKey: chaves.pensamentos,
+    queryFn: () => fonte.pensamentos(),
+    refetchInterval: 60_000,
+  });
+}
+
+export function useHistoricoDoPensamento(roboId: string) {
+  const fonte = useFonte();
+  return useQuery({
+    queryKey: chaves.historicoDoPensamento(roboId),
+    queryFn: () => fonte.historicoDoPensamento(roboId),
+  });
 }
 
 /** O avaliador do motor grava de 5 em 5 minutos: a tela relê no mesmo ritmo. */
@@ -134,4 +166,10 @@ export function useAoVivo(roboId?: string) {
     queryFn: () => fonte.aoVivo(roboId),
     staleTime: Infinity,
   });
+}
+
+function lerDecisaoDaLista(qc: QueryClient, id: string): DecisaoDTO | undefined {
+  for (const [, lista] of qc.getQueriesData<DecisaoDTO[]>({ queryKey: chaves.decisoesTodas }))
+    for (const d of lista ?? []) if (d.id === id) return d;
+  return undefined;
 }

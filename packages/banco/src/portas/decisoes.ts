@@ -7,7 +7,7 @@ import { ErroDados } from "../erros.js";
 import { decisoes, robos } from "../esquema/index.js";
 
 /** Sinal com decimais em texto: o jsonb não guarda Decimal. */
-function sinalGravavel(s: Sinal): Record<string, string> {
+function sinalBasico(s: Sinal): Record<string, string> {
   switch (s.acao) {
     case "COMPRAR":
       return { acao: s.acao, explicacao: s.explicacao, stop: paraTexto(s.stop), alvo: paraTexto(s.alvo) };
@@ -16,6 +16,18 @@ function sinalGravavel(s: Sinal): Record<string, string> {
     case "AGUARDAR":
       return { acao: s.acao, explicacao: s.explicacao };
   }
+}
+
+/**
+ * O sinal gravado leva junto o cenário de mercado e as condições da regra no momento da
+ * decisão (chaves a mais no mesmo jsonb: decisões antigas continuam lendo sem elas).
+ */
+function sinalGravavel(d: NovaDecisao): Record<string, unknown> {
+  return {
+    ...sinalBasico(d.sinal),
+    ...(d.regime ? { regime: d.regime } : {}),
+    ...(d.condicoes ? { condicoes: d.condicoes } : {}),
+  };
 }
 
 const textoOuNulo = (v: Valor | undefined): string | null => (v ? paraTexto(v) : null);
@@ -61,7 +73,7 @@ async function ultimaCompraExecutada(db: Db, roboId: string): Promise<CompraExec
 export async function inserirDecisao(executor: Executor, d: NovaDecisao, validade: number): Promise<string> {
   const linhas = await executor.execute<{ id: string }>(sql`
         insert into decisoes (usuario_id, robo_id, em, sinal, proposta, quantidade, preco, risco, estado, custo_ia_usd, expira_em, stop_efetivo, alvo_efetivo)
-        select r.usuario_id, r.id, ${iso(d.em)}::timestamptz, ${JSON.stringify(sinalGravavel(d.sinal))}::jsonb, ${d.proposta ? JSON.stringify(d.proposta) : null}::jsonb,
+        select r.usuario_id, r.id, ${iso(d.em)}::timestamptz, ${JSON.stringify(sinalGravavel(d))}::jsonb, ${d.proposta ? JSON.stringify(d.proposta) : null}::jsonb,
                ${textoOuNulo(d.quantidade)}::numeric, ${paraTexto(d.preco)}::numeric, ${JSON.stringify(d.risco)}::jsonb, ${d.estado},
                ${textoOuNulo(d.custoIaUsd)}::numeric,
                ${prazo(d, validade)}::timestamptz,

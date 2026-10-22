@@ -10,6 +10,8 @@ import type {
   LimitesRiscoDTO,
   ModoRobo,
   OrdemDTO,
+  PensamentoAtualDTO,
+  PensamentoHistoricoDTO,
   PlacarDTO,
   PosicaoDTO,
   Rede,
@@ -132,10 +134,17 @@ export interface Fonte {
   posicao(roboId: string): Promise<PosicaoDTO>;
 
   decisoes(f?: FiltroDecisoes): Promise<DecisaoDTO[]>;
+  /** Uma decisão com tudo o que a tela "por dentro" mostra (cenário, condições, proposta, risco, placar). */
+  decisao(id: string): Promise<DecisaoDTO>;
   aprovarDecisao(id: string): Promise<DecisaoDTO>;
   recusarDecisao(id: string): Promise<DecisaoDTO>;
   /** O placar do Claude: precisão das aprovações, vetos certos, dinheiro, calibração e limite sugerido. */
   placar(f?: FiltroPlacar): Promise<PlacarDTO>;
+
+  /** O que cada robô pensou na última vela: cenário, condições da regra e conclusão. */
+  pensamentos(): Promise<PensamentoAtualDTO[]>;
+  /** O histórico curto de um robô: primeira leitura, mudanças de cenário e sinais, do mais novo ao mais velho. */
+  historicoDoPensamento(roboId: string): Promise<PensamentoHistoricoDTO[]>;
 
   ordens(roboId?: string): Promise<OrdemDTO[]>;
   candles(simbolo: string, intervalo: Intervalo): Promise<CandleApi[]>;

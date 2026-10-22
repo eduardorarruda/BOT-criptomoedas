@@ -1,6 +1,7 @@
 import type { DecisaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
 import { dec } from "@zentrade/dominio";
-import { ArrowDownRight, ArrowUpRight, Check, ShieldCheck, ShieldX, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowDownRight, ArrowUpRight, Check, ScanSearch, ShieldCheck, ShieldX, X } from "lucide-react";
 import { mensagemDe } from "../../api/erros";
 import { useAprovarDecisao, useRecusarDecisao } from "../../ganchos/mutacoes";
 import {
@@ -70,7 +71,7 @@ function Cabeca({ decisao: d, robo }: Pick<Props, "decisao" | "robo">) {
   );
 }
 
-function Numeros({ decisao: d }: Pick<Props, "decisao">) {
+export function Numeros({ decisao: d }: Pick<Props, "decisao">) {
   const total = valorTotal(d);
   return (
     <dl className="decisao__numeros">
@@ -106,7 +107,7 @@ function Numeros({ decisao: d }: Pick<Props, "decisao">) {
   );
 }
 
-function Risco({ decisao: d }: Pick<Props, "decisao">) {
+export function Risco({ decisao: d }: Pick<Props, "decisao">) {
   if (d.risco.aprovada) {
     return (
       <p className="decisao__risco decisao__risco--ok">
@@ -148,7 +149,7 @@ function ListaBarreiras({
   );
 }
 
-function Resposta({ decisao: d }: Pick<Props, "decisao">) {
+export function Resposta({ decisao: d }: Pick<Props, "decisao">) {
   const aprovar = useAprovarDecisao();
   const recusar = useRecusarDecisao();
   const avisar = useAvisos();
@@ -211,6 +212,12 @@ export function CartaoDecisao({ decisao: d, robo, compacto = false }: Props) {
           </section>
         </>
       )}
+      <Link to="/decisoes/$id" params={{ id: d.id }} className="link-seta link-por-dentro">
+        <ScanSearch size={14} aria-hidden="true" /> Ver por dentro
+        <span className="so-leitor">
+          : {ACAO[d.sinal.acao]} de {robo?.nome ?? "robô"}
+        </span>
+      </Link>
       {d.estado === "aguardando_aprovacao" ? <Resposta decisao={d} /> : null}
     </article>
   );

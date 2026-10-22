@@ -1,9 +1,22 @@
-import type { DecisaoDTO, OrdemDTO, PosicaoDTO, RoboDTO } from "@zentrade/contratos/esquemas";
+import type {
+  DecisaoDTO,
+  OrdemDTO,
+  PensamentoAtualDTO,
+  PosicaoDTO,
+  RoboDTO,
+} from "@zentrade/contratos/esquemas";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useFonte } from "../api/contexto";
 import type { EventoTela } from "../api/fonte";
-import { aplicarAnalise, aplicarOrdem, aplicarRobo, removerAnalise } from "./atualizarCache";
+import {
+  aplicarAnalise,
+  aplicarOrdem,
+  aplicarPensamento,
+  aplicarRobo,
+  entraNoHistorico,
+  removerAnalise,
+} from "./atualizarCache";
 import { chaves } from "./chaves";
 import { categoriaDe, juntarRegistros } from "../lib/aovivo/eventos";
 import { lojaAnalises, lojaAoVivo, lojaBarreiras, lojaConexao, lojaPrecos, lojaUltimoEvento } from "./lojas";
@@ -31,6 +44,18 @@ function aplicarOrdemNasListas(qc: QueryClient, o: OrdemDTO): void {
     if (doRobo === "todas" || doRobo === dono) qc.setQueryData(chave, aplicarOrdem(lista, o));
     else if (!dono || lista.some((x) => x.id === o.id)) void qc.invalidateQueries({ queryKey: chave });
   }
+}
+
+/** O pensamento novo troca o do robô na hora; o histórico curto relê só quando a leitura entra nele. */
+function aplicarPensamentoNoCache(qc: QueryClient, e: Extract<EventoTela, { tipo: "pensamento" }>): void {
+  const lista = qc.getQueryData<PensamentoAtualDTO[]>(chaves.pensamentos);
+  const anterior = lista?.find((p) => p.roboId === e.roboId)?.pensamento;
+  const robo = qc.getQueryData<RoboDTO[]>(chaves.robos)?.find((r) => r.id === e.roboId);
+  const nova = lista ? aplicarPensamento(lista, e.roboId, e.pensamento, robo) : null;
+  if (nova) qc.setQueryData(chaves.pensamentos, nova);
+  else void qc.invalidateQueries({ queryKey: chaves.pensamentos, exact: true });
+  if (entraNoHistorico(anterior, e.pensamento))
+    void qc.invalidateQueries({ queryKey: chaves.historicoDoPensamento(e.roboId) });
 }
 
 export function aplicarEvento(qc: QueryClient, e: EventoTela, agendar = setTimeout, agora = Date.now): void {
@@ -76,6 +101,9 @@ export function aplicarEvento(qc: QueryClient, e: EventoTela, agendar = setTimeo
     case "alerta":
       // Um alerta novo (stop, pausa, divergência...): a tela de Risco relê avisos e pausas.
       void qc.invalidateQueries({ queryKey: chaves.risco });
+      return;
+    case "pensamento":
+      aplicarPensamentoNoCache(qc, e);
       return;
     case "candle":
     case "sinal":

@@ -8,6 +8,7 @@ import {
   RoboEsquema,
 } from "./dados.js";
 import { Id, Instante, TextoDecimal } from "./comum.js";
+import { PensamentoEsquema } from "./pensamento.js";
 
 /** Candle fechado de um robô, para o gráfico ao vivo (decimais em texto). */
 export const CandleEventoEsquema = z.object({
@@ -65,6 +66,8 @@ export const EventoEsquema = z.discriminatedUnion("tipo", [
     protecaoCorretora: ProtecaoCorretoraEsquema.optional(),
     em: Instante,
   }),
+  /** O que o robô pensou ao fechar a vela (mesmo sem sinal): a tela "Ao vivo" e "Robô por dentro". */
+  z.object({ tipo: z.literal("pensamento"), roboId: Id, pensamento: PensamentoEsquema }),
   z.object({ tipo: z.literal("preco"), simbolo: z.string(), preco: TextoDecimal, em: Instante }),
   z.object({ tipo: z.literal("decisao"), decisao: DecisaoEsquema }),
   z.object({ tipo: z.literal("ordem"), ordem: OrdemEsquema }),

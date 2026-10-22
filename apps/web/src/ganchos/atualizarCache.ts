@@ -1,4 +1,10 @@
-import type { DecisaoDTO, OrdemDTO, RoboDTO } from "@zentrade/contratos/esquemas";
+import type {
+  DecisaoDTO,
+  OrdemDTO,
+  PensamentoAtualDTO,
+  PensamentoDTO,
+  RoboDTO,
+} from "@zentrade/contratos/esquemas";
 import type { EventoAnalise } from "@zentrade/contratos/esquemas";
 import type { FiltroDecisoes } from "../api/fonte";
 
@@ -35,6 +41,29 @@ export const aplicarOrdem = (lista: readonly OrdemDTO[], o: OrdemDTO): OrdemDTO[
   substituirOuIncluir(lista, o);
 export const aplicarRobo = (lista: readonly RoboDTO[], r: RoboDTO): RoboDTO[] =>
   substituirOuIncluir(lista, r, false);
+
+/**
+ * O pensamento novo de um robô troca o dele na lista (um item por robô). Robô que ainda não
+ * tinha pensado entra se a tela já conhece o ativo e o intervalo dele; senão devolve `null`
+ * (quem chamou recarrega a lista).
+ */
+export function aplicarPensamento(
+  lista: readonly PensamentoAtualDTO[],
+  roboId: string,
+  pensamento: PensamentoDTO,
+  robo: Pick<RoboDTO, "simbolo" | "intervalo"> | undefined,
+): PensamentoAtualDTO[] | null {
+  const atual = lista.find((p) => p.roboId === roboId);
+  const base = atual ?? (robo ? { roboId, simbolo: robo.simbolo, intervalo: robo.intervalo } : null);
+  if (!base) return null;
+  const novo: PensamentoAtualDTO = { ...base, pensamento };
+  return atual ? lista.map((p) => (p.roboId === roboId ? novo : p)) : [...lista, novo];
+}
+
+/** A leitura entra no histórico curto quando é a primeira, o cenário mudou ou houve sinal. */
+export function entraNoHistorico(anterior: PensamentoDTO | undefined, novo: PensamentoDTO): boolean {
+  return !anterior || anterior.cenario.cenario !== novo.cenario.cenario || novo.sinal !== "AGUARDAR";
+}
 
 /* ---------- análises em andamento (cartão "pensando") ---------- */
 

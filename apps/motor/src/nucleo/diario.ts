@@ -27,6 +27,8 @@ export function decisaoDTO(r: DecisaoRegistrada): DecisaoDTO {
     preco: paraTexto(d.preco),
     risco: { aprovada: d.risco.aprovada, barreiras: d.risco.barreiras.map((b) => ({ ...b })) },
     estado: d.estado,
+    ...(d.regime ? { regime: d.regime } : {}),
+    ...(d.condicoes ? { condicoes: d.condicoes } : {}),
     ...(d.proposta ? { proposta: d.proposta } : {}),
     ...(d.quantidade ? { quantidade: paraTexto(d.quantidade) } : {}),
     ...(d.custoIaUsd ? { custoIaUsd: paraTexto(d.custoIaUsd) } : {}),

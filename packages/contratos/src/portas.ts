@@ -1,5 +1,8 @@
 import type {
   Candle,
+  Condicao,
+  LeituraCenario,
+  PensamentoRobo,
   Estrategia,
   EventoMercado,
   EstadoConta,
@@ -65,6 +68,10 @@ export interface NovaDecisao {
    * agente. Gravados para a posição aberta seguir protegida depois de um reinício.
    */
   readonly protecao?: Protecao;
+  /** O cenário de mercado no momento da decisão (grava junto, para a tela explicar). */
+  readonly regime?: LeituraCenario;
+  /** A regra aberta em condições (✓/✗ com valores) naquele momento. */
+  readonly condicoes?: Condicao;
 }
 
 export interface Protecao {
@@ -230,6 +237,14 @@ export interface PortaAgente {
 /** Candles fechados gravados para o gráfico da tela e para o backtest. */
 export interface PortaCandles {
   gravar(simbolo: string, intervalo: Intervalo, candles: readonly Candle[]): Promise<void>;
+}
+
+/**
+ * O pensamento do robô a cada vela: a última leitura por robô e um histórico curto
+ * (primeira leitura, mudança de cenário e sinais). Falhar aqui nunca para o robô.
+ */
+export interface PortaPensamentos {
+  registrar(roboId: string, pensamento: PensamentoRobo): Promise<void>;
 }
 
 export interface PortaEventos {

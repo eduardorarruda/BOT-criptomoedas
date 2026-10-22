@@ -5,13 +5,14 @@ import {
   type DecisaoDTO,
   type EstadoDecisao,
   type EstrategiaDTO,
+  type LeituraCenarioDTO,
   type OrdemDTO,
   type PropostaAgente,
   type ProtecaoCorretoraDTO,
   type RoboConfig,
   type RoboDTO,
 } from "@zentrade/contratos";
-import { acertou, dec, paraTexto, type Estrategia, type Execucao } from "@zentrade/dominio";
+import { acertou, dec, paraTexto, type Condicao, type Estrategia, type Execucao } from "@zentrade/dominio";
 import type {
   avaliacoesDecisao,
   decisoes,
@@ -117,6 +118,8 @@ export function roboConfigDeLinha(r: LinhaRobo, versao: LinhaVersao): RoboConfig
 interface SinalGravado {
   readonly acao: "COMPRAR" | "VENDER" | "AGUARDAR";
   readonly explicacao: string;
+  readonly regime?: LeituraCenarioDTO;
+  readonly condicoes?: Condicao;
 }
 
 interface RiscoGravado {
@@ -156,6 +159,8 @@ export function decisaoDeLinha(
     roboId: d.roboId,
     em: ms(d.em),
     sinal: { acao: sinal.acao, explicacao: sinal.explicacao },
+    ...(sinal.regime ? { regime: sinal.regime } : {}),
+    ...(sinal.condicoes ? { condicoes: sinal.condicoes } : {}),
     ...(d.proposta ? { proposta: d.proposta as PropostaAgente } : {}),
     ...(quantidade !== undefined ? { quantidade } : {}),
     preco: decimalTexto(d.preco),

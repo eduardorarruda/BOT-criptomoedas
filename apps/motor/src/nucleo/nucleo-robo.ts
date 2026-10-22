@@ -26,6 +26,7 @@ import { PosicaoAberta, type ProtecaoEfetiva } from "./posicao-aberta.js";
 import { conferirOrdemIncerta, type OrdemIncerta } from "./reconciliacao.js";
 import { conferirProtecao, StopNaCorretora } from "./stop-corretora.js";
 import { velasDoPedido } from "./contexto-operacao.js";
+import { pensamentoDoCandle, registrarPensamento } from "./pensar.js";
 import type { AprovacaoPendente, Dependencias, EntradaCiclo, ResultadoCiclo } from "./tipos.js";
 
 type Contexto = Omit<EntradaCiclo, "fechamentos" | "velas">;
@@ -123,9 +124,21 @@ export class NucleoRobo {
     const estrategia = await this.aberta.estrategia(posicao);
     const decisaoId = (await this.aberta.protecaoEfetiva(posicao))?.decisaoId ?? null;
     const acompanhamento = await this.acompanhamento.noIntervalo(estrategia, posicao, decisaoId);
-    const sinal = decidir(estrategia, this.contextoDecisao(candle.fecha, acompanhamento), posicao);
+    const ctx = this.contextoDecisao(candle.fecha, acompanhamento);
+    const sinal = decidir(estrategia, ctx, posicao);
     await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
-    return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
+    const pensamento = pensamentoDoCandle(this.robo, {
+      estrategia,
+      sinal,
+      ctx,
+      posicao,
+      em: candle.fechamento,
+    });
+    // O pensamento grava ao lado da decisão (não antes dela): a vela não espera o banco por causa dele.
+    const gravando = registrarPensamento(this.deps, this.robo, pensamento);
+    const r = await this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento, pensamento });
+    await gravando;
+    return r;
   }
 
   /** Candle de 1 minuto: só vigia stop e alvo da posição aberta, entre um candle do intervalo e outro. */
@@ -149,10 +162,19 @@ export class NucleoRobo {
     // Só stop (o efetivo) e alvo: a regra de saída e o tempo são do candle do intervalo.
     const { saida: _saida, tempoMaximo: _tempo, ...soStopEAlvo } = await this.aberta.estrategia(posicao);
     const acompanhamento = await this.acompanhamento.vigente(soStopEAlvo, posicao);
-    const sinal = decidir(soStopEAlvo, this.contextoDecisao(candle.fecha, acompanhamento), posicao);
+    const ctx = this.contextoDecisao(candle.fecha, acompanhamento);
+    const sinal = decidir(soStopEAlvo, ctx, posicao);
     if (sinal.acao !== "VENDER" || (await this.bloqueio.repetido(sinal, posicao))) return null;
     await publicarSinal(this.deps, this.robo, sinal, candle.fecha, candle.fechamento);
-    return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento });
+    // Fora do candle do intervalo não há leitura nova do robô; o cenário só vai junto da decisão.
+    const pensamento = pensamentoDoCandle(this.robo, {
+      estrategia: soStopEAlvo,
+      sinal,
+      ctx,
+      posicao,
+      em: candle.fechamento,
+    });
+    return this.seguir({ sinal, preco: candle.fecha, posicao, em: candle.fechamento, pensamento });
   }
 
   /** Resolve quando não há decisão nem espera de aprovação em andamento. */

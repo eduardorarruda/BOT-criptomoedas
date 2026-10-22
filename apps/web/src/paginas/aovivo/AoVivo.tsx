@@ -13,9 +13,11 @@ import { useAgora } from "../../ganchos/useAgora";
 import { juntarRegistros, mapaDecisoes, roboDoEvento } from "../../lib/aovivo/eventos";
 import { useLoja } from "../../lib/loja";
 import { AnuncioAoVivo } from "./AnuncioAoVivo";
+import { PainelCenarios } from "../../componentes/cenario/PainelCenarios";
 import { EstadoConexao } from "./EstadoConexao";
 import { LinhaDoTempo } from "./LinhaDoTempo";
 import { PainelPensando } from "./PainelPensando";
+import { PensamentoDoRobo } from "./PensamentoDoRobo";
 import { PainelRobo } from "./PainelRobo";
 import { ResumoRobos } from "./ResumoRobos";
 
@@ -60,6 +62,9 @@ function Todos(
   );
   return (
     <section className="aovivo-grade aovivo-grade--todos" aria-label="Todos os robôs">
+      <div className="aovivo-area-resumo">
+        <PainelCenarios />
+      </div>
       <div className="aovivo-area-resumo">
         <ResumoRobos
           robos={p.robos}
@@ -141,6 +146,7 @@ export function AoVivo() {
                 registros={registros.registros}
                 linha={<Linha robos={lista} roboId={escolhido.id} {...registros} />}
                 pensando={<PainelPensando robos={lista} roboId={escolhido.id} />}
+                pensamento={<PensamentoDoRobo robo={escolhido} />}
               />
               <AnuncioAoVivo registros={registros.registros} />
             </>

@@ -7,6 +7,7 @@ import type {
   PortaCandles,
   PortaDecisoes,
   PortaEventos,
+  PortaPensamentos,
   PortaOrdens,
   PortaProtecoes,
   PortaRiscoConta,
@@ -15,7 +16,7 @@ import type {
   ResultadoOrdem,
   VelasPedido,
 } from "@zentrade/contratos";
-import { FUSO_PADRAO, type Posicao, type Sinal, type Valor } from "@zentrade/dominio";
+import { FUSO_PADRAO, type PensamentoRobo, type Posicao, type Sinal, type Valor } from "@zentrade/dominio";
 import type { DecisaoRegistrada } from "./diario.js";
 import type { Plano } from "./plano.js";
 
@@ -62,6 +63,8 @@ export interface EntradaCiclo {
   readonly velas?: VelasPedido;
   readonly posicao: Posicao;
   readonly em: number;
+  /** O que o robô pensou neste candle: o cenário e as condições vão junto da decisão que ele registrar. */
+  readonly pensamento?: PensamentoRobo;
 }
 
 /** Decisão do modo sugerir esperando a pessoa. O robô segue vigiando o stop enquanto isso. */
@@ -99,6 +102,8 @@ export interface Dependencias {
   readonly riscoConta?: PortaRiscoConta;
   /** Agenda de eventos de mercado, para o filtro opcional de dia de evento. Sem ela, o filtro não atua. */
   readonly agendaEventos?: PortaAgendaEventos;
+  /** Onde guardar o que o robô pensa a cada vela (última leitura e histórico curto). Sem banco, só o evento ao vivo. */
+  readonly pensamentos?: PortaPensamentos;
   readonly relogio: Relogio;
   readonly registro: Registro;
   readonly dormir: (ms: number) => Promise<void>;

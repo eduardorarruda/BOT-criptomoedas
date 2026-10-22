@@ -1,5 +1,6 @@
 import type {
   PortaAgendaEventos,
+  PortaPensamentos,
   PortaAgente,
   PortaCandles,
   PortaRiscoConta,
@@ -98,6 +99,8 @@ export interface OpcoesCenario {
   readonly agendaEventos?: PortaAgendaEventos;
   /** O fuso da instância (ZENTRADE_FUSO). Padrão: o do motor. */
   readonly fuso?: string;
+  /** Onde o pensamento do robô é guardado (sem ela, só o evento ao vivo). */
+  readonly pensamentos?: PortaPensamentos;
 }
 
 export const USUARIO = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
@@ -145,6 +148,7 @@ export function montarCenario(o: OpcoesCenario = {}) {
     ...(o.candles ? { candles: o.candles } : {}),
     ...(o.riscoConta ? { riscoConta: o.riscoConta } : {}),
     ...(o.agendaEventos ? { agendaEventos: o.agendaEventos } : {}),
+    ...(o.pensamentos ? { pensamentos: o.pensamentos } : {}),
     relogio,
     registro,
     dormir: o.dormir ?? relogio.dormir,
