@@ -64,3 +64,25 @@ describe("pensamento do robô", () => {
     expect(nova.data?.condicoes?.filhos?.[0]?.texto).toBe("preço (99,6) > SMA(200) (100)");
   });
 });
+
+describe("cenário por ativo", () => {
+  const atual = (roboId: string, intervalo: "1h" | "5m", em: number, nome: "alta" | "queda") => ({
+    roboId,
+    simbolo: "BTCUSDT",
+    intervalo,
+    pensamento: { ...pensamento, em, cenario: { ...cenario, cenario: nome } } as never,
+  });
+
+  it("robôs do mesmo ativo e intervalo viram um cenário, o da leitura mais recente", async () => {
+    const { cenariosDosAtuais } = await import("./pensamento.js");
+    const r = cenariosDosAtuais([
+      atual("r1", "1h", 10, "alta"),
+      atual("r2", "1h", 20, "queda"),
+      atual("r3", "5m", 5, "alta"),
+    ]);
+    expect(r).toHaveLength(2);
+    const h = r.find((x) => x.intervalo === "1h");
+    expect(h?.cenario.cenario).toBe("queda");
+    expect(h?.roboIds.sort()).toEqual(["r1", "r2"]);
+  });
+});

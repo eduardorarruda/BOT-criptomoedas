@@ -161,9 +161,9 @@ describe("fonte demo: decisões", () => {
     const fim = eventos.find((e) => e.tipo === "analise" && e.concluida);
     const etapas = eventos.filter((e) => e.tipo === "analise" && e.etapa);
     expect(etapas.length).toBe(5);
-    // a mesma sequência do motor: candle → sinal → início da análise → etapas → fim → decisão
+    // a mesma sequência do motor: candle → sinal → pensamento → início da análise → etapas → fim → decisão
     const ordem = eventos.map((e) => e.tipo).filter((t) => t !== "preco");
-    expect(ordem.slice(0, 3)).toEqual(["candle", "sinal", "analise"]);
+    expect(ordem.slice(0, 4)).toEqual(["candle", "sinal", "pensamento", "analise"]);
     expect(fim && "resultado" in fim ? fim.resultado : null).toBe("comprar");
     expect(fim).toBeDefined();
     expect(tipos).toContain("decisao");

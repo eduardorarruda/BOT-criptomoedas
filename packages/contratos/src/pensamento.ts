@@ -75,3 +75,29 @@ export type CenarioDoAtivoDTO = z.infer<typeof CenarioDoAtivoEsquema>;
 
 /** Quantas leituras o histórico curto guarda por robô. */
 export const LIMITE_HISTORICO_PENSAMENTO = 200;
+
+/**
+ * Vários robôs no mesmo ativo e intervalo dão um cenário só: o da leitura mais recente.
+ * Vale para a API e para a tela (que reagrupa quando chega um pensamento ao vivo).
+ */
+export function cenariosDosAtuais(atuais: readonly PensamentoAtualDTO[]): CenarioDoAtivoDTO[] {
+  const porAtivo = new Map<string, CenarioDoAtivoDTO>();
+  for (const a of atuais) {
+    const chave = `${a.simbolo}:${a.intervalo}`;
+    const existente = porAtivo.get(chave);
+    const roboIds = [...(existente?.roboIds ?? []), a.roboId];
+    if (existente && existente.em >= a.pensamento.em) {
+      porAtivo.set(chave, { ...existente, roboIds });
+      continue;
+    }
+    porAtivo.set(chave, {
+      simbolo: a.simbolo,
+      intervalo: a.intervalo,
+      roboIds,
+      em: a.pensamento.em,
+      preco: a.pensamento.preco,
+      cenario: a.pensamento.cenario,
+    });
+  }
+  return [...porAtivo.values()];
+}

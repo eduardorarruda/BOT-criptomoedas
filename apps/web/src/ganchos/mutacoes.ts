@@ -24,6 +24,10 @@ export function gravarDecisao(qc: QueryClient, d: DecisaoDTO): void {
     const filtro = (chave[1] ?? {}) as FiltroDecisoes;
     qc.setQueryData(chave, aplicarDecisao(lista, d, filtro));
   }
+  // A decisão aberta por inteiro (tela "por dentro") ganha o estado novo sem perder o que a lista não traz.
+  qc.setQueryData<DecisaoDTO | undefined>(chaves.decisao(d.id), (atual) =>
+    atual ? { ...atual, ...d } : atual,
+  );
 }
 
 export function useEntrar() {

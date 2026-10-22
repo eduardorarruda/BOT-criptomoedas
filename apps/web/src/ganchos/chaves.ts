@@ -15,6 +15,10 @@ export const chaves = {
   posicao: (roboId: string) => ["posicao", roboId] as const,
   decisoesTodas: ["decisoes"] as const,
   decisoes: (f: FiltroDecisoes = {}) => ["decisoes", f] as const,
+  decisao: (id: string) => ["decisao", id] as const,
+  /** O que cada robô pensou na última vela (um item por robô). */
+  pensamentos: ["pensamentos"] as const,
+  historicoDoPensamento: (roboId: string) => ["pensamentos", "historico", roboId] as const,
   /** Fora de "decisoes": o placar não é lista de decisões (os eventos ao vivo mexem nelas). */
   placar: (f: FiltroPlacar = {}) => ["placar", f] as const,
   ordensTodas: ["ordens"] as const,

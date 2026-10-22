@@ -374,8 +374,11 @@
   .aovivo-area-risco {
     order: 4;
   }
-  .aovivo-area-linha {
+  .aovivo-area-pensamento {
     order: 5;
+  }
+  .aovivo-area-linha {
+    order: 6;
   }
 }
 

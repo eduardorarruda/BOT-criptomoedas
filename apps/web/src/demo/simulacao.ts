@@ -1,10 +1,18 @@
-import type { DecisaoDTO, Evento, OrdemDTO, RoboDTO } from "@zentrade/contratos/esquemas";
+import type {
+  DecisaoDTO,
+  Evento,
+  OrdemDTO,
+  PensamentoAtualDTO,
+  PensamentoDTO,
+  RoboDTO,
+} from "@zentrade/contratos/esquemas";
 import { dec } from "@zentrade/dominio";
 import type { RegistroAoVivo } from "../api/esquemas";
 import { juntarRegistros, roboDoEvento } from "../lib/aovivo/eventos";
 import { decisaoDaAnalise, decisaoDeVenda, etapasPara, eventoEtapa } from "./analise";
 import { ehSimboloDemo, type Mercado } from "./mercado";
 import { exposicaoAtual, posicaoDerivada, posicaoDTO, type EstadoDemo } from "./estado";
+import { pensamentoDoCiclo, pensamentosIniciais } from "./pensamentos";
 import { gerarVelas } from "./velas";
 
 /**
@@ -35,6 +43,8 @@ export interface Simulacao {
   desligar(): void;
   executarAprovada(d: DecisaoDTO): void;
   historico(roboId?: string): RegistroAoVivo[];
+  /** O que cada robô pensou na última vela (muda a cada ciclo). */
+  pensamentos(): PensamentoAtualDTO[];
 }
 
 const TETO_HISTORICO = 400;
@@ -59,11 +69,14 @@ export function criarSimulacao(c: Contexto): Simulacao {
   let registros: readonly RegistroAoVivo[] = semente(c.estado());
   let relogios: ReturnType<typeof setInterval>[] = [];
   let vez = 0;
+  let pensados: readonly PensamentoAtualDTO[] = pensamentosIniciais(c.estado().robos, c.agora());
 
   const roboDaDecisao = (id: string): string | undefined =>
     c.estado().decisoes.find((d) => d.id === id)?.roboId;
 
   function emitir(e: Evento): void {
+    if (e.tipo === "pensamento")
+      pensados = pensados.map((p) => (p.roboId === e.roboId ? { ...p, pensamento: e.pensamento } : p));
     if (roboDoEvento(e, roboDaDecisao))
       registros = juntarRegistros(registros, [{ recebidoEm: c.agora(), evento: e }], TETO_HISTORICO);
     c.transmitir(e);
@@ -101,7 +114,15 @@ export function criarSimulacao(c: Contexto): Simulacao {
     emitir({ ...posicaoDTO(c.estado(), robo.id), tipo: "posicao", em: c.agora() });
   }
 
-  function registrarDecisao(d: DecisaoDTO, robo: RoboDTO): void {
+  /** A decisão nasce com o cenário e as condições que o robô tinha na última vela. */
+  function comPensamento(d: DecisaoDTO, robo: RoboDTO): DecisaoDTO {
+    const p = pensados.find((x) => x.roboId === robo.id)?.pensamento;
+    if (!p) return d;
+    return { ...d, regime: p.cenario, ...(p.condicoes ? { condicoes: p.condicoes } : {}) };
+  }
+
+  function registrarDecisao(original: DecisaoDTO, robo: RoboDTO): void {
+    const d = comPensamento(original, robo);
     const vaiExecutar = d.estado === "executada";
     const nasce: DecisaoDTO = vaiExecutar ? { ...d, estado: "aprovada" } : d;
     c.mudar((e) => ({ ...e, decisoes: [nasce, ...e.decisoes] }));
@@ -156,6 +177,13 @@ export function criarSimulacao(c: Contexto): Simulacao {
 
   function sinal(robo: RoboDTO, acao: "COMPRAR" | "VENDER" | "AGUARDAR", explicacao: string, preco: string) {
     emitir({ tipo: "sinal", roboId: robo.id, acao, explicacao, preco, em: c.agora() });
+    const base: PensamentoDTO | undefined = pensados.find((p) => p.roboId === robo.id)?.pensamento;
+    if (base)
+      emitir({
+        tipo: "pensamento",
+        roboId: robo.id,
+        pensamento: pensamentoDoCiclo(base, acao, explicacao, preco, c.agora()),
+      });
   }
 
   /** Um ciclo: compra, venda da posição aberta ou só "aguardar", alternando. */
@@ -197,6 +225,7 @@ export function criarSimulacao(c: Contexto): Simulacao {
       const robo = c.estado().robos.find((r) => r.id === d.roboId);
       if (robo) setTimeout(() => executar(d, robo), ATRASO_EXECUCAO_MS);
     },
+    pensamentos: () => [...pensados],
     historico(roboId) {
       return registros.filter((r) => !roboId || roboDoEvento(r.evento, roboDaDecisao) === roboId);
     },

@@ -126,10 +126,12 @@ interface Props {
   /** A linha do tempo e o cartão "pensando" entram nas colunas daqui. */
   readonly linha: ReactNode;
   readonly pensando: ReactNode;
+  /** O que a estratégia pensou na última vela ("Robô por dentro"). */
+  readonly pensamento: ReactNode;
 }
 
 /** Um robô: gráfico ao vivo, posição contando, limites de risco. */
-export function PainelRobo({ robo, registros, linha, pensando }: Props) {
+export function PainelRobo({ robo, registros, linha, pensando, pensamento }: Props) {
   const ordens = useOrdens(robo.id).data ?? SEM_ORDENS;
   const [posicao] = usePosicoes([robo.id]);
   const estrategia = useEstrategias().data?.find((e) => e.id === robo.estrategiaId);
@@ -169,6 +171,7 @@ export function PainelRobo({ robo, registros, linha, pensando }: Props) {
           />
         </div>
         <div className="aovivo-area-pensando">{pensando}</div>
+        <div className="aovivo-area-pensamento">{pensamento}</div>
         <div className="aovivo-area-risco">
           <MedidoresRisco
             medidores={medidores({ limites: robo.limites, ordens, quantidade, preco, agora })}

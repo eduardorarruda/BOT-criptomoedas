@@ -120,6 +120,13 @@ const decisoes = createRoute({
   component: lazyRouteComponent(() => import("./paginas/Decisoes"), "Decisoes"),
 });
 
+/** A decisão aberta por dentro: quando, o que a regra viu, o cenário, o que o Claude pensou, risco e resultado. */
+const decisaoPorDentro = createRoute({
+  getParentRoute: () => app,
+  path: "/decisoes/$id",
+  component: lazyRouteComponent(() => import("./paginas/decisoes/DecisaoPorDentro"), "DecisaoPorDentro"),
+});
+
 const ordens = createRoute({
   getParentRoute: () => app,
   path: "/ordens",
@@ -165,6 +172,7 @@ const arvore = raiz.addChildren([
     pagina("/assistente/configuracoes", () => import("./paginas/assistente/Configuracoes"), "Configuracoes"),
     pagina("/mercado", () => import("./paginas/Mercado"), "Mercado"),
     decisoes,
+    decisaoPorDentro,
     ordens,
     patrimonio,
     carteira,

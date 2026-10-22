@@ -97,7 +97,7 @@ export type { VerificacaoAuditoria } from "./repositorios/auditoria.js";
 export { VALIDADE_APROVACAO_PADRAO_MS } from "./portas/decisoes.js";
 export { portaPlacar } from "./portas/placar.js";
 export { portaPensamentos } from "./portas/pensamentos.js";
-export { cenariosDosAtuais, type RepositorioPensamentos } from "./repositorios/pensamentos.js";
+export { type RepositorioPensamentos } from "./repositorios/pensamentos.js";
 export { LIMITE_PLACAR, type FiltroPlacarBanco, type RepositorioPlacar } from "./repositorios/placar.js";
 export * as esquema from "./esquema/index.js";
 export {

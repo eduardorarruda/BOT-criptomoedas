@@ -4,7 +4,9 @@ import {
   aplicarAnalise,
   aplicarDecisao,
   aplicarOrdem,
+  aplicarPensamento,
   aplicarRobo,
+  entraNoHistorico,
   removerAnalise,
   substituirOuIncluir,
 } from "./atualizarCache";
@@ -80,5 +82,58 @@ describe("atualização dos dados ao vivo", () => {
     for (let i = 0; i < 9; i++)
       a = aplicarAnalise(a, { tipo: "analise", analiseId: `a${i}`, roboId: "r", concluida: false });
     expect(Object.keys(a)).toEqual(["a3", "a4", "a5", "a6", "a7", "a8"]);
+  });
+});
+
+describe("pensamento do robô ao vivo", () => {
+  const leitura = (cenario: "alta" | "lateral", sinal: "AGUARDAR" | "COMPRAR" = "AGUARDAR") =>
+    ({
+      em: 1,
+      preco: "1",
+      sinal,
+      posicionado: false,
+      regraAvaliada: "entrada",
+      condicoes: null,
+      cenario: {
+        cenario,
+        precoVsSma200: null,
+        precoVsSma400: null,
+        inclinacaoSma200: null,
+        limiarInclinacao: null,
+        variacao7d: null,
+        janelaVariacaoHoras: null,
+        atrPct: null,
+        atrPercentil: null,
+        eficiencia: null,
+        texto: "x",
+      },
+      agente: "decide",
+      explicacao: "x",
+      conclusao: "x",
+    }) as const;
+
+  it("troca o pensamento do robô que já pensou, sem mexer nos outros", () => {
+    const lista = [
+      { roboId: "r1", simbolo: "BTCUSDT", intervalo: "1h", pensamento: leitura("lateral") },
+      { roboId: "r2", simbolo: "ETHUSDT", intervalo: "1h", pensamento: leitura("lateral") },
+    ] as const;
+    const nova = aplicarPensamento(lista, "r1", leitura("alta"), undefined);
+    expect(nova?.[0]?.pensamento.cenario.cenario).toBe("alta");
+    expect(nova?.[1]).toBe(lista[1]);
+  });
+
+  it("robô que ainda não pensou entra se a tela conhece o ativo; senão pede para recarregar", () => {
+    const robo = { simbolo: "SOLUSDT", intervalo: "4h" } as const;
+    expect(aplicarPensamento([], "r9", leitura("alta"), robo)).toEqual([
+      { roboId: "r9", simbolo: "SOLUSDT", intervalo: "4h", pensamento: leitura("alta") },
+    ]);
+    expect(aplicarPensamento([], "r9", leitura("alta"), undefined)).toBeNull();
+  });
+
+  it("entra no histórico na primeira leitura, na mudança de cenário e no sinal; o resto, não", () => {
+    expect(entraNoHistorico(undefined, leitura("lateral"))).toBe(true);
+    expect(entraNoHistorico(leitura("lateral"), leitura("alta"))).toBe(true);
+    expect(entraNoHistorico(leitura("alta"), leitura("alta", "COMPRAR"))).toBe(true);
+    expect(entraNoHistorico(leitura("alta"), leitura("alta"))).toBe(false);
   });
 });

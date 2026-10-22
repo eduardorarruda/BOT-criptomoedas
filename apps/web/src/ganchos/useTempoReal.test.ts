@@ -178,4 +178,44 @@ describe("aplicarEvento", () => {
     );
     expect(lojaAnalises.obter().a9).toMatchObject({ concluida: true, resultado: "falhou" });
   });
+
+  it("o pensamento novo troca o do robô na lista e só recarrega o histórico quando entra nele", () => {
+    const qc = new QueryClient();
+    const pensamento = (cenario: "lateral" | "alta") =>
+      ({
+        em: 1,
+        preco: "1",
+        sinal: "AGUARDAR",
+        posicionado: false,
+        regraAvaliada: "entrada",
+        condicoes: null,
+        cenario: {
+          cenario,
+          precoVsSma200: null,
+          precoVsSma400: null,
+          inclinacaoSma200: null,
+          limiarInclinacao: null,
+          variacao7d: null,
+          janelaVariacaoHoras: null,
+          atrPct: null,
+          atrPercentil: null,
+          eficiencia: null,
+          texto: "x",
+        },
+        agente: "decide",
+        explicacao: "x",
+        conclusao: "x",
+      }) as const;
+    qc.setQueryData(chaves.pensamentos, [
+      { roboId: "r1", simbolo: "BTCUSDT", intervalo: "1h", pensamento: pensamento("lateral") },
+    ]);
+    qc.setQueryData(chaves.historicoDoPensamento("r1"), []);
+    aplicarEvento(qc, { tipo: "pensamento", roboId: "r1", pensamento: pensamento("lateral") });
+    expect(qc.getQueryState(chaves.historicoDoPensamento("r1"))?.isInvalidated).toBe(false);
+    aplicarEvento(qc, { tipo: "pensamento", roboId: "r1", pensamento: pensamento("alta") });
+    const lista = qc.getQueryData<{ pensamento: { cenario: { cenario: string } } }[]>(chaves.pensamentos);
+    expect(lista?.[0]?.pensamento.cenario.cenario).toBe("alta");
+    expect(qc.getQueryState(chaves.historicoDoPensamento("r1"))?.isInvalidated).toBe(true);
+    expect(lojaAoVivo.obter().some((r) => r.evento.tipo === "pensamento")).toBe(false);
+  });
 });

@@ -3,6 +3,8 @@ import {
   DecisaoEsquema,
   EstrategiaEsquema,
   OrdemEsquema,
+  PensamentoAtualEsquema,
+  PensamentoHistoricoEsquema,
   PlacarEsquema,
   PosicaoEsquema,
   RoboEsquema,
@@ -87,9 +89,14 @@ export function criarFonteApi(cliente: ClienteApi = criarCliente()): Fonte {
     posicao: (id) => pedir("GET", `/robos/${encodeURIComponent(id)}/posicao`, PosicaoEsquema),
 
     decisoes: (f = {}) => pedir("GET", "/decisoes", lista(DecisaoEsquema), undefined, { ...f }),
+    decisao: (id) => pedir("GET", `/decisoes/${encodeURIComponent(id)}`, DecisaoEsquema),
     aprovarDecisao: (id) => pedir("POST", `/decisoes/${encodeURIComponent(id)}/aprovar`, DecisaoEsquema),
     recusarDecisao: (id) => pedir("POST", `/decisoes/${encodeURIComponent(id)}/recusar`, DecisaoEsquema),
     placar: (f = {}) => pedir("GET", "/decisoes/placar", PlacarEsquema, undefined, { ...f }),
+
+    pensamentos: () => pedir("GET", "/pensamentos", lista(PensamentoAtualEsquema)),
+    historicoDoPensamento: (roboId) =>
+      pedir("GET", `/robos/${encodeURIComponent(roboId)}/pensamentos`, lista(PensamentoHistoricoEsquema)),
 
     ordens: (roboId) => pedir("GET", "/ordens", lista(OrdemEsquema), undefined, { roboId }),
     candles: (simbolo, intervalo) =>
