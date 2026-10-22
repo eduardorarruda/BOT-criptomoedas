@@ -30,6 +30,7 @@ import { rotasContas } from "./rotas/contas.js";
 import { rotasDadosB3 } from "./rotas/dados-b3.js";
 import { rotasDadosMt5 } from "./rotas/dados-mt5.js";
 import { rotasDecisoes } from "./rotas/decisoes.js";
+import { rotasPensamentos } from "./rotas/pensamentos.js";
 import { rotasEstrategias } from "./rotas/estrategias.js";
 import { rotasImobiliario } from "./rotas/imobiliario.js";
 import { rotasMercado } from "./rotas/mercado.js";
@@ -117,6 +118,7 @@ export async function construirApp(deps: Dependencias, log?: FastifyBaseLogger):
         rotasRobos,
         rotasEventosMercado,
         rotasDecisoes,
+        rotasPensamentos,
         rotasMercado,
         rotasParada,
         rotasRisco,

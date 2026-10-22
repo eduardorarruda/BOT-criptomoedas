@@ -50,6 +50,7 @@ export function criarHubEventos(o: { donos: Donos; log: Log }): HubEventos {
       case "candle":
       case "sinal":
       case "posicao":
+      case "pensamento":
         return lembrar(`r:${e.roboId}`, () => o.donos.donoDoRobo(e.roboId));
       case "robo":
         return lembrar(`r:${e.robo.id}`, () => o.donos.donoDoRobo(e.robo.id));

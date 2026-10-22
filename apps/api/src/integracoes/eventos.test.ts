@@ -28,6 +28,45 @@ describe("hub de eventos ao vivo", () => {
     expect(beto).not.toHaveBeenCalled();
   });
 
+  it("o pensamento do robô chega só para a dona", async () => {
+    const hub = criarHubEventos({ donos, log });
+    const ana = vi.fn();
+    const beto = vi.fn();
+    hub.registrar("ana", ana);
+    hub.registrar("beto", beto);
+    const evento: Evento = {
+      tipo: "pensamento",
+      roboId: "robo-ana",
+      pensamento: {
+        em: 1,
+        preco: "100",
+        sinal: "AGUARDAR",
+        posicionado: false,
+        regraAvaliada: "nenhuma",
+        condicoes: null,
+        cenario: {
+          cenario: "indefinido",
+          precoVsSma200: null,
+          precoVsSma400: null,
+          inclinacaoSma200: null,
+          limiarInclinacao: null,
+          variacao7d: null,
+          janelaVariacaoHoras: null,
+          atrPct: null,
+          atrPercentil: null,
+          eficiencia: null,
+          texto: "Sem histórico para o cenário: faltam 150 velas (precisa de 250).",
+        },
+        agente: "decide",
+        explicacao: "x",
+        conclusao: "Fico de fora: x.",
+      },
+    };
+    await hub.receber(JSON.stringify(evento));
+    expect(ana).toHaveBeenCalledOnce();
+    expect(beto).not.toHaveBeenCalled();
+  });
+
   it("preço e saúde vão para todo mundo conectado", async () => {
     const hub = criarHubEventos({ donos, log });
     const ana = vi.fn();
