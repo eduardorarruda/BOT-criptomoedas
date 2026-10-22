@@ -200,5 +200,24 @@ describe("estratégia", () => {
         expect.stringMatching(/ATR do tamanho/),
       ]);
     });
+
+    const v = (parcial: Partial<Estrategia>) => validarEstrategia({ ...estrategia, ...parcial });
+
+    it("tamanho por alocação: fração entre 0 e 100%, e não junto com o tamanho pela volatilidade", () => {
+      expect(v({ tamanhoPorAlocacao: { fracao: 1 } })).toEqual([]);
+      expect(v({ tamanhoPorAlocacao: { fracao: 0.5 } })).toEqual([]);
+      expect(v({ tamanhoPorAlocacao: { fracao: 0 } })).toEqual([expect.stringMatching(/alocação/)]);
+      expect(v({ tamanhoPorAlocacao: { fracao: 1.2 } })).toEqual([expect.stringMatching(/alocação/)]);
+      expect(
+        v({
+          tamanhoPorAlocacao: { fracao: 1 },
+          tamanhoPorVolatilidade: { periodo: 14, multiplo: 2 },
+        }),
+      ).toEqual([expect.stringMatching(/um só jeito de definir o tamanho/)]);
+    });
+
+    it("aceita o stop de catástrofe mais largo permitido (49%) com alvo distante", () => {
+      expect(v({ stop: 0.49, alvoLiquido: 0.99 })).toEqual([]);
+    });
   });
 });

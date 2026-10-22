@@ -113,6 +113,7 @@ describe("conversão de linhas do banco para o contrato", () => {
       empate: { gatilho: 0.03 },
       tempoMaximo: 30,
       tamanhoPorVolatilidade: { periodo: 20, multiplo: 2 },
+      tamanhoPorAlocacao: { fracao: 1 },
     } as const;
     const regra = regraGravada({ ...campos, saida: undefined });
     expect(regra).not.toHaveProperty("stop");

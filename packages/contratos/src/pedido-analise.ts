@@ -54,6 +54,8 @@ export const OperacaoPedidoEsquema = z.object({
   regraSaida: z.string().min(1).max(1000).optional(),
   /** Tamanho pela volatilidade (k × ATR), se houver: só informa. */
   tamanhoPorVolatilidade: z.object({ periodo: Periodo, multiplo: Multiplo }).optional(),
+  /** Tamanho por alocação (fração da exposição máxima, sem risco por operação), se houver: só informa. */
+  tamanhoPorAlocacao: z.object({ fracao: z.number().gt(0).max(1) }).optional(),
 });
 export type OperacaoPedido = z.infer<typeof OperacaoPedidoEsquema>;
 

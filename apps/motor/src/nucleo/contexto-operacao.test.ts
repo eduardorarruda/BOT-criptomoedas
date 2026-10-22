@@ -32,6 +32,15 @@ describe("operação no pedido ao agente", () => {
     expect(op.tamanhoPorVolatilidade).toEqual({ periodo: 20, multiplo: 2 });
   });
 
+  it("o tamanho por alocação do cofre vai para o agente (e o de volatilidade não)", () => {
+    const e = modelo("cofre-tendencia-sma400");
+    const op = operacaoDoPedido(e, custosCriptoDoPedido(e), "comprado");
+    expect(op.tamanhoPorAlocacao).toEqual({ fracao: 1 });
+    expect(op.tamanhoPorVolatilidade).toBeUndefined();
+    expect(op.stopPercentual).toBe(0.49);
+    expect(OperacaoPedidoEsquema.safeParse(op).success).toBe(true);
+  });
+
   it("stop móvel, empate e tempo máximo vão quando a estratégia tem", () => {
     const e = {
       ...modelo("donchian-20-10"),

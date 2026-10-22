@@ -22,7 +22,7 @@ export interface ModeloEstrategia {
   /** Para que mercado o modelo foi pensado. Sem ele, cripto. */
   readonly mercado?: Mercado;
   /** O intervalo de candles para o qual os parâmetros foram pensados. */
-  readonly intervalo?: "5m" | "15m" | "1h";
+  readonly intervalo?: "5m" | "15m" | "1h" | "4h";
 }
 
 export const AVISO_MODELOS =
@@ -166,6 +166,33 @@ export const MODELOS: readonly ModeloEstrategia[] = [
       tempoMaximo: 10,
       alvoLiquido: 0.08,
       taxa: TAXA_BINANCE,
+    },
+  },
+  {
+    id: "cofre-tendencia-sma400",
+    nome: "Cofre de tendência: comprado acima da média de 400, caixa abaixo",
+    intervalo: "4h",
+    descricao:
+      "Uma decisão por dia, no fechamento da vela de 4 horas que abre às 17:00 de Brasília (00:00 UTC): se o preço está acima da média de 400 velas (cerca de 67 dias), fica comprado; se está abaixo, fica em caixa; nos outros horários não faz nada. Não tem stop de verdade: o stop de 49% e o alvo de 99% ficam longe de propósito, só como proteção contra desastre, e quem encerra é a regra de saída. A compra usa a exposição máxima do robô inteira, sem dividir pelo risco por operação. No estudo pré-registrado (15 moedas em peso igual, de 01/2021 a 10/2026, com taxa de 0,1% e 0,07% de deslizamento e spread por lado), rendeu +1.348% com queda máxima de −67%, contra +886% e −87% de comprar e segurar: corta as quedas pela metade (2022: −42% contra −81%), mas fica atrás nas altas fortes (2021, 2023 e 2024). Limites: a queda de cada moeda sozinha ainda é grande (de −59% a −91%), são cerca de 20 trocas por ano, as moedas foram escolhidas olhando para hoje (viés de sobrevivência) e é uma janela só. É um teste para estudar, não uma indicação de investimento nem promessa de resultado.",
+    estrategia: {
+      entrada: {
+        tipo: "e",
+        regras: [
+          comparar(preco, ">", { tipo: "indicador", nome: "sma", periodo: 400 }),
+          { tipo: "horario", de: "17:00", ate: "18:00" },
+        ],
+      },
+      saida: {
+        tipo: "e",
+        regras: [
+          comparar(preco, "<", { tipo: "indicador", nome: "sma", periodo: 400 }),
+          { tipo: "horario", de: "17:00", ate: "18:00" },
+        ],
+      },
+      stop: 0.49,
+      alvoLiquido: 0.99,
+      taxa: TAXA_BINANCE,
+      tamanhoPorAlocacao: { fracao: 1 },
     },
   },
 ];

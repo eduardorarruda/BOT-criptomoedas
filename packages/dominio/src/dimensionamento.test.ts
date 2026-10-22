@@ -112,4 +112,49 @@ describe("dimensionamento por busca binária", () => {
       expect(paraTexto(maiorQuantidade({ ...comum, stop: dec(99), distanciaRisco: dec(500) })!)).toBe("0.1");
     });
   });
+  describe("tamanho por alocação (valor alvo opcional, sem olhar o risco)", () => {
+    const comum = { preco: dec(100), stop: dec(50), filtros, taxa: 0 };
+
+    it("compra o valor alvo inteiro mesmo que o stop longe estoure o risco por operação", () => {
+      const q = maiorQuantidade({
+        ...comum,
+        riscoMaximo: dec(1),
+        disponivel: dec(100000),
+        valorAlvo: dec(1000),
+      });
+      expect(paraTexto(q!)).toBe("10");
+    });
+
+    it("o saldo livre e a exposição restante (disponivel) continuam mandando", () => {
+      const q = maiorQuantidade({
+        ...comum,
+        riscoMaximo: dec(1),
+        disponivel: dec(300),
+        valorAlvo: dec(1000),
+      });
+      expect(paraTexto(q!)).toBe("3");
+    });
+
+    it("a taxa entra no custo: o valor alvo cobre preço mais a taxa de compra", () => {
+      const q = maiorQuantidade({
+        ...comum,
+        taxa: 0.001,
+        riscoMaximo: dec(1),
+        disponivel: dec(100000),
+        valorAlvo: dec(1001),
+      });
+      expect(paraTexto(q!)).toBe("10");
+    });
+
+    it("respeita a quantidade mínima e o valor mínimo da corretora", () => {
+      expect(
+        maiorQuantidade({ ...comum, riscoMaximo: dec(1), disponivel: dec(100000), valorAlvo: dec(4) }),
+      ).toBeNull();
+    });
+
+    it("sem valor alvo, o risco por operação manda como sempre", () => {
+      const q = maiorQuantidade({ ...comum, riscoMaximo: dec(10), disponivel: dec(100000) });
+      expect(paraTexto(q!)).toBe("0.2");
+    });
+  });
 });

@@ -16,6 +16,13 @@ export interface EntradaDimensionamento {
    * risco por operação é respeitado mesmo se o stop estiver mais longe.
    */
   readonly distanciaRisco?: Valor;
+  /**
+   * Tamanho por alocação (opcional): compra este valor, em moeda de cotação, e NÃO olha o
+   * risco por operação — para estratégias sem stop de verdade, como o cofre de tendência.
+   * O saldo livre e a exposição restante (`disponivel`) e os filtros da corretora continuam
+   * valendo.
+   */
+  readonly valorAlvo?: Valor;
 }
 
 /**
@@ -35,13 +42,15 @@ export function maiorQuantidade(e: EntradaDimensionamento): Valor | null {
   const perdaPorUnidade = e.preco.minus(saida).plus(e.preco.times(taxa)).plus(saida.times(taxa));
   const custoPorUnidade = e.preco.times(dec(1).plus(taxa));
 
+  const orcamento = e.valorAlvo ? menor(e.disponivel, e.valorAlvo) : e.disponivel;
   const cabe = (passos: Valor): boolean => {
     const q = passos.times(passo);
-    return q.times(perdaPorUnidade).lte(e.riscoMaximo) && q.times(custoPorUnidade).lte(e.disponivel);
+    const noRisco = e.valorAlvo !== undefined || q.times(perdaPorUnidade).lte(e.riscoMaximo);
+    return noRisco && q.times(custoPorUnidade).lte(orcamento);
   };
 
   let baixo = dec(0);
-  let alto = e.disponivel.div(custoPorUnidade).div(passo).floor();
+  let alto = orcamento.div(custoPorUnidade).div(passo).floor();
   if (quantidadeMaxima) alto = menor(alto, quantidadeMaxima.div(passo).floor());
   while (baixo.lt(alto)) {
     const meio = baixo.plus(alto).plus(1).div(2).floor();
