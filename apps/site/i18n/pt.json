@@ -1,7 +1,7 @@
 {
   "dinamico": {
     "cenarios": {
-      "abas": ["BTC · rompimento", "SOL · rompimento fraco", "WIN · abertura agitada"],
+      "abas": ["BTC", "SOL", "WIN"],
       "nomes": ["alta", "lateral", "baixa"],
       "sinais": [
         "BTC/USDT · 4h · rompimento do topo de 20 velas",
@@ -13,26 +13,26 @@
     },
     "terminal": [
       [
-        ["h", "21:00:00  BTC/USDT 4h  vela fechada"],
-        ["s", "regra    rompeu o topo de 20 velas, acima da média de 200"],
-        ["c", "claude   alta 62% · lateral 26% · baixa 12%"],
-        ["c", "claude   valor esperado +1,33% depois das taxas"],
-        ["c", "claude   contra: volume abaixo da média, o rompimento pode falhar"],
-        ["ok", "risco    APROVADO · 0,004 BTC · stop 61.230 na corretora"]
+        ["h", "21:00:00  BTC/USDT 4h  vela fechada", 1],
+        ["s", "regra    rompeu o topo de 20 velas, acima da média de 200", 1],
+        ["c", "claude   alta 62% · lateral 26% · baixa 12%", 2],
+        ["c", "claude   valor esperado +1,33% depois das taxas", 2],
+        ["c", "claude   contra: volume abaixo da média, o rompimento pode falhar", 2],
+        ["ok", "risco    APROVADO · 0,004 BTC · stop 61.230 na corretora", 3]
       ],
       [
-        ["h", "21:00:00  SOL/USDT 1h  vela fechada"],
-        ["s", "regra    rompeu o topo por só 0,02%"],
-        ["c", "claude   alta 40% · lateral 38% · baixa 22%"],
-        ["no", "claude   AGUARDAR · cenário favorável abaixo de 60%"],
-        ["h", "placar   veto registrado, avaliado daqui a 20 velas"]
+        ["h", "21:00:00  SOL/USDT 1h  vela fechada", 1],
+        ["s", "regra    rompeu o topo por só 0,02%", 1],
+        ["c", "claude   alta 40% · lateral 38% · baixa 22%", 2],
+        ["no", "claude   AGUARDAR · cenário favorável abaixo de 60%", 2],
+        ["h", "placar   veto registrado, avaliado daqui a 20 velas", 2]
       ],
       [
-        ["h", "09:20:00  WIN 5 min  agenda: Copom às 18h30"],
-        ["s", "regra    rompeu a faixa de abertura"],
-        ["no", "eventos  dia de evento, robô em modo reduzido"],
-        ["c", "claude   valor esperado -0,12%, lateral provável"],
-        ["no", "risco    BARRADO · nada operado"]
+        ["h", "09:20:00  WIN 5 min  agenda: Copom às 18h30", 1],
+        ["s", "regra    rompeu a faixa de abertura", 1],
+        ["no", "eventos  dia de evento, robô em modo reduzido", 3],
+        ["c", "claude   valor esperado -0,12%, lateral provável", 2],
+        ["no", "risco    BARRADO · nada operado", 3]
       ]
     ],
     "chat": [
@@ -55,6 +55,16 @@
         "resposta": "Amanhã tem <b>Copom às 18h30</b>, então o robô do WIN fica em modo reduzido. Não é recomendação: a decisão continua com as suas regras e o motor de risco."
       }
     ],
-    "velas": { "abertura": "abertura", "maxima": "máxima", "minima": "mínima", "fechamento": "fechamento" }
+    "velas": {
+      "abertura": "abertura",
+      "maxima": "máxima",
+      "minima": "mínima",
+      "fechamento": "fechamento"
+    },
+    "bt": {
+      "patrimonio": "patrimônio, base 100",
+      "queda": "queda desde o topo",
+      "maxima": "queda máxima"
+    }
   }
 }
