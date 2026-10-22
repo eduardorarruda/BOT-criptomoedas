@@ -327,4 +327,15 @@ describe("tamanho por alocação (cofre de tendência)", () => {
     expect(r.resultadoLiquido.gt(95)).toBe(true);
     expect(r.resultadoLiquido.lt(100)).toBe(true);
   });
+  it("alocando o saldo inteiro, a folga de 0,5% evita ordem recusada por deslizamento e spread", async () => {
+    const r = await rodarBacktest(
+      entrada(precos, {
+        estrategia: { ...cofre, tamanhoPorAlocacao: { fracao: 1 } },
+        limites: { ...entrada([]).limites, exposicaoMaxima: dec(5000) },
+        custos: { taxaPorLado: 0.001, deslizamentoBps: 5, meioSpreadBps: 2 },
+      }),
+    );
+    expect(r.operacoes).toBe(1);
+    expect(r.resultadoLiquido.gt(90)).toBe(true);
+  });
 });

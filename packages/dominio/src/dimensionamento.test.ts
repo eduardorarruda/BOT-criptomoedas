@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dec, paraTexto } from "./dinheiro.js";
-import { maiorQuantidade } from "./dimensionamento.js";
+import { FOLGA_DA_ALOCACAO, maiorQuantidade } from "./dimensionamento.js";
 import type { FiltrosAtivo } from "./tipos.js";
 
 const filtros: FiltrosAtivo = {
@@ -125,14 +125,16 @@ describe("dimensionamento por busca binária", () => {
       expect(paraTexto(q!)).toBe("10");
     });
 
-    it("o saldo livre e a exposição restante (disponivel) continuam mandando", () => {
+    it("o saldo livre e a exposição restante mandam, com folga de 0,5% para deslizamento e spread", () => {
       const q = maiorQuantidade({
         ...comum,
         riscoMaximo: dec(1),
         disponivel: dec(300),
         valorAlvo: dec(1000),
       });
-      expect(paraTexto(q!)).toBe("3");
+      // 300 × (1 − 0,005) = 298,5 → 2,985 unidades a 100: a ordem a mercado não estoura o saldo
+      expect(FOLGA_DA_ALOCACAO).toBe(0.005);
+      expect(paraTexto(q!)).toBe("2.985");
     });
 
     it("a taxa entra no custo: o valor alvo cobre preço mais a taxa de compra", () => {

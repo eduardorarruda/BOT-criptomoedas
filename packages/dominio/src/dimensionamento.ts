@@ -1,6 +1,13 @@
 import { dec, type Valor } from "./dinheiro.js";
 import type { FiltrosAtivo } from "./tipos.js";
 
+/**
+ * No tamanho por alocação o saldo livre pode ser o limite (o cofre aloca tudo): a ordem a
+ * mercado paga o deslizamento e o meio spread, que a conta não vê. Esta fração do saldo
+ * (0,5%, bem acima dos 7 pb de custo) fica de fora para a ordem não estourar o saldo.
+ */
+export const FOLGA_DA_ALOCACAO = 0.005;
+
 export interface EntradaDimensionamento {
   readonly preco: Valor;
   readonly stop: Valor;
@@ -42,7 +49,9 @@ export function maiorQuantidade(e: EntradaDimensionamento): Valor | null {
   const perdaPorUnidade = e.preco.minus(saida).plus(e.preco.times(taxa)).plus(saida.times(taxa));
   const custoPorUnidade = e.preco.times(dec(1).plus(taxa));
 
-  const orcamento = e.valorAlvo ? menor(e.disponivel, e.valorAlvo) : e.disponivel;
+  const orcamento = e.valorAlvo
+    ? menor(e.disponivel.times(1 - FOLGA_DA_ALOCACAO), e.valorAlvo)
+    : e.disponivel;
   const cabe = (passos: Valor): boolean => {
     const q = passos.times(passo);
     const noRisco = e.valorAlvo !== undefined || q.times(perdaPorUnidade).lte(e.riscoMaximo);
