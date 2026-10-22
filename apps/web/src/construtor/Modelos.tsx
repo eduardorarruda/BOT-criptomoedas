@@ -15,9 +15,12 @@ const INTERVALO: Record<NonNullable<ModeloEstrategia["intervalo"]>, string> = {
 
 const DIRECAO = { comprado: "só comprado", vendido: "só vendido", ambos: "nos dois sentidos" } as const;
 
-/** "Mini índice (WIN) · 5 min · nos dois sentidos": só nos modelos do mini índice. */
+/**
+ * "Mini índice (WIN) · 5 min · nos dois sentidos" nos modelos do mini índice; "Velas de 4 h" nos de
+ * cripto pensados para um intervalo só (o cofre de tendência); os outros não levam selo.
+ */
 export function seloModelo(m: ModeloEstrategia): string | null {
-  if (m.mercado !== "win") return null;
+  if (m.mercado !== "win") return m.intervalo ? `Velas de ${INTERVALO[m.intervalo]}` : null;
   return [
     "Mini índice (WIN)",
     ...(m.intervalo ? [INTERVALO[m.intervalo]] : []),

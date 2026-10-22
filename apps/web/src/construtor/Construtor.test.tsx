@@ -147,6 +147,7 @@ describe("Construtor de estratégias", () => {
     const cofre = MODELOS.find((m) => m.id === "cofre-tendencia-sma400")!;
     const item = within(screen.getByRole("heading", { name: cofre.nome }).closest("li")!);
     expect(item.getByText(/não uma indicação de investimento/)).toBeInTheDocument();
+    expect(item.getByText("Velas de 4 h")).toBeInTheDocument();
     await usuario.click(screen.getByRole("button", { name: `Usar este modelo: ${cofre.nome}` }));
 
     const alocacao = screen.getByRole("checkbox", { name: /Tamanho por alocação/ });
