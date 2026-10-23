@@ -4,3 +4,5 @@ pnpm-lock.yaml
 infra/n8n
 pesquisa/replay-claude/cache/
 apps/site/dados/
+pesquisa/win-papel/saida/*.json
+pesquisa/win-papel/vivo/

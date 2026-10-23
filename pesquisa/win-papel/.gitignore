@@ -1,0 +1,5 @@
+# Velas do mercado (vêm da corretora; não redistribuir) e saídas de máquina
+vivo/
+saida/laco.log
+saida/claude-cache.json
+saida/*.json

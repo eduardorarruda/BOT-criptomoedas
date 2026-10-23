@@ -1,0 +1,651 @@
+[
+  {
+    "id": "64579f84-e68e-4444-91bd-5db799845bba",
+    "nome": "P0 Donchian 20/10 (base)",
+    "versao": 1,
+    "entrada": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "superior",
+        "periodo": 20
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": ">"
+    },
+    "stop": 0.1,
+    "alvoLiquido": 0.6,
+    "taxa": 0.001,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "inferior",
+        "periodo": 10
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
+    },
+    "stopAtr": {
+      "periodo": 20,
+      "multiplo": 2
+    },
+    "tamanhoPorVolatilidade": {
+      "periodo": 20,
+      "multiplo": 2
+    }
+  },
+  {
+    "id": "87299e1e-989c-4397-84b3-b9d8f8bbf692",
+    "nome": "P1 Donchian 20/10 + tendência longa",
+    "versao": 1,
+    "entrada": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "donchian",
+            "tipo": "indicador",
+            "saida": "superior",
+            "periodo": 20
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "sma",
+            "tipo": "indicador",
+            "periodo": 200
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        }
+      ]
+    },
+    "stop": 0.1,
+    "alvoLiquido": 0.6,
+    "taxa": 0.001,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "inferior",
+        "periodo": 10
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
+    },
+    "stopAtr": {
+      "periodo": 20,
+      "multiplo": 2
+    },
+    "tamanhoPorVolatilidade": {
+      "periodo": 20,
+      "multiplo": 2
+    }
+  },
+  {
+    "id": "73e63a25-a30a-4707-a781-3bd88344e0f9",
+    "nome": "P2 Donchian 55/20 + tendência longa",
+    "versao": 1,
+    "entrada": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "donchian",
+            "tipo": "indicador",
+            "saida": "superior",
+            "periodo": 55
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "sma",
+            "tipo": "indicador",
+            "periodo": 200
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        }
+      ]
+    },
+    "stop": 0.1,
+    "alvoLiquido": 0.6,
+    "taxa": 0.001,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "inferior",
+        "periodo": 20
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
+    },
+    "stopAtr": {
+      "periodo": 20,
+      "multiplo": 2
+    },
+    "tamanhoPorVolatilidade": {
+      "periodo": 20,
+      "multiplo": 2
+    }
+  },
+  {
+    "id": "5a807c46-0427-49e4-86a4-870d70b4ca6d",
+    "nome": "P3 MACD (base)",
+    "versao": 1,
+    "entrada": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "macd",
+            "tipo": "indicador",
+            "lenta": 26,
+            "saida": "sinal",
+            "rapida": 12,
+            "periodoSinal": 9
+          },
+          "esquerda": {
+            "nome": "macd",
+            "tipo": "indicador",
+            "lenta": 26,
+            "saida": "macd",
+            "rapida": 12,
+            "periodoSinal": 9
+          },
+          "comparador": "cruzouAcima"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "ema",
+            "tipo": "indicador",
+            "periodo": 50
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        }
+      ]
+    },
+    "stop": 0.08,
+    "alvoLiquido": 0.2,
+    "taxa": 0.001,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "tipo": "numero",
+        "valor": 0
+      },
+      "esquerda": {
+        "nome": "macd",
+        "tipo": "indicador",
+        "lenta": 26,
+        "saida": "histograma",
+        "rapida": 12,
+        "periodoSinal": 9
+      },
+      "comparador": "<"
+    },
+    "stopAtr": {
+      "periodo": 14,
+      "multiplo": 2
+    },
+    "empate": {
+      "gatilho": 0.03
+    }
+  },
+  {
+    "id": "d461ef69-4a2a-46bd-8459-bfe6895d69ef",
+    "nome": "Mini índice: rompimento da faixa de abertura (30 min) (v2 21/10)",
+    "versao": 1,
+    "entrada": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "faixaAbertura",
+        "tipo": "indicador",
+        "saida": "superior",
+        "periodo": 30
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "cruzouAcima"
+    },
+    "stop": 0.01,
+    "alvoLiquido": 0.01,
+    "taxa": 0,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "faixaAbertura",
+        "tipo": "indicador",
+        "saida": "meio",
+        "periodo": 30
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
+    },
+    "stopAtr": {
+      "periodo": 14,
+      "multiplo": 4
+    },
+    "direcao": "ambos",
+    "entradaVendida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "faixaAbertura",
+        "tipo": "indicador",
+        "saida": "inferior",
+        "periodo": 30
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "cruzouAbaixo"
+    },
+    "saidaVendida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "faixaAbertura",
+        "tipo": "indicador",
+        "saida": "meio",
+        "periodo": 30
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": ">"
+    }
+  },
+  {
+    "id": "2fbac901-8661-4e2d-8852-7fb69c4849bd",
+    "nome": "Mini índice: tendência EMA 9/21 com ADX (v2 21/10)",
+    "versao": 1,
+    "entrada": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "ema",
+            "tipo": "indicador",
+            "periodo": 21
+          },
+          "esquerda": {
+            "nome": "ema",
+            "tipo": "indicador",
+            "periodo": 9
+          },
+          "comparador": "cruzouAcima"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "tipo": "numero",
+            "valor": 20
+          },
+          "esquerda": {
+            "nome": "adx",
+            "tipo": "indicador",
+            "saida": "adx",
+            "periodo": 14
+          },
+          "comparador": ">"
+        }
+      ]
+    },
+    "stop": 0.003,
+    "alvoLiquido": 0.012,
+    "taxa": 0,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "ema",
+        "tipo": "indicador",
+        "periodo": 21
+      },
+      "esquerda": {
+        "nome": "ema",
+        "tipo": "indicador",
+        "periodo": 9
+      },
+      "comparador": "cruzouAbaixo"
+    },
+    "stopAtr": {
+      "periodo": 14,
+      "multiplo": 2
+    },
+    "stopMovel": {
+      "tipo": "atr",
+      "periodo": 14,
+      "multiplo": 3
+    },
+    "direcao": "ambos",
+    "entradaVendida": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "ema",
+            "tipo": "indicador",
+            "periodo": 21
+          },
+          "esquerda": {
+            "nome": "ema",
+            "tipo": "indicador",
+            "periodo": 9
+          },
+          "comparador": "cruzouAbaixo"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "tipo": "numero",
+            "valor": 20
+          },
+          "esquerda": {
+            "nome": "adx",
+            "tipo": "indicador",
+            "saida": "adx",
+            "periodo": 14
+          },
+          "comparador": ">"
+        }
+      ]
+    },
+    "saidaVendida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "ema",
+        "tipo": "indicador",
+        "periodo": 21
+      },
+      "esquerda": {
+        "nome": "ema",
+        "tipo": "indicador",
+        "periodo": 9
+      },
+      "comparador": "cruzouAcima"
+    }
+  },
+  {
+    "id": "fe0c87cf-94c0-46c8-b466-64d24b692f4a",
+    "nome": "Mini índice: volta à média com Bollinger no pregão (v2 21/10)",
+    "versao": 1,
+    "entrada": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "bollinger",
+            "tipo": "indicador",
+            "saida": "inferior",
+            "desvios": 2,
+            "periodo": 20
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": "<"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "tipo": "numero",
+            "valor": 20
+          },
+          "esquerda": {
+            "nome": "adx",
+            "tipo": "indicador",
+            "saida": "adx",
+            "periodo": 14
+          },
+          "comparador": "<"
+        }
+      ]
+    },
+    "stop": 0.0025,
+    "alvoLiquido": 0.006,
+    "taxa": 0,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "bollinger",
+        "tipo": "indicador",
+        "saida": "media",
+        "desvios": 2,
+        "periodo": 20
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": ">"
+    },
+    "stopAtr": {
+      "periodo": 14,
+      "multiplo": 1.5
+    },
+    "tempoMaximo": 12,
+    "direcao": "ambos",
+    "entradaVendida": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "bollinger",
+            "tipo": "indicador",
+            "saida": "superior",
+            "desvios": 2,
+            "periodo": 20
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "tipo": "numero",
+            "valor": 20
+          },
+          "esquerda": {
+            "nome": "adx",
+            "tipo": "indicador",
+            "saida": "adx",
+            "periodo": 14
+          },
+          "comparador": "<"
+        }
+      ]
+    },
+    "saidaVendida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "bollinger",
+        "tipo": "indicador",
+        "saida": "media",
+        "desvios": 2,
+        "periodo": 20
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
+    }
+  },
+  {
+    "id": "1194d07e-3d77-4361-bbc1-cdc23786c029",
+    "nome": "Mini índice: rompimento de Donchian 20/10 com stop por ATR (v2 21/10)",
+    "versao": 1,
+    "entrada": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "superior",
+        "periodo": 20
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": ">"
+    },
+    "stop": 0.003,
+    "alvoLiquido": 0.015,
+    "taxa": 0,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "inferior",
+        "periodo": 10
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
+    },
+    "stopAtr": {
+      "periodo": 14,
+      "multiplo": 2
+    },
+    "direcao": "ambos",
+    "entradaVendida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "inferior",
+        "periodo": 20
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
+    },
+    "saidaVendida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "superior",
+        "periodo": 10
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": ">"
+    }
+  },
+  {
+    "id": "4640062d-67d9-4adc-ac5e-1a939195144c",
+    "nome": "Mini índice: rompimento a favor da tendência, fora da abertura e do almoço",
+    "versao": 1,
+    "entrada": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "donchian",
+            "tipo": "indicador",
+            "saida": "superior",
+            "periodo": 20
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "sma",
+            "tipo": "indicador",
+            "periodo": 200
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        },
+        {
+          "tipo": "nao",
+          "regra": {
+            "de": "09:00",
+            "ate": "10:00",
+            "tipo": "horario"
+          }
+        },
+        {
+          "tipo": "nao",
+          "regra": {
+            "de": "12:00",
+            "ate": "14:00",
+            "tipo": "horario"
+          }
+        }
+      ]
+    },
+    "stop": 0.1,
+    "alvoLiquido": 0.6,
+    "taxa": 0,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "inferior",
+        "periodo": 10
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
+    },
+    "stopAtr": {
+      "periodo": 20,
+      "multiplo": 2
+    }
+  }
+]
