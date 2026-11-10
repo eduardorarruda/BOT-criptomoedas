@@ -101,6 +101,8 @@ export interface OpcoesCenario {
   readonly fuso?: string;
   /** Onde o pensamento do robô é guardado (sem ela, só o evento ao vivo). */
   readonly pensamentos?: PortaPensamentos;
+  /** Idade máxima do candle para abrir posição (R2). Sem ela, não há trava. */
+  readonly idadeMaximaSinalMs?: number;
 }
 
 export const USUARIO = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
@@ -158,6 +160,7 @@ export function montarCenario(o: OpcoesCenario = {}) {
       tamanhoHistorico: o.tamanhoHistorico ?? 100,
       ...(o.stopLimiteBps ? { stopLimiteBps: o.stopLimiteBps } : {}),
       ...(o.fuso ? { fuso: o.fuso } : {}),
+      ...(o.idadeMaximaSinalMs ? { idadeMaximaSinalMs: o.idadeMaximaSinalMs } : {}),
     },
   } satisfies Dependencias;
 

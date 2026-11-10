@@ -49,6 +49,25 @@ const base = (robo: RoboConfig, e: EntradaCiclo) => ({
     : {}),
 });
 
+const textoIdade = (ms: number): string =>
+  ms < 60_000 ? `${Math.round(ms / 1000)} s` : `${Math.round(ms / 60_000)} min`;
+
+/** R2: só a ENTRADA tem idade máxima; sair e proteger nunca esperam. */
+function sinalVelho(
+  deps: Dependencias,
+  e: EntradaCiclo,
+  sinal: SinalOperacao,
+): { codigo: string; mensagem: string } | null {
+  const maxima = deps.opcoes.idadeMaximaSinalMs;
+  if (!maxima || sinal.acao !== "COMPRAR") return null;
+  const idade = deps.relogio.agora() - e.em;
+  if (idade <= maxima) return null;
+  return {
+    codigo: "sinal_velho",
+    mensagem: `O candle fechou há ${textoIdade(idade)} (o limite é ${textoIdade(maxima)}): o preço dele já passou, não abro posição atrasada.`,
+  };
+}
+
 /** O que acontece entre o sinal da regra e a ordem: agente → plano → risco → modo → execução. */
 export async function processarSinal(
   deps: Dependencias,
@@ -57,6 +76,15 @@ export async function processarSinal(
 ): Promise<ResultadoCiclo> {
   if (e.sinal.acao === "AGUARDAR") return { estado: null };
   const sinal: SinalOperacao = e.sinal;
+  const velho = sinalVelho(deps, e, sinal);
+  if (velho) {
+    await registrarDecisao(deps, {
+      ...base(robo, e),
+      risco: { aprovada: false, barreiras: [velho] },
+      estado: "barrada",
+    });
+    return { estado: "barrada" };
+  }
   // Pausado não analisa: a barreira sai antes de gastar uma consulta ao agente.
   if (!ehProtecao(sinal) && (await deps.robos.pausado(robo.id))) {
     await registrarDecisao(deps, {

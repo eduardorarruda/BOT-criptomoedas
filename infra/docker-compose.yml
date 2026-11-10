@@ -221,6 +221,40 @@ services:
       redis: { condition: service_healthy }
       motor: { condition: service_started }
 
+  # Papel do mini índice pelo MESMO núcleo dos robôs (R1): só os robôs WINBRL, velas de
+  # 5 min lidas dos CSVs que o MT5 escreve (somente leitura). Nenhuma ordem sai para a B3.
+  # Liga com: docker compose -p zentrade --profile app --profile b3 up -d motor-b3
+  motor-b3:
+    profiles: ["b3"]
+    image: ${ZENTRADE_IMAGEM:-zentrade}-motor:local
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
+    environment:
+      <<: *ambiente-motor
+      MOTOR_FUNCAO: robos
+      MOTOR_REDE: papel
+      MOTOR_MERCADO: b3
+      # As estratégias congeladas decidem sozinhas: sem IA no caminho da ordem.
+      AGENTE_URL: ""
+      MOTOR_AGENTE_OBRIGATORIO: "false"
+      MOTOR_AGENTE_FIXO: sempre_concorda
+      MOTOR_PLACAR: "false"
+      MOTOR_MT5_AUTO: "false"
+      MOTOR_B3_VIVO: /dados/mt5/WIN_M5_vivo.csv
+      MOTOR_B3_HISTORICO: /dados/mt5/WIN_M5.csv
+      MOTOR_B3_SALDO: ${MOTOR_B3_SALDO:-120000}
+      MOTOR_B3_IDADE_SINAL_S: ${MOTOR_B3_IDADE_SINAL_S:-120}
+      MOTOR_B3_IDADE_COTACAO_MIN: ${MOTOR_B3_IDADE_COTACAO_MIN:-7}
+      MOTOR_B3_CONSULTA_S: ${MOTOR_B3_CONSULTA_S:-10}
+      MOTOR_B3_DESLIZAMENTO_TICKS: ${MOTOR_B3_DESLIZAMENTO_TICKS:-1}
+    volumes:
+      - type: bind
+        source: ${MT5_ARQUIVOS:-${HOME}/.mt5/drive_c/Program Files/Rico - MetaTrader 5/MQL5/Files}
+        target: /dados/mt5
+        read_only: true
+    depends_on:
+      migrar: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
   agente:
     profiles: ["app"]
     build: { context: .., dockerfile: infra/docker/agente.Dockerfile }

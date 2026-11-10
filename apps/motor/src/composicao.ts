@@ -21,6 +21,8 @@ import {
   PapelCorretora,
 } from "@zentrade/corretora";
 import { dec } from "@zentrade/dominio";
+import { criarCorretoraB3, opcoesWin, RobosDoMercado } from "./b3/composicao-b3.js";
+import { CorretoraB3Papel } from "./b3/corretora-b3-papel.js";
 import { conferirChaveParaOperar } from "./chave-segura.js";
 import type { Config } from "./config.js";
 import { CorretorasPorPessoa } from "./corretoras-por-pessoa.js";
@@ -51,6 +53,7 @@ const SAUDE_MS = 30_000;
  * (corretorasDasPessoas); esta só leva a chave do ambiente em desenvolvimento.
  */
 export function criarCorretora(config: Config, registro: Registro): Corretora {
+  if (config.MOTOR_MERCADO === "b3") return criarCorretoraB3(config);
   const aoErroWebSocket = (erro: Error) => registro.warn({ erro }, "WebSocket da Binance com problema");
   if (config.MOTOR_REDE === "testnet")
     return new BinanceCorretora({
@@ -142,7 +145,7 @@ function portasDaMemoria(f: FontesMotor, registro: Registro, relogio: RelogioSis
 
 /** Papel com banco: refaz o saldo simulado com as execuções gravadas, uma vez por robô. */
 function prepararPapel(corretora: Corretora, ordens: PortaOrdens): OpcoesMotor["preparar"] {
-  if (!(corretora instanceof CorretoraPapelAoVivo)) return undefined;
+  if (!(corretora instanceof CorretoraPapelAoVivo || corretora instanceof CorretoraB3Papel)) return undefined;
   let preparados: ReadonlySet<string> = new Set();
   return async (robo: RoboConfig) => {
     if (preparados.has(robo.id)) return;
@@ -220,7 +223,7 @@ export function montarMotor(config: Config, f: FontesMotor, registro: Registro) 
     : portasDaMemoria(f, registro, relogio);
   const deps: Dependencias = {
     corretora,
-    robos: new RobosDaRede(portas.robos, config.MOTOR_REDE),
+    robos: new RobosDoMercado(new RobosDaRede(portas.robos, config.MOTOR_REDE), config.MOTOR_MERCADO),
     decisoes: portas.decisoes,
     ordens: portas.ordens,
     ...(config.MOTOR_STOP_NA_CORRETORA ? { protecoes: portas.protecoes } : {}),
@@ -241,6 +244,9 @@ export function montarMotor(config: Config, f: FontesMotor, registro: Registro) 
       expiracaoAprovacaoMs: config.APROVACAO_VALIDADE_MIN * 60_000,
       stopLimiteBps: config.MOTOR_STOP_LIMITE_BPS,
       fuso: config.ZENTRADE_FUSO,
+      ...(config.MOTOR_MERCADO === "b3"
+        ? { win: opcoesWin(config), idadeMaximaSinalMs: config.MOTOR_B3_IDADE_SINAL_S * 1000 }
+        : {}),
     },
   };
   return { deps, opcoesMotor: opcoesDoMotor(config, f, corretora, portas.ordens, registro) };

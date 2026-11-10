@@ -21,6 +21,7 @@ import {
   quantidadeVenda,
   type AjustePosicao,
 } from "./protecao.js";
+import { contratosDaEntrada } from "./tamanho-win.js";
 import type { Dependencias } from "./tipos.js";
 
 export interface Plano {
@@ -58,19 +59,32 @@ async function planejarCompra(
   const disponivel = restante.lte(0) ? dec(0) : menor(saldo, restante);
   // Tamanho por alocação: fração × exposição máxima, sem olhar o risco por operação.
   const alocacao = valorDeAlocacao(robo.estrategia, robo.limites.exposicaoMaxima);
-  const quantidade = quantidadeCompra(
-    {
-      preco: ctx.preco,
-      stop: protecao.stop,
-      riscoMaximo: robo.riscoPorOperacao,
-      disponivel,
-      filtros: ctx.filtros,
-      taxa,
-      ...(sinal.distanciaRisco ? { distanciaRisco: sinal.distanciaRisco } : {}),
-      ...(alocacao ? { valorAlvo: alocacao } : {}),
-    },
-    (ctx.proposta?.tamanhoRelativo ?? 1) * fatorDoModoDeEvento(ctx.estado.diaDeEvento?.modo ?? "ignorar"),
-  );
+  const relativo =
+    (ctx.proposta?.tamanhoRelativo ?? 1) * fatorDoModoDeEvento(ctx.estado.diaDeEvento?.modo ?? "ignorar");
+  const win = deps.opcoes.win;
+  const quantidade =
+    win && win.simbolo === robo.simbolo
+      ? contratosDaEntrada(win, {
+          preco: ctx.preco,
+          stop: protecao.stop,
+          risco: robo.riscoPorOperacao,
+          saldoLivre: saldo,
+          tamanhoRelativo: relativo,
+          ...(sinal.distanciaRisco ? { distanciaRisco: sinal.distanciaRisco } : {}),
+        })
+      : quantidadeCompra(
+          {
+            preco: ctx.preco,
+            stop: protecao.stop,
+            riscoMaximo: robo.riscoPorOperacao,
+            disponivel,
+            filtros: ctx.filtros,
+            taxa,
+            ...(sinal.distanciaRisco ? { distanciaRisco: sinal.distanciaRisco } : {}),
+            ...(alocacao ? { valorAlvo: alocacao } : {}),
+          },
+          relativo,
+        );
   return {
     lado: "COMPRA",
     finalidade: "entrada",

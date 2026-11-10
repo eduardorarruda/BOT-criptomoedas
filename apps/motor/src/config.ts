@@ -76,6 +76,31 @@ export const EsquemaConfig = z
     MOTOR_MT5_HORA: z.coerce.number().int().min(18).max(23).default(19),
     /** Quanto histórico pedir na primeira vez (a corretora entrega o que tiver). */
     MOTOR_MT5_HISTORICO_DIAS: z.coerce.number().int().min(1).max(1095).default(730),
+    /**
+     * "cripto" (Binance) ou "b3": o motor do papel do mini índice (R1), com velas do MT5
+     * (só leitura) e só os robôs WINBRL. Os dois mercados rodam em processos separados.
+     */
+    MOTOR_MERCADO: z.enum(["cripto", "b3"]).default("cripto"),
+    /** O arquivo ao vivo do EA ZenTradeWINVivo (últimas velas de 5 min, reescrito a cada 5 s). */
+    MOTOR_B3_VIVO: z.string().default(""),
+    /** Exports completos do MT5 (história dos indicadores), lidos uma vez; separados por vírgula. */
+    MOTOR_B3_HISTORICO: z.string().default(""),
+    /** Fuso dos horários dos CSVs do MT5 (o da Rico é o de Brasília). */
+    MOTOR_B3_FUSO: z.string().min(1).default("America/Sao_Paulo"),
+    /** Conta de papel da B3 (reais), dividida entre os robôs do WIN. */
+    MOTOR_B3_SALDO: TextoDecimal.default("120000"),
+    MOTOR_B3_MARGEM: TextoDecimal.default("155"),
+    MOTOR_B3_TARIFA: TextoDecimal.default("0.25"),
+    MOTOR_B3_DESLIZAMENTO_TICKS: z.coerce.number().int().min(0).max(20).default(1),
+    MOTOR_B3_CONTRATOS_MAXIMOS: z.coerce.number().int().min(1).max(100).default(5),
+    /** Pontos: traduz tarifa e ticks nas frações da corretora de papel (erro de centavos a ±20%). */
+    MOTOR_B3_PRECO_REFERENCIA: z.coerce.number().int().min(10_000).max(1_000_000).default(180_000),
+    /** R2: o candle fechou há mais que isto (segundos) = não abre posição. */
+    MOTOR_B3_IDADE_SINAL_S: z.coerce.number().int().min(10).max(3600).default(120),
+    /** R2: a última vela do MT5 tem mais que isto (minutos) = ordem recusada. */
+    MOTOR_B3_IDADE_COTACAO_MIN: z.coerce.number().int().min(1).max(120).default(7),
+    /** De quantos em quantos segundos lê os CSVs do MT5 (o EA escreve a cada 5 s). */
+    MOTOR_B3_CONSULTA_S: z.coerce.number().int().min(1).max(300).default(10),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
     /** O fuso da instância: onde começa o dia da perda diária (padrão: America/Sao_Paulo). */
     ZENTRADE_FUSO: FusoInstanciaEsquema,
@@ -88,6 +113,25 @@ export const EsquemaConfig = z
         path: ["DATABASE_URL"],
         message:
           "a testnet exige banco (estado durável: decisões, ordens e posição precisam sobreviver a um reinício). Defina DATABASE_URL ou use MOTOR_REDE=papel",
+      });
+    if (c.MOTOR_MERCADO === "b3" && c.MOTOR_REDE !== "papel")
+      ctx.addIssue({
+        code: "custom",
+        path: ["MOTOR_REDE"],
+        message: "a B3 só roda no papel (nenhuma ordem sai para a bolsa): use MOTOR_REDE=papel",
+      });
+    if (c.MOTOR_MERCADO === "b3" && c.MOTOR_B3_VIVO.trim() === "")
+      ctx.addIssue({
+        code: "custom",
+        path: ["MOTOR_B3_VIVO"],
+        message: "diga onde está o CSV ao vivo do EA ZenTradeWINVivo (pasta MQL5/Files do MT5)",
+      });
+    if (c.MOTOR_MERCADO === "b3" && c.MOTOR_FUNCAO !== "robos")
+      ctx.addIssue({
+        code: "custom",
+        path: ["MOTOR_FUNCAO"],
+        message:
+          "o motor da B3 só roda robôs (os backtests ficam no processo do cripto): use MOTOR_FUNCAO=robos",
       });
     if (c.AGENTE_URL && !c.AGENTE_SEGREDO)
       ctx.addIssue({

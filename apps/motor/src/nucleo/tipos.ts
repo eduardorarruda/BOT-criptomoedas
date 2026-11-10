@@ -19,6 +19,7 @@ import type {
 import { FUSO_PADRAO, type PensamentoRobo, type Posicao, type Sinal, type Valor } from "@zentrade/dominio";
 import type { DecisaoRegistrada } from "./diario.js";
 import type { Plano } from "./plano.js";
+import type { OpcoesWin } from "./tamanho-win.js";
 
 /** O que o motor usa de um logger (pino cumpre). Nada de console.log. */
 export interface Registro {
@@ -43,6 +44,14 @@ export interface OpcoesNucleo {
   readonly stopLimiteBps: number;
   /** O fuso da instância (ZENTRADE_FUSO): onde começa o dia da perda diária. */
   readonly fuso: string;
+  /**
+   * Idade máxima do candle (desde o fechamento) para ABRIR posição (R2). Depois de uma
+   * reconexão, de uma fila ou de um agente lento, o preço do candle já passou: entrar
+   * nele é entrar atrasado. Saídas e proteção não passam por ela. Sem ela, não há trava.
+   */
+  readonly idadeMaximaSinalMs?: number;
+  /** O mini índice no papel da B3 (motor da B3): tamanho em contratos pela perda no stop. */
+  readonly win?: OpcoesWin;
 }
 
 export const OPCOES_PADRAO: OpcoesNucleo = {

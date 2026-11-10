@@ -149,7 +149,8 @@ function ligarAtualizacaoMt5(
 
 /** O avaliador do placar do Claude: só no processo dos robôs, com banco (lê candles e decisões dele). */
 function ligarPlacar(config: Config, infra: Infra, registro: Logger): AvaliadorLigado | undefined {
-  if (!config.MOTOR_PLACAR || !infra.banco) return undefined;
+  // O placar do Claude mede contra candles da Binance: no motor da B3, fica desligado.
+  if (!config.MOTOR_PLACAR || !infra.banco || config.MOTOR_MERCADO === "b3") return undefined;
   return ligarAvaliador(
     { placar: infra.banco.placar, candles: infra.banco.mercado, relogio: new RelogioSistema(), registro },
     {
@@ -202,6 +203,7 @@ async function principal(): Promise<void> {
   registro.info(
     {
       funcao: config.MOTOR_FUNCAO,
+      mercado: config.MOTOR_MERCADO,
       rede: config.MOTOR_REDE,
       ligados,
       falharam,
