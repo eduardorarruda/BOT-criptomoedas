@@ -220,9 +220,13 @@ export function montarPosicao(
   capital: Valor,
   reduzida = false,
 ): PosicaoWin | null {
-  const m = reduzida
-    ? { ...s.modelo, riscoPorOperacao: s.modelo.riscoPorOperacao.times(fatorDoModoDeEvento("reduzir")) }
-    : s.modelo;
+  const riscoBase = s.modelo.riscoFracaoDoCapital
+    ? capital.times(s.modelo.riscoFracaoDoCapital)
+    : s.modelo.riscoPorOperacao;
+  const m = {
+    ...s.modelo,
+    riscoPorOperacao: reduzida ? riscoBase.times(fatorDoModoDeEvento("reduzir")) : riscoBase,
+  };
   const entrada = precoDeEntrada(m, sentido, referencia);
   const { stop } = stopDeEntrada(s.estrategia, entrada, ctx, sentido);
   const distancia = entrada.minus(stop).abs();

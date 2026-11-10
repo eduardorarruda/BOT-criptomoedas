@@ -17,6 +17,11 @@ export interface ModeloWin {
   readonly contratosMaximos: number;
   /** Quanto se aceita perder por operação, em reais, se o stop for atingido. */
   readonly riscoPorOperacao: Valor;
+  /**
+   * Risco por operação como fração do patrimônio de antes da entrada (ex.: 0,01 = 1%).
+   * Quando vem, substitui `riscoPorOperacao`: o tamanho cresce e encolhe com a conta.
+   */
+  readonly riscoFracaoDoCapital?: number;
 }
 
 export function modeloWinDe(c: ConfiguracaoWin): ModeloWin {

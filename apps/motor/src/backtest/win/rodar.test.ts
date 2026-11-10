@@ -352,3 +352,30 @@ describe(
     });
   },
 );
+
+describe("backtest do mini índice: risco como fração do patrimônio", () => {
+  const candles = () =>
+    pregao(DIA, "10:00", [
+      parada(130_000),
+      { o: 130_000, h: 130_130, l: 129_990, c: 130_120 }, // cruza 130.100: compra
+      { o: 130_125, h: 130_300, l: 130_100, c: 130_250 },
+      parada(130_400),
+      { o: 130_400, h: 130_650, l: 130_380, c: 130_600 },
+    ]);
+
+  it("1% de R$ 40.000 = R$ 400 de risco: ⌊400 ÷ 132,625⌋ = 3 contratos (no lugar dos R$ 300 fixos)", () => {
+    const r = rodar(candles(), {
+      modelo: { ...modelo, riscoFracaoDoCapital: 0.01 },
+      saldoInicial: dec(40_000),
+    });
+    expect(r.operacoes[0]!.contratos).toBe(3);
+  });
+
+  it("o risco acompanha o patrimônio: com R$ 20.000, 1% = R$ 200 → 1 contrato", () => {
+    const r = rodar(candles(), {
+      modelo: { ...modelo, riscoFracaoDoCapital: 0.01 },
+      saldoInicial: dec(20_000),
+    });
+    expect(r.operacoes[0]!.contratos).toBe(1);
+  });
+});
