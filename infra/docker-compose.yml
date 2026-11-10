@@ -1,9 +1,10 @@
 # ZenTrade com Docker.
 #
-# Só a infra de desenvolvimento (banco, Redis e n8n), para rodar os serviços com `pnpm dev`:
+# Só a infra de desenvolvimento (banco e Redis), para rodar os serviços com `pnpm dev`:
 #   docker compose --env-file .env -f infra/docker-compose.yml up -d
 # Tudo junto (perfil "app": migração, api, motor, agente e tela, além da infra):
 #   docker compose --env-file .env -f infra/docker-compose.yml --profile app up -d --build
+# O n8n (automações opcionais) só sobe se pedir: acrescente --profile n8n.
 #
 # As portas ficam presas em 127.0.0.1: nada disso deve ficar exposto na rede. O agente
 # e o motor não publicam porta nenhuma. As portas do host mudam por variável (*_PORTA_HOST).
@@ -23,7 +24,7 @@ services:
   banco:
     # timescaledb-ha já traz TimescaleDB e pgvector; o pg17 é a versão suportada.
     image: timescale/timescaledb-ha:pg17
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
@@ -43,7 +44,7 @@ services:
 
   redis:
     image: redis:8-alpine
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     command:
       ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_SENHA:?defina REDIS_SENHA no .env}"]
     ports:
@@ -59,9 +60,12 @@ services:
       REDIS_SENHA: ${REDIS_SENHA}
 
   n8n:
+    # Opcional (avisos, aprovação pelo Telegram, notícias: veja infra/n8n/README.md). Fora do
+    # núcleo: o ZenTrade roda sem ele. Só sobe com --profile n8n.
+    profiles: ["n8n"]
     # Versão fixada: atualizar o n8n é uma decisão, não um efeito colateral do pull.
     image: n8nio/n8n:2.42.6
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     environment:
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?defina N8N_ENCRYPTION_KEY no .env}
       N8N_HOST: localhost
@@ -115,7 +119,7 @@ services:
     profiles: ["app"]
     build: { context: .., dockerfile: infra/docker/api.Dockerfile }
     image: ${ZENTRADE_IMAGEM:-zentrade}-api:local
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     environment:
       <<: *ambiente-comum
       ZENTRADE_CHAVE_MESTRA: ${ZENTRADE_CHAVE_MESTRA:-}
@@ -165,7 +169,7 @@ services:
     profiles: ["app"]
     build: { context: .., dockerfile: infra/docker/motor.Dockerfile }
     image: ${ZENTRADE_IMAGEM:-zentrade}-motor:local
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     environment: &ambiente-motor
       <<: *ambiente-comum
       # Este processo só roda os robôs; os backtests ficam no motor-backtests, para um
@@ -206,7 +210,7 @@ services:
   motor-backtests:
     profiles: ["app"]
     image: ${ZENTRADE_IMAGEM:-zentrade}-motor:local
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     environment:
       <<: *ambiente-motor
       MOTOR_FUNCAO: backtests
@@ -221,7 +225,7 @@ services:
     profiles: ["app"]
     build: { context: .., dockerfile: infra/docker/agente.Dockerfile }
     image: ${ZENTRADE_IMAGEM:-zentrade}-agente:local
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     # Sem "ports": o agente só é alcançado pela rede interna (motor e API).
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-zentrade}:${POSTGRES_PASSWORD:-}@banco:5432/${POSTGRES_DB:-zentrade}
@@ -273,7 +277,7 @@ services:
         VITE_URL_PUBLICA: ${VITE_URL_PUBLICA:-}
         VITE_DEMO: ${VITE_DEMO:-}
     image: ${ZENTRADE_IMAGEM:-zentrade}-web:local
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     ports:
       - "127.0.0.1:${WEB_PORTA_HOST:-8088}:8080"
     depends_on:
@@ -289,7 +293,7 @@ services:
   mt5-terminal:
     profiles: ["mt5"]
     image: ${MT5_TERMINAL_IMAGEM:-gmag11/metatrader5_vnc:latest}
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     environment:
       # Só para depuração visual (VNC web); a porta NÃO é publicada.
       CUSTOM_USER: ${MT5_VNC_USUARIO:-zentrade}
@@ -305,7 +309,7 @@ services:
     profiles: ["mt5"]
     build: { context: ../infra/coletor-mt5 }
     image: ${ZENTRADE_IMAGEM:-zentrade}-coletor-mt5:local
-    restart: unless-stopped
+    restart: ${ZENTRADE_REINICIO:-unless-stopped}
     environment:
       MT5_RPYC_HOST: mt5-terminal
       MT5_RPYC_PORTA: "8001"
