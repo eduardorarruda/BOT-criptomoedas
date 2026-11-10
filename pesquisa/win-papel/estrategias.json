@@ -1,197 +1,132 @@
 [
- {
-  "id": "73e63a25-a30a-4707-a781-3bd88344e0f9",
-  "nome": "P2 Donchian 55/20 + tendência longa",
-  "versao": 1,
-  "entrada": {
-   "tipo": "e",
-   "regras": [
-    {
-     "tipo": "comparar",
-     "direita": {
-      "nome": "donchian",
-      "tipo": "indicador",
-      "saida": "superior",
-      "periodo": 55
-     },
-     "esquerda": {
-      "tipo": "preco"
-     },
-     "comparador": ">"
+  {
+    "id": "73e63a25-a30a-4707-a781-3bd88344e0f9",
+    "nome": "P2 Donchian 55/20 + tendência longa",
+    "versao": 1,
+    "entrada": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "donchian",
+            "tipo": "indicador",
+            "saida": "superior",
+            "periodo": 55
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "sma",
+            "tipo": "indicador",
+            "periodo": 200
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        }
+      ]
     },
-    {
-     "tipo": "comparar",
-     "direita": {
-      "nome": "sma",
-      "tipo": "indicador",
-      "periodo": 200
-     },
-     "esquerda": {
-      "tipo": "preco"
-     },
-     "comparador": ">"
+    "stop": 0.1,
+    "alvoLiquido": 0.6,
+    "taxa": 0.001,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "inferior",
+        "periodo": 20
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
+    },
+    "stopAtr": {
+      "periodo": 20,
+      "multiplo": 2
+    },
+    "tamanhoPorVolatilidade": {
+      "periodo": 20,
+      "multiplo": 2
     }
-   ]
   },
-  "stop": 0.1,
-  "alvoLiquido": 0.6,
-  "taxa": 0.001,
-  "saida": {
-   "tipo": "comparar",
-   "direita": {
-    "nome": "donchian",
-    "tipo": "indicador",
-    "saida": "inferior",
-    "periodo": 20
-   },
-   "esquerda": {
-    "tipo": "preco"
-   },
-   "comparador": "<"
-  },
-  "stopAtr": {
-   "periodo": 20,
-   "multiplo": 2
-  },
-  "tamanhoPorVolatilidade": {
-   "periodo": 20,
-   "multiplo": 2
-  }
- },
- {
-  "id": "1194d07e-3d77-4361-bbc1-cdc23786c029",
-  "nome": "Mini índice: rompimento de Donchian 20/10 com stop por ATR (v2 21/10)",
-  "versao": 1,
-  "entrada": {
-   "tipo": "comparar",
-   "direita": {
-    "nome": "donchian",
-    "tipo": "indicador",
-    "saida": "superior",
-    "periodo": 20
-   },
-   "esquerda": {
-    "tipo": "preco"
-   },
-   "comparador": ">"
-  },
-  "stop": 0.003,
-  "alvoLiquido": 0.015,
-  "taxa": 0,
-  "saida": {
-   "tipo": "comparar",
-   "direita": {
-    "nome": "donchian",
-    "tipo": "indicador",
-    "saida": "inferior",
-    "periodo": 10
-   },
-   "esquerda": {
-    "tipo": "preco"
-   },
-   "comparador": "<"
-  },
-  "stopAtr": {
-   "periodo": 14,
-   "multiplo": 2
-  },
-  "direcao": "ambos",
-  "entradaVendida": {
-   "tipo": "comparar",
-   "direita": {
-    "nome": "donchian",
-    "tipo": "indicador",
-    "saida": "inferior",
-    "periodo": 20
-   },
-   "esquerda": {
-    "tipo": "preco"
-   },
-   "comparador": "<"
-  },
-  "saidaVendida": {
-   "tipo": "comparar",
-   "direita": {
-    "nome": "donchian",
-    "tipo": "indicador",
-    "saida": "superior",
-    "periodo": 10
-   },
-   "esquerda": {
-    "tipo": "preco"
-   },
-   "comparador": ">"
-  }
- },
- {
-  "id": "4640062d-67d9-4adc-ac5e-1a939195144c",
-  "nome": "Mini índice: rompimento a favor da tendência, fora da abertura e do almoço",
-  "versao": 1,
-  "entrada": {
-   "tipo": "e",
-   "regras": [
-    {
-     "tipo": "comparar",
-     "direita": {
-      "nome": "donchian",
-      "tipo": "indicador",
-      "saida": "superior",
-      "periodo": 20
-     },
-     "esquerda": {
-      "tipo": "preco"
-     },
-     "comparador": ">"
+  {
+    "id": "4640062d-67d9-4adc-ac5e-1a939195144c",
+    "nome": "Mini índice: rompimento a favor da tendência, fora da abertura e do almoço",
+    "versao": 1,
+    "entrada": {
+      "tipo": "e",
+      "regras": [
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "donchian",
+            "tipo": "indicador",
+            "saida": "superior",
+            "periodo": 20
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        },
+        {
+          "tipo": "comparar",
+          "direita": {
+            "nome": "sma",
+            "tipo": "indicador",
+            "periodo": 200
+          },
+          "esquerda": {
+            "tipo": "preco"
+          },
+          "comparador": ">"
+        },
+        {
+          "tipo": "nao",
+          "regra": {
+            "de": "09:00",
+            "ate": "10:00",
+            "tipo": "horario"
+          }
+        },
+        {
+          "tipo": "nao",
+          "regra": {
+            "de": "12:00",
+            "ate": "14:00",
+            "tipo": "horario"
+          }
+        }
+      ]
     },
-    {
-     "tipo": "comparar",
-     "direita": {
-      "nome": "sma",
-      "tipo": "indicador",
-      "periodo": 200
-     },
-     "esquerda": {
-      "tipo": "preco"
-     },
-     "comparador": ">"
+    "stop": 0.1,
+    "alvoLiquido": 0.6,
+    "taxa": 0,
+    "saida": {
+      "tipo": "comparar",
+      "direita": {
+        "nome": "donchian",
+        "tipo": "indicador",
+        "saida": "inferior",
+        "periodo": 10
+      },
+      "esquerda": {
+        "tipo": "preco"
+      },
+      "comparador": "<"
     },
-    {
-     "tipo": "nao",
-     "regra": {
-      "de": "09:00",
-      "ate": "10:00",
-      "tipo": "horario"
-     }
-    },
-    {
-     "tipo": "nao",
-     "regra": {
-      "de": "12:00",
-      "ate": "14:00",
-      "tipo": "horario"
-     }
+    "stopAtr": {
+      "periodo": 20,
+      "multiplo": 2
     }
-   ]
-  },
-  "stop": 0.1,
-  "alvoLiquido": 0.6,
-  "taxa": 0,
-  "saida": {
-   "tipo": "comparar",
-   "direita": {
-    "nome": "donchian",
-    "tipo": "indicador",
-    "saida": "inferior",
-    "periodo": 10
-   },
-   "esquerda": {
-    "tipo": "preco"
-   },
-   "comparador": "<"
-  },
-  "stopAtr": {
-   "periodo": 20,
-   "multiplo": 2
   }
- }
 ]

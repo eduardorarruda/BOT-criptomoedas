@@ -8,7 +8,7 @@
 #property strict
 
 input string Simbolo  = "WIN$N";
-input int    Velas    = 300;
+input int    Velas    = 2000;
 input int    EsperaMs = 5000;
 
 void Gravar(const MqlRates &barras[], const int n, const datetime ultima)

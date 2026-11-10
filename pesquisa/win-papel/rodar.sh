@@ -4,7 +4,8 @@
 #   1. garante o MT5 da corretora aberto com o script ZenTradeWINVivo (que grava as velas
 #      fechadas do WIN$N em MQL5/Files/WIN_M5_vivo.csv);
 #   2. importa essas velas no banco (importar-candles-csv; regravar não duplica);
-#   3. roda o pregao.mjs (todas as estratégias, com e sem Claude) e atualiza saida/<dia>.md.
+# O papel oficial (fora da amostra) NÃO roda mais aqui: é o motor-b3 (mesmo núcleo dos robôs),
+# que lê o mesmo CSV. O pregao.mjs ficou só como ferramenta de pesquisa, fora do laço.
 # Uso: bash pesquisa/win-papel/rodar.sh [--uma-vez]
 set -u
 
@@ -52,7 +53,7 @@ uma_rodada() {
   local saida
   saida=$(cd "$REPO/infra" && timeout 900 docker compose -p zentrade --env-file "$ENV_ZT" --profile app \
     run --rm --no-deps -T -e WIN_PAPEL_USUARIO="$(usuario)" -v "$AQUI:/app/pesquisa-win" motor sh -c \
-    'node dist/comandos/importar-candles-csv.js --simbolo WIN --intervalo 5m --arquivo /app/pesquisa-win/vivo/WIN_M5_vivo.csv | tail -2 && node /app/pesquisa-win/pregao.mjs' 2>&1 | grep -v -E '^ Container ')
+    'node dist/comandos/importar-candles-csv.js --simbolo WIN --intervalo 5m --arquivo /app/pesquisa-win/vivo/WIN_M5_vivo.csv | tail -2' 2>&1 | grep -v -E '^ Container ')
   registrar "$(echo "$saida" | tr '\n' ' ')"
 }
 
