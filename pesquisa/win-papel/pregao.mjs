@@ -1,10 +1,13 @@
-// Pregão de papel do mini índice (WIN): roda TODAS as estratégias, em 5m, 15m e 1h, sobre as
+// Pregão de papel do mini índice (WIN): roda as estratégias de estrategias.json, em 15m e 1h, sobre as
 // velas reais do dia (vindas do MT5 da corretora e gravadas no banco), com o MESMO motor do
 // backtest do WIN (custos da B3, deslizamento, zeragem, risco em reais). Duas versões de cada:
 //   • sem Claude: a regra pura;
 //   • com Claude: cada entrada que a regra pediu vai ao agente (com as velas só até o sinal) e
 //     só conta se ele aprovar. As saídas seguem a regra. Cada sinal é perguntado UMA vez
-//     (cache em saida/claude-cache.json).
+//     (cache em saida/claude-cache-v2.json). Junto vai a "máquina do tempo"
+//     (maquina-do-tempo.mjs): o placar da mesma regra nos 2 anos anteriores (total, mesma
+//     faixa de horário, mesmo lado) e a simulação do resto da sessão; com amostra
+//     suficiente, o agente decide por ela.
 // Nada envia ordem: é simulação com dinheiro de mentira.
 //
 // Roda dentro de um container do motor (precisa do dist e do DATABASE_URL), pelo rodar.sh:
@@ -20,14 +23,23 @@ import { HISTORICO_WIN, rodarBacktestWin } from "/app/dist/backtest/win/rodar.js
 import { abrirBancoDosComandos } from "/app/dist/comandos/banco.js";
 import { operacaoDoPedido, velasDoPedido } from "/app/dist/nucleo/contexto-operacao.js";
 import { AgenteHttp } from "/app/dist/portas/agente-http.js";
+import { historicoDoSinal, sessoesParaBlocos, simularResto, VALOR_PONTO } from "./maquina-do-tempo.mjs";
 
 const PASTA = "/app/pesquisa-win";
 const SAIDA = `${PASTA}/saida`;
-const INTERVALOS = ["5m", "15m", "1h"];
+const INTERVALOS = ["15m", "1h"];
 const SALDO = "10000";
 const RISCO = "300";
 const TIMEOUT_AGENTE_MS = 150_000;
 const HORA_MS = 3_600_000;
+const DIA_MS = 24 * HORA_MS;
+/** Quanto do passado a máquina do tempo mede (a mesma regra) e de onde ela sorteia (velas de 5 min). */
+const HISTORICO_DIAS = 730;
+const SORTEIO_DIAS = 100;
+const ZERAGEM = "18:15:00";
+/** Sinal mais velho que isso é recuperação de atraso: vai em modo replay (sem dados do futuro). */
+const SINAL_RECENTE_MS = 15 * 60_000;
+const TICK_PONTOS = 5;
 
 function argumentos(lista) {
   const a = { dia: null, claude: true, maxClaude: 80 };
@@ -59,10 +71,15 @@ function candleDaDecisao(candles, abertaEm) {
   return candles[i].abertura === abertaEm ? i - 1 : i;
 }
 
-function pedidoAoAgente(e, intervalo, candles, i, sentido, modelo) {
-  const c = candles[i];
+/** O contexto e o sinal da regra no fechamento do candle da decisão (stop e alvo vêm daqui). */
+function sinalNaDecisao(e, candles, i) {
   const ctx = contextoDeCandles(candles.slice(Math.max(0, i + 1 - HISTORICO_WIN), i + 1));
-  const s = decidirComSentido(e, { ...ctx, preco: c.fecha }, null);
+  return { ctx, s: decidirComSentido(e, { ...ctx, preco: candles[i].fecha }, null) };
+}
+
+function pedidoAoAgente(e, intervalo, candles, i, sentido, modelo, decisao, historico) {
+  const c = candles[i];
+  const { ctx, s } = decisao;
   // O contrato do agente fala a língua do robô ao vivo: COMPRAR abre comprado; sem posição,
   // VENDER abre vendido (o agente lê o lado em operacao.sentido).
   const sinal =
@@ -93,7 +110,10 @@ function pedidoAoAgente(e, intervalo, candles, i, sentido, modelo) {
     posicao: POSICAO_ZERADA,
     operacao: operacaoDoPedido(e, custos, sentido),
     ...(velas ? { velas } : {}),
-    ate: c.fechamento + 1,
+    ...(historico ? { historico } : {}),
+    // Sinal recente: o agente usa o "agora" de verdade e consulta a base de conhecimento.
+    // Sinal velho (recuperando atraso): modo replay, para nada vir do futuro do sinal.
+    ...(Date.now() - (c.fechamento + 1) > SINAL_RECENTE_MS ? { ate: c.fechamento + 1 } : {}),
   };
 }
 
@@ -115,6 +135,48 @@ function resumo(ops) {
     liquido: soma((o) => o.liquido),
   };
 }
+
+/** Custos de ida e volta de 1 contrato em % do valor negociado (tarifa, corretagem e deslizamento). */
+function custoIdaEVoltaPct(modelo, preco) {
+  const reais =
+    2 * (Number(modelo.custos.tarifaB3) + Number(modelo.custos.corretagem)) +
+    2 * modelo.custos.deslizamentoTicks * TICK_PONTOS * VALOR_PONTO;
+  return (reais / (preco * VALOR_PONTO)) * 100;
+}
+
+/** As operações que a mesma regra fez no passado (antes do dia), no formato da máquina do tempo. */
+async function operacoesPassadas(banco, semVelas, e, intervalo, inicio, modelo, limites) {
+  const de = inicio - HISTORICO_DIAS * DIA_MS;
+  const candles = await candlesHistoricos(
+    { banco: banco.mercado, corretora: semVelas },
+    { simbolo: "WIN", intervalo, inicio: de, fim: inicio },
+    HISTORICO_WIN,
+  );
+  const r = rodarBacktestWin({
+    simbolo: "WIN",
+    candles,
+    estrategia: e,
+    modelo,
+    limites,
+    saldoInicial: dec(SALDO),
+    inicio: de,
+    fim: inicio,
+    execucao: "proximaAbertura",
+  });
+  const desde = r.candles[0]?.abertura ?? de;
+  return {
+    fonte: `WIN ${intervalo}, mesma regra, ${horaDia(desde)} a ${horaDia(inicio - 1)}`,
+    ops: r.operacoes.map((o) => ({
+      abertaEm: o.abertaEm,
+      sentido: o.sentido,
+      contratos: o.contratos,
+      entrada: Number(o.entrada),
+      resultado: Number(o.resultado),
+    })),
+  };
+}
+
+const horaDia = (ms) => new Date(ms - 3 * HORA_MS).toISOString().slice(0, 10);
 
 function operacaoDoResultado(o) {
   return {
@@ -143,7 +205,7 @@ async function principal() {
   if (estrategias.length === 0)
     throw new Error("estrategias.json vazio: rode o rodar.sh, que o baixa da API");
   mkdirSync(SAIDA, { recursive: true });
-  const cacheArq = `${SAIDA}/claude-cache.json`;
+  const cacheArq = `${SAIDA}/claude-cache-v2.json`;
   const cache = lerJson(cacheArq, {});
   const config = ConfiguracaoBacktestEsquema.parse({
     mercado: "win",
@@ -163,6 +225,18 @@ async function principal() {
       : null;
   const banco = abrirBancoDosComandos(process.env);
   const semVelas = { candles: async () => [] };
+  // O baralho do sorteio: as velas de 5 min dos ~100 dias antes do pregão.
+  let blocos = null;
+  try {
+    const velas5m = await candlesHistoricos(
+      { banco: banco.mercado, corretora: semVelas },
+      { simbolo: "WIN", intervalo: "5m", inicio: inicio - SORTEIO_DIAS * DIA_MS, fim: inicio },
+      0,
+    );
+    blocos = sessoesParaBlocos(velas5m); // R4: sorteio por pregão inteiro
+  } catch (erro) {
+    console.error(`sem simulação hoje: ${erro.message}`);
+  }
   const linhas = [];
   let perguntas = 0;
   let custoClaude = 0;
@@ -195,6 +269,12 @@ async function principal() {
           fim,
           execucao: "proximaAbertura",
         });
+        let passado = null;
+        try {
+          passado = await operacoesPassadas(banco, semVelas, e, intervalo, inicio, modelo, limites);
+        } catch (erro) {
+          console.error(`sem histórico de ${e.nome} ${intervalo}: ${erro.message}`);
+        }
         const ops = [];
         for (const o of r.operacoes) {
           const op = operacaoDoResultado(o);
@@ -205,8 +285,32 @@ async function principal() {
             if (i >= 0) {
               perguntas++;
               try {
+                const decisao = sinalNaDecisao(e, candles, i);
+                const entrada = Number(o.entrada);
+                const simulacao =
+                  blocos && decisao.s.acao === "ABRIR"
+                    ? simularResto({
+                        blocos,
+                        inicioMs: o.abertaEm,
+                        fimMs: msBrasilia(dia, ZERAGEM),
+                        entrada,
+                        stop: Number(decisao.s.stop),
+                        alvo: Number(decisao.s.alvo),
+                        sentido: o.sentido,
+                        custoPct: custoIdaEVoltaPct(modelo, entrada),
+                      })
+                    : null;
+                const historico = passado
+                  ? historicoDoSinal(
+                      passado.ops,
+                      { abertaEm: o.abertaEm, sentido: o.sentido },
+                      passado.fonte,
+                      simulacao,
+                    )
+                  : null;
+                op.historico = historico;
                 const resp = await agente.analisar(
-                  pedidoAoAgente(e, intervalo, candles, i, o.sentido, modelo),
+                  pedidoAoAgente(e, intervalo, candles, i, o.sentido, modelo, decisao, historico),
                 );
                 custoClaude += Number(resp.custoUsd);
                 op.claude = {
