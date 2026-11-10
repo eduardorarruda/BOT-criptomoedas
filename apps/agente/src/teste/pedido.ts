@@ -1,4 +1,4 @@
-import type { OperacaoPedido, PedidoAnalise, VelasPedido } from "@zentrade/contratos";
+import type { HistoricoSinal, OperacaoPedido, PedidoAnalise, VelasPedido } from "@zentrade/contratos";
 import { dec, POSICAO_ZERADA } from "@zentrade/dominio";
 
 /** Pedido de exemplo: BTC com 30 fechamentos subindo de 59 000 a 60 450. */
@@ -60,3 +60,12 @@ export function velasDeTeste(o: {
     },
   };
 }
+
+/** O placar da mesma regra no histórico, como o pregão de papel do WIN calcula. */
+export const HISTORICO_EXEMPLO: HistoricoSinal = {
+  fonte: "WIN 15m, mesma regra, 2024-10-28 a 2026-10-27",
+  total: { operacoes: 120, certas: 48, resultadoMedio: 0.08 },
+  mesmoHorario: { operacoes: 31, certas: 9, resultadoMedio: -0.05 },
+  mesmoLado: { operacoes: 70, certas: 30, resultadoMedio: 0.11 },
+  simulacao: { replays: 10_000, alvoPrimeiro: 0.29, stopPrimeiro: 0.26, nenhum: 0.45, resultadoMedio: 0.02 },
+};

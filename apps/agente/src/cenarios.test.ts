@@ -191,3 +191,103 @@ describe("regra dos cenários", () => {
     });
   });
 });
+
+describe("regra dos cenários com o histórico medido (máquina do tempo)", () => {
+  const TOTAL = { operacoes: 120, certas: 48, resultadoMedio: 0.08 };
+  const comHistorico = (recortes: object = {}) =>
+    pedidoExemplo({ historico: { fonte: "WIN 15m, mesma regra", total: TOTAL, ...recortes } });
+
+  it("histórico negativo na mesma faixa de horário barra a entrada, mesmo com os cenários do modelo a favor", () => {
+    const p = aplicarRegraDosCenarios(
+      { ...PROPOSTA_GERADA, cenarios: comProbabilidades(0.6, 0.25, 0.15) },
+      comHistorico({ mesmoHorario: { operacoes: 31, certas: 9, resultadoMedio: -0.05 } }),
+    );
+    expect(p).toMatchObject({ acao: "aguardar", tamanhoRelativo: 0, confianca: 0 });
+    expect(p.avaliacao).toMatchObject({ aplicada: true, aprovada: false, valorEsperado: -0.05 });
+    expect(p.avaliacao?.motivo).toMatch(/mesma faixa de horário/);
+    expect(p.justificativa).toMatch(/^Regra do histórico/);
+  });
+
+  it("histórico positivo decide pela entrada mesmo com o modelo propondo aguardar", () => {
+    const p = aplicarRegraDosCenarios(
+      {
+        ...PROPOSTA_GERADA,
+        acao: "aguardar",
+        tamanhoRelativo: 0,
+        cenarios: comProbabilidades(0.2, 0.5, 0.3),
+      },
+      comHistorico({ mesmoHorario: { operacoes: 25, certas: 12, resultadoMedio: 0.1 } }),
+    );
+    expect(p.acao).toBe("comprar");
+    expect(p.tamanhoRelativo).toBe(1);
+    expect(p.confianca).toBe(0.48);
+    expect(p.avaliacao).toMatchObject({
+      aplicada: true,
+      aprovada: true,
+      valorEsperado: 0.1,
+      probabilidadeFavoravel: 0.48,
+    });
+  });
+
+  it("o modelo ainda pode reduzir o tamanho quando o histórico aprova", () => {
+    const p = aplicarRegraDosCenarios(PROPOSTA_GERADA, comHistorico());
+    expect(p).toMatchObject({ acao: "comprar", tamanhoRelativo: 0.5 });
+  });
+
+  it("um veto grave concreto do modelo segura a entrada que o histórico aprovaria", () => {
+    const p = aplicarRegraDosCenarios(
+      { ...PROPOSTA_GERADA, acao: "aguardar", tamanhoRelativo: 0, vetoGrave: "Copom em 10 minutos" },
+      comHistorico(),
+    );
+    expect(p.acao).toBe("aguardar");
+    expect(p.avaliacao).toMatchObject({ aplicada: true, aprovada: false });
+    expect(p.avaliacao?.motivo).toMatch(/veto grave: Copom em 10 minutos/);
+  });
+
+  it("recorte pequeno não vale: cai para o mesmo lado e depois para o total", () => {
+    const pequeno = { operacoes: 5, certas: 0, resultadoMedio: -1 };
+    const ladoPositivo = aplicarRegraDosCenarios(
+      PROPOSTA_GERADA,
+      comHistorico({ mesmoHorario: pequeno, mesmoLado: { operacoes: 40, certas: 18, resultadoMedio: 0.2 } }),
+    );
+    expect(ladoPositivo.avaliacao).toMatchObject({ aprovada: true, valorEsperado: 0.2 });
+    expect(ladoPositivo.avaliacao?.motivo).toMatch(/mesmo lado/);
+    const total = aplicarRegraDosCenarios(PROPOSTA_GERADA, comHistorico({ mesmoHorario: pequeno }));
+    expect(total.avaliacao).toMatchObject({ aprovada: true, valorEsperado: 0.08 });
+    expect(total.avaliacao?.motivo).toMatch(/120 operações/);
+  });
+
+  it("amostra total pequena: vale a regra dos cenários do modelo, como antes", () => {
+    const pedido = pedidoExemplo({
+      historico: { fonte: "WIN 1h", total: { operacoes: 10, certas: 6, resultadoMedio: 0.5 } },
+    });
+    const p = aplicarRegraDosCenarios(PROPOSTA_GERADA, pedido, 0.6);
+    expect(p.acao).toBe("aguardar");
+    expect(p.avaliacao?.motivo).toMatch(/limiar/);
+  });
+
+  it("a saída de uma posição aberta não é barrada pelo histórico", () => {
+    const p = aplicarRegraDosCenarios(
+      { ...PROPOSTA_GERADA, acao: "vender" },
+      pedidoExemplo({
+        posicao: posicaoAberta,
+        sinal: { acao: "VENDER", motivo: "regra de saída", explicacao: "saiu" },
+        historico: { fonte: "x", total: { operacoes: 100, certas: 10, resultadoMedio: -2 } },
+      }),
+    );
+    expect(p.acao).toBe("vender");
+    expect(p.avaliacao?.aplicada).toBe(false);
+  });
+});
+
+describe("médias pequenas do histórico", () => {
+  it('mostra até 4 casas (não vira "0%")', () => {
+    const p = aplicarRegraDosCenarios(
+      PROPOSTA_GERADA,
+      pedidoExemplo({
+        historico: { fonte: "x", total: { operacoes: 98, certas: 37, resultadoMedio: -0.0048 } },
+      }),
+    );
+    expect(p.avaliacao?.motivo).toMatch(/−0,0048% por operação/);
+  });
+});

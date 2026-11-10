@@ -17,7 +17,7 @@ import type {
 } from "@zentrade/dominio";
 import type { Intervalo, ModoRobo, Rede } from "./comum.js";
 import type { EstadoDecisao } from "./dados.js";
-import type { OperacaoPedido, VelasPedido } from "./pedido-analise.js";
+import type { HistoricoSinal, OperacaoPedido, VelasPedido } from "./pedido-analise.js";
 import type { Evento } from "./eventos.js";
 import type { PropostaAgente } from "./proposta.js";
 import type { EstadoProtecao, IdsProtecao, ResultadoOrdem } from "./corretora.js";
@@ -211,6 +211,8 @@ export interface PedidoAnalise {
   readonly operacao?: OperacaoPedido;
   /** Máximas, mínimas, volumes e instantes das velas, alinhados com `fechamentos`. */
   readonly velas?: VelasPedido;
+  /** O placar real da mesma regra no histórico do ativo, medido no código. */
+  readonly historico?: HistoricoSinal;
   /**
    * Replay histórico: o instante (ms UTC) em que a análise "acontece". Com ele o agente
    * usa este instante como "agora" e não consulta nada que dependa do banco ao vivo

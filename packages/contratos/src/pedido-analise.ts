@@ -79,3 +79,45 @@ export const VelasPedidoEsquema = z
     "as séries das velas precisam ter o mesmo tamanho",
   );
 export type VelasPedido = z.infer<typeof VelasPedidoEsquema>;
+
+const Contagem = z.number().int().min(0).max(1_000_000);
+/** Resultado em % do preço de entrada, líquido dos custos (0,12 = 0,12%). */
+const Percentual = z.number().finite().min(-100).max(1000);
+const Fracao = z.number().min(0).max(1);
+const TOLERANCIA_SOMA = 0.01;
+
+/** O placar de um recorte do histórico: quantas operações, quantas com lucro líquido e a média. */
+const PlacarHistoricoEsquema = z
+  .object({ operacoes: Contagem, certas: Contagem, resultadoMedio: Percentual })
+  .refine((p) => p.certas <= p.operacoes, "há mais operações certas do que operações");
+
+/**
+ * O que a MESMA regra fez no passado, medido no código (a "máquina do tempo"): o placar
+ * real das operações que ela abriu no histórico do ativo e, opcionalmente, os recortes
+ * na mesma faixa de horário e no mesmo lado, e a simulação do resto da sessão a partir
+ * das velas do próprio ativo. Dá à IA a frequência de base em vez de um palpite.
+ */
+export const HistoricoSinalEsquema = z.object({
+  /** De onde vêm os números (ativo, intervalo, período). */
+  fonte: z.string().min(1).max(300),
+  total: PlacarHistoricoEsquema,
+  /** Só as entradas na mesma faixa de horário do sinal. */
+  mesmoHorario: PlacarHistoricoEsquema.optional(),
+  /** Só as entradas no mesmo lado (comprado ou vendido). */
+  mesmoLado: PlacarHistoricoEsquema.optional(),
+  /** O resto da sessão sorteado das velas do mesmo horário: o que toca primeiro, stop ou alvo. */
+  simulacao: z
+    .object({
+      replays: z.number().int().min(100).max(1_000_000),
+      alvoPrimeiro: Fracao,
+      stopPrimeiro: Fracao,
+      nenhum: Fracao,
+      resultadoMedio: Percentual,
+    })
+    .refine(
+      (s) => Math.abs(s.alvoPrimeiro + s.stopPrimeiro + s.nenhum - 1) <= TOLERANCIA_SOMA,
+      "alvo primeiro, stop primeiro e nenhum precisam somar 1",
+    )
+    .optional(),
+});
+export type HistoricoSinal = z.infer<typeof HistoricoSinalEsquema>;

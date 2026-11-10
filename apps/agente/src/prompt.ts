@@ -2,6 +2,7 @@ import type { PedidoAnalise } from "@zentrade/contratos";
 import { FUSO_PADRAO } from "@zentrade/dominio";
 import { custoIdaEVolta } from "./pedido/custos.js";
 import { linhaDoAgora } from "./agora.js";
+import { linhasDoHistorico } from "./historico.js";
 import { leituraDoMercado } from "./pedido/mercado.js";
 import { linhasDoPrevio, type ContextoPrevio } from "./pedido/previo.js";
 import { leituraDasSaidas } from "./pedido/saidas.js";
@@ -34,6 +35,7 @@ Prévias de futuro ("cenarios"), antes de decidir:
 - Probabilidades calibradas: parta da frequência típica (rompimentos falham muito; lateralidade é comum em velas curtas) e ajuste com a evidência do pedido. Evite 0 e 1.
 - Use o placar do robô: se as aprovações acertaram menos do que a confiança dizia, baixe as probabilidades do cenário favorável.
 - O código calcula o valor esperado (Σ probabilidade × resultado) e DECIDE: abre posição quando ele é positivo e o cenário favorável tem a probabilidade mínima configurada, mesmo que você proponha aguardar; e não abre quando é negativo. A sua parte é estimar os cenários com honestidade e calibração. Para bloquear uma entrada que os cenários aprovariam, preencha vetoGrave com um risco concreto e grave.
+- Quando o pedido trouxer "Histórico da mesma regra", ele é o placar REAL desta regra neste ativo, medido no código (operações passadas, acerto, resultado médio líquido, recortes de horário e de lado, e a simulação do resto da sessão). Use-o como frequência de base das probabilidades e só se afaste dele com evidência concreta do pedido, dizendo qual. Com amostra suficiente, quem decide a entrada é o código, pelo resultado médio medido: você ainda pode reduzir o tamanho (tamanhoRelativo) ou vetar (vetoGrave) com um risco concreto e grave que o histórico não enxerga (notícia, evento, dado inconsistente).
 
 Autoverificação:
 - Depois dos cenários, escreva em contraArgumento o melhor argumento CONTRA a sua proposta: imagine que ela já deu errado e diga por quê.
@@ -72,7 +74,15 @@ const secao = (titulo: string, linhas: readonly string[]): string[] =>
 
 /** Os dados do motor, enxutos: sem as velas, sem textos repetidos e só os últimos fechamentos. */
 function dadosBrutos(pedido: PedidoAnalise): string {
-  const { fechamentos, operacao: _operacao, velas: _velas, sinal, ...resto } = pedidoParaJson(pedido);
+  // Operação, velas e histórico já foram para as seções, em texto e com os números prontos.
+  const {
+    fechamentos,
+    operacao: _operacao,
+    velas: _velas,
+    historico: _historico,
+    sinal,
+    ...resto
+  } = pedidoParaJson(pedido);
   // A explicação do sinal já foi na seção "Sinal".
   const { explicacao: _explicacao, ...sinalSemTexto } = sinal;
   return JSON.stringify({
@@ -104,6 +114,10 @@ export function mensagemDoPedido(pedido: PedidoAnalise, agora: Date, opcoes: Opc
     ...secao("Como a operação sai (avalie por aqui)", saidas.linhas),
     ...secao("Custos", custo ? [`Custos de ida e volta: ${custo.texto}.`] : []),
     ...secao("Mercado agora (calculado no código)", mercado.linhas),
+    ...secao(
+      "Histórico da mesma regra (medido no código)",
+      pedido.historico ? linhasDoHistorico(pedido.historico) : [],
+    ),
     ...secao("Contexto do robô", opcoes.previo ? linhasDoPrevio(opcoes.previo, fuso) : []),
     "",
     "## Dados do motor (decimais em texto)",

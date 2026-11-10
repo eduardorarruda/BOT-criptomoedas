@@ -113,6 +113,16 @@ describe("agente por HTTP", () => {
     expect(venda).not.toHaveProperty("analiseId");
   });
 
+  it("leva o histórico da mesma regra ao agente, sem mexer nos números", () => {
+    const historico = {
+      fonte: "WIN 1h, mesma regra",
+      total: { operacoes: 40, certas: 24, resultadoMedio: 0.12 },
+      simulacao: { replays: 1000, alvoPrimeiro: 0.3, stopPrimeiro: 0.3, nenhum: 0.4, resultadoMedio: 0.01 },
+    };
+    expect(pedidoNoFio({ ...pedido("COMPRAR"), historico }).historico).toEqual(historico);
+    expect(pedidoNoFio(pedido("COMPRAR"))).not.toHaveProperty("historico");
+  });
+
   it("leva o analiseId ao agente, para o passo a passo dele chegar à tela ligado à análise", () => {
     const fio = pedidoNoFio({ ...pedido("COMPRAR"), analiseId: "a-123" });
     expect(fio.analiseId).toBe("a-123");

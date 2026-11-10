@@ -7,6 +7,7 @@ import type {
   PropostaGerada,
 } from "@zentrade/contratos";
 import { dec } from "@zentrade/dominio";
+import { CASAS_MEDIA, recorteDecisivo, taxaDeAcerto } from "./historico.js";
 import { pct, pctSinal } from "./pedido/formato.js";
 
 /**
@@ -124,17 +125,89 @@ function entradaPelosCenarios(
   };
 }
 
+const REGRA_HISTORICO = "Regra do histórico";
+
+/** A proposta vira "aguardar" com o motivo; cenários e contra-argumento ficam para a tela e o placar. */
+function paraAguardar(proposta: PropostaGerada, avaliacao: AvaliacaoCenarios, regra: string): PropostaAgente {
+  const { stop: _stop, alvo: _alvo, ...semPrecos } = proposta;
+  return {
+    ...semPrecos,
+    acao: "aguardar",
+    confianca: 0,
+    tamanhoRelativo: 0,
+    justificativa: `${regra}: ${avaliacao.motivo}. ${proposta.justificativa}`.slice(0, LIMITE_JUSTIFICATIVA),
+    avaliacao,
+  };
+}
+
 /**
- * A regra determinística sobre as "prévias de futuro": só abre posição com valor
- * esperado líquido > 0 E cenário favorável com probabilidade ≥ limiar; senão,
- * "aguardar" com o motivo (cenários e contra-argumento ficam, para a tela e o placar).
- * Aprovada, a confiança não passa da probabilidade do cenário favorável.
+ * A "máquina do tempo" decide a entrada quando o motor mediu a mesma regra no histórico
+ * com amostra suficiente: entra se o resultado médio do recorte mais específico
+ * (mesmo horário, mesmo lado ou total) é positivo, fica de fora se não é. O palpite do
+ * modelo sobre os cenários deixa de decidir — em 5m/15m ele fica perto de zero e
+ * escolhe quase ao acaso (placar de 23 e 26/10) —; o modelo ainda reduz o tamanho e
+ * pode vetar com um risco concreto e grave que o histórico não vê.
+ */
+function decisaoPeloHistorico(
+  proposta: PropostaGerada,
+  pedido: PedidoAnalise,
+  limiar: number,
+): PropostaAgente | null {
+  const recorte = recorteDecisivo(pedido.historico);
+  const acao = pedido.sinal.acao;
+  if (!recorte || !pedido.posicao.quantidade.isZero()) return null;
+  if (acao !== "COMPRAR" && acao !== "VENDER") return null;
+  const sentido: Sentido = pedido.operacao?.sentido ?? (acao === "VENDER" ? "vendido" : "comprado");
+  const { nome, placar } = recorte;
+  const ve = placar.resultadoMedio;
+  const acerto = taxaDeAcerto(placar);
+  const conta =
+    `histórico da mesma regra (${nome}: ${placar.operacoes} operações, ${pct(acerto, 0)} certas) ` +
+    `dá resultado médio ${pctSinal(ve / 100, CASAS_MEDIA)} por operação`;
+  const favoravel: NomeCenario = sentido === "comprado" ? "alta" : "baixa";
+  const base = { valorEsperado: ve, favoravel, probabilidadeFavoravel: acerto, limiar, aplicada: true };
+  if (ve <= 0)
+    return paraAguardar(
+      proposta,
+      { ...base, aprovada: false, motivo: `${conta}, não é positivo` },
+      REGRA_HISTORICO,
+    );
+  if (proposta.vetoGrave)
+    return paraAguardar(
+      proposta,
+      { ...base, aprovada: false, motivo: `${conta}, mas há um veto grave: ${proposta.vetoGrave}` },
+      REGRA_HISTORICO,
+    );
+  const reduziu = proposta.acao !== "aguardar" && proposta.tamanhoRelativo > 0;
+  const aviso = proposta.acao === "aguardar" ? " (o modelo tinha proposto aguardar)" : "";
+  return {
+    ...proposta,
+    acao: sentido === "comprado" ? "comprar" : "vender",
+    confianca: acerto,
+    tamanhoRelativo: reduziu ? proposta.tamanhoRelativo : 1,
+    justificativa:
+      `${REGRA_HISTORICO}: ${conta}; o histórico decide pela entrada${aviso}. ${proposta.justificativa}`.slice(
+        0,
+        LIMITE_JUSTIFICATIVA,
+      ),
+    avaliacao: { ...base, aprovada: true, motivo: conta },
+  };
+}
+
+/**
+ * A regra determinística da entrada. Com o histórico medido da mesma regra (amostra
+ * suficiente), decide o histórico (decisaoPeloHistorico). Sem ele, as "prévias de
+ * futuro" do modelo: só abre posição com valor esperado líquido > 0 E cenário favorável
+ * com probabilidade ≥ limiar; senão, "aguardar" com o motivo. Aprovada, a confiança não
+ * passa da probabilidade do cenário favorável.
  */
 export function aplicarRegraDosCenarios(
   proposta: PropostaGerada,
   pedido: PedidoAnalise,
   limiar: number = LIMIAR_PADRAO,
 ): PropostaAgente {
+  const peloHistorico = decisaoPeloHistorico(proposta, pedido, limiar);
+  if (peloHistorico) return peloHistorico;
   const pelosCenarios = entradaPelosCenarios(proposta, pedido, limiar);
   if (pelosCenarios) return pelosCenarios;
   const avaliacao = avaliar(proposta, pedido, limiar);
@@ -145,16 +218,5 @@ export function aplicarRegraDosCenarios(
       confianca: Math.min(proposta.confianca, avaliacao.probabilidadeFavoravel),
       avaliacao,
     };
-  const { stop: _stop, alvo: _alvo, ...semPrecos } = proposta;
-  return {
-    ...semPrecos,
-    acao: "aguardar",
-    confianca: 0,
-    tamanhoRelativo: 0,
-    justificativa: `Regra dos cenários: ${avaliacao.motivo}. ${proposta.justificativa}`.slice(
-      0,
-      LIMITE_JUSTIFICATIVA,
-    ),
-    avaliacao,
-  };
+  return paraAguardar(proposta, avaliacao, "Regra dos cenários");
 }

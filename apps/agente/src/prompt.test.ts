@@ -1,7 +1,7 @@
 import { dec, precoAlvo } from "@zentrade/dominio";
 import { describe, expect, it } from "vitest";
 import { mensagemDoPedido, SYSTEM_PROMPT } from "./prompt.js";
-import { OPERACAO_DONCHIAN, pedidoExemplo, velasDeTeste } from "./teste/pedido.js";
+import { HISTORICO_EXEMPLO, OPERACAO_DONCHIAN, pedidoExemplo, velasDeTeste } from "./teste/pedido.js";
 
 const agora = new Date("2026-10-18T01:52:00Z");
 
@@ -130,5 +130,28 @@ describe("mensagem do pedido", () => {
     });
     expect(m).toMatch(/Histórico deste robô: nenhuma decisão anterior/);
     expect(m).toMatch(/ausência de notícia é neutra/);
+  });
+});
+
+describe("histórico da mesma regra (máquina do tempo)", () => {
+  it("o system prompt manda partir da frequência de base medida e diz quem decide", () => {
+    expect(SYSTEM_PROMPT).toMatch(/Histórico da mesma regra/);
+    expect(SYSTEM_PROMPT).toMatch(/frequência de base/);
+  });
+
+  it("a mensagem traz a fonte, o total, os recortes e a simulação, com os números prontos", () => {
+    const m = mensagemDoPedido(pedidoExemplo({ historico: HISTORICO_EXEMPLO }), agora);
+    expect(m).toMatch(/## Histórico da mesma regra \(medido no código\)/);
+    expect(m).toMatch(/Fonte: WIN 15m, mesma regra, 2024-10-28 a 2026-10-27/);
+    expect(m).toMatch(/Total: 120 operações, 48 certas \(40%\), resultado médio \+0,08% por operação/);
+    expect(m).toMatch(/Mesma faixa de horário: 31 operações, 9 certas \(29%\), resultado médio −0,05%/);
+    expect(m).toMatch(/Mesmo lado: 70 operações, 30 certas \(43%\), resultado médio \+0,11%/);
+    expect(m).toMatch(
+      /Simulação do resto da sessão \(10\.000 sorteios\): alvo primeiro 29%, stop primeiro 26%, nenhum 45%; resultado médio \+0,02%/,
+    );
+  });
+
+  it("sem histórico, a seção não aparece", () => {
+    expect(mensagemDoPedido(pedidoExemplo(), agora)).not.toMatch(/Histórico da mesma regra/);
   });
 });

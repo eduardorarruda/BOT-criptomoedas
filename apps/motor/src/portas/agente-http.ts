@@ -53,6 +53,8 @@ export function pedidoNoFio(p: PedidoAnalise) {
     // Como a operação sai e quanto custa, e as velas: números puros, vão como estão.
     ...(p.operacao ? { operacao: p.operacao } : {}),
     ...(p.velas ? { velas: p.velas } : {}),
+    // O placar da mesma regra no histórico (números puros): a IA parte dele, não de palpite.
+    ...(p.historico ? { historico: p.historico } : {}),
     ...(p.ate !== undefined ? { ate: p.ate } : {}),
     ...(o
       ? {

@@ -1,4 +1,5 @@
 import {
+  HistoricoSinalEsquema,
   Id,
   Instante,
   Intervalo,
@@ -49,6 +50,8 @@ export const PedidoAnaliseJson = z.object({
   operacao: OperacaoPedidoEsquema.optional(),
   /** Máximas, mínimas, volumes e instantes alinhados com os fechamentos. */
   velas: VelasPedidoEsquema.optional(),
+  /** O placar real da mesma regra no histórico do ativo (a "máquina do tempo"), medido no motor. */
+  historico: HistoricoSinalEsquema.optional(),
   /** Replay histórico: o "agora" da análise (ms UTC); desliga as ferramentas que leem o banco ao vivo. */
   ate: Instante.optional(),
 });
@@ -122,6 +125,7 @@ export function pedidoParaJson(p: PedidoAnalise): PedidoAnaliseJson {
     ...(p.analiseId ? { analiseId: p.analiseId } : {}),
     ...(p.operacao ? { operacao: p.operacao } : {}),
     ...(p.velas ? { velas: p.velas } : {}),
+    ...(p.historico ? { historico: p.historico } : {}),
     ...(p.ate !== undefined ? { ate: p.ate } : {}),
   };
 }
@@ -136,6 +140,7 @@ export function pedidoDeJson(j: PedidoAnaliseJson): PedidoAnalise {
     ...(j.analiseId ? { analiseId: j.analiseId } : {}),
     ...(j.operacao ? { operacao: j.operacao } : {}),
     ...(j.velas ? { velas: j.velas } : {}),
+    ...(j.historico ? { historico: j.historico } : {}),
     ...(j.ate !== undefined ? { ate: j.ate } : {}),
   };
 }

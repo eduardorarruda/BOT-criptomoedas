@@ -2,7 +2,7 @@ import { dec, POSICAO_ZERADA } from "@zentrade/dominio";
 import type { PedidoAnalise } from "@zentrade/contratos";
 import { describe, expect, it } from "vitest";
 import { lerCorpoAnalise, pedidoDeJson, pedidoParaJson } from "./serializacao.js";
-import { OPERACAO_DONCHIAN, pedidoExemplo } from "./teste/pedido.js";
+import { HISTORICO_EXEMPLO, OPERACAO_DONCHIAN, pedidoExemplo } from "./teste/pedido.js";
 
 const pedido: PedidoAnalise = {
   robo: { id: "r1", simbolo: "BTCUSDT", intervalo: "1h" },
@@ -109,6 +109,22 @@ describe("serialização do PedidoAnalise", () => {
     const r2 = lerCorpoAnalise({ ...base, operacao: { ...OPERACAO_DONCHIAN, custos: { mercado: "lua" } } });
     expect(r2.ok).toBe(false);
     if (!r2.ok) expect(r2.erro).toMatch(/operacao/);
+  });
+
+  it("leva e traz o histórico da mesma regra (a máquina do tempo)", () => {
+    const json = pedidoParaJson({ ...pedido, historico: HISTORICO_EXEMPLO });
+    const lido = lerCorpoAnalise(JSON.parse(JSON.stringify(json)));
+    expect(lido.ok).toBe(true);
+    if (!lido.ok) return;
+    expect(lido.valor.pedido.historico).toEqual(HISTORICO_EXEMPLO);
+  });
+
+  it("recusa histórico torto, dizendo onde", () => {
+    const base = pedidoParaJson(pedido);
+    const torto = { ...HISTORICO_EXEMPLO, total: { operacoes: 1, certas: 5, resultadoMedio: 0 } };
+    const r = lerCorpoAnalise({ ...base, historico: torto });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.erro).toMatch(/historico/);
   });
 
   it("pedido sem operação nem velas (motor antigo) continua valendo", () => {
